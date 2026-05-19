@@ -16,17 +16,7 @@ Write-Host " Running Local Environment Setup for XAMPP"
 Write-Host "============================================="
 Write-Host ""
 
-# 1. Update Windows Hosts file
-Write-Host "Adding $Domain to Windows hosts file..."
-$HostsContent = Get-Content $HostsFilePath
-if ($HostsContent -match $Domain) {
-    Write-Host "[OK] Domain already exists in hosts file."
-} else {
-    Add-Content -Path $HostsFilePath -Value "`r`n127.0.0.1`t$Domain"
-    Write-Host "[SUCCESS] Domain added to hosts file."
-}
-
-# 2. Update XAMPP Virtual Hosts
+# Update XAMPP Virtual Hosts
 Write-Host "Adding VirtualHost for $Domain to XAMPP..."
 if (Test-Path $XamppVhostsPath) {
     $VhostContent = Get-Content $XamppVhostsPath

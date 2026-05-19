@@ -8,3 +8,28 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
+.kiro
+start-cf.bat
+cloudflared.exe
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
+
+###> Custom Ignores ###
+# Environment variables
+/.env
+/.env.*
+
+# IDEs
+/.idea/
+/.vscode/
+
+# SQLite Databases
+/var/data.db
+/*.sqlite
+/*.db
+
+# Logs
+/*.log
+###< Custom Ignores ###

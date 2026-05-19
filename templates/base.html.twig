@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}OpenSquadron Dashboard{% endblock %}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --primary-color: #25D366; /* WhatsApp Green */
+                --primary-dark: #128C7E;
+                --sidebar-bg: #ffffff;
+                --topbar-bg: #f8f9fa;
+                --main-bg: #f4f6f9;
+                --text-main: #333333;
+                --text-muted: #6c757d;
+                --border-color: #e9ecef;
+                --menu-hover-bg: #f8f9fa;
+                --menu-active-color: #007bff;
+            }
+            body {
+                font-family: 'Inter', sans-serif;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                height: 100vh;
+                overflow: hidden;
+                background-color: var(--main-bg);
+                color: var(--text-main);
+            }
+            /* Sidebar */
+            .sidebar {
+                width: 260px;
+                background-color: var(--sidebar-bg);
+                border-right: 1px solid var(--border-color);
+                display: flex;
+                flex-direction: column;
+                flex-shrink: 0;
+                z-index: 10;
+            }
+            .sidebar-header {
+                height: 60px;
+                display: flex;
+                align-items: center;
+                padding: 0 20px;
+                border-bottom: 1px solid var(--border-color);
+                font-size: 20px;
+                font-weight: 700;
+                color: #2c3e50;
+            }
+            .sidebar-menu {
+                padding: 15px 0;
+                overflow-y: auto;
+                flex-grow: 1;
+            }
+            .menu-item {
+                display: block;
+                padding: 10px 20px;
+                color: var(--text-main);
+                text-decoration: none;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                transition: background-color 0.2s, color 0.2s;
+            }
+            .menu-item:hover {
+                background-color: var(--menu-hover-bg);
+            }
+            .menu-item.active {
+                color: var(--menu-active-color);
+            }
+            .menu-icon {
+                margin-right: 10px;
+                width: 20px;
+                text-align: center;
+                font-size: 18px;
+            }
+            .menu-group {
+                margin-top: 10px;
+            }
+            .menu-group-title {
+                padding: 10px 20px;
+                font-size: 12px;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                font-weight: 600;
+            }
+            .submenu {
+                padding-left: 20px;
+            }
+            .submenu .menu-item {
+                font-size: 14px;
+                padding: 8px 20px;
+            }
+            .whatsapp-icon {
+                color: var(--primary-color);
+            }
+
+            /* Main Content Area */
+            .main-wrapper {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            .topbar {
+                height: 60px;
+                background-color: var(--topbar-bg);
+                border-bottom: 1px solid var(--border-color);
+                display: flex;
+                align-items: center;
+                padding: 0 20px;
+                justify-content: space-between;
+                flex-shrink: 0;
+            }
+            .topbar-stats {
+                display: flex;
+                gap: 15px;
+            }
+            .stat-badge {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                color: var(--text-muted);
+                font-weight: 500;
+            }
+            .stat-circle {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 2px solid var(--primary-color);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                color: var(--primary-dark);
+                font-weight: bold;
+            }
+            .user-profile {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .user-profile a {
+                color: var(--text-muted);
+                text-decoration: none;
+            }
+            .user-profile a:hover {
+                color: var(--text-main);
+            }
+            
+            .content-area {
+                flex-grow: 1;
+                padding: 30px;
+                overflow-y: auto;
+            }
+            
+            /* Components */
+            .card {
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+                padding: 25px;
+                margin-bottom: 25px;
+                border: 1px solid var(--border-color);
+            }
+            .card-title {
+                margin-top: 0;
+                margin-bottom: 20px;
+                font-size: 18px;
+                color: #2c3e50;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+            }
+            .form-control {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid var(--border-color);
+                border-radius: 4px;
+                font-size: 16px;
+                box-sizing: border-box;
+            }
+            .form-control[readonly] {
+                background-color: #e9ecef;
+                color: #495057;
+            }
+            .btn {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            .btn-primary {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            .btn-primary:hover {
+                background-color: var(--primary-dark);
+            }
+            .btn-secondary {
+                background-color: #6c757d;
+                color: white;
+            }
+            .btn-secondary:hover {
+                background-color: #5a6268;
+            }
+            .input-group {
+                display: flex;
+            }
+            .input-group .form-control {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+            .input-group .btn {
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+            .badge {
+                padding: 5px 10px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: bold;
+                color: white;
+                margin-left: 10px;
+                vertical-align: middle;
+            }
+            .badge-active { background-color: var(--primary-color); }
+            .badge-inactive { background-color: #6c757d; }
+            .badge-error { background-color: var(--error-color); }
+            .header {
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .header h1 {
+                margin: 0;
+                font-size: 20px;
+                color: #2c3e50;
+            }
+            
+            /* Flash Messages */
+            .alert {
+                padding: 15px;
+                margin-bottom: 20px;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+            .alert-success {
+                color: #155724;
+                background-color: #d4edda;
+                border-color: #c3e6cb;
+            }
+            .alert-error, .alert-danger {
+                color: #721c24;
+                background-color: #f8d7da;
+                border-color: #f5c6cb;
+            }
+            
+            {% block stylesheets %}{% endblock %}
+        </style>
+    </head>
+    <body>
+        <div class="sidebar">
+            <div class="sidebar-header">
+                🤖 OpenSquadron
+            </div>
+            <div class="sidebar-menu">
+                <a href="{{ path('app_dashboard') }}" class="menu-item {% if app.request.attributes.get('_route') == 'app_dashboard' %}active{% endif %}">
+                    <span class="menu-icon">🎛️</span> Dashboard
+                </a>
+                <a href="{{ path('app_inbox') }}" class="menu-item {% if 'inbox' in app.request.attributes.get('_route') %}active{% endif %}">
+                    <span class="menu-icon">💬</span> Shared Inbox
+                </a>
+                
+                <div class="menu-group">
+                    <div class="menu-group-title">Connect Account</div>
+                    <div class="submenu">
+                        <a href="{{ path('whatsapp_connect_show') }}" class="menu-item {% if 'whatsapp' in app.request.attributes.get('_route') %}active{% endif %}">
+                            <span class="menu-icon whatsapp-icon">🟢</span> Connect WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-wrapper">
+            <div class="topbar">
+                <div class="topbar-stats">
+                    <div class="stat-badge">
+                        <div class="stat-circle">100%</div>
+                        <div>
+                            System<br>Online
+                        </div>
+                    </div>
+                </div>
+                <div class="user-profile">
+                    {% if app.user %}
+                        {{ app.user.userIdentifier }} | <a href="{{ path('app_logout') }}">Logout</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="content-area">
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ label }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+                
+                {% block body %}{% endblock %}
+            </div>
+        </div>
+        
+        <script>
+            function copyToClipboard(elementId) {
+                var copyText = document.getElementById(elementId);
+                copyText.select();
+                copyText.setSelectionRange(0, 99999);
+                navigator.clipboard.writeText(copyText.value).then(function() {
+                    alert("Copied: " + copyText.value);
+                }, function(err) {
+                    console.error('Async: Could not copy text: ', err);
+                });
+            }
+        </script>
+        {% block javascripts %}{% endblock %}
+    </body>
+</html>

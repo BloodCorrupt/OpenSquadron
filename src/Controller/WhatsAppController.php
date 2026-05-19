@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\WhatsAppConnectionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -9,24 +10,40 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Subscriber;
+use App\Entity\Message;
 
 class WhatsAppController extends AbstractController
 {
-    private string $verifyToken;
-    private string $accessToken;
+    private string $envVerifyToken;
+    private string $envAccessToken;
     private string $phoneNumberId;
     private HttpClientInterface $httpClient;
+    private WhatsAppConnectionService $whatsappService;
 
     public function __construct(
         #[Autowire('%env(WHATSAPP_VERIFY_TOKEN)%')] string $verifyToken,
         #[Autowire('%env(WHATSAPP_ACCESS_TOKEN)%')] string $accessToken,
         #[Autowire('%env(WHATSAPP_PHONE_NUMBER_ID)%')] string $phoneNumberId,
-        HttpClientInterface $httpClient
+        HttpClientInterface $httpClient,
+        WhatsAppConnectionService $whatsappService,
+        private EntityManagerInterface $entityManager
     ) {
-        $this->verifyToken = $verifyToken;
-        $this->accessToken = $accessToken;
+        $this->envVerifyToken = $verifyToken;
+        $this->envAccessToken = $accessToken;
         $this->phoneNumberId = $phoneNumberId;
         $this->httpClient = $httpClient;
+        $this->whatsappService = $whatsappService;
+    }
+
+    private function getVerifyToken(): string
+    {
+        $connection = $this->whatsappService->getConnection();
+        if ($connection && $connection->getVerifyToken()) {
+            return $connection->getVerifyToken();
+        }
+        return $this->envVerifyToken;
     }
 
     #[Route('/webhook/whatsapp', name: 'whatsapp_webhook_verify', methods: ['GET'])]
@@ -36,8 +53,10 @@ class WhatsAppController extends AbstractController
         $token = $request->query->get('hub_verify_token', $request->query->get('hub.verify_token'));
         $challenge = $request->query->get('hub_challenge', $request->query->get('hub.challenge'));
 
+        $expectedToken = $this->getVerifyToken();
+
         if ($mode && $token) {
-            if ($mode === 'subscribe' && $token === $this->verifyToken) {
+            if ($mode === 'subscribe' && $token === $expectedToken) {
                 return new Response($challenge, 200);
             }
             return new Response('Forbidden', 403);
@@ -49,7 +68,11 @@ class WhatsAppController extends AbstractController
     #[Route('/webhook/whatsapp', name: 'whatsapp_webhook_handle', methods: ['POST'])]
     public function handleWebhook(Request $request): JsonResponse
     {
-        $content = json_decode($request->getContent(), true);
+        $payload = $request->getContent();
+        // Log incoming payload for debugging
+        file_put_contents($this->getParameter('kernel.project_dir') . '/var/webhook.log', date('Y-m-d H:i:s') . " - " . $payload . PHP_EOL, FILE_APPEND);
+
+        $content = json_decode($payload, true);
 
         if (!$content) {
             return new JsonResponse(['status' => 'invalid payload'], 400);
@@ -65,12 +88,35 @@ class WhatsAppController extends AbstractController
                     foreach ($messages as $message) {
                         $from = $message['from']; // The sender's phone number
                         $msgBody = $message['text']['body'] ?? '';
+                        $metaMessageId = $message['id'] ?? null;
 
-                        // For testing, reply to the user automatically to verify it works
                         if ($msgBody) {
-                            $this->sendMessage($from, "Hello! We received your message: \"{$msgBody}\" from OpenSquadron webhook test.");
+                            $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy(['phoneNumber' => $from]);
+                            if (!$subscriber) {
+                                $subscriber = new Subscriber();
+                                $subscriber->setPhoneNumber($from);
+                                
+                                $name = $entry['changes'][0]['value']['contacts'][0]['profile']['name'] ?? null;
+                                if ($name) {
+                                    $subscriber->setName($name);
+                                }
+                                $this->entityManager->persist($subscriber);
+                            }
+
+                            $msg = new Message();
+                            $msg->setSubscriber($subscriber);
+                            $msg->setDirection('inbound');
+                            $msg->setContent($msgBody);
+                            $msg->setMetaMessageId($metaMessageId);
+                            $msg->setStatus('received');
+                            
+                            $this->entityManager->persist($msg);
+                            
+                            // Update subscriber timestamp so it jumps to top of inbox
+                            $subscriber->setUpdatedAt(new \DateTime());
                         }
                     }
+                    $this->entityManager->flush();
                 }
             }
             // Always return 200 to acknowledge receipt of standard webhook events
@@ -89,34 +135,10 @@ class WhatsAppController extends AbstractController
         }
 
         try {
-            $response = $this->sendMessage($to, "Hello from OpenSquadron! This is a test message to verify the connection.");
+            $response = $this->whatsappService->sendMessage($to, "Hello from OpenSquadron! This is a test message to verify the connection.");
             return new JsonResponse(['status' => 'success', 'data' => $response]);
         } catch (\Exception $e) {
             return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-    }
-
-    private function sendMessage(string $to, string $text): array
-    {
-        $url = "https://graph.facebook.com/v21.0/{$this->phoneNumberId}/messages";
-        
-        $response = $this->httpClient->request('POST', $url, [
-            'headers' => [
-                'Authorization' => "Bearer {$this->accessToken}",
-                'Content-Type' => 'application/json',
-            ],
-            'json' => [
-                'messaging_product' => 'whatsapp',
-                'recipient_type' => 'individual',
-                'to' => $to,
-                'type' => 'text',
-                'text' => [
-                    'preview_url' => false,
-                    'body' => $text,
-                ]
-            ]
-        ]);
-
-        return $response->toArray(); // Will throw exception if response is not 2xx
     }
 }
