@@ -1,6 +1,6 @@
 # OpenSquadron
 
-OpenSquadron is an open-source, Symfony-based alternative to commercial marketing and live chat platforms like ManyChat, Chatfuel, and Wati. Currently, it implements the underlying framework and Meta WhatsApp Cloud API connectivity for live chat.
+OpenSquadron is an open-source, Symfony-based alternative to commercial marketing and live chat platforms like ManyChat, Chatfuel, and Wati. Currently, it implements the underlying framework and Meta WhatsApp Cloud API connectivity for a Shared Live Inbox and Subscriber management.
 
 ## Prerequisites
 
@@ -21,11 +21,8 @@ Before you begin, ensure you have the following installed on your Windows machin
    ```
 
 2. **Environment Variables:**
-   Open the `.env` file and configure your Meta/WhatsApp credentials. Replace the placeholders with your actual Meta App details:
+   Open the `.env` file and configure your database credentials. (Tokens are now securely stored in the database via the Dashboard UI).
    ```ini
-   WHATSAPP_VERIFY_TOKEN="your_custom_verify_token"
-   WHATSAPP_ACCESS_TOKEN="your_admin_access_token"
-   WHATSAPP_PHONE_NUMBER_ID="your_phone_number_id"
    DATABASE_URL="mysql://root:@127.0.0.1:3306/opensquadron?serverVersion=10.4.32-MariaDB&charset=utf8mb4"
    ```
 
@@ -38,11 +35,13 @@ To easily host this on XAMPP using a local domain (`opensquadron.local`):
 2. Open the **XAMPP Control Panel**.
 3. **Restart Apache** and **Start MySQL**.
 
-## 3. Database Initialization
+## 3. Database & Admin Initialization
 
-Once MySQL is running in XAMPP, create the application database by running:
+Once MySQL is running in XAMPP, create the database, run the schema migrations, and create your Admin account:
 ```bash
 C:\xampp\php\php.exe bin/console doctrine:database:create
+C:\xampp\php\php.exe bin/console doctrine:migrations:migrate
+C:\xampp\php\php.exe bin/console app:create-admin admin@example.com password123
 ```
 
 ## 4. Setting up the Cloudflare Tunnel
@@ -52,27 +51,30 @@ To connect your local environment to the Meta Cloud API webhook, your local serv
 1. Log into your **Cloudflare Zero Trust** dashboard and create a Tunnel.
 2. Route the public hostname (e.g., `opensquadron.your.domain`) to `http://opensquadron.local:80`.
 3. Copy the **Tunnel Token** provided by Cloudflare.
-4. Edit the `start-tunnel.bat` file in the root directory and replace the placeholder variable with your tunnel token:
-   ```bat
-   set TUNNEL_TOKEN=your_cloudflare_tunnel_token_here
-   ```
+4. Edit the `start-tunnel.bat` file in the root directory and replace the placeholder variable with your tunnel token.
 5. Double-click `start-tunnel.bat` to start the tunnel.
 
-## 5. Meta Webhook Setup
+## 5. Connecting WhatsApp & Meta Webhook
 
-1. Go to your Meta App Dashboard > WhatsApp > Configuration.
-2. Click **Edit Webhook**.
-3. Set the **Callback URL** to: `https://opensquadron.your.domain/webhook/whatsapp`
-4. Set the **Verify Token** to exactly match the `WHATSAPP_VERIFY_TOKEN` you set in your `.env` file.
-5. Click **Verify and Save**.
-6. Manage Webhook fields and subscribe to the `messages` event.
+1. Log in to your OpenSquadron Dashboard (`https://opensquadron.your.domain/login`).
+2. Go to the **WhatsApp -> Connect** page and input your `Phone Number ID`, `Access Token`, and create a `Verify Token`.
+3. In your **Meta App Dashboard**, go to **WhatsApp -> Configuration** (do not use the generic "Webhooks" product tab).
+4. Click **Edit Webhook**.
+5. Set the **Callback URL** to: `https://opensquadron.your.domain/webhook/whatsapp`
+6. Set the **Verify Token** to exactly match the one you saved in the OpenSquadron dashboard.
+7. Click **Verify and Save**.
+8. Underneath the Webhook URL, click **Manage** Webhook fields and subscribe to the `messages` event.
 
-### Testing the connection
+## 6. Going Live (Privacy Policy & Cloudflare Rules)
 
-You can verify outgoing messages are working by visiting this test URL in your browser:
-`http://opensquadron.local/whatsapp/test?to=YOUR_PHONE_NUMBER_WITH_COUNTRY_CODE`
+To receive messages from anyone in the world, your Meta App must be in **Live Mode**:
+1. OpenSquadron automatically generates Meta-compliant policy pages. In the Meta Dashboard -> App Settings -> Basic, paste these URLs:
+   - Privacy Policy: `https://opensquadron.your.domain/privacy`
+   - Terms of Service: `https://opensquadron.your.domain/terms`
+2. Toggle the App Mode at the top of the screen to **Live**.
+3. **IMPORTANT:** Ensure your Cloudflare WAF or "Bot Fight Mode" is not blocking the `facebookexternalhit` crawler or POST requests to the `/webhook/whatsapp` endpoint.
 
-If set up correctly, incoming messages to your business number will also automatically reply with an acknowledgment message confirming the Webhook connection!
+You can now use the **Shared Inbox** in the OpenSquadron dashboard to chat with users in real time!
 
 ## License
 
