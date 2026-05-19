@@ -126,7 +126,7 @@ class WhatsAppConnectionService
         }
     }
 
-    public function saveConnection(string $businessAccountId, string $plainAccessToken): WhatsAppConnection
+    public function saveConnection(string $businessAccountId, string $plainAccessToken, ?string $phoneNumberId = null): WhatsAppConnection
     {
         if (empty($businessAccountId) || empty($plainAccessToken)) {
             throw new \InvalidArgumentException('Business Account ID and Access Token are required.');
@@ -136,6 +136,10 @@ class WhatsAppConnectionService
         
         $connection->setBusinessAccountId($businessAccountId);
         $connection->setEncryptedAccessToken($this->encryptToken($plainAccessToken));
+        
+        if ($phoneNumberId !== null) {
+            $connection->setPhoneNumberId($phoneNumberId);
+        }
         
         if (!$connection->getVerifyToken()) {
             $connection->setVerifyToken($this->generateVerifyToken());
@@ -173,7 +177,10 @@ class WhatsAppConnectionService
 
     public function sendMessage(string $to, string $text): array
     {
-        $url = "https://graph.facebook.com/v21.0/{$this->phoneNumberId}/messages";
+        $connection = $this->getConnection();
+        $phoneId = ($connection && $connection->getPhoneNumberId()) ? $connection->getPhoneNumberId() : $this->phoneNumberId;
+        
+        $url = "https://graph.facebook.com/v21.0/{$phoneId}/messages";
         
         $accessToken = $this->getAccessToken();
 

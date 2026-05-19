@@ -19,6 +19,9 @@ class WhatsAppConnection
     #[ORM\Column(length: 255)]
     private ?string $businessAccountId = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $phoneNumberId = null;
+
     #[ORM\Column(type: Types::TEXT)]
     private ?string $encryptedAccessToken = null;
 
@@ -50,6 +53,18 @@ class WhatsAppConnection
     public function setBusinessAccountId(string $businessAccountId): static
     {
         $this->businessAccountId = $businessAccountId;
+
+        return $this;
+    }
+
+    public function getPhoneNumberId(): ?string
+    {
+        return $this->phoneNumberId;
+    }
+
+    public function setPhoneNumberId(?string $phoneNumberId): static
+    {
+        $this->phoneNumberId = $phoneNumberId;
 
         return $this;
     }

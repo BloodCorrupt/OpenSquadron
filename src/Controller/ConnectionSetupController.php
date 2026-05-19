@@ -35,6 +35,7 @@ class ConnectionSetupController extends AbstractController
     {
         $businessAccountId = $request->request->get('businessAccountId');
         $accessToken = $request->request->get('accessToken');
+        $phoneNumberId = $request->request->get('phoneNumberId');
 
         $connection = $this->whatsappService->getConnection();
 
@@ -72,7 +73,7 @@ class ConnectionSetupController extends AbstractController
         }
 
         try {
-            $this->whatsappService->saveConnection($businessAccountId, $accessToken);
+            $this->whatsappService->saveConnection($businessAccountId, $accessToken, $phoneNumberId);
             $this->addFlash('success', 'WhatsApp Connection saved and validated successfully!');
         } catch (\Exception $e) {
             $this->addFlash('error', 'Failed to save connection: ' . $e->getMessage());
