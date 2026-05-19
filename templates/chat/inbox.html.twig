@@ -175,6 +175,25 @@
         border-color: var(--primary-accent);
     }
     
+    .attachment-btn {
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text-muted);
+        border: 1px solid var(--glass-border);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .attachment-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    
     .send-btn {
         background: linear-gradient(135deg, var(--primary-accent), #0284c7);
         color: white;
@@ -244,27 +263,80 @@
             <div class="chat-messages" id="chat-messages">
                 {% for message in messages %}
                     <div class="message-bubble {% if message.direction == 'inbound' %}message-inbound{% else %}message-outbound{% endif %}">
-                        {{ message.content|nl2br }}
+                        {% if message.type == 'image' and message.mediaUrl %}
+                            <a href="/{{ message.mediaUrl }}" target="_blank">
+                                <img src="/{{ message.mediaUrl }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                            </a>
+                        {% elseif message.type == 'audio' and message.mediaUrl %}
+                            <audio controls style="max-width: 100%; margin-bottom: 8px;">
+                                <source src="/{{ message.mediaUrl }}">
+                            </audio>
+                        {% endif %}
+                        
+                        {% if message.content %}
+                            <div>{{ message.content|nl2br }}</div>
+                        {% endif %}
                         <div class="message-time">{{ message.timestamp|date('H:i') }}</div>
                     </div>
                 {% endfor %}
             </div>
             
             <div class="chat-input-area">
+                <button class="attachment-btn" onclick="openTemplateModal()" title="Send Template" style="margin-right: 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </button>
+                <input type="file" id="media-upload" accept="image/*,audio/*" style="display: none;" onchange="handleFileSelect(this)">
+                <button class="attachment-btn" onclick="document.getElementById('media-upload').click()" title="Attach File">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </button>
+                <div id="file-preview" style="display: none; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 20px; font-size: 12px; color: #fff; gap: 10px;">
+                    <span id="file-name">file.jpg</span>
+                    <button onclick="clearFile()" style="background: none; border: none; color: #ff4444; cursor: pointer; padding: 0;">&times;</button>
+                </div>
                 <input type="text" id="message-input" class="chat-input" placeholder="Type a message..." autocomplete="off" onkeypress="if(event.keyCode == 13) sendMessage()">
                 <button class="send-btn" onclick="sendMessage()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
         {% else %}
-            <div class="empty-state">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                <h2>OpenSquadron Web</h2>
-                <p>Select a chat from the sidebar to start messaging.</p>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #888; font-size: 16px;">
+                Select a chat from the sidebar to start messaging.
             </div>
         {% endif %}
     </div>
 </div>
+
+<!-- Template Modal -->
+<div id="templateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: var(--bg-gradient-end); border: 1px solid var(--glass-border); border-radius: 16px; width: 90%; max-width: 500px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #fff; font-size: 18px;">Send Message Template</h3>
+            <button onclick="closeTemplateModal()" style="background: none; border: none; color: #fff; cursor: pointer;">&times;</button>
+        </div>
+        
+        <div style="max-height: 400px; overflow-y: auto;">
+            {% for template in templates|default([]) %}
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; border: 1px solid var(--glass-border);"
+                     onclick="sendTemplate('{{ template.name }}', '{{ template.language }}')"
+                     onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                     onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                    <div style="color: #fff; font-weight: 600; margin-bottom: 5px;">{{ template.name }} <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: var(--secondary-accent); padding: 2px 6px; border-radius: 4px;">{{ template.language }}</span></div>
+                    
+                    {% set bodyText = '' %}
+                    {% for comp in template.components %}
+                        {% if comp.type == 'BODY' %}
+                            {% set bodyText = comp.text %}
+                        {% endif %}
+                    {% endfor %}
+                    <div style="color: #aaa; font-size: 13px;">{{ bodyText }}</div>
+                </div>
+            {% else %}
+                <div style="color: #888; text-align: center; padding: 20px;">No approved templates available.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block javascripts %}
@@ -274,35 +346,62 @@
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
+    function handleFileSelect(input) {
+        const file = input.files[0];
+        if (file) {
+            document.getElementById('file-preview').style.display = 'flex';
+            document.getElementById('file-name').innerText = file.name;
+        }
+    }
+
+    function clearFile() {
+        document.getElementById('media-upload').value = '';
+        document.getElementById('file-preview').style.display = 'none';
+    }
+
     function sendMessage() {
         const input = document.getElementById('message-input');
+        const fileInput = document.getElementById('media-upload');
         const content = input.value.trim();
+        const file = fileInput.files[0];
         const subscriberId = {{ activeSubscriber.id }};
         
-        if (!content) return;
+        if (!content && !file) return;
         
         // Disable input while sending
         input.disabled = true;
         
+        const formData = new FormData();
+        formData.append('subscriber_id', subscriberId);
+        formData.append('content', content);
+        if (file) {
+            formData.append('media', file);
+        }
+        
         fetch('{{ path('app_inbox_send') }}', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                'subscriber_id': subscriberId,
-                'content': content
-            })
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 input.value = '';
+                clearFile();
                 
                 // Add message to UI
                 const bubble = document.createElement('div');
                 bubble.className = 'message-bubble message-outbound';
-                bubble.innerHTML = data.message.content.replace(/\n/g, "<br>") + '<div class="message-time">Just now</div>';
+                
+                let mediaHtml = '';
+                if (data.message.type === 'image' && data.message.mediaUrl) {
+                    mediaHtml = `<a href="${data.message.mediaUrl}" target="_blank"><img src="${data.message.mediaUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px;"></a>`;
+                } else if (data.message.type === 'audio' && data.message.mediaUrl) {
+                    mediaHtml = `<audio controls style="max-width: 100%; margin-bottom: 8px;"><source src="${data.message.mediaUrl}"></audio>`;
+                }
+                
+                let textHtml = data.message.content ? `<div>${data.message.content.replace(/\n/g, "<br>")}</div>` : '';
+                
+                bubble.innerHTML = mediaHtml + textHtml + '<div class="message-time">Just now</div>';
                 
                 messagesContainer.appendChild(bubble);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -317,6 +416,46 @@
         .finally(() => {
             input.disabled = false;
             input.focus();
+        });
+    }
+
+    function openTemplateModal() {
+        document.getElementById('templateModal').style.display = 'flex';
+    }
+
+    function closeTemplateModal() {
+        document.getElementById('templateModal').style.display = 'none';
+    }
+
+    function sendTemplate(templateName, languageCode) {
+        closeTemplateModal();
+        const subscriberId = {{ activeSubscriber.id|default('null') }};
+        if (!subscriberId) return;
+
+        const formData = new FormData();
+        formData.append('subscriber_id', subscriberId);
+        formData.append('template_name', templateName);
+        formData.append('language_code', languageCode);
+
+        fetch('{{ path('app_inbox_send_template') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble message-outbound';
+                bubble.innerHTML = `<div>${data.message.content}</div><div class="message-time">Just now</div>`;
+                messagesContainer.appendChild(bubble);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else {
+                alert('Error sending template: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send template.');
         });
     }
     

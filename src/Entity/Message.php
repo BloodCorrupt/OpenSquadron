@@ -28,6 +28,12 @@ class Message
     private ?string $metaMessageId = null;
 
     #[ORM\Column(length: 20)]
+    private ?string $type = 'text';
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $mediaUrl = null;
+
+    #[ORM\Column(length: 20)]
     private ?string $status = 'received';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -87,6 +93,30 @@ class Message
     public function setMetaMessageId(?string $metaMessageId): static
     {
         $this->metaMessageId = $metaMessageId;
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    public function getMediaUrl(): ?string
+    {
+        return $this->mediaUrl;
+    }
+
+    public function setMediaUrl(?string $mediaUrl): static
+    {
+        $this->mediaUrl = $mediaUrl;
 
         return $this;
     }

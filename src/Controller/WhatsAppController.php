@@ -87,10 +87,30 @@ class WhatsAppController extends AbstractController
 
                     foreach ($messages as $message) {
                         $from = $message['from']; // The sender's phone number
-                        $msgBody = $message['text']['body'] ?? '';
+                        $msgBody = '';
+                        $msgType = $message['type'] ?? 'text';
+                        $mediaUrl = null;
+                        
+                        if ($msgType === 'text') {
+                            $msgBody = $message['text']['body'] ?? '';
+                        } elseif ($msgType === 'image') {
+                            $mediaId = $message['image']['id'] ?? null;
+                            if ($mediaId) {
+                                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/whatsapp_media';
+                                $mediaUrl = $this->whatsappService->downloadMedia($mediaId, $uploadDir);
+                            }
+                            $msgBody = $message['image']['caption'] ?? '';
+                        } elseif ($msgType === 'audio') {
+                            $mediaId = $message['audio']['id'] ?? null;
+                            if ($mediaId) {
+                                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/whatsapp_media';
+                                $mediaUrl = $this->whatsappService->downloadMedia($mediaId, $uploadDir);
+                            }
+                        }
+
                         $metaMessageId = $message['id'] ?? null;
 
-                        if ($msgBody) {
+                        if ($msgBody !== '' || $mediaUrl !== null) {
                             $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy(['phoneNumber' => $from]);
                             if (!$subscriber) {
                                 $subscriber = new Subscriber();
@@ -106,12 +126,47 @@ class WhatsAppController extends AbstractController
                             $msg = new Message();
                             $msg->setSubscriber($subscriber);
                             $msg->setDirection('inbound');
+                            $msg->setType($msgType);
                             $msg->setContent($msgBody);
+                            $msg->setMediaUrl($mediaUrl);
                             $msg->setMetaMessageId($metaMessageId);
                             $msg->setStatus('received');
                             
                             $this->entityManager->persist($msg);
                             
+                            // Check for Automations (Bot Flows)
+                            if ($msgType === 'text') {
+                                $keyword = strtolower(trim($msgBody));
+                                $flow = $this->entityManager->getRepository(\App\Entity\BotFlow::class)->findOneBy([
+                                    'triggerKeyword' => $keyword,
+                                    'isActive' => true
+                                ]);
+                                
+                                if ($flow) {
+                                    $actions = $flow->getFlowData();
+                                    foreach ($actions as $action) {
+                                        if ($action['type'] === 'send_text' && !empty($action['text'])) {
+                                            try {
+                                                // Send response via Meta API
+                                                $response = $this->whatsappService->sendMessage($from, $action['text']);
+                                                
+                                                // Create outbound message record
+                                                $outMsg = new Message();
+                                                $outMsg->setSubscriber($subscriber);
+                                                $outMsg->setDirection('outbound');
+                                                $outMsg->setType('text');
+                                                $outMsg->setContent($action['text']);
+                                                $outMsg->setMetaMessageId($response['messages'][0]['id'] ?? null);
+                                                $outMsg->setStatus('sent');
+                                                $this->entityManager->persist($outMsg);
+                                            } catch (\Exception $e) {
+                                                // Log error or ignore
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             // Update subscriber timestamp so it jumps to top of inbox
                             $subscriber->setUpdatedAt(new \DateTime());
                         }

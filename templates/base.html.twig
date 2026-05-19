@@ -329,6 +329,9 @@
                 <a href="{{ path('whatsapp_connect_show') }}" class="nav-item {% if 'whatsapp' in app.request.attributes.get('_route') %}active{% endif %}">
                     <span class="nav-icon">🟢</span> Connect WhatsApp
                 </a>
+                <a href="{{ path('app_bot_manager') }}" class="nav-item {% if 'bot_manager' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                    <span class="nav-icon">🤖</span> Bot Manager
+                </a>
             </div>
 
             <div class="topbar-right">

@@ -33,3 +33,4 @@ cloudflared.exe
 # Logs
 /*.log
 ###< Custom Ignores ###
+public/uploads

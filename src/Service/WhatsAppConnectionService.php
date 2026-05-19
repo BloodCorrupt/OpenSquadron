@@ -208,4 +208,238 @@ class WhatsAppConnectionService
         
         return $content;
     }
+
+    public function downloadMedia(string $mediaId, string $uploadDir): ?string
+    {
+        $accessToken = $this->getAccessToken();
+        
+        // 1. Get media URL
+        $response = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$mediaId}", [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ],
+        ]);
+        
+        if ($response->getStatusCode() >= 400) {
+            return null;
+        }
+        
+        $data = $response->toArray();
+        $url = $data['url'] ?? null;
+        $mimeType = $data['mime_type'] ?? '';
+        
+        if (!$url) return null;
+        
+        // 2. Download the actual file
+        $fileResponse = $this->httpClient->request('GET', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ],
+        ]);
+        
+        if ($fileResponse->getStatusCode() >= 400) {
+            return null;
+        }
+        
+        // Determine extension from mime type
+        $extension = 'bin';
+        if (str_contains($mimeType, 'jpeg') || str_contains($mimeType, 'jpg')) $extension = 'jpg';
+        elseif (str_contains($mimeType, 'png')) $extension = 'png';
+        elseif (str_contains($mimeType, 'webp')) $extension = 'webp';
+        elseif (str_contains($mimeType, 'audio/ogg') || str_contains($mimeType, 'audio/opus')) $extension = 'ogg';
+        elseif (str_contains($mimeType, 'audio/mpeg')) $extension = 'mp3';
+        elseif (str_contains($mimeType, 'audio/mp4')) $extension = 'm4a';
+        
+        $filename = uniqid('media_') . '.' . $extension;
+        $filepath = rtrim($uploadDir, '/') . '/' . $filename;
+        
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        file_put_contents($filepath, $fileResponse->getContent());
+        
+        return 'uploads/whatsapp_media/' . $filename;
+    }
+
+    public function sendMediaMessage(string $to, string $type, string $fileUrl): array
+    {
+        $connection = $this->getConnection();
+        $phoneId = ($connection && $connection->getPhoneNumberId()) ? $connection->getPhoneNumberId() : $this->phoneNumberId;
+        
+        $url = "https://graph.facebook.com/v21.0/{$phoneId}/messages";
+        $accessToken = $this->getAccessToken();
+
+        $payload = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => $to,
+            'type' => $type,
+            $type => [
+                'link' => $fileUrl,
+            ]
+        ];
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+
+        $content = $response->toArray();
+        if ($response->getStatusCode() >= 400) {
+             throw new \RuntimeException($content['error']['message'] ?? 'Failed to send media message');
+        }
+        
+        return $content;
+    }
+
+    public function createTemplate(string $name, string $language, string $category, string $bodyText, ?string $headerText = null, ?string $footerText = null): array
+    {
+        $connection = $this->getConnection();
+        if (!$connection) {
+            throw new \RuntimeException('No WhatsApp connection configured.');
+        }
+        
+        $businessAccountId = $connection->getBusinessAccountId();
+        $accessToken = $this->getAccessToken();
+        
+        $url = "https://graph.facebook.com/v21.0/{$businessAccountId}/message_templates";
+        
+        $components = [];
+        
+        if ($headerText) {
+            $components[] = [
+                'type' => 'HEADER',
+                'format' => 'TEXT',
+                'text' => $headerText,
+            ];
+        }
+        
+        $components[] = [
+            'type' => 'BODY',
+            'text' => $bodyText,
+        ];
+        
+        if ($footerText) {
+            $components[] = [
+                'type' => 'FOOTER',
+                'text' => $footerText,
+            ];
+        }
+        
+        $payload = [
+            'name' => strtolower(str_replace(' ', '_', $name)),
+            'language' => $language,
+            'category' => strtoupper($category),
+            'components' => $components,
+        ];
+        
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+        
+        $data = $response->toArray(false);
+        
+        if ($response->getStatusCode() >= 400) {
+            $errorMsg = $data['error']['error_user_msg'] ?? $data['error']['message'] ?? 'Failed to create template on Meta.';
+            throw new \RuntimeException($errorMsg);
+        }
+        
+        return $data;
+    }
+
+    public function syncTemplates(): array
+    {
+        $connection = $this->getConnection();
+        if (!$connection) {
+            throw new \RuntimeException('No WhatsApp connection configured.');
+        }
+        
+        $businessAccountId = $connection->getBusinessAccountId();
+        $accessToken = $this->getAccessToken();
+        
+        $url = "https://graph.facebook.com/v21.0/{$businessAccountId}/message_templates?limit=100";
+        
+        $response = $this->httpClient->request('GET', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ],
+        ]);
+        
+        if ($response->getStatusCode() >= 400) {
+            $content = $response->toArray(false);
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to sync templates');
+        }
+        
+        $data = $response->toArray();
+        $templates = $data['data'] ?? [];
+        
+        $repo = $this->entityManager->getRepository(\App\Entity\MessageTemplate::class);
+        $syncedCount = 0;
+        
+        // Truncate existing templates to ensure exact sync
+        $this->entityManager->createQuery('DELETE FROM App\Entity\MessageTemplate')->execute();
+        
+        foreach ($templates as $tpl) {
+            if ($tpl['status'] !== 'APPROVED') continue;
+            
+            $entity = new \App\Entity\MessageTemplate();
+            $entity->setName($tpl['name']);
+            $entity->setLanguage($tpl['language']);
+            $entity->setStatus($tpl['status']);
+            $entity->setCategory($tpl['category']);
+            $entity->setComponents($tpl['components']);
+            
+            $this->entityManager->persist($entity);
+            $syncedCount++;
+        }
+        
+        $this->entityManager->flush();
+        
+        return ['success' => true, 'count' => $syncedCount];
+    }
+
+    public function sendTemplateMessage(string $to, string $templateName, string $languageCode): array
+    {
+        $connection = $this->getConnection();
+        $phoneId = ($connection && $connection->getPhoneNumberId()) ? $connection->getPhoneNumberId() : $this->phoneNumberId;
+        
+        $url = "https://graph.facebook.com/v21.0/{$phoneId}/messages";
+        $accessToken = $this->getAccessToken();
+
+        $payload = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => $to,
+            'type' => 'template',
+            'template' => [
+                'name' => $templateName,
+                'language' => [
+                    'code' => $languageCode
+                ]
+            ]
+        ];
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+             throw new \RuntimeException($content['error']['message'] ?? 'Failed to send template message');
+        }
+        
+        return $content;
+    }
 }
