@@ -22,7 +22,8 @@ class BotManagerController extends AbstractController
         $flows = $em->getRepository(BotFlow::class)->findBy([], ['id' => 'DESC']);
         $templates = $em->getRepository(MessageTemplate::class)->findAll();
         $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]) ?? new AiSetting();
-        $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findOneBy([]);
+        $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
+        $connection = $connections[0] ?? null;
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
 
         return $this->render('bot_manager/index.html.twig', [
@@ -30,6 +31,7 @@ class BotManagerController extends AbstractController
             'templates' => $templates,
             'aiSetting' => $aiSetting,
             'connection' => $connection,
+            'connections' => $connections,
             'contexts' => $contexts,
         ]);
     }

@@ -4,10 +4,10 @@ namespace App\Controller;
 
 use App\Service\WhatsAppConnectionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class ConnectionSetupController extends AbstractController
@@ -22,10 +22,10 @@ class ConnectionSetupController extends AbstractController
     #[Route('/admin/whatsapp/connect', name: 'whatsapp_connect_show', methods: ['GET'])]
     public function show(): Response
     {
-        $connection = $this->whatsappService->getConnection();
+        $connections = $this->whatsappService->getAllConnections();
 
         return $this->render('whatsapp/connect.html.twig', [
-            'connection' => $connection,
+            'connections' => $connections,
             'fallbackVerifyToken' => $this->envVerifyToken,
         ]);
     }
@@ -33,31 +33,11 @@ class ConnectionSetupController extends AbstractController
     #[Route('/admin/whatsapp/connect', name: 'whatsapp_connect', methods: ['POST'])]
     public function connect(Request $request): Response
     {
-        $businessAccountId = $request->request->get('businessAccountId');
-        $accessToken = $request->request->get('accessToken');
-        $phoneNumberId = $request->request->get('phoneNumberId');
-
-        $connection = $this->whatsappService->getConnection();
-
-        // If connection exists, access token might be empty (which means we keep the old one)
-        if ($connection && empty($accessToken)) {
-            // We just update the business account ID if it changed
-            if ($businessAccountId !== $connection->getBusinessAccountId()) {
-                // Actually, if they don't provide an access token, we can't really validate it easily unless we decrypt.
-                // Let's decrypt the existing one to validate.
-                try {
-                    $accessToken = $this->whatsappService->decryptToken($connection->getEncryptedAccessToken());
-                } catch (\Exception $e) {
-                    $this->addFlash('error', 'Encryption key error or corrupted token. Please re-enter your access token.');
-                    return $this->redirectToRoute('whatsapp_connect_show');
-                }
-            } else {
-                // Nothing really changed that requires validation. We can just save it.
-                // But let's just make them enter it if they want to change business ID.
-                $this->addFlash('success', 'Settings updated.');
-                return $this->redirectToRoute('whatsapp_connect_show');
-            }
-        }
+        $businessAccountId = trim($request->request->get('businessAccountId', ''));
+        $accessToken = trim($request->request->get('accessToken', ''));
+        $phoneNumberId = trim($request->request->get('phoneNumberId', ''));
+        $label = trim($request->request->get('label', ''));
+        $phoneNumber = trim($request->request->get('phoneNumber', ''));
 
         if (empty($businessAccountId) || empty($accessToken)) {
             $this->addFlash('error', 'Business Account ID and Access Token are required.');
@@ -73,12 +53,88 @@ class ConnectionSetupController extends AbstractController
         }
 
         try {
-            $this->whatsappService->saveConnection($businessAccountId, $accessToken, $phoneNumberId);
+            $this->whatsappService->saveConnection(
+                $businessAccountId,
+                $accessToken,
+                $phoneNumberId ?: null,
+                $label ?: null,
+                $phoneNumber ?: null
+            );
             $this->addFlash('success', 'WhatsApp Connection saved and validated successfully!');
         } catch (\Exception $e) {
             $this->addFlash('error', 'Failed to save connection: ' . $e->getMessage());
         }
 
         return $this->redirectToRoute('whatsapp_connect_show');
+    }
+
+    #[Route('/admin/whatsapp/connect/{id}/edit', name: 'whatsapp_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function edit(int $id): Response
+    {
+        $connection = $this->whatsappService->getConnectionById($id);
+        if (!$connection) {
+            $this->addFlash('error', 'Connection not found.');
+            return $this->redirectToRoute('whatsapp_connect_show');
+        }
+
+        $connections = $this->whatsappService->getAllConnections();
+
+        return $this->render('whatsapp/connect.html.twig', [
+            'connections' => $connections,
+            'editConnection' => $connection,
+            'fallbackVerifyToken' => $this->envVerifyToken,
+        ]);
+    }
+
+    #[Route('/admin/whatsapp/connect/{id}/update', name: 'whatsapp_connect_update', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function update(int $id, Request $request): Response
+    {
+        $businessAccountId = trim($request->request->get('businessAccountId', ''));
+        $accessToken = trim($request->request->get('accessToken', ''));
+        $phoneNumberId = trim($request->request->get('phoneNumberId', ''));
+        $label = trim($request->request->get('label', ''));
+        $phoneNumber = trim($request->request->get('phoneNumber', ''));
+
+        if (empty($businessAccountId)) {
+            $this->addFlash('error', 'Business Account ID is required.');
+            return $this->redirectToRoute('whatsapp_connect_edit', ['id' => $id]);
+        }
+
+        // If a new access token is provided, validate it
+        if (!empty($accessToken)) {
+            $validationResult = $this->whatsappService->validateWithMetaApi($businessAccountId, $accessToken);
+            if (!$validationResult['success']) {
+                $this->addFlash('error', 'Failed to validate with Meta API: ' . $validationResult['error']);
+                return $this->redirectToRoute('whatsapp_connect_edit', ['id' => $id]);
+            }
+        }
+
+        try {
+            $result = $this->whatsappService->updateConnection(
+                $id,
+                $businessAccountId,
+                $accessToken ?: null,
+                $phoneNumberId ?: null,
+                $label ?: null,
+                $phoneNumber ?: null
+            );
+
+            if (!$result) {
+                $this->addFlash('error', 'Connection not found.');
+            } else {
+                $this->addFlash('success', 'Connection updated successfully!');
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Failed to update connection: ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('whatsapp_connect_show');
+    }
+
+    #[Route('/admin/whatsapp/connect/{id}/delete', name: 'whatsapp_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function delete(int $id): JsonResponse
+    {
+        $success = $this->whatsappService->deleteConnection($id);
+        return new JsonResponse(['success' => $success]);
     }
 }

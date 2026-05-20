@@ -22,6 +22,12 @@ class WhatsAppConnection
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $phoneNumberId = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $label = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $phoneNumber = null;
+
     #[ORM\Column(type: Types::TEXT)]
     private ?string $encryptedAccessToken = null;
 
@@ -82,6 +88,28 @@ class WhatsAppConnection
     {
         $this->phoneNumberId = $phoneNumberId;
 
+        return $this;
+    }
+
+    public function getLabel(): ?string
+    {
+        return $this->label;
+    }
+
+    public function setLabel(?string $label): static
+    {
+        $this->label = $label;
+        return $this;
+    }
+
+    public function getPhoneNumber(): ?string
+    {
+        return $this->phoneNumber;
+    }
+
+    public function setPhoneNumber(?string $phoneNumber): static
+    {
+        $this->phoneNumber = $phoneNumber;
         return $this;
     }
 

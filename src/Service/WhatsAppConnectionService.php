@@ -26,6 +26,155 @@ class WhatsAppConnectionService
     ) {
     }
 
+    // ───────────────────────── Connection CRUD ─────────────────────────
+
+    /**
+     * Return ALL connections ordered newest-first.
+     * @return WhatsAppConnection[]
+     */
+    public function getAllConnections(): array
+    {
+        return $this->entityManager
+            ->getRepository(WhatsAppConnection::class)
+            ->findBy([], ['id' => 'DESC']);
+    }
+
+    /**
+     * Return the default (first active) connection — backward-compatible.
+     */
+    public function getDefaultConnection(): ?WhatsAppConnection
+    {
+        return $this->entityManager
+            ->getRepository(WhatsAppConnection::class)
+            ->findOneBy(['status' => 'active'], ['id' => 'ASC']);
+    }
+
+    /**
+     * Legacy alias so existing callers still compile.
+     */
+    public function getConnection(): ?WhatsAppConnection
+    {
+        return $this->getDefaultConnection();
+    }
+
+    public function getConnectionById(int $id): ?WhatsAppConnection
+    {
+        return $this->entityManager
+            ->getRepository(WhatsAppConnection::class)
+            ->find($id);
+    }
+
+    /**
+     * Lookup by Meta's phone_number_id — used for webhook routing.
+     */
+    public function getConnectionByPhoneNumberId(string $phoneNumberId): ?WhatsAppConnection
+    {
+        return $this->entityManager
+            ->getRepository(WhatsAppConnection::class)
+            ->findOneBy(['phoneNumberId' => $phoneNumberId]);
+    }
+
+    /**
+     * Save a new connection or update an existing one.
+     */
+    public function saveConnection(
+        string $businessAccountId,
+        string $plainAccessToken,
+        ?string $phoneNumberId = null,
+        ?string $label = null,
+        ?string $phoneNumber = null,
+        ?int $existingId = null
+    ): WhatsAppConnection {
+        if (empty($businessAccountId) || empty($plainAccessToken)) {
+            throw new \InvalidArgumentException('Business Account ID and Access Token are required.');
+        }
+
+        $connection = $existingId
+            ? $this->getConnectionById($existingId)
+            : new WhatsAppConnection();
+
+        if (!$connection) {
+            $connection = new WhatsAppConnection();
+        }
+
+        $connection->setBusinessAccountId($businessAccountId);
+        $connection->setEncryptedAccessToken($this->encryptToken($plainAccessToken));
+
+        if ($phoneNumberId !== null) {
+            $connection->setPhoneNumberId($phoneNumberId);
+        }
+        if ($label !== null) {
+            $connection->setLabel($label);
+        }
+        if ($phoneNumber !== null) {
+            $connection->setPhoneNumber($phoneNumber);
+        }
+
+        if (!$connection->getVerifyToken()) {
+            $connection->setVerifyToken($this->generateVerifyToken());
+        }
+
+        if (!$connection->getWebhookUrl()) {
+            $connection->setWebhookUrl($this->buildWebhookUrl());
+        }
+
+        $connection->setStatus('active');
+
+        $this->entityManager->persist($connection);
+        $this->entityManager->flush();
+
+        return $connection;
+    }
+
+    /**
+     * Update an existing connection — only overwrites the access token if a new one is provided.
+     */
+    public function updateConnection(
+        int $id,
+        string $businessAccountId,
+        ?string $plainAccessToken,
+        ?string $phoneNumberId,
+        ?string $label,
+        ?string $phoneNumber
+    ): ?WhatsAppConnection {
+        $connection = $this->getConnectionById($id);
+        if (!$connection) {
+            return null;
+        }
+
+        $connection->setBusinessAccountId($businessAccountId);
+
+        if ($plainAccessToken !== null && $plainAccessToken !== '') {
+            $connection->setEncryptedAccessToken($this->encryptToken($plainAccessToken));
+        }
+        if ($phoneNumberId !== null) {
+            $connection->setPhoneNumberId($phoneNumberId);
+        }
+        if ($label !== null) {
+            $connection->setLabel($label);
+        }
+        if ($phoneNumber !== null) {
+            $connection->setPhoneNumber($phoneNumber);
+        }
+
+        $this->entityManager->flush();
+
+        return $connection;
+    }
+
+    public function deleteConnection(int $id): bool
+    {
+        $connection = $this->getConnectionById($id);
+        if (!$connection) {
+            return false;
+        }
+        $this->entityManager->remove($connection);
+        $this->entityManager->flush();
+        return true;
+    }
+
+    // ───────────────────────── Crypto ─────────────────────────
+
     public function generateVerifyToken(): string
     {
         return bin2hex(random_bytes(32));
@@ -100,6 +249,8 @@ class WhatsAppConnectionService
         return str_repeat('*', $length - 4) . substr($token, -4);
     }
 
+    // ───────────────────────── Meta API ─────────────────────────
+
     public function validateWithMetaApi(string $businessAccountId, string $accessToken): array
     {
         try {
@@ -126,48 +277,17 @@ class WhatsAppConnectionService
         }
     }
 
-    public function saveConnection(string $businessAccountId, string $plainAccessToken, ?string $phoneNumberId = null): WhatsAppConnection
+    // ───────────────────────── Messaging ─────────────────────────
+
+    /**
+     * Resolve access token from a specific connection, or fall back to default/env.
+     */
+    private function getAccessToken(?WhatsAppConnection $connection = null): string
     {
-        if (empty($businessAccountId) || empty($plainAccessToken)) {
-            throw new \InvalidArgumentException('Business Account ID and Access Token are required.');
-        }
-
-        $connection = $this->getConnection() ?? new WhatsAppConnection();
-        
-        $connection->setBusinessAccountId($businessAccountId);
-        $connection->setEncryptedAccessToken($this->encryptToken($plainAccessToken));
-        
-        if ($phoneNumberId !== null) {
-            $connection->setPhoneNumberId($phoneNumberId);
-        }
-        
-        if (!$connection->getVerifyToken()) {
-            $connection->setVerifyToken($this->generateVerifyToken());
-        }
-
-        if (!$connection->getWebhookUrl()) {
-            $connection->setWebhookUrl($this->buildWebhookUrl());
-        }
-
-        $connection->setStatus('active');
-
-        $this->entityManager->persist($connection);
-        $this->entityManager->flush();
-
-        return $connection;
-    }
-
-    public function getConnection(): ?WhatsAppConnection
-    {
-        return $this->entityManager->getRepository(WhatsAppConnection::class)->findOneBy([]);
-    }
-
-    private function getAccessToken(): string
-    {
-        $connection = $this->getConnection();
-        if ($connection && $connection->getEncryptedAccessToken()) {
+        $conn = $connection ?? $this->getDefaultConnection();
+        if ($conn && $conn->getEncryptedAccessToken()) {
             try {
-                return $this->decryptToken($connection->getEncryptedAccessToken());
+                return $this->decryptToken($conn->getEncryptedAccessToken());
             } catch (\Exception $e) {
                 // Fallback to env
             }
@@ -175,14 +295,23 @@ class WhatsAppConnectionService
         return $this->envAccessToken;
     }
 
-    public function sendMessage(string $to, string $text): array
+    /**
+     * Resolve phone number ID from a specific connection, or fall back to default/env.
+     */
+    private function resolvePhoneId(?WhatsAppConnection $connection = null): string
     {
-        $connection = $this->getConnection();
-        $phoneId = ($connection && $connection->getPhoneNumberId()) ? $connection->getPhoneNumberId() : $this->phoneNumberId;
-        
+        $conn = $connection ?? $this->getDefaultConnection();
+        if ($conn && $conn->getPhoneNumberId()) {
+            return $conn->getPhoneNumberId();
+        }
+        return $this->phoneNumberId;
+    }
+
+    public function sendMessage(string $to, string $text, ?WhatsAppConnection $connection = null): array
+    {
+        $phoneId = $this->resolvePhoneId($connection);
         $url = "https://graph.facebook.com/v21.0/{$phoneId}/messages";
-        
-        $accessToken = $this->getAccessToken();
+        $accessToken = $this->getAccessToken($connection);
 
         $response = $this->httpClient->request('POST', $url, [
             'headers' => [
@@ -209,9 +338,9 @@ class WhatsAppConnectionService
         return $content;
     }
 
-    public function downloadMedia(string $mediaId, string $uploadDir): ?string
+    public function downloadMedia(string $mediaId, string $uploadDir, ?WhatsAppConnection $connection = null): ?string
     {
-        $accessToken = $this->getAccessToken();
+        $accessToken = $this->getAccessToken($connection);
         
         // 1. Get media URL
         $response = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$mediaId}", [
@@ -262,13 +391,11 @@ class WhatsAppConnectionService
         return 'uploads/whatsapp_media/' . $filename;
     }
 
-    public function sendMediaMessage(string $to, string $type, string $fileUrl): array
+    public function sendMediaMessage(string $to, string $type, string $fileUrl, ?WhatsAppConnection $connection = null): array
     {
-        $connection = $this->getConnection();
-        $phoneId = ($connection && $connection->getPhoneNumberId()) ? $connection->getPhoneNumberId() : $this->phoneNumberId;
-        
+        $phoneId = $this->resolvePhoneId($connection);
         $url = "https://graph.facebook.com/v21.0/{$phoneId}/messages";
-        $accessToken = $this->getAccessToken();
+        $accessToken = $this->getAccessToken($connection);
 
         $payload = [
             'messaging_product' => 'whatsapp',
@@ -296,15 +423,15 @@ class WhatsAppConnectionService
         return $content;
     }
 
-    public function createTemplate(string $name, string $language, string $category, string $bodyText, ?string $headerText = null, ?string $footerText = null): array
+    public function createTemplate(string $name, string $language, string $category, string $bodyText, ?string $headerText = null, ?string $footerText = null, ?WhatsAppConnection $connection = null): array
     {
-        $connection = $this->getConnection();
-        if (!$connection) {
+        $conn = $connection ?? $this->getDefaultConnection();
+        if (!$conn) {
             throw new \RuntimeException('No WhatsApp connection configured.');
         }
         
-        $businessAccountId = $connection->getBusinessAccountId();
-        $accessToken = $this->getAccessToken();
+        $businessAccountId = $conn->getBusinessAccountId();
+        $accessToken = $this->getAccessToken($conn);
         
         $url = "https://graph.facebook.com/v21.0/{$businessAccountId}/message_templates";
         
@@ -355,15 +482,15 @@ class WhatsAppConnectionService
         return $data;
     }
 
-    public function syncTemplates(): array
+    public function syncTemplates(?WhatsAppConnection $connection = null): array
     {
-        $connection = $this->getConnection();
-        if (!$connection) {
+        $conn = $connection ?? $this->getDefaultConnection();
+        if (!$conn) {
             throw new \RuntimeException('No WhatsApp connection configured.');
         }
         
-        $businessAccountId = $connection->getBusinessAccountId();
-        $accessToken = $this->getAccessToken();
+        $businessAccountId = $conn->getBusinessAccountId();
+        $accessToken = $this->getAccessToken($conn);
         
         $url = "https://graph.facebook.com/v21.0/{$businessAccountId}/message_templates?limit=100";
         
@@ -406,13 +533,11 @@ class WhatsAppConnectionService
         return ['success' => true, 'count' => $syncedCount];
     }
 
-    public function sendTemplateMessage(string $to, string $templateName, string $languageCode): array
+    public function sendTemplateMessage(string $to, string $templateName, string $languageCode, ?WhatsAppConnection $connection = null): array
     {
-        $connection = $this->getConnection();
-        $phoneId = ($connection && $connection->getPhoneNumberId()) ? $connection->getPhoneNumberId() : $this->phoneNumberId;
-        
+        $phoneId = $this->resolvePhoneId($connection);
         $url = "https://graph.facebook.com/v21.0/{$phoneId}/messages";
-        $accessToken = $this->getAccessToken();
+        $accessToken = $this->getAccessToken($connection);
 
         $payload = [
             'messaging_product' => 'whatsapp',

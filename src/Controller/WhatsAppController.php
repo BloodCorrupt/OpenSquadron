@@ -88,6 +88,16 @@ class WhatsAppController extends AbstractController
                     $changes = $entry['changes'][0]['value'];
                     $messages = $changes['messages'];
 
+                    // Resolve the correct connection by the phone_number_id in the payload
+                    $incomingPhoneNumberId = $changes['metadata']['phone_number_id'] ?? null;
+                    $resolvedConnection = null;
+                    if ($incomingPhoneNumberId) {
+                        $resolvedConnection = $this->whatsappService->getConnectionByPhoneNumberId($incomingPhoneNumberId);
+                    }
+                    if (!$resolvedConnection) {
+                        $resolvedConnection = $this->whatsappService->getDefaultConnection();
+                    }
+
                     foreach ($messages as $message) {
                         $from = $message['from']; // The sender's phone number
                         $msgBody = '';
@@ -154,14 +164,13 @@ class WhatsAppController extends AbstractController
                                 }
 
                                 if (!$matched) {
-                                    $connection = $this->whatsappService->getConnection();
-                                    if ($connection && $connection->isAiActive()) {
+                                    if ($resolvedConnection && $resolvedConnection->isAiActive()) {
                                         $aiSetting = $this->entityManager->getRepository(\App\Entity\AiSetting::class)->findOneBy([]);
                                         if ($aiSetting && $aiSetting->isActive()) {
-                                            $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $connection);
+                                            $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection);
                                             if ($aiResponse) {
                                                 try {
-                                                    $response = $this->whatsappService->sendMessage($subscriber->getPhoneNumber(), $aiResponse);
+                                                    $response = $this->whatsappService->sendMessage($subscriber->getPhoneNumber(), $aiResponse, $resolvedConnection);
                                                     $metaMessageId = $response['messages'][0]['id'] ?? null;
 
                                                     $outboundMsg = new Message();
