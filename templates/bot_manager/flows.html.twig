@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends app.request.query.has('embed') ? 'empty.html.twig' : 'base.html.twig' %}
 
 {% block title %}Flow Builder - Bot Manager{% endblock %}
 
@@ -26,6 +26,10 @@
         background: var(--fb-bg);
         color: var(--fb-text-main);
         font-family: 'Inter', sans-serif;
+    }
+    body.is-embedded .fb-shell {
+        margin: 0;
+        height: 100vh;
     }
 
     /* ─── Left Sidebar (Flow Blocks Palette) ─── */
@@ -1084,7 +1088,7 @@
                     state.meta.keywords = kw.value;
                     state.dirty = true;
                     const nodeKw = document.getElementById('node-meta-kw');
-                    if (nodeKw) nodeKw.textContent = kw.value || 'sa';
+                    if (nodeKw) nodeKw.textContent = kw.value || 'None';
                 };
                 wrap.appendChild(wrapField('Trigger Keywords', kw, 'Comma separated keywords (e.g. hi, hello)'));
 
@@ -1683,7 +1687,7 @@
         // Fill dynamic metadata variables on the trigger node
         const nodeMetaKw = document.getElementById('node-meta-kw');
         const nodeMetaMatch = document.getElementById('node-meta-match');
-        if (nodeMetaKw) nodeMetaKw.textContent = state.meta.keywords || 'sa';
+        if (nodeMetaKw) nodeMetaKw.textContent = state.meta.keywords || 'None';
         if (nodeMetaMatch) {
             let label = 'Exact keyword match';
             if (state.meta.matchMode === 'contains') label = 'Contains match';
@@ -2290,7 +2294,11 @@
     };
 
     document.getElementById('fb-btn-close').onclick = () => {
-        window.location.href = '{{ path('app_bot_manager') }}';
+        if (window.self !== window.top) {
+            window.parent.postMessage({ type: 'close_flow_builder' }, '*');
+        } else {
+            window.location.href = '{{ path('app_bot_manager') }}';
+        }
     };
 
     document.getElementById('fb-save-flow').onclick = saveFlow;
@@ -2429,6 +2437,9 @@
             flowSelector.value = saved.id;
             state.dirty = false;
             showToast('Flow saved successfully.', 'success');
+            if (window.self !== window.top) {
+                window.parent.postMessage({ type: 'flow_saved' }, '*');
+            }
             renderAll();
         })
         .catch(err => showToast('Save failed: ' + err.message, 'error'))

@@ -30,7 +30,8 @@ class WhatsAppController extends AbstractController
         HttpClientInterface $httpClient,
         WhatsAppConnectionService $whatsappService,
         private EntityManagerInterface $entityManager,
-        private BotFlowExecutor $botFlowExecutor
+        private BotFlowExecutor $botFlowExecutor,
+        private \App\Service\AiAgentService $aiAgentService
     ) {
         $this->envVerifyToken = $verifyToken;
         $this->envAccessToken = $accessToken;
@@ -143,10 +144,44 @@ class WhatsAppController extends AbstractController
                                     ->getRepository(\App\Entity\BotFlow::class)
                                     ->findBy(['isActive' => true]);
 
+                                $matched = false;
                                 foreach ($flows as $candidate) {
                                     if ($candidate->matches($msgBody)) {
                                         $this->botFlowExecutor->execute($candidate, $subscriber);
+                                        $matched = true;
                                         break;
+                                    }
+                                }
+
+                                if (!$matched) {
+                                    $connection = $this->whatsappService->getConnection();
+                                    if ($connection && $connection->isAiActive()) {
+                                        $aiSetting = $this->entityManager->getRepository(\App\Entity\AiSetting::class)->findOneBy([]);
+                                        if ($aiSetting && $aiSetting->isActive()) {
+                                            $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $connection);
+                                            if ($aiResponse) {
+                                                try {
+                                                    $response = $this->whatsappService->sendMessage($subscriber->getPhoneNumber(), $aiResponse);
+                                                    $metaMessageId = $response['messages'][0]['id'] ?? null;
+
+                                                    $outboundMsg = new Message();
+                                                    $outboundMsg->setSubscriber($subscriber);
+                                                    $outboundMsg->setDirection('outbound');
+                                                    $outboundMsg->setStatus('sent');
+                                                    $outboundMsg->setType('text');
+                                                    $outboundMsg->setContent($aiResponse);
+                                                    $outboundMsg->setMetaMessageId($metaMessageId);
+
+                                                    $this->entityManager->persist($outboundMsg);
+                                                } catch (\Exception $sendEx) {
+                                                    file_put_contents(
+                                                        $this->getParameter('kernel.project_dir') . '/var/webhook.log',
+                                                        date('Y-m-d H:i:s') . " - AI Send Error: " . $sendEx->getMessage() . PHP_EOL,
+                                                        FILE_APPEND
+                                                    );
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

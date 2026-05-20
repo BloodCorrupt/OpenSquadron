@@ -325,6 +325,11 @@
         background-color: var(--primary-accent);
     }
 
+    select.form-control option, select.toolbar-select option, select option {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+    }
+
     /* Action icons inside table */
     .row-actions {
         display: flex;
@@ -605,6 +610,91 @@
     .fb-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
     .fb-toast.is-success { border-left: 4px solid #10b981; }
     .fb-toast.is-error { border-left: 4px solid #ef4444; }
+
+    /* Custom Searchable Dropdown for Models */
+    .custom-dropdown-container {
+        position: relative;
+        flex: 1;
+    }
+    .custom-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: #0b1329;
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        max-height: 280px;
+        overflow-y: auto;
+        backdrop-filter: blur(16px);
+    }
+    .custom-dropdown-search-wrapper {
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        position: sticky;
+        top: 0;
+        background: #0b1329;
+        z-index: 2;
+    }
+    .custom-dropdown-options-list {
+        display: flex;
+        flex-direction: column;
+    }
+    .custom-dropdown-option {
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #f8fafc;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        text-align: left;
+        border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+    .custom-dropdown-option:last-child {
+        border-bottom: none;
+    }
+    .custom-dropdown-option:hover {
+        background: rgba(6, 182, 212, 0.15);
+        color: var(--primary-accent);
+    }
+    .custom-dropdown-option.active {
+        background: rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+        font-weight: 600;
+    }
+    .custom-dropdown-empty {
+        padding: 16px;
+        font-size: 13px;
+        color: var(--text-muted);
+        text-align: center;
+        font-style: italic;
+    }
+
+    /* Inner Sidebar Sub-items style */
+    .ai-nav-subitem {
+        padding: 12px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    .ai-nav-subitem:hover {
+        color: #f8fafc;
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .ai-nav-subitem.is-active {
+        color: #f8fafc;
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+    }
 </style>
 {% endblock %}
 
@@ -625,11 +715,12 @@
             <span>Message Templates</span>
         </div>
 
-        <div class="nav-item is-disabled" onclick="return false;">
+        <div class="nav-item" data-tab-target="ai-agent">
             <span class="nav-item-icon">⚡</span>
             <span>AI Agent</span>
-            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+            <span class="nav-item-status" id="ai-nav-status">{% if connection and connection.isAiActive() %}Active{% else %}Inactive{% endif %}</span>
         </div>
+
 
         <div class="nav-item is-disabled" onclick="return false;">
             <span class="nav-item-icon">📣</span>
@@ -747,7 +838,12 @@
             </table>
         </div>
     </div>
-
+ 
+    {# 4. Flow Builder Content Pane #}
+    <div class="manager-content-pane" id="pane-flow-builder" style="padding: 0; height: calc(100vh - 120px); border: none; background: transparent; box-shadow: none;">
+        <iframe id="flow-builder-iframe" src="" style="width: 100%; height: 100%; border: none; border-radius: 16px; background: transparent;"></iframe>
+    </div>
+ 
     {# 2. Message Templates Content Pane #}
     <div class="manager-content-pane" id="pane-templates">
         <div class="content-header">
@@ -811,6 +907,62 @@
             {% endfor %}
         </div>
     </div>
+
+    {# 3. AI Agent Content Pane #}
+    <div class="manager-content-pane" id="pane-ai-agent">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <span>AI Agent Configuration</span>
+                    <span style="font-size: 20px;">⚡</span>
+                </h1>
+                <div class="content-subtitle">Enable and configure which context profile this bot uses to respond to incoming messages.</div>
+            </div>
+        </div>
+
+        <div style="max-width: 680px; display: flex; flex-direction: column; gap: 20px;">
+            <!-- Notice Box -->
+            <div id="ai-agent-notice" class="notice-box"></div>
+
+            <!-- Enable AI Agent switch -->
+            <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; color: #fff; font-size: 14px;">Enable AI Agent Responder</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Toggle whether this WhatsApp bot answers messages using AI.</div>
+                </div>
+                <label class="switch-toggle" style="margin: 0;">
+                    <input type="checkbox" id="ai-agent-active" {% if connection and connection.isAiActive() %}checked{% endif %}>
+                    <span class="slider-round"></span>
+                </label>
+            </div>
+
+            <!-- Select Context Profile -->
+            <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <div style="font-weight: 600; color: #fff; font-size: 14px; margin-bottom: 4px;">Context Profile</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Select the context profile to ground this bot's persona and knowledge base.</div>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <select id="ai-agent-context-select" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 14px; width: 100%;">
+                        <option value="">-- No Context Profile (Use Connection Default) --</option>
+                        {% for ctx in contexts %}
+                            <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
+                                {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                <button type="button" class="btn-action btn-create" id="btn-save-ai-agent-settings" onclick="saveAiAgentSettings()">
+                    <span>⚡ Save AI Agent Settings</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 {# ───────── Create Template Modal Overlay ───────── #}
@@ -898,6 +1050,15 @@
 <script>
     // ───────── Tab Switcher Logic ─────────
     function switchTab(tabId) {
+        // Clear iframe if we are switching away to another tab
+        const iframe = document.getElementById('flow-builder-iframe');
+        if (iframe) iframe.src = '';
+        const fbPane = document.getElementById('pane-flow-builder');
+        if (fbPane) {
+            fbPane.classList.remove('is-active');
+            fbPane.style.display = 'none';
+        }
+
         // Toggle Nav Items
         document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
             if (el.getAttribute('data-tab-target') === tabId) {
@@ -911,8 +1072,12 @@
         document.querySelectorAll('.manager-content-pane').forEach(el => {
             if (el.id === 'pane-' + tabId) {
                 el.classList.add('is-active');
+                el.style.display = 'flex';
             } else {
                 el.classList.remove('is-active');
+                if (el.id !== 'pane-flow-builder') {
+                    el.style.display = '';
+                }
             }
         });
 
@@ -928,6 +1093,8 @@
         const tab = params.get('tab');
         if (tab === 'templates') {
             switchTab('templates');
+        } else if (tab === 'ai-agent') {
+            switchTab('ai-agent');
         } else {
             switchTab('bot-reply');
         }
@@ -938,6 +1105,83 @@
         el.addEventListener('click', () => {
             switchTab(el.getAttribute('data-tab-target'));
         });
+    });
+
+    // ───────── Flow Builder Embedded Logic ─────────
+    let needsReload = false;
+
+    function openFlowBuilder(url) {
+        // Append embed parameter
+        const embedUrl = url + (url.includes('?') ? '&' : '?') + 'embed=1';
+        const iframe = document.getElementById('flow-builder-iframe');
+        iframe.src = embedUrl;
+        
+        // Hide all nav highlights
+        document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
+            el.classList.remove('is-active');
+        });
+        // Make Bot Reply nav item look active since Flow Builder is a sub-page of Bot Reply
+        const botReplyNav = document.querySelector('.manager-nav .nav-item[data-tab-target="bot-reply"]');
+        if (botReplyNav) botReplyNav.classList.add('is-active');
+
+        // Hide all panes
+        document.querySelectorAll('.manager-content-pane').forEach(p => {
+            p.classList.remove('is-active');
+            p.style.display = 'none';
+        });
+        
+        // Show flow builder pane
+        const pane = document.getElementById('pane-flow-builder');
+        pane.classList.add('is-active');
+        pane.style.display = 'flex';
+        
+        needsReload = false;
+    }
+
+    function closeFlowBuilder() {
+        // Reset iframe src
+        document.getElementById('flow-builder-iframe').src = '';
+        
+        // Hide flow builder pane
+        const pane = document.getElementById('pane-flow-builder');
+        pane.classList.remove('is-active');
+        pane.style.display = 'none';
+        
+        // Show bot reply pane
+        const botReplyPane = document.getElementById('pane-bot-reply');
+        botReplyPane.classList.add('is-active');
+        botReplyPane.style.display = 'flex';
+        
+        // Highlight Bot Reply menu item as active
+        document.querySelectorAll('.nav-item').forEach(item => {
+            if (item.getAttribute('data-tab-target') === 'bot-reply') {
+                item.classList.add('is-active');
+            } else {
+                item.classList.remove('is-active');
+            }
+        });
+    }
+
+    // Intercept clicks on create/edit flow links to open in iframe
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (link && link.getAttribute('href') && link.getAttribute('href').includes('/admin/bot-manager/flows') && !link.getAttribute('href').includes('/export') && !link.getAttribute('href').includes('/delete') && !link.getAttribute('href').includes('/clone')) {
+            e.preventDefault();
+            openFlowBuilder(link.getAttribute('href'));
+        }
+    });
+
+    // Listen to messages from Flow Builder iframe
+    window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'close_flow_builder') {
+            if (needsReload) {
+                window.location.reload();
+            } else {
+                closeFlowBuilder();
+            }
+        } else if (e.data && e.data.type === 'flow_saved') {
+            needsReload = true;
+        }
     });
 
 
@@ -1131,5 +1375,44 @@
     document.getElementById('createTemplateModal').addEventListener('click', function(e) {
         if (e.target === this) closeTemplateModal();
     });
+
+    function saveAiAgentSettings() {
+        const aiActive = document.getElementById('ai-agent-active').checked;
+        const activeContextId = document.getElementById('ai-agent-context-select').value;
+        const btn = document.getElementById('btn-save-ai-agent-settings');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const formData = new FormData();
+        formData.append('configType', 'agent');
+        formData.append('aiActive', aiActive ? '1' : '0');
+        formData.append('activeContextId', activeContextId);
+
+        fetch('{{ path('app_bot_ai_settings_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('AI Agent Settings saved successfully!', 'success');
+                const statusBadge = document.getElementById('ai-nav-status');
+                if (statusBadge) {
+                    statusBadge.textContent = aiActive ? 'Active' : 'Inactive';
+                }
+            } else {
+                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Save error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Save AI Agent Settings</span>';
+        });
+    }
+
 </script>
 {% endblock %}

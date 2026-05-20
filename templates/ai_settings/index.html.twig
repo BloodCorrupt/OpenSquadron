@@ -1,0 +1,962 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}AI Settings - OpenSquadron{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Two-column layout */
+    .manager-shell {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 30px;
+        margin-top: 20px;
+        min-height: calc(100vh - 180px);
+    }
+
+    /* Left Nav Sidebar Panel */
+    .manager-nav {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: fit-content;
+    }
+    .nav-header {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.6px;
+        margin-bottom: 12px;
+        padding-left: 10px;
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        cursor: pointer;
+        user-select: none;
+    }
+    .nav-item:hover {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .nav-item.is-active {
+        color: var(--text-main);
+        background: rgba(6, 182, 212, 0.1);
+        border-color: rgba(6, 182, 212, 0.2);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
+    }
+    .nav-item-icon {
+        font-size: 18px;
+    }
+    .nav-item-status {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .nav-item.is-active .nav-item-status {
+        background: rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+    }
+
+    /* Right Content Panel */
+    .manager-content-pane {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed var(--glass-border);
+        padding-bottom: 18px;
+    }
+    .content-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .content-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    /* Form Styles */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e2e8f0;
+    }
+    .form-label span {
+        color: var(--primary-accent);
+    }
+    .form-control {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s;
+        height: 42px;
+        box-sizing: border-box;
+    }
+    textarea.form-control {
+        height: auto;
+        resize: vertical;
+        line-height: 1.5;
+    }
+    .form-control:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    select.form-control option {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+    }
+    .form-hint {
+        font-size: 12px;
+        color: #64748b;
+        margin: 4px 0 0 0;
+    }
+
+    /* Switch toggle component */
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+    .switch-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider-round {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .3s;
+        border-radius: 24px;
+        border: 1px solid var(--glass-border);
+    }
+    .slider-round:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    .switch-toggle input:checked + .slider-round {
+        background-color: var(--primary-accent);
+    }
+    .switch-toggle input:checked + .slider-round:before {
+        transform: translateX(20px);
+    }
+
+    /* Custom searchable dropdown */
+    .custom-dropdown-container {
+        position: relative;
+        flex-grow: 1;
+    }
+    .custom-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(25px);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        margin-top: 5px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        max-height: 250px;
+        overflow: hidden;
+        flex-direction: column;
+    }
+    .custom-dropdown-search-wrapper {
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .custom-dropdown-options-list {
+        overflow-y: auto;
+        max-height: 190px;
+    }
+    .custom-dropdown-option {
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #cbd5e1;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .custom-dropdown-option:hover {
+        background: rgba(6, 182, 212, 0.15);
+        color: #fff;
+    }
+
+    /* Toast component */
+    .fb-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastSlideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .fb-toast.toast-success {
+        background: rgba(16, 185, 129, 0.9);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .fb-toast.toast-error {
+        background: rgba(239, 68, 68, 0.9);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Buttons */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        color: #fff;
+        text-decoration: none;
+        user-select: none;
+    }
+    .btn-create {
+        background: linear-gradient(135deg, var(--primary-accent) 0%, #0891b2 100%);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+    }
+    .btn-create:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="manager-shell">
+    {# ───────── Left Sidebar Navigation ───────── #}
+    <div class="manager-nav">
+        <div class="nav-header">AI Settings</div>
+        
+        <div class="nav-item is-active" data-tab-target="api-config" onclick="switchAiSubtab('api-config')">
+            <span class="nav-item-icon">🔑</span>
+            <span>API Configuration</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="context-agent" onclick="switchAiSubtab('context-agent')">
+            <span class="nav-item-icon">🤖</span>
+            <span>Context Manager</span>
+            <span class="nav-item-status" id="ai-nav-status">{% if connection and connection.isAiActive() %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+    </div>
+
+    {# ───────── Right Content Pane ───────── #}
+    <div class="manager-content-pane">
+        <div class="content-header" style="margin-bottom: 20px;">
+            <div>
+                <h1 class="content-title">
+                    <span id="ai-settings-title-text">API Configuration</span>
+                    <span style="font-size: 20px;" id="ai-settings-title-icon">🔑</span>
+                </h1>
+                <div class="content-subtitle" id="ai-settings-title-desc">Configure global AI provider integration (OpenAI, Gemini, Moonshot, OpenRouter).</div>
+            </div>
+        </div>
+
+        <!-- Inner Content Area containing sub-panes -->
+        <div class="ai-agent-subpane-container" style="width: 100%; display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Sub-pane 1: API Configuration -->
+            <div class="ai-agent-subpane" id="ai-subpane-api-config" style="display: block; width: 100%;">
+                <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">
+                    <strong style="color: var(--primary-accent);">💡 Open Nature:</strong> Connect to any provider: OpenAI, Google Gemini, Moonshot (Kimi), OpenRouter, or a custom self-hosted proxy/endpoint.
+                </div>
+
+                <form id="ai-api-config-form" onsubmit="saveAiApiConfig(event)" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+                    <!-- Fake credentials fields to bypass browser autocomplete/autofill -->
+                    <input type="text" name="fake_username_remembered" style="display:none" aria-hidden="true" autocomplete="off" />
+                    <input type="password" name="fake_password_remembered" style="display:none" aria-hidden="true" autocomplete="off" />
+                    <input type="hidden" name="configType" value="api" />
+
+                    <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-bottom: 4px;">
+                            <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0; display: flex; align-items: center; gap: 8px;">
+                                <span>🔑 Global API Configuration</span>
+                            </h3>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 12px; color: var(--text-muted);">Global Active State:</span>
+                                <label class="switch-toggle" style="margin: 0;">
+                                    <input type="checkbox" name="isActive" id="ai-isActive" {% if aiSetting.isActive() %}checked{% endif %}>
+                                    <span class="slider-round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="ai-provider">AI Provider <span>*</span></label>
+                                <select id="ai-provider" name="provider" class="form-control" onchange="onAiProviderChange()">
+                                    <option value="openai" {% if aiSetting.provider == 'openai' %}selected{% endif %}>OpenAI</option>
+                                    <option value="gemini" {% if aiSetting.provider == 'gemini' %}selected{% endif %}>Google Gemini</option>
+                                    <option value="kimi" {% if aiSetting.provider == 'kimi' %}selected{% endif %}>Moonshot (Kimi)</option>
+                                    <option value="deepseek" {% if aiSetting.provider == 'deepseek' %}selected{% endif %}>DeepSeek</option>
+                                    <option value="openrouter" {% if aiSetting.provider == 'openrouter' %}selected{% endif %}>OpenRouter</option>
+                                    <option value="custom" {% if aiSetting.provider == 'custom' %}selected{% endif %}>OpenAI Compatible (Custom)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="ai-model">Model</label>
+                                <div style="display: flex; gap: 10px; position: relative;">
+                                    <div class="custom-dropdown-container">
+                                        <input type="text" id="ai-model" name="model" class="form-control" value="{{ aiSetting.model }}" placeholder="gpt-4o-mini" autocomplete="off" style="width: 100%;">
+                                        <div id="ai-model-dropdown" class="custom-dropdown-menu">
+                                            <div class="custom-dropdown-search-wrapper">
+                                                <input type="text" id="ai-model-search" class="form-control" placeholder="Search models..." autocomplete="off" style="padding: 6px 10px; font-size: 13px; height: 32px; background: rgba(0,0,0,0.3);">
+                                            </div>
+                                            <div id="ai-model-options" class="custom-dropdown-options-list">
+                                                <!-- Dynamic options -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-action btn-secondary-action" id="btn-fetch-models" onclick="fetchModelsFromApi()" style="padding: 0 16px; white-space: nowrap; height: 42px; font-size: 13px; display: flex; align-items: center; gap: 6px; margin: 0; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #f8fafc; border-radius: 8px;">
+                                        <span>🔍 Fetch Models</span>
+                                    </button>
+                                </div>
+                                <p class="form-hint" id="ai-model-hint">e.g. gpt-4o-mini, gemini-1.5-flash. Click "Fetch Models" to pull dynamically.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="ai-apiKey">API Key <span>*</span></label>
+                            <input type="password" id="ai-apiKey" name="apiKey" class="form-control" value="{{ aiSetting.apiKey }}" placeholder="Enter API Key/Token" autocomplete="new-password">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="ai-apiEndpoint">Custom API Endpoint <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
+                            <input type="text" id="ai-apiEndpoint" name="apiEndpoint" class="form-control" value="{{ aiSetting.apiEndpoint }}" placeholder="Override default API endpoint if needed" autocomplete="off">
+                            <p class="form-hint">Required for custom proxies. Leave empty to use provider's official API endpoint.</p>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                        <button type="submit" class="btn-action btn-create" id="btn-save-ai-api">
+                            <span>⚡ Save API Configuration</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Sub-pane 2: Context Manager -->
+            <div class="ai-agent-subpane" id="ai-subpane-context-agent" style="display: none; width: 100%;">
+                
+                <!-- List View of Contexts -->
+                <div id="context-list-view">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                        <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 12px 18px; font-size: 13px; color: #94a3b8; line-height: 1.5; flex-grow: 1; margin: 0;">
+                            <strong style="color: var(--primary-accent);">💡 Context Manager:</strong> Create multiple custom context profiles for your AI assistant. You can activate one active context profile at a time to ground your bot's answers.
+                        </div>
+                        <button type="button" class="btn-action btn-create" onclick="showCreateContextForm()" style="margin: 0; font-size: 13px; padding: 12px 20px; white-space: nowrap; display: flex; align-items: center; gap: 6px; height: 42px;">
+                            <span>➕ Create Context</span>
+                        </button>
+                    </div>
+
+                    <!-- Context Profiles List Table -->
+                    <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; width: 100%;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.02);">
+                                    <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted);">Context Name</th>
+                                    <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted);">Agent Role</th>
+                                    <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted);">Status</th>
+                                    <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted); text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="context-list-tbody">
+                                {% if contexts is empty %}
+                                    <tr>
+                                        <td colspan="4" style="padding: 40px 20px; text-align: center; color: var(--text-muted);">
+                                            No contexts created yet. Click "Create Context" to get started.
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    {% for ctx in contexts %}
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);" id="context-row-{{ ctx.id }}">
+                                            <td style="padding: 14px 20px; font-weight: 500; color: #fff;">
+                                                {{ ctx.name }}
+                                            </td>
+                                            <td style="padding: 14px 20px; color: var(--text-muted);">
+                                                {{ ctx.agentRole|default('-') }}
+                                            </td>
+                                            <td style="padding: 14px 20px;">
+                                                <label class="switch-toggle" style="margin: 0;">
+                                                    <input type="checkbox" class="context-active-checkbox" data-context-id="{{ ctx.id }}" {% if ctx.isActive %}checked{% endif %} onchange="toggleContextActive({{ ctx.id }}, this.checked)">
+                                                    <span class="slider-round"></span>
+                                                </label>
+                                            </td>
+                                            <td style="padding: 14px 20px; text-align: right;">
+                                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                                    <button type="button" class="btn-action btn-secondary-action" onclick='editContext({{ {id: ctx.id, name: ctx.name, agentRole: ctx.agentRole, systemInstruction: ctx.systemInstruction, contextData: ctx.contextData}|json_encode|raw }})' style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: var(--primary-accent); display: flex; align-items: center; gap: 4px;">
+                                                        ✏️ Edit
+                                                    </button>
+                                                    <button type="button" class="btn-action btn-danger-action" onclick="deleteContext({{ ctx.id }})" style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; background: rgba(239,68,68,0.1); border-color: rgba(239, 68, 68, 0.2); color: #f87171; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                                        🗑️ Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Create/Edit Form View -->
+                <div id="context-form-view" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0; display: flex; align-items: center; gap: 8px;" id="context-form-title">
+                            <span>🤖 Create Context Profile</span>
+                        </h3>
+                        <button type="button" class="btn-action btn-secondary-action" onclick="hideContextForm()" style="margin: 0; padding: 8px 16px; font-size: 13px; height: 34px;">
+                            Cancel
+                        </button>
+                    </div>
+
+                    <form id="ai-context-form" onsubmit="submitContextForm(event)" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+                        <input type="hidden" name="id" id="ctx-id" value="" />
+
+                        <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="ctx-name">Context Name <span>*</span></label>
+                                    <input type="text" id="ctx-name" name="name" class="form-control" placeholder="e.g. Sarah Support" required>
+                                    <p class="form-hint">A descriptive name for this context/agent persona.</p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="ctx-agentRole">Agent Role <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
+                                    <input type="text" id="ctx-agentRole" name="agentRole" class="form-control" placeholder="e.g. Lead Support Agent">
+                                    <p class="form-hint">Defines the bot agent's professional persona and tone.</p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="ctx-systemInstruction">Base Prompt (Instructions) <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
+                                <textarea id="ctx-systemInstruction" name="systemInstruction" class="form-control" style="min-height: 100px;" placeholder="e.g. You are a helpful support agent for OpenSquadron. Answer brief and politely."></textarea>
+                                <p class="form-hint">General behavioral rules and guidelines for the AI.</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="ctx-contextData">Custom Context Data (Knowledge Base) <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
+                                <textarea id="ctx-contextData" name="contextData" class="form-control" style="min-height: 180px;" placeholder="Paste your custom business details, FAQ lists, pricing charts, support answers, or product descriptions here. The AI agent will refer to this context data when formulating responses."></textarea>
+                                <p class="form-hint">Ground your bot agent's replies on custom business info. Recommended structure: Q&A format or itemized text blocks.</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                            <button type="button" class="btn-action btn-secondary-action" onclick="hideContextForm()" style="height: 48px; margin: 0;">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn-action btn-create" id="btn-save-context" style="margin: 0;">
+                                <span>⚡ Save Context</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="fb-toast" id="fb-toast"></div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('fb-toast');
+        toast.className = 'fb-toast ' + (type === 'success' ? 'toast-success' : 'toast-error');
+        toast.textContent = message;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+
+    // ───────── AI Sub-Tab Switcher Logic ─────────
+    function switchAiSubtab(subtabId) {
+        // Toggle active nav-item highlight
+        document.querySelectorAll('.manager-nav .nav-item').forEach(el => {
+            if (el.getAttribute('data-tab-target') === subtabId) {
+                el.classList.add('is-active');
+            } else {
+                el.classList.remove('is-active');
+            }
+        });
+
+        // Toggle active subpane visibility
+        document.querySelectorAll('.ai-agent-subpane').forEach(el => {
+            if (el.id === 'ai-subpane-' + subtabId) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+
+        // Update headers based on selection
+        const titleText = document.getElementById('ai-settings-title-text');
+        const titleIcon = document.getElementById('ai-settings-title-icon');
+        const titleDesc = document.getElementById('ai-settings-title-desc');
+        if (subtabId === 'api-config') {
+            titleText.textContent = 'API Configuration';
+            titleIcon.textContent = '🔑';
+            titleDesc.textContent = 'Configure global AI provider integration (OpenAI, Gemini, Moonshot, OpenRouter).';
+        } else {
+            titleText.textContent = 'Context Manager';
+            titleIcon.textContent = '🤖';
+            titleDesc.textContent = 'Create and manage custom AI context profiles to ground your bot responder.';
+        }
+
+        // Save AI sub-tab selection to URL params
+        const url = new URL(window.location);
+        url.searchParams.set('ai_subtab', subtabId);
+        window.history.replaceState({}, '', url);
+    }
+
+    // Set active tab on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const aiSubtab = params.get('ai_subtab') || 'api-config';
+        switchAiSubtab(aiSubtab);
+
+        // Initialize placeholders
+        onAiProviderChange();
+        initModelDropdown();
+    });
+
+    function saveAiApiConfig(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-save-ai-api');
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const form = document.getElementById('ai-api-config-form');
+        const formData = new FormData(form);
+        formData.set('isActive', document.getElementById('ai-isActive').checked ? '1' : '0');
+
+        fetch('{{ path('app_bot_ai_settings_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('API Configuration saved successfully!', 'success');
+            } else {
+                showToast('Failed to save API configuration: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Save error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Save API Configuration</span>';
+        });
+    }
+
+    // ───────── Context Manager Logic ─────────
+    function showCreateContextForm() {
+        document.getElementById('context-list-view').style.display = 'none';
+        document.getElementById('context-form-view').style.display = 'block';
+        document.getElementById('context-form-title').innerHTML = '<span>🤖 Create Context Profile</span>';
+        
+        document.getElementById('ctx-id').value = '';
+        document.getElementById('ctx-name').value = '';
+        document.getElementById('ctx-agentRole').value = '';
+        document.getElementById('ctx-systemInstruction').value = '';
+        document.getElementById('ctx-contextData').value = '';
+    }
+
+    // Export function to global scope for HTML events
+    window.showCreateContextForm = showCreateContextForm;
+
+    function hideContextForm() {
+        document.getElementById('context-form-view').style.display = 'none';
+        document.getElementById('context-list-view').style.display = 'block';
+    }
+
+    window.hideContextForm = hideContextForm;
+
+    function editContext(ctx) {
+        document.getElementById('context-list-view').style.display = 'none';
+        document.getElementById('context-form-view').style.display = 'block';
+        document.getElementById('context-form-title').innerHTML = '<span>🤖 Edit Context Profile</span>';
+        
+        document.getElementById('ctx-id').value = ctx.id || '';
+        document.getElementById('ctx-name').value = ctx.name || '';
+        document.getElementById('ctx-agentRole').value = ctx.agentRole || '';
+        document.getElementById('ctx-systemInstruction').value = ctx.systemInstruction || '';
+        document.getElementById('ctx-contextData').value = ctx.contextData || '';
+    }
+
+    window.editContext = editContext;
+
+    function submitContextForm(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-save-context');
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const form = document.getElementById('ai-context-form');
+        const formData = new FormData(form);
+
+        fetch('{{ path('app_bot_ai_context_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Context profile saved successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast('Failed to save context profile: ' + (data.error || 'Unknown error'), 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<span>⚡ Save Context</span>';
+            }
+        })
+        .catch(err => {
+            showToast('Save error: ' + err.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Save Context</span>';
+        });
+    }
+
+    window.submitContextForm = submitContextForm;
+
+    function toggleContextActive(id, isActive) {
+        fetch('/admin/ai-settings/context/' + id + '/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ isActive: isActive })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(isActive ? 'Context activated successfully!' : 'Context deactivated successfully!', 'success');
+                if (isActive) {
+                    document.querySelectorAll('.context-active-checkbox').forEach(cb => {
+                        if (cb.getAttribute('data-context-id') != id) {
+                            cb.checked = false;
+                        }
+                    });
+                }
+            } else {
+                showToast('Failed to toggle context active state: ' + (data.error || 'Unknown error'), 'error');
+                document.querySelector(`.context-active-checkbox[data-context-id="${id}"]`).checked = !isActive;
+            }
+        })
+        .catch(err => {
+            showToast('Error toggling context state: ' + err.message, 'error');
+            document.querySelector(`.context-active-checkbox[data-context-id="${id}"]`).checked = !isActive;
+        });
+    }
+
+    window.toggleContextActive = toggleContextActive;
+
+    function deleteContext(id) {
+        if (!confirm('Are you sure you want to delete this context profile?')) {
+            return;
+        }
+
+        fetch('/admin/ai-settings/context/' + id + '/delete', {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Context profile deleted successfully!', 'success');
+                const row = document.getElementById('context-row-' + id);
+                if (row) {
+                    row.remove();
+                }
+                const tbody = document.getElementById('context-list-tbody');
+                if (tbody && tbody.children.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="padding: 40px 20px; text-align: center; color: var(--text-muted);">No contexts created yet. Click "Create Context" to get started.</td></tr>`;
+                }
+            } else {
+                showToast('Failed to delete context profile: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Delete error: ' + err.message, 'error');
+        });
+    }
+
+    window.deleteContext = deleteContext;
+
+    // Provider default models and endpoints map
+    const PROVIDER_DEFAULTS = {
+        openai: {
+            placeholder: 'gpt-4o-mini',
+            endpoint: '',
+            hint: 'e.g. gpt-4o-mini, gpt-4o. Click "Fetch Models" to fetch list from OpenAI.',
+            models: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo']
+        },
+        gemini: {
+            placeholder: 'gemini-1.5-flash',
+            endpoint: '',
+            hint: 'e.g. gemini-1.5-flash, gemini-1.5-pro. Click "Fetch Models" to pull Google Gemini models.',
+            models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+        },
+        deepseek: {
+            placeholder: 'deepseek-chat',
+            endpoint: 'https://api.deepseek.com',
+            hint: 'e.g. deepseek-chat, deepseek-reasoner. Click "Fetch Models" to pull DeepSeek models.',
+            models: ['deepseek-chat', 'deepseek-reasoner']
+        },
+        kimi: {
+            placeholder: 'moonshot-v1-8k',
+            endpoint: 'https://api.moonshot.cn/v1',
+            hint: 'e.g. moonshot-v1-8k, moonshot-v1-32k. Click "Fetch Models" to pull Moonshot models.',
+            models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k']
+        },
+        openrouter: {
+            placeholder: 'google/gemini-2.0-flash-exp:free',
+            endpoint: 'https://openrouter.ai/api/v1',
+            hint: 'e.g. google/gemini-2.0-flash-exp:free, deepseek/deepseek-chat. Click "Fetch Models" to pull live models.',
+            models: ['google/gemini-2.0-flash-exp:free', 'openai/gpt-4o-mini', 'deepseek/deepseek-chat', 'meta-llama/llama-3-8b-instruct:free']
+        },
+        custom: {
+            placeholder: 'custom-model',
+            endpoint: '',
+            hint: 'Enter your custom models manually or click "Fetch Models" if endpoint supports GET /v1/models.',
+            models: []
+        }
+    };
+
+    let currentFetchedModels = [];
+
+    function onAiProviderChange() {
+        const provider = document.getElementById('ai-provider').value;
+        const modelInput = document.getElementById('ai-model');
+        const endpointInput = document.getElementById('ai-apiEndpoint');
+        const modelHint = document.getElementById('ai-model-hint');
+
+        const defaults = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.custom;
+        const defaultModel = defaults.placeholder;
+        const defaultEndpoint = defaults.endpoint;
+        const hintText = defaults.hint;
+
+        if (!modelInput.value || Object.values(PROVIDER_DEFAULTS).some(d => d.models.includes(modelInput.value) || d.placeholder === modelInput.value)) {
+            modelInput.value = '';
+        }
+
+        modelInput.placeholder = defaultModel;
+        endpointInput.placeholder = defaultEndpoint || 'Leave empty for official API';
+        if (modelHint) {
+            modelHint.textContent = hintText;
+        }
+
+        const searchInput = document.getElementById('ai-model-search');
+        if (searchInput) searchInput.value = '';
+        if (typeof updateModelDropdownOptions === 'function') {
+            updateModelDropdownOptions();
+        }
+    }
+
+    function fetchModelsFromApi() {
+        const provider = document.getElementById('ai-provider').value;
+        const apiKey = document.getElementById('ai-apiKey').value.trim();
+        const endpoint = document.getElementById('ai-apiEndpoint').value.trim();
+        const btn = document.getElementById('btn-fetch-models');
+
+        if (!apiKey) {
+            showToast('Please enter an API Key first to fetch models!', 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Fetching...</span>';
+
+        const formData = new FormData();
+        formData.append('provider', provider);
+        formData.append('apiKey', apiKey);
+        formData.append('apiEndpoint', endpoint);
+
+        fetch('{{ path('app_bot_ai_models_fetch') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && Array.isArray(data.models)) {
+                // Map the models format to what the autocomplete dropdown expects
+                currentFetchedModels = data.models.map(m => m.id || m);
+                showToast(`Successfully fetched ${data.models.length} models!`, 'success');
+                updateModelDropdownOptions();
+                
+                // Automatically show dropdown menu
+                const dropdownMenu = document.getElementById('ai-model-dropdown');
+                if (dropdownMenu) dropdownMenu.style.display = 'flex';
+                document.getElementById('ai-model-search').focus();
+            } else {
+                showToast('Failed to fetch models: ' + (data.error || 'Check credentials'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Fetch error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔍 Fetch Models</span>';
+        });
+    }
+
+    function initModelDropdown() {
+        const modelInput = document.getElementById('ai-model');
+        const dropdownMenu = document.getElementById('ai-model-dropdown');
+        const searchInput = document.getElementById('ai-model-search');
+
+        if (!modelInput || !dropdownMenu || !searchInput) return;
+
+        modelInput.addEventListener('focus', () => {
+            updateModelDropdownOptions();
+            dropdownMenu.style.display = 'flex';
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-dropdown-container') && e.target !== modelInput) {
+                dropdownMenu.style.display = 'none';
+            }
+        });
+
+        searchInput.addEventListener('input', () => {
+            updateModelDropdownOptions(searchInput.value.trim().toLowerCase());
+        });
+    }
+
+    function updateModelDropdownOptions(query = '') {
+        const provider = document.getElementById('ai-provider').value;
+        const optionsList = document.getElementById('ai-model-options');
+        if (!optionsList) return;
+
+        optionsList.innerHTML = '';
+
+        // Combine static default models for the provider and any dynamically fetched ones
+        const staticList = (PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.custom).models;
+        const allModelsSet = new Set([...currentFetchedModels, ...staticList]);
+        const allModels = Array.from(allModelsSet);
+
+        const filtered = allModels.filter(m => m.toLowerCase().includes(query));
+
+        if (filtered.length === 0) {
+            const noOptions = document.createElement('div');
+            noOptions.className = 'custom-dropdown-option';
+            noOptions.style.opacity = '0.5';
+            noOptions.style.cursor = 'default';
+            noOptions.textContent = 'No models found';
+            optionsList.appendChild(noOptions);
+            return;
+        }
+
+        filtered.forEach(modelName => {
+            const opt = document.createElement('div');
+            opt.className = 'custom-dropdown-option';
+            opt.textContent = modelName;
+            opt.addEventListener('click', () => {
+                document.getElementById('ai-model').value = modelName;
+                document.getElementById('ai-model-dropdown').style.display = 'none';
+            });
+            optionsList.appendChild(opt);
+        });
+    }
+</script>
+{% endblock %}

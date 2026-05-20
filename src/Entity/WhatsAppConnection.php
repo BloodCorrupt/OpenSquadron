@@ -34,6 +34,22 @@ class WhatsAppConnection
     #[ORM\Column(length: 50)]
     private ?string $status = 'active';
 
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private bool $aiActive = false;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $agentName = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $agentRole = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $contextData = null;
+
+    #[ORM\ManyToOne(targetEntity: AiContext::class)]
+    #[ORM\JoinColumn(name: "active_context_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
+    private ?AiContext $activeContext = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -114,6 +130,61 @@ class WhatsAppConnection
     {
         $this->status = $status;
 
+        return $this;
+    }
+
+    public function isAiActive(): bool
+    {
+        return $this->aiActive;
+    }
+
+    public function setAiActive(bool $aiActive): static
+    {
+        $this->aiActive = $aiActive;
+        return $this;
+    }
+
+    public function getAgentName(): ?string
+    {
+        return $this->agentName;
+    }
+
+    public function setAgentName(?string $agentName): static
+    {
+        $this->agentName = $agentName;
+        return $this;
+    }
+
+    public function getAgentRole(): ?string
+    {
+        return $this->agentRole;
+    }
+
+    public function setAgentRole(?string $agentRole): static
+    {
+        $this->agentRole = $agentRole;
+        return $this;
+    }
+
+    public function getContextData(): ?string
+    {
+        return $this->contextData;
+    }
+
+    public function setContextData(?string $contextData): static
+    {
+        $this->contextData = $contextData;
+        return $this;
+    }
+
+    public function getActiveContext(): ?AiContext
+    {
+        return $this->activeContext;
+    }
+
+    public function setActiveContext(?AiContext $activeContext): static
+    {
+        $this->activeContext = $activeContext;
         return $this;
     }
 
