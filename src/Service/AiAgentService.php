@@ -176,6 +176,27 @@ class AiAgentService
         return $this->callOpenAiCompatible($provider, $userMessage, $apiKey, $model, $systemInstruction, $setting->getApiEndpoint());
     }
 
+    public function generateFaqs(string $rawText, AiSetting $setting): ?string
+    {
+        $provider = strtolower($setting->getProvider() ?? 'openai');
+        $apiKey = $setting->getApiKey();
+        
+        if (empty($apiKey)) {
+            $this->logger->warning('FAQ Generation requested but API Key is empty.');
+            return null;
+        }
+
+        $systemInstruction = "You are a helpful AI assistant tasked with converting unstructured business text into a clean, structured Frequently Asked Questions (FAQ) list. Output strictly in Q&A format. Do not include introductory or concluding conversational text.";
+        $userMessage = "Convert the following information into an FAQ format:\n\n" . $rawText;
+        $model = $setting->getModel();
+
+        if ($provider === 'gemini') {
+            return $this->callGemini($userMessage, $apiKey, $model, $systemInstruction);
+        }
+
+        return $this->callOpenAiCompatible($provider, $userMessage, $apiKey, $model, $systemInstruction, $setting->getApiEndpoint());
+    }
+
     private function callGemini(string $userMessage, string $apiKey, ?string $model, string $systemInstruction): ?string
     {
         $activeModel = $model ?: 'gemini-1.5-flash';

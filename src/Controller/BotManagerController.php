@@ -327,6 +327,30 @@ class BotManagerController extends AbstractController
             ], 500);
         }
     }
+
+    #[Route('/admin/bot-manager/ai-settings/generate-faqs', name: 'app_bot_ai_generate_faqs', methods: ['POST'])]
+    public function generateFaqs(Request $request, \App\Service\AiAgentService $aiAgentService, EntityManagerInterface $em): JsonResponse
+    {
+        $contextData = trim($request->request->get('contextData', ''));
+        if (empty($contextData)) {
+            return new JsonResponse(['success' => false, 'error' => 'No context data provided.'], 400);
+        }
+
+        $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]);
+        if (!$aiSetting || empty($aiSetting->getApiKey())) {
+            return new JsonResponse(['success' => false, 'error' => 'Global AI Configuration is not set up. Please save your API Key first.'], 400);
+        }
+
+        try {
+            $faqs = $aiAgentService->generateFaqs($contextData, $aiSetting);
+            if (!$faqs) {
+                return new JsonResponse(['success' => false, 'error' => 'AI generation failed or returned an empty response.']);
+            }
+            return new JsonResponse(['success' => true, 'faqs' => $faqs]);
+        } catch (\Exception $e) {
+            return new JsonResponse(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
     #[Route('/admin/ai-settings', name: 'app_ai_settings')]
     public function aiSettings(EntityManagerInterface $em): Response
     {

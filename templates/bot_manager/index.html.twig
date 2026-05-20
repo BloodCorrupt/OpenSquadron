@@ -839,10 +839,7 @@
         </div>
     </div>
  
-    {# 4. Flow Builder Content Pane #}
-    <div class="manager-content-pane" id="pane-flow-builder" style="padding: 0; height: calc(100vh - 120px); border: none; background: transparent; box-shadow: none;">
-        <iframe id="flow-builder-iframe" src="" style="width: 100%; height: 100%; border: none; border-radius: 16px; background: transparent;"></iframe>
-    </div>
+
  
     {# 2. Message Templates Content Pane #}
     <div class="manager-content-pane" id="pane-templates">
@@ -1107,82 +1104,7 @@
         });
     });
 
-    // ───────── Flow Builder Embedded Logic ─────────
-    let needsReload = false;
 
-    function openFlowBuilder(url) {
-        // Append embed parameter
-        const embedUrl = url + (url.includes('?') ? '&' : '?') + 'embed=1';
-        const iframe = document.getElementById('flow-builder-iframe');
-        iframe.src = embedUrl;
-        
-        // Hide all nav highlights
-        document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
-            el.classList.remove('is-active');
-        });
-        // Make Bot Reply nav item look active since Flow Builder is a sub-page of Bot Reply
-        const botReplyNav = document.querySelector('.manager-nav .nav-item[data-tab-target="bot-reply"]');
-        if (botReplyNav) botReplyNav.classList.add('is-active');
-
-        // Hide all panes
-        document.querySelectorAll('.manager-content-pane').forEach(p => {
-            p.classList.remove('is-active');
-            p.style.display = 'none';
-        });
-        
-        // Show flow builder pane
-        const pane = document.getElementById('pane-flow-builder');
-        pane.classList.add('is-active');
-        pane.style.display = 'flex';
-        
-        needsReload = false;
-    }
-
-    function closeFlowBuilder() {
-        // Reset iframe src
-        document.getElementById('flow-builder-iframe').src = '';
-        
-        // Hide flow builder pane
-        const pane = document.getElementById('pane-flow-builder');
-        pane.classList.remove('is-active');
-        pane.style.display = 'none';
-        
-        // Show bot reply pane
-        const botReplyPane = document.getElementById('pane-bot-reply');
-        botReplyPane.classList.add('is-active');
-        botReplyPane.style.display = 'flex';
-        
-        // Highlight Bot Reply menu item as active
-        document.querySelectorAll('.nav-item').forEach(item => {
-            if (item.getAttribute('data-tab-target') === 'bot-reply') {
-                item.classList.add('is-active');
-            } else {
-                item.classList.remove('is-active');
-            }
-        });
-    }
-
-    // Intercept clicks on create/edit flow links to open in iframe
-    document.addEventListener('click', (e) => {
-        const link = e.target.closest('a');
-        if (link && link.getAttribute('href') && link.getAttribute('href').includes('/admin/bot-manager/flows') && !link.getAttribute('href').includes('/export') && !link.getAttribute('href').includes('/delete') && !link.getAttribute('href').includes('/clone')) {
-            e.preventDefault();
-            openFlowBuilder(link.getAttribute('href'));
-        }
-    });
-
-    // Listen to messages from Flow Builder iframe
-    window.addEventListener('message', (e) => {
-        if (e.data && e.data.type === 'close_flow_builder') {
-            if (needsReload) {
-                window.location.reload();
-            } else {
-                closeFlowBuilder();
-            }
-        } else if (e.data && e.data.type === 'flow_saved') {
-            needsReload = true;
-        }
-    });
 
 
     // ───────── Bot Reply Logic ─────────

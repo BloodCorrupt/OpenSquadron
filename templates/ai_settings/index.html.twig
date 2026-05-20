@@ -408,7 +408,7 @@
 
                         <div class="form-group">
                             <label class="form-label" for="ai-apiKey">API Key <span>*</span></label>
-                            <input type="password" id="ai-apiKey" name="apiKey" class="form-control" value="{{ aiSetting.apiKey }}" placeholder="Enter API Key/Token" autocomplete="new-password">
+                            <input type="text" id="ai-apiKey" name="apiKey" class="form-control" value="{{ aiSetting.apiKey }}" placeholder="Enter API Key/Token" autocomplete="off" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc;">
                         </div>
 
                         <div class="form-group">
@@ -475,7 +475,13 @@
                                             </td>
                                             <td style="padding: 14px 20px; text-align: right;">
                                                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                                    <button type="button" class="btn-action btn-secondary-action" onclick='editContext({{ {id: ctx.id, name: ctx.name, agentRole: ctx.agentRole, systemInstruction: ctx.systemInstruction, contextData: ctx.contextData}|json_encode|raw }})' style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: var(--primary-accent); display: flex; align-items: center; gap: 4px;">
+                                                    <button type="button" class="btn-action btn-secondary-action btn-edit-context" 
+                                                            data-ctx-id="{{ ctx.id }}"
+                                                            data-ctx-name="{{ ctx.name|default('')|e('html_attr') }}"
+                                                            data-ctx-role="{{ ctx.agentRole|default('')|e('html_attr') }}"
+                                                            data-ctx-instruction="{{ ctx.systemInstruction|default('')|e('html_attr') }}"
+                                                            data-ctx-data="{{ ctx.contextData|default('')|e('html_attr') }}"
+                                                            style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: var(--primary-accent); display: flex; align-items: center; gap: 4px;">
                                                         ✏️ Edit
                                                     </button>
                                                     <button type="button" class="btn-action btn-danger-action" onclick="deleteContext({{ ctx.id }})" style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; background: rgba(239,68,68,0.1); border-color: rgba(239, 68, 68, 0.2); color: #f87171; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
@@ -497,7 +503,7 @@
                         <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0; display: flex; align-items: center; gap: 8px;" id="context-form-title">
                             <span>🤖 Create Context Profile</span>
                         </h3>
-                        <button type="button" class="btn-action btn-secondary-action" onclick="hideContextForm()" style="margin: 0; padding: 8px 16px; font-size: 13px; height: 34px;">
+                        <button type="button" class="btn-action btn-secondary-action" onclick="hideContextForm()" style="margin: 0; padding: 8px 16px; font-size: 13px; height: 34px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc;">
                             Cancel
                         </button>
                     </div>
@@ -527,14 +533,19 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="ctx-contextData">Custom Context Data (Knowledge Base) <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
-                                <textarea id="ctx-contextData" name="contextData" class="form-control" style="min-height: 180px;" placeholder="Paste your custom business details, FAQ lists, pricing charts, support answers, or product descriptions here. The AI agent will refer to this context data when formulating responses."></textarea>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                    <label class="form-label" for="ctx-contextData" style="margin-bottom: 0;">Custom Context Data (Knowledge Base) <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
+                                    <button type="button" class="btn-action btn-secondary-action" onclick="generateFaqs()" id="btn-generate-faqs" style="padding: 4px 10px; font-size: 11px; height: 26px; margin: 0; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: var(--primary-accent);">
+                                        ✨ Generate FAQs with AI
+                                    </button>
+                                </div>
+                                <textarea id="ctx-contextData" name="contextData" class="form-control" style="min-height: 180px;" placeholder="Paste raw text (about your business, products, details) and click 'Generate FAQs with AI' to automatically create a Q&A list. You can also manually type the FAQs here."></textarea>
                                 <p class="form-hint">Ground your bot agent's replies on custom business info. Recommended structure: Q&A format or itemized text blocks.</p>
                             </div>
                         </div>
 
                         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
-                            <button type="button" class="btn-action btn-secondary-action" onclick="hideContextForm()" style="height: 48px; margin: 0;">
+                            <button type="button" class="btn-action btn-secondary-action" onclick="hideContextForm()" style="height: 48px; margin: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc;">
                                 Cancel
                             </button>
                             <button type="submit" class="btn-action btn-create" id="btn-save-context" style="margin: 0;">
@@ -669,19 +680,86 @@
 
     window.hideContextForm = hideContextForm;
 
-    function editContext(ctx) {
-        document.getElementById('context-list-view').style.display = 'none';
-        document.getElementById('context-form-view').style.display = 'block';
-        document.getElementById('context-form-title').innerHTML = '<span>🤖 Edit Context Profile</span>';
-        
-        document.getElementById('ctx-id').value = ctx.id || '';
-        document.getElementById('ctx-name').value = ctx.name || '';
-        document.getElementById('ctx-agentRole').value = ctx.agentRole || '';
-        document.getElementById('ctx-systemInstruction').value = ctx.systemInstruction || '';
-        document.getElementById('ctx-contextData').value = ctx.contextData || '';
+    function editContext(btn) {
+        try {
+            console.log('Editing context for:', btn);
+            document.getElementById('context-list-view').style.display = 'none';
+            document.getElementById('context-form-view').style.display = 'block';
+            document.getElementById('context-form-title').innerHTML = '<span>🤖 Edit Context Profile</span>';
+            
+            document.getElementById('ctx-id').value = btn.getAttribute('data-ctx-id') || '';
+            document.getElementById('ctx-name').value = btn.getAttribute('data-ctx-name') || '';
+            document.getElementById('ctx-agentRole').value = btn.getAttribute('data-ctx-role') || '';
+            
+            let systemInstructionEl = document.getElementById('ctx-systemInstruction');
+            if (systemInstructionEl) {
+                systemInstructionEl.value = btn.getAttribute('data-ctx-instruction') || '';
+            } else {
+                console.warn('ctx-systemInstruction element not found');
+            }
+            
+            let contextDataEl = document.getElementById('ctx-contextData');
+            if (contextDataEl) {
+                contextDataEl.value = btn.getAttribute('data-ctx-data') || '';
+            } else {
+                console.warn('ctx-contextData element not found');
+            }
+        } catch(err) {
+            console.error('editContext Error:', err);
+            alert('Error editing context: ' + err.message);
+        }
     }
 
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.addEventListener('click', function(e) {
+            const editBtn = e.target.closest('.btn-edit-context');
+            if (editBtn) {
+                e.preventDefault();
+                editContext(editBtn);
+            }
+        });
+    });
+
     window.editContext = editContext;
+
+    function generateFaqs() {
+        const textArea = document.getElementById('ctx-contextData');
+        const rawText = textArea.value.trim();
+        if (!rawText) {
+            showToast('Please paste some raw text into the knowledge base first!', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-generate-faqs');
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Generating...';
+
+        const formData = new FormData();
+        formData.append('contextData', rawText);
+
+        fetch('/admin/bot-manager/ai-settings/generate-faqs', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                textArea.value = data.faqs;
+                showToast('FAQs generated successfully!', 'success');
+            } else {
+                showToast('Failed to generate FAQs: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Generation error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '✨ Generate FAQs with AI';
+        });
+    }
+
+    window.generateFaqs = generateFaqs;
 
     function submitContextForm(event) {
         event.preventDefault();

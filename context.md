@@ -31,14 +31,17 @@ Below is a breakdown of the key files in the OpenSquadron project directory. Eac
 
 ### 📦 Database Entities (Models)
 * [Admin.php](src/Entity/Admin.php) — Represents the backend platform administrator user, implementing `UserInterface` and `PasswordAuthenticatedUserInterface`.
-* [WhatsAppConnection.php](src/Entity/WhatsAppConnection.php) — Stores Meta credentials (Business Account ID, Phone Number ID, encrypted Access Token, Verify Token, and Webhook URL) for the workspace connection.
+* [WhatsAppConnection.php](src/Entity/WhatsAppConnection.php) — Stores Meta credentials (Business Account ID, Phone Number ID, encrypted Access Token, Verify Token, and Webhook URL) for the workspace connection. Links to an active `AiContext`.
 * [Subscriber.php](src/Entity/Subscriber.php) — Represents a user who has engaged with the WhatsApp Business channel. Stores the phone number, profile name, and system metadata.
 * [Message.php](src/Entity/Message.php) — Models chat messages, including direction (inbound/outbound), type (text, image, audio, template), status, content, media URL, timestamps, and Meta's unique message ID.
 * [MessageTemplate.php](src/Entity/MessageTemplate.php) — Caches WhatsApp templates approved by Meta, storing name, language, status, category, and structural components.
 * [BotFlow.php](src/Entity/BotFlow.php) — Stores keyword-triggered auto-reply rule maps as JSON schemas containing action pipelines (e.g., text responses).
+* [AiSetting.php](src/Entity/AiSetting.php) — Holds global configuration for AI integration, storing the active API provider (OpenAI, Gemini, Moonshot, DeepSeek, OpenRouter, Custom), endpoints, models, and API keys.
+* [AiContext.php](src/Entity/AiContext.php) — Represents custom bot personas and knowledge bases. Allows administrators to create profiles dictating the agent's name, role, system instructions, and RAG data.
 
 ### 🛠️ Core Services
 * [WhatsAppConnectionService.php](src/Service/WhatsAppConnectionService.php) — The primary layer for Meta API communication. It encapsulates symmetric token encryption/decryption (AES-256-GCM using `APP_SECRET`), validates credentials against the Meta Graph API, transmits text/media/template messages, creates templates, and downloads media payloads to the local storage.
+* [AiAgentService.php](src/Service/AiAgentService.php) — Responsible for formatting prompts and communicating with various AI provider APIs (Gemini, OpenAI, DeepSeek, etc.) to generate intelligent automated bot replies using context data.
 
 ### 🎮 Controllers (HTTP Handlers)
 * [SecurityController.php](src/Controller/SecurityController.php) — Intercepts login and logout route firewalls.
@@ -54,7 +57,8 @@ Below is a breakdown of the key files in the OpenSquadron project directory. Eac
 * [inbox.html.twig](templates/chat/inbox.html.twig) — Full-screen Shared Inbox template containing active chat sidebars, bubbles for inbound/outbound files, attachment modals, and manual polling javascript (which reloads the history frame every 10 seconds if idle).
 * [flows.html.twig](templates/bot_manager/flows.html.twig) — Visual interface to configure keyword triggers and sequence response events.
 * [templates.html.twig](templates/bot_manager/templates.html.twig) — Template creation form and synced templates list.
-* [index.html.twig (Bot Manager)](templates/bot_manager/index.html.twig) — Routing dashboard for bot configuration.
+* [index.html.twig (Bot Manager)](templates/bot_manager/index.html.twig) — Routing dashboard for bot configuration and connection-specific AI context activation.
+* [index.html.twig (AI Settings)](templates/ai_settings/index.html.twig) — Dashboard for Global AI API configuration and managing multiple context profiles/personas.
 * [connect.html.twig](templates/whatsapp/connect.html.twig) — UI for editing and checking connection parameters.
 * [login.html.twig](templates/security/login.html.twig) — Admin login screen.
 * [privacy.html.twig](templates/policy/privacy.html.twig) — Privacy policy boilerplate.
@@ -85,8 +89,29 @@ erDiagram
         string verifyToken
         string webhookUrl
         string status
+        boolean aiActive
+        int active_context_id FK
         datetime createdAt
         datetime updatedAt
+    }
+
+    AiSetting {
+        int id PK
+        string provider
+        string apiKey
+        string apiEndpoint
+        string model
+        string systemInstruction
+        boolean isActive
+    }
+
+    AiContext {
+        int id PK
+        string name
+        string agentRole
+        text systemInstruction
+        text contextData
+        boolean isActive
     }
 
     Subscriber {
@@ -127,11 +152,18 @@ erDiagram
     }
 
     Subscriber ||--o{ Message : has
+    AiContext ||--o{ WhatsAppConnection : provides_context
 ```
 
 ---
 
 ## 4. Key Workflows & Execution Flows
+
+### 🤖 AI Agent Responder Integration
+The system includes `AiAgentService`, which acts as an integration layer to various Large Language Models (LLMs) including OpenAI, Google Gemini, Moonshot Kimi, DeepSeek, and OpenRouter. 
+- **Global Config**: Admins define the global AI provider and API keys via `AiSetting`.
+- **Context Profiles**: Admins can construct detailed bot personas containing instructions and knowledge-base data (`AiContext`).
+- **Bot-Level Activation**: Individual WhatsApp connections can activate AI responses and select a specific `AiContext` profile. When enabled, incoming messages that don't trigger keyword BotFlows are routed through the LLM, grounded in the context data to answer subscriber queries.
 
 ### 📬 Incoming Webhook Flow (Message Reception)
 When an external user sends a WhatsApp message to the registered Business Phone Number, Meta fires a webhook POST request to OpenSquadron:
