@@ -42,20 +42,33 @@ Choose **one** of the following methods to initialize your database:
 ### Option A: Clean Import from Skeleton (Recommended)
 This imports the complete up-to-date schema, seeds the initial tables, and marks the Doctrine migrations history as complete in a single step.
 
-1. **Create the database** (e.g. via phpMyAdmin or MySQL CLI):
+#### Method 1: Using XAMPP Shell / Command Line (Fastest)
+1. **Open XAMPP Control Panel** and click the **Shell** button on the right side.
+2. **Create the database** by running:
+   ```bash
+   mysql -u root -e "CREATE DATABASE IF NOT EXISTS opensquadron CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   ```
+3. **Import the skeleton database file**:
+   ```bash
+   mysql -u root opensquadron < skeleton.sql
+   ```
+   *(Note: XAMPP's default MySQL installation uses user `root` with no password. If you have set a custom password, append `-p` to the commands and enter your password when prompted)*.
+
+#### Method 2: Using phpMyAdmin (Web GUI)
+1. Open your web browser and go to `http://localhost/phpmyadmin/`.
+2. Click on **SQL** in the top navigation tab and run:
    ```sql
    CREATE DATABASE IF NOT EXISTS `opensquadron` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-2. **Import the skeleton schema and seed data**:
-   ```bash
-   mysql -u root -p opensquadron < skeleton.sql
-   ```
-   *(Note: If you are using XAMPP's default settings, your user is `root` and has no password, so you can omit `-p` or simply press enter when prompted)*.
+3. Click on the newly created **opensquadron** database in the left-hand sidebar list.
+4. Click the **Import** tab at the top.
+5. Click **Choose File** and select the `skeleton.sql` file in the root of the project.
+6. Scroll down to the bottom of the page and click the **Import** (or **Go**) button.
 
-3. **Login Details**:
-   The default admin credentials seeded in the skeleton database are:
-   - **Email:** `admin@opensquadron.local`
-   - **Password:** `admin123` *(change immediately after first login)*
+#### Default Admin Login:
+Once imported, you can log in to the application at `https://opensquadron.local/login` or `http://localhost/login` with:
+- **Email:** `admin@opensquadron.local`
+- **Password:** `admin123` *(change immediately after first login)*
 
 ---
 

@@ -144,9 +144,9 @@ ALTER TABLE `subscriber`
     ADD CONSTRAINT FK_AD005B696381BF43 FOREIGN KEY (whats_app_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
 -- ───── Seed: Default Admin User ─────
--- Password: "admin" (bcrypt hash — change immediately after first login)
+-- Password: "admin123" (bcrypt hash — change immediately after first login)
 INSERT INTO `admin` (email, roles, password) VALUES
-    ('admin@opensquadron.local', '["ROLE_ADMIN"]', '$2y$13$dGKh0HQwLm8VxQnXpqFKjuahGkDfvLPGqGpX.qlzJZ0yL9snIYGd.');
+    ('admin@opensquadron.local', '["ROLE_ADMIN"]', '$2y$13$dCqXfD9w9XB/Dxr2r4DD5u3ihrcsCgpBLq2LOnyfyHWM8pj2Hc4Ty');
 
 -- ───── Seed: Default AI Setting Row ─────
 INSERT INTO `ai_setting` (provider, is_active, created_at) VALUES

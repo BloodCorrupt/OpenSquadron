@@ -165,14 +165,18 @@
     .toolbar-search input:focus {
         border-color: var(--primary-accent);
     }
-    .toolbar-search::before {
-        content: '🔍';
+    .toolbar-search .search-icon {
         position: absolute;
         left: 12px;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 12px;
+        width: 14px;
+        height: 14px;
+        stroke: #fff;
         opacity: 0.5;
+        pointer-events: none;
+        fill: none;
+        stroke-width: 2.2;
     }
 
     /* Tables */
@@ -439,7 +443,10 @@
                 <div class="nav-header">Channel Statistics</div>
                 <div class="stats-card">
                     <div class="stat-row">
-                        <div class="stat-label">👥 Total Subscribers</div>
+                        <div class="stat-label" style="display: flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; stroke: var(--primary-accent); fill: none;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            <span>Total Subscribers</span>
+                        </div>
                         <div class="stat-value">{{ total }}</div>
                     </div>
                     <div class="stat-row">
@@ -467,14 +474,15 @@
             <div class="content-header">
                 <div>
                     <h1 class="content-title">
+                        <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                         <span>Subscriber Manager</span>
-                        <span style="font-size: 20px;">👥</span>
                     </h1>
                     <div class="content-subtitle">Manage users connected to <strong>{{ connection.label ?: connection.phoneNumber }}</strong>.</div>
                 </div>
                 
                 <button onclick="openCreateModal()" class="btn-action btn-create">
-                    <span>➕ Add Subscriber</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Add Subscriber</span>
                 </button>
             </div>
 
@@ -488,6 +496,7 @@
                     </select>
                     
                     <div class="toolbar-search">
+                        <svg viewBox="0 0 24 24" fill="none" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         <input type="text" id="subscriber-search" placeholder="Search by name or phone number..." value="{{ search }}" onkeyup="handleSearchKey(event)">
                     </div>
                     
@@ -547,13 +556,13 @@
                                     <td>
                                         <div class="row-actions" style="justify-content: flex-end;">
                                             <button onclick="openEditModal({{ sub.id }}, '{{ sub.name|escape('js') }}', '{{ sub.phoneNumber|escape('js') }}', '{{ sub.status|escape('js') }}')" class="btn-row-action edit-action" title="Edit details">
-                                                ✏️
+                                                <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                             </button>
                                             <a href="{{ path('app_inbox_chat', {id: sub.id}) }}" class="btn-row-action chat-action" title="Live chat">
-                                                💬
+                                                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                                             </a>
                                             <button onclick="deleteSubscriber({{ sub.id }})" class="btn-row-action delete-action" title="Delete subscriber">
-                                                🗑️
+                                                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                             </button>
                                         </div>
                                     </td>
@@ -602,7 +611,10 @@
 
             <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;">
                 <button type="button" onclick="closeModal()" class="btn-action" style="background:rgba(255,255,255,0.05); color:#fff;">Cancel</button>
-                <button type="submit" id="btn-modal-submit" class="btn-action btn-create">Save</button>
+                <button type="submit" id="btn-modal-submit" class="btn-action btn-create">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Save</span>
+                </button>
             </div>
         </form>
     </div>
@@ -711,7 +723,7 @@
 
         const submitBtn = document.getElementById('btn-modal-submit');
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
+        submitBtn.innerHTML = '<span>Saving...</span>';
 
         const formData = new FormData();
         if (id) formData.append('id', id);
@@ -731,13 +743,13 @@
             } else {
                 showModalError(data.error || 'Failed to save subscriber details.');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Save';
+                submitBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Save</span>';
             }
         })
         .catch(() => {
             showModalError('An unexpected server error occurred.');
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Save';
+            submitBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Save</span>';
         });
     }
 

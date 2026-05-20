@@ -124,16 +124,27 @@
             color: #fecaca;
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 12px 16px;
+            padding: 12px 16px 12px 42px;
             border-radius: 8px;
             margin-bottom: 25px;
             font-size: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
+            position: relative;
         }
         .alert-error::before {
-            content: '❌';
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
     </style>
 </head>

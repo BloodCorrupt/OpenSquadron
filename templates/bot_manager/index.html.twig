@@ -161,13 +161,18 @@
         border-color: var(--primary-accent);
         box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
     }
-    .toolbar-search::before {
-        content: '🔍';
+    .toolbar-search .search-icon {
         position: absolute;
         left: 12px;
-        top: 10px;
-        font-size: 13px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        stroke: #fff;
         opacity: 0.5;
+        pointer-events: none;
+        fill: none;
+        stroke-width: 2.2;
     }
     .toolbar-select {
         padding: 10px 14px;
@@ -720,37 +725,49 @@
         <div class="nav-header">Bot settings</div>
         
         <div class="nav-item is-active" data-tab-target="bot-reply">
-            <span class="nav-item-icon">🤖</span>
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
+            </span>
             <span>Bot Reply</span>
             <span class="nav-item-status">Active</span>
         </div>
 
         <div class="nav-item" data-tab-target="templates">
-            <span class="nav-item-icon">📋</span>
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+            </span>
             <span>Message Templates</span>
         </div>
 
         <div class="nav-item" data-tab-target="ai-agent">
-            <span class="nav-item-icon">⚡</span>
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </span>
             <span>AI Agent</span>
             <span class="nav-item-status" id="ai-nav-status">{% if connection and connection.isAiActive() %}Active{% else %}Inactive{% endif %}</span>
         </div>
 
 
         <div class="nav-item is-disabled" onclick="return false;">
-            <span class="nav-item-icon">📣</span>
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            </span>
             <span>Broadcast Campaign</span>
             <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
         </div>
 
         <div class="nav-item is-disabled" onclick="return false;">
-            <span class="nav-item-icon">💬</span>
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </span>
             <span>Chat Widget</span>
             <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
         </div>
 
         <div class="nav-item is-disabled" onclick="return false;">
-            <span class="nav-item-icon">⏱️</span>
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </span>
             <span>Sequence</span>
             <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
         </div>
@@ -763,14 +780,15 @@
         <div class="content-header">
             <div>
                 <h1 class="content-title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
                     <span>Bot Reply Settings</span>
-                    <span style="font-size: 20px;">🤖</span>
                 </h1>
                 <div class="content-subtitle">Manage triggers, dynamic reply pipelines, and automated response actions.</div>
             </div>
             
             <a href="{{ path('app_bot_flows', {id: 'new', connectionId: connection ? connection.id : ''}) }}" class="btn-action btn-create">
-                <span>➕ Create Flow</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Create Flow</span>
             </a>
         </div>
 
@@ -781,6 +799,7 @@
                     <option value="all">All Folders</option>
                 </select>
                 <div class="toolbar-search">
+                    <svg viewBox="0 0 24 24" fill="none" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input type="text" id="flow-search" placeholder="Search flows...">
                 </div>
             </div>
@@ -833,16 +852,16 @@
                                 <td>
                                     <div class="row-actions" style="justify-content: flex-end;">
                                         <a href="{{ path('app_bot_flows', {id: flow.id, connectionId: connection ? connection.id : ''}) }}" class="btn-row-action edit-action" title="Edit flow">
-                                            ✏️
+                                            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                         </a>
                                         <button onclick="cloneFlow({{ flow.id }})" class="btn-row-action clone-action" title="Clone flow">
-                                            👥
+                                            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                         </button>
                                         <a href="{{ path('app_bot_flows_export', {id: flow.id}) }}" class="btn-row-action export-action" title="Export flow">
-                                            📥
+                                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                         </a>
                                         <button onclick="deleteFlow({{ flow.id }})" class="btn-row-action delete-action" title="Delete flow">
-                                            🗑️
+                                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                         </button>
                                     </div>
                                 </td>
@@ -861,8 +880,8 @@
         <div class="content-header">
             <div>
                 <h1 class="content-title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                     <span>Message Templates</span>
-                    <span style="font-size: 20px;">📋</span>
                 </h1>
                 <div class="content-subtitle">Create and manage WhatsApp message templates. New templates require Meta review.</div>
             </div>
@@ -873,7 +892,8 @@
                     Sync Templates
                 </button>
                 <button class="btn-action btn-create" onclick="openTemplateModal()">
-                    <span>➕ Create Template</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Create Template</span>
                 </button>
             </div>
         </div>
@@ -925,8 +945,8 @@
         <div class="content-header">
             <div>
                 <h1 class="content-title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                     <span>AI Agent Configuration</span>
-                    <span style="font-size: 20px;">⚡</span>
                 </h1>
                 <div class="content-subtitle">Enable and configure which context profile this bot uses to respond to incoming messages.</div>
             </div>
@@ -969,7 +989,8 @@
 
             <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
                 <button type="button" class="btn-action btn-create" id="btn-save-ai-agent-settings" onclick="saveAiAgentSettings()">
-                    <span>⚡ Save AI Agent Settings</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    <span>Save AI Agent Settings</span>
                 </button>
             </div>
         </div>
@@ -986,7 +1007,7 @@
         </div>
 
         <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 20px; font-size: 13px; color: #94a3b8; line-height: 1.4;">
-            <strong style="color: var(--primary-accent);">ℹ️ Note:</strong> Templates require Meta review before they can be used. UTILITY templates are typically approved within minutes.
+            <strong style="color: var(--primary-accent);">Note:</strong> Templates require Meta review before they can be used. UTILITY templates are typically approved within minutes.
         </div>
 
         <div class="notice-box" id="modal-notice"></div>
@@ -1352,7 +1373,7 @@
         })
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<span>⚡ Save AI Agent Settings</span>';
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> <span>Save AI Agent Settings</span>';
         });
     }
 
