@@ -17,20 +17,34 @@ use Symfony\Component\Routing\Attribute\Route;
 class BotManagerController extends AbstractController
 {
     #[Route('/admin/bot-manager', name: 'app_bot_manager')]
-    public function index(EntityManagerInterface $em): Response
+    public function index(Request $request, EntityManagerInterface $em): Response
     {
-        $flows = $em->getRepository(BotFlow::class)->findBy([], ['id' => 'DESC']);
-        $templates = $em->getRepository(MessageTemplate::class)->findAll();
-        $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]) ?? new AiSetting();
         $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
-        $connection = $connections[0] ?? null;
+        
+        $selectedConnectionId = $request->query->get('connectionId');
+        $selectedConnection = null;
+        if ($selectedConnectionId) {
+            $selectedConnection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($selectedConnectionId);
+        }
+        if (!$selectedConnection && !empty($connections)) {
+            $selectedConnection = $connections[0];
+        }
+
+        $flows = [];
+        $templates = [];
+        if ($selectedConnection) {
+            $flows = $em->getRepository(BotFlow::class)->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'DESC']);
+            $templates = $em->getRepository(MessageTemplate::class)->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'DESC']);
+        }
+
+        $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]) ?? new AiSetting();
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
 
         return $this->render('bot_manager/index.html.twig', [
             'flows' => $flows,
             'templates' => $templates,
             'aiSetting' => $aiSetting,
-            'connection' => $connection,
+            'connection' => $selectedConnection,
             'connections' => $connections,
             'contexts' => $contexts,
         ]);
@@ -50,6 +64,7 @@ class BotManagerController extends AbstractController
         $clone->setMatchMode($flow->getMatchMode());
         $clone->setActive($flow->isActive());
         $clone->setFlowData($flow->getFlowData());
+        $clone->setWhatsAppConnection($flow->getWhatsAppConnection());
 
         $em->persist($clone);
         $em->flush();
@@ -89,10 +104,16 @@ class BotManagerController extends AbstractController
     }
 
     #[Route('/admin/bot-manager/templates/sync', name: 'app_bot_templates_sync', methods: ['POST'])]
-    public function syncTemplates(WhatsAppConnectionService $whatsappService): JsonResponse
+    public function syncTemplates(Request $request, WhatsAppConnectionService $whatsappService, EntityManagerInterface $em): JsonResponse
     {
+        $connectionId = $request->request->get('connectionId');
+        $connection = null;
+        if ($connectionId) {
+            $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        }
+
         try {
-            $result = $whatsappService->syncTemplates();
+            $result = $whatsappService->syncTemplates($connection);
             return new JsonResponse([
                 'success' => true,
                 'message' => "Successfully synced {$result['count']} approved templates.",
@@ -103,8 +124,14 @@ class BotManagerController extends AbstractController
     }
 
     #[Route('/admin/bot-manager/templates/create', name: 'app_bot_templates_create', methods: ['POST'])]
-    public function createTemplate(Request $request, WhatsAppConnectionService $whatsappService): JsonResponse
+    public function createTemplate(Request $request, WhatsAppConnectionService $whatsappService, EntityManagerInterface $em): JsonResponse
     {
+        $connectionId = $request->request->get('connectionId');
+        $connection = null;
+        if ($connectionId) {
+            $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        }
+
         $name     = trim($request->request->get('name', ''));
         $language = $request->request->get('language', 'en_US');
         $category = $request->request->get('category', 'UTILITY');
@@ -117,9 +144,9 @@ class BotManagerController extends AbstractController
         }
 
         try {
-            $result = $whatsappService->createTemplate($name, $language, $category, $body, $header, $footer);
+            $result = $whatsappService->createTemplate($name, $language, $category, $body, $header, $footer, $connection);
             try {
-                $whatsappService->syncTemplates();
+                $whatsappService->syncTemplates($connection);
             } catch (\Exception $syncEx) {
                 // Sync failure is non-critical — Meta still has the template.
             }
@@ -137,11 +164,28 @@ class BotManagerController extends AbstractController
     // ───────────────────────── Flows ─────────────────────────
 
     #[Route('/admin/bot-manager/flows', name: 'app_bot_flows', methods: ['GET'])]
-    public function flows(EntityManagerInterface $em): Response
+    public function flows(Request $request, EntityManagerInterface $em): Response
     {
-        $flows = $em->getRepository(BotFlow::class)->findBy([], ['id' => 'DESC']);
-        $templates = $em->getRepository(MessageTemplate::class)->findBy(['status' => 'APPROVED']);
-        $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findOneBy([]);
+        $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
+        
+        $selectedConnectionId = $request->query->get('connectionId');
+        $selectedConnection = null;
+        if ($selectedConnectionId) {
+            $selectedConnection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($selectedConnectionId);
+        }
+        if (!$selectedConnection && !empty($connections)) {
+            $selectedConnection = $connections[0];
+        }
+
+        $flows = [];
+        $templates = [];
+        if ($selectedConnection) {
+            $flows = $em->getRepository(BotFlow::class)->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'DESC']);
+            $templates = $em->getRepository(MessageTemplate::class)->findBy([
+                'status' => 'APPROVED',
+                'whatsAppConnection' => $selectedConnection
+            ], ['id' => 'DESC']);
+        }
 
         $payload = array_map(static fn (BotFlow $f) => self::flowToArray($f), $flows);
 
@@ -149,7 +193,7 @@ class BotManagerController extends AbstractController
             'flows'       => $flows,
             'flowsJson'   => $payload,
             'templates'   => $templates,
-            'connection'  => $connection,
+            'connection'  => $selectedConnection,
         ]);
     }
 
@@ -183,6 +227,19 @@ class BotManagerController extends AbstractController
             $flow = new BotFlow();
         }
 
+        // Get selected connection
+        $connectionId = isset($payload['connectionId']) ? (int)$payload['connectionId'] : (int)$request->query->get('connectionId');
+        $connection = null;
+        if ($connectionId) {
+            $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        }
+        if (!$connection) {
+            // Default to the first connection
+            $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
+            $connection = $connections[0] ?? null;
+        }
+
+        $flow->setWhatsAppConnection($connection);
         $flow->setName($name);
         $flow->setTriggerKeyword($keywords);
         try {
@@ -270,7 +327,14 @@ class BotManagerController extends AbstractController
             $aiSetting->setSystemInstruction($systemInstruction ?: null);
 
             // Update the WhatsAppConnection with bot-account-based agent settings
-            $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findOneBy([]);
+            $connectionId = $request->request->get('connectionId');
+            $connection = null;
+            if ($connectionId) {
+                $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+            }
+            if (!$connection) {
+                $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findOneBy([]);
+            }
             if ($connection) {
                 $aiActive = (bool)$request->request->get('aiActive', false);
                 $agentName = trim($request->request->get('agentName', ''));

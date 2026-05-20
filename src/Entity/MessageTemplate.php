@@ -28,6 +28,10 @@ class MessageTemplate
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $components = null;
 
+    #[ORM\ManyToOne(targetEntity: WhatsAppConnection::class)]
+    #[ORM\JoinColumn(name: "whatsapp_connection_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?WhatsAppConnection $whatsAppConnection = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -90,6 +94,17 @@ class MessageTemplate
     {
         $this->components = $components;
 
+        return $this;
+    }
+
+    public function getWhatsAppConnection(): ?WhatsAppConnection
+    {
+        return $this->whatsAppConnection;
+    }
+
+    public function setWhatsAppConnection(?WhatsAppConnection $whatsAppConnection): static
+    {
+        $this->whatsAppConnection = $whatsAppConnection;
         return $this;
     }
 }

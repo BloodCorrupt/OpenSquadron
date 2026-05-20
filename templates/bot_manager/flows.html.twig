@@ -2296,7 +2296,7 @@
         if (window.self !== window.top) {
             window.parent.postMessage({ type: 'close_flow_builder' }, '*');
         } else {
-            window.location.href = '{{ path('app_bot_manager') }}';
+            window.location.href = '{{ path('app_bot_manager', {connectionId: connection ? connection.id : ''}) }}';
         }
     };
 
@@ -2397,6 +2397,7 @@
             keywords: state.meta.keywords,
             matchMode: state.meta.matchMode,
             isActive: state.meta.isActive,
+            connectionId: '{{ connection ? connection.id : "" }}',
             graph: {
                 nodes: Array.from(state.nodes.values()).map(n => ({
                     id: n.id, type: n.type, x: Math.round(n.x), y: Math.round(n.y), data: n.data || {},

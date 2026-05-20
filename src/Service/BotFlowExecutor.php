@@ -41,34 +41,35 @@ class BotFlowExecutor
     public function execute(BotFlow $flow, Subscriber $subscriber): void
     {
         $data = $flow->getFlowData();
+        $connection = $flow->getWhatsAppConnection();
 
         // Legacy: a plain action list.
         if (!isset($data['format']) || $data['format'] !== 'graph') {
-            $this->runActionList(\is_array($data) ? $data : [], $subscriber);
+            $this->runActionList(\is_array($data) ? $data : [], $subscriber, $connection);
             return;
         }
 
-        $this->runGraph($data, $subscriber);
+        $this->runGraph($data, $subscriber, $connection);
     }
 
     /**
      * @param array<int, array<string, mixed>> $actions
      */
-    private function runActionList(array $actions, Subscriber $subscriber): void
+    private function runActionList(array $actions, Subscriber $subscriber, ?\App\Entity\WhatsAppConnection $connection = null): void
     {
         $steps = 0;
         foreach ($actions as $action) {
             if (++$steps > self::MAX_STEPS) {
                 break;
             }
-            $this->runAction(\is_array($action) ? $action : [], $subscriber);
+            $this->runAction(\is_array($action) ? $action : [], $subscriber, $connection);
         }
     }
 
     /**
      * @param array{format:string, nodes?:array, edges?:array} $graph
      */
-    private function runGraph(array $graph, Subscriber $subscriber): void
+    private function runGraph(array $graph, Subscriber $subscriber, ?\App\Entity\WhatsAppConnection $connection = null): void
     {
         $nodes = [];
         foreach (($graph['nodes'] ?? []) as $node) {
@@ -141,7 +142,7 @@ class BotFlowExecutor
             $this->runAction([
                 'type' => $node['type'] ?? '',
                 ...($node['data'] ?? []),
-            ], $subscriber);
+            ], $subscriber, $connection);
 
             // Follow the first outgoing edge from the default 'out' handle.
             $next = null;
@@ -158,7 +159,7 @@ class BotFlowExecutor
     /**
      * @param array<string, mixed> $action
      */
-    private function runAction(array $action, Subscriber $subscriber): void
+    private function runAction(array $action, Subscriber $subscriber, ?\App\Entity\WhatsAppConnection $connection = null): void
     {
         $type = (string)($action['type'] ?? '');
         $to   = (string)$subscriber->getPhoneNumber();
@@ -173,7 +174,7 @@ class BotFlowExecutor
                     if ($text === '') {
                         return;
                     }
-                    $response = $this->whatsapp->sendMessage($to, $text);
+                    $response = $this->whatsapp->sendMessage($to, $text, $connection);
                     $this->logOutbound($subscriber, 'text', $text, null, $response);
                     return;
 
@@ -182,7 +183,7 @@ class BotFlowExecutor
                     if ($url === '') {
                         return;
                     }
-                    $response = $this->whatsapp->sendMediaMessage($to, 'image', $url);
+                    $response = $this->whatsapp->sendMediaMessage($to, 'image', $url, $connection);
                     $caption = trim((string)($action['caption'] ?? ''));
                     $this->logOutbound($subscriber, 'image', $caption, $url, $response);
                     return;
@@ -193,7 +194,7 @@ class BotFlowExecutor
                     if ($name === '') {
                         return;
                     }
-                    $response = $this->whatsapp->sendTemplateMessage($to, $name, $lang);
+                    $response = $this->whatsapp->sendTemplateMessage($to, $name, $lang, $connection);
                     $this->logOutbound($subscriber, 'template', "[template:{$name}]", null, $response);
                     return;
 

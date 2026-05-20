@@ -152,7 +152,10 @@ class WhatsAppController extends AbstractController
                             if ($msgType === 'text' && $msgBody !== '') {
                                 $flows = $this->entityManager
                                     ->getRepository(\App\Entity\BotFlow::class)
-                                    ->findBy(['isActive' => true]);
+                                    ->findBy([
+                                        'isActive' => true,
+                                        'whatsAppConnection' => $resolvedConnection,
+                                    ]);
 
                                 $matched = false;
                                 foreach ($flows as $candidate) {

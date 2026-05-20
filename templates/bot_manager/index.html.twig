@@ -702,6 +702,21 @@
 <div class="manager-shell">
     {# ───────── Left Sidebar Navigation ───────── #}
     <div class="manager-nav">
+        <div class="nav-header">WhatsApp Account</div>
+        <div style="margin-bottom: 20px; padding: 0 10px;">
+            <select id="whatsapp-conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
+                {% if connections is empty %}
+                    <option value="">No Accounts Connected</option>
+                {% else %}
+                    {% for conn in connections %}
+                        <option value="{{ conn.id }}" {% if connection and connection.id == conn.id %}selected{% endif %}>
+                            {{ conn.label ?: conn.phoneNumber ?: 'Unnamed Connection (' ~ conn.id ~ ')' }}
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+
         <div class="nav-header">Bot settings</div>
         
         <div class="nav-item is-active" data-tab-target="bot-reply">
@@ -754,7 +769,7 @@
                 <div class="content-subtitle">Manage triggers, dynamic reply pipelines, and automated response actions.</div>
             </div>
             
-            <a href="{{ path('app_bot_flows', {id: 'new'}) }}" class="btn-action btn-create">
+            <a href="{{ path('app_bot_flows', {id: 'new', connectionId: connection ? connection.id : ''}) }}" class="btn-action btn-create">
                 <span>➕ Create Flow</span>
             </a>
         </div>
@@ -817,7 +832,7 @@
                                 </td>
                                 <td>
                                     <div class="row-actions" style="justify-content: flex-end;">
-                                        <a href="{{ path('app_bot_flows', {id: flow.id}) }}" class="btn-row-action edit-action" title="Edit flow">
+                                        <a href="{{ path('app_bot_flows', {id: flow.id, connectionId: connection ? connection.id : ''}) }}" class="btn-row-action edit-action" title="Edit flow">
                                             ✏️
                                         </a>
                                         <button onclick="cloneFlow({{ flow.id }})" class="btn-row-action clone-action" title="Clone flow">
@@ -1246,6 +1261,7 @@
         btn.innerHTML = '<svg style="animation:spin 1s linear infinite; margin-right: 6px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> Submitting...';
 
         const formData = new FormData();
+        formData.append('connectionId', '{{ connection ? connection.id : "" }}');
         formData.append('name', name);
         formData.append('category', category);
         formData.append('language', language);
@@ -1276,7 +1292,10 @@
         btn.classList.add('loading');
         btn.disabled = true;
 
-        fetch('{{ path('app_bot_templates_sync') }}', { method: 'POST' })
+        const formData = new FormData();
+        formData.append('connectionId', '{{ connection ? connection.id : "" }}');
+
+        fetch('{{ path('app_bot_templates_sync') }}', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -1307,6 +1326,7 @@
         btn.innerHTML = '<span>Saving...</span>';
 
         const formData = new FormData();
+        formData.append('connectionId', '{{ connection ? connection.id : "" }}');
         formData.append('configType', 'agent');
         formData.append('aiActive', aiActive ? '1' : '0');
         formData.append('activeContextId', activeContextId);
@@ -1334,6 +1354,12 @@
             btn.disabled = false;
             btn.innerHTML = '<span>⚡ Save AI Agent Settings</span>';
         });
+    }
+
+    function changeConnection(connectionId) {
+        const url = new URL(window.location);
+        url.searchParams.set('connectionId', connectionId);
+        window.location.href = url.toString();
     }
 
 </script>

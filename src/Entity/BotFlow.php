@@ -40,6 +40,10 @@ class BotFlow
     #[ORM\Column]
     private ?bool $isActive = true;
 
+    #[ORM\ManyToOne(targetEntity: WhatsAppConnection::class)]
+    #[ORM\JoinColumn(name: "whatsapp_connection_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?WhatsAppConnection $whatsAppConnection = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -140,5 +144,16 @@ class BotFlow
             }
         }
         return false;
+    }
+
+    public function getWhatsAppConnection(): ?WhatsAppConnection
+    {
+        return $this->whatsAppConnection;
+    }
+
+    public function setWhatsAppConnection(?WhatsAppConnection $whatsAppConnection): static
+    {
+        $this->whatsAppConnection = $whatsAppConnection;
+        return $this;
     }
 }

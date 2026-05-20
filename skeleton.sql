@@ -45,11 +45,13 @@ CREATE TABLE IF NOT EXISTS `ai_setting` (
 -- ───── Bot Flows ─────
 CREATE TABLE IF NOT EXISTS `bot_flow` (
     id INT AUTO_INCREMENT NOT NULL,
+    whatsapp_connection_id INT DEFAULT NULL,
     name VARCHAR(120) DEFAULT NULL,
     trigger_keyword VARCHAR(500) DEFAULT NULL,
     match_mode VARCHAR(20) DEFAULT 'exact' NOT NULL,
     flow_data JSON NOT NULL,
     is_active TINYINT NOT NULL DEFAULT 1,
+    INDEX IDX_D3665A02C664C80F (whatsapp_connection_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
@@ -83,11 +85,13 @@ CREATE TABLE IF NOT EXISTS `message` (
 -- ───── Message Templates ─────
 CREATE TABLE IF NOT EXISTS `message_template` (
     id INT AUTO_INCREMENT NOT NULL,
+    whatsapp_connection_id INT DEFAULT NULL,
     name VARCHAR(255) NOT NULL,
     language VARCHAR(10) NOT NULL,
     status VARCHAR(50) NOT NULL,
     category VARCHAR(50) NOT NULL,
     components JSON DEFAULT NULL,
+    INDEX IDX_9E46DB92C664C80F (whatsapp_connection_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
@@ -127,6 +131,12 @@ ALTER TABLE `message`
 
 ALTER TABLE `whatsapp_connection`
     ADD CONSTRAINT FK_5E00F7954AA2A339 FOREIGN KEY (active_context_id) REFERENCES ai_context (id) ON DELETE SET NULL;
+
+ALTER TABLE `bot_flow`
+    ADD CONSTRAINT FK_D3665A02C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
+
+ALTER TABLE `message_template`
+    ADD CONSTRAINT FK_9E46DB92C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
 -- ───── Seed: Default Admin User ─────
 -- Password: "admin" (bcrypt hash — change immediately after first login)

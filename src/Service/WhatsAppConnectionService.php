@@ -511,8 +511,10 @@ class WhatsAppConnectionService
         $repo = $this->entityManager->getRepository(\App\Entity\MessageTemplate::class);
         $syncedCount = 0;
         
-        // Truncate existing templates to ensure exact sync
-        $this->entityManager->createQuery('DELETE FROM App\Entity\MessageTemplate')->execute();
+        // Truncate existing templates for this connection to ensure exact sync
+        $this->entityManager->createQuery('DELETE FROM App\Entity\MessageTemplate t WHERE t.whatsAppConnection = :conn')
+            ->setParameter('conn', $conn)
+            ->execute();
         
         foreach ($templates as $tpl) {
             if ($tpl['status'] !== 'APPROVED') continue;
@@ -523,6 +525,7 @@ class WhatsAppConnectionService
             $entity->setStatus($tpl['status']);
             $entity->setCategory($tpl['category']);
             $entity->setComponents($tpl['components']);
+            $entity->setWhatsAppConnection($conn);
             
             $this->entityManager->persist($entity);
             $syncedCount++;
