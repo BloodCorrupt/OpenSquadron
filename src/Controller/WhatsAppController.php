@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\BotFlowExecutor;
 use App\Service\WhatsAppConnectionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,7 +29,8 @@ class WhatsAppController extends AbstractController
         #[Autowire('%env(WHATSAPP_PHONE_NUMBER_ID)%')] string $phoneNumberId,
         HttpClientInterface $httpClient,
         WhatsAppConnectionService $whatsappService,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private BotFlowExecutor $botFlowExecutor
     ) {
         $this->envVerifyToken = $verifyToken;
         $this->envAccessToken = $accessToken;
@@ -134,35 +136,17 @@ class WhatsAppController extends AbstractController
                             
                             $this->entityManager->persist($msg);
                             
-                            // Check for Automations (Bot Flows)
-                            if ($msgType === 'text') {
-                                $keyword = strtolower(trim($msgBody));
-                                $flow = $this->entityManager->getRepository(\App\Entity\BotFlow::class)->findOneBy([
-                                    'triggerKeyword' => $keyword,
-                                    'isActive' => true
-                                ]);
-                                
-                                if ($flow) {
-                                    $actions = $flow->getFlowData();
-                                    foreach ($actions as $action) {
-                                        if ($action['type'] === 'send_text' && !empty($action['text'])) {
-                                            try {
-                                                // Send response via Meta API
-                                                $response = $this->whatsappService->sendMessage($from, $action['text']);
-                                                
-                                                // Create outbound message record
-                                                $outMsg = new Message();
-                                                $outMsg->setSubscriber($subscriber);
-                                                $outMsg->setDirection('outbound');
-                                                $outMsg->setType('text');
-                                                $outMsg->setContent($action['text']);
-                                                $outMsg->setMetaMessageId($response['messages'][0]['id'] ?? null);
-                                                $outMsg->setStatus('sent');
-                                                $this->entityManager->persist($outMsg);
-                                            } catch (\Exception $e) {
-                                                // Log error or ignore
-                                            }
-                                        }
+                            // Check for Automations (Bot Flows). The first
+                            // active flow whose keyword/match-mode matches wins.
+                            if ($msgType === 'text' && $msgBody !== '') {
+                                $flows = $this->entityManager
+                                    ->getRepository(\App\Entity\BotFlow::class)
+                                    ->findBy(['isActive' => true]);
+
+                                foreach ($flows as $candidate) {
+                                    if ($candidate->matches($msgBody)) {
+                                        $this->botFlowExecutor->execute($candidate, $subscriber);
+                                        break;
                                     }
                                 }
                             }

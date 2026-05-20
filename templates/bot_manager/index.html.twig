@@ -1,168 +1,1135 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Bot Manager{% endblock %}
+{% block title %}Bot Manager - OpenSquadron{% endblock %}
 
 {% block stylesheets %}
 <style>
-    .manager-grid {
+    /* Two-column layout */
+    .manager-shell {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 24px;
-        margin-top: 30px;
+        grid-template-columns: 260px 1fr;
+        gap: 30px;
+        margin-top: 20px;
+        min-height: calc(100vh - 180px);
     }
-    
-    .manager-card {
-        background: var(--glass-bg);
+
+    /* Left Nav Sidebar Panel */
+    .manager-nav {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
         border: 1px solid var(--glass-border);
         border-radius: 16px;
-        padding: 24px;
-        text-decoration: none;
-        color: inherit;
+        padding: 20px;
         display: flex;
-        align-items: center;
-        gap: 20px;
-        transition: all 0.3s;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        position: relative;
-        overflow: hidden;
+        flex-direction: column;
+        gap: 10px;
+        height: fit-content;
     }
-    
-    .manager-card:hover {
-        transform: translateY(-5px);
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.15);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-    
-    .manager-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: transparent;
-        transition: background 0.3s;
-    }
-    
-    .manager-card:hover::before {
-        background: var(--primary-accent);
-    }
-    
-    .card-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        background: rgba(6, 182, 212, 0.1);
-        color: var(--primary-accent);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-    }
-    
-    .card-icon.emerald {
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--secondary-accent);
-    }
-    
-    .card-content {
-        flex: 1;
-    }
-    
-    .card-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #fff;
-        margin-bottom: 5px;
-    }
-    
-    .card-status {
-        font-size: 13px;
+    .nav-header {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
         color: var(--text-muted);
+        letter-spacing: 0.6px;
+        margin-bottom: 12px;
+        padding-left: 10px;
+    }
+    .nav-item {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        cursor: pointer;
+        user-select: none;
     }
-    
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--primary-accent);
+    .nav-item:hover {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.03);
     }
-    
-    .status-dot.emerald {
-        background: var(--secondary-accent);
+    .nav-item.is-active {
+        color: var(--text-main);
+        background: rgba(6, 182, 212, 0.1);
+        border-color: rgba(6, 182, 212, 0.2);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
     }
-    
-    .status-dot.offline {
-        background: var(--error-color);
+    .nav-item-icon {
+        font-size: 18px;
     }
-    
-    .page-header {
-        margin-bottom: 40px;
+    .nav-item-status {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
     }
-    
-    .page-title {
-        font-size: 28px;
+    .nav-item.is-active .nav-item-status {
+        background: rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+    }
+    .nav-item.is-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .nav-item.is-disabled:hover {
+        background: transparent;
+        color: var(--text-muted);
+    }
+
+    /* Right Content Panels */
+    .manager-content-pane {
+        display: none;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        flex-direction: column;
+        gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.3s ease;
+    }
+    .manager-content-pane.is-active {
+        display: flex;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed var(--glass-border);
+        padding-bottom: 18px;
+    }
+    .content-title {
+        font-size: 22px;
         font-weight: 700;
         color: #fff;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
-    
-    .page-subtitle {
+    .content-subtitle {
+        font-size: 13px;
         color: var(--text-muted);
-        font-size: 15px;
-        margin-top: 8px;
+        margin-top: 4px;
     }
+
+    /* Toolbar Row */
+    .toolbar-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        max-width: 600px;
+    }
+    .toolbar-search {
+        position: relative;
+        flex: 1;
+    }
+    .toolbar-search input {
+        width: 100%;
+        padding: 10px 14px 10px 36px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        font-size: 13px;
+        color: #fff;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .toolbar-search input:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    .toolbar-search::before {
+        content: '🔍';
+        position: absolute;
+        left: 12px;
+        top: 10px;
+        font-size: 13px;
+        opacity: 0.5;
+    }
+    .toolbar-select {
+        padding: 10px 14px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        font-size: 13px;
+        color: #fff;
+        outline: none;
+        cursor: pointer;
+        min-width: 140px;
+    }
+
+    /* Button components */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        color: #fff;
+        text-decoration: none;
+        user-select: none;
+    }
+    .btn-create {
+        background: var(--primary-accent);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+    }
+    .btn-create:hover {
+        background: #0891b2;
+        transform: translateY(-1px);
+    }
+    .btn-secondary-action {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: #e2e8f0;
+    }
+    .btn-secondary-action:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    .btn-secondary-action.loading svg {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* Table styles */
+    .table-container {
+        overflow-x: auto;
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.15);
+    }
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 13px;
+    }
+    .custom-table th {
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid var(--glass-border);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.5px;
+    }
+    .custom-table td {
+        padding: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+    .custom-table tr:last-child td {
+        border-bottom: none;
+    }
+    .custom-table tr:hover td {
+        background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Tag and Status indicators */
+    .keyword-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+        font-size: 11px;
+        font-weight: 600;
+        margin-right: 4px;
+        margin-bottom: 4px;
+    }
+    .match-mode-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 4px;
+    }
+
+    /* Switch toggle */
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 22px;
+        vertical-align: middle;
+    }
+    .switch-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider-round {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        transition: .3s;
+        border-radius: 34px;
+    }
+    .slider-round:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #64748b;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    .switch-toggle input:checked + .slider-round {
+        background-color: rgba(6, 182, 212, 0.2);
+        border-color: rgba(6, 182, 212, 0.4);
+    }
+    .switch-toggle input:checked + .slider-round:before {
+        transform: translateX(22px);
+        background-color: var(--primary-accent);
+    }
+
+    /* Action icons inside table */
+    .row-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-row-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-muted);
+        transition: all 0.15s;
+        text-decoration: none;
+    }
+    .btn-row-action:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .btn-row-action.edit-action:hover {
+        border-color: var(--primary-accent);
+        color: var(--primary-accent);
+        background: rgba(6, 182, 212, 0.05);
+    }
+    .btn-row-action.delete-action:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+    .btn-row-action.clone-action:hover {
+        border-color: #f59e0b;
+        color: #f59e0b;
+        background: rgba(245, 158, 11, 0.05);
+    }
+    .btn-row-action.export-action:hover {
+        border-color: #10b981;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .no-data-row {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 40px !important;
+        font-style: italic;
+    }
+
+    /* ───────── Templates Tab Styling ───────── */
+    .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px;
+    }
+    .template-card {
+        background: rgba(15, 23, 42, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: all 0.3s;
+    }
+    .template-card:hover {
+        background: rgba(15, 23, 42, 0.5);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+    .template-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .template-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+        word-break: break-all;
+    }
+    .template-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+    .badge {
+        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        white-space: nowrap;
+        flex-shrink: 0;
+        text-transform: uppercase;
+    }
+    .badge-approved  { background: rgba(16,185,129,0.15);  color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-pending   { background: rgba(234,179,8,0.15);   color: #f59e0b; border: 1px solid rgba(234,179,8,0.3); }
+    .badge-rejected  { background: rgba(239,68,68,0.15);   color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-disabled  { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+
+    .template-body {
+        font-size: 13px;
+        color: #cbd5e1;
+        background: rgba(0,0,0,0.2);
+        padding: 12px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        flex: 1;
+        border: 1px solid rgba(255,255,255,0.03);
+    }
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 40px;
+        color: var(--text-muted);
+        background: rgba(15, 23, 42, 0.3);
+        border-radius: 12px;
+        border: 1px dashed var(--glass-border);
+    }
+    .empty-state svg {
+        margin-bottom: 16px;
+        opacity: 0.4;
+        color: var(--primary-accent);
+    }
+    .empty-state h3 { color: #fff; margin: 0 0 8px; font-size: 18px; }
+
+    /* Modal Form styling */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(6px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+        background: #0b1329;
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        width: 95%;
+        max-width: 600px;
+        padding: 30px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    .modal-title { font-size: 20px; font-weight: 700; color: #fff; margin: 0; }
+    .modal-close {
+        background: rgba(255,255,255,0.08);
+        border: none;
+        color: #fff;
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.15); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+    }
+    .form-label span { color: var(--primary-accent); }
+    .form-control {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    textarea.form-control { resize: vertical; min-height: 100px; }
+    select.form-control option { background: #0b1329; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-hint { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .char-count { font-size: 11px; color: #64748b; text-align: right; margin-top: 4px; }
+
+    .var-hint {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+        align-items: center;
+    }
+    .var-chip {
+        background: rgba(6,182,212,0.1);
+        border: 1px solid rgba(6,182,212,0.3);
+        color: var(--primary-accent);
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+        font-weight: 700;
+    }
+    .var-chip:hover { background: rgba(6,182,212,0.2); }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--glass-border);
+    }
+    .btn-cancel {
+        background: rgba(255,255,255,0.06);
+        color: #ccc;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,0.12); }
+
+    /* Notice boxes inside modal */
+    .notice-box {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 20px;
+        display: none;
+    }
+    .notice-box.success { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #34d399; }
+    .notice-box.error   { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.4);  color: #f87171; }
+
+    /* Toast system */
+    .fb-toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #0f172a;
+        color: #ffffff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s, transform 0.25s;
+        z-index: 10000;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    .fb-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .fb-toast.is-success { border-left: 4px solid #10b981; }
+    .fb-toast.is-error { border-left: 4px solid #ef4444; }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="page-header">
-    <h1 class="page-title">Bot Manager</h1>
-    <p class="page-subtitle">Configure automated flows and message templates for WhatsApp Cloud API</p>
+<div class="manager-shell">
+    {# ───────── Left Sidebar Navigation ───────── #}
+    <div class="manager-nav">
+        <div class="nav-header">Bot settings</div>
+        
+        <div class="nav-item is-active" data-tab-target="bot-reply">
+            <span class="nav-item-icon">🤖</span>
+            <span>Bot Reply</span>
+            <span class="nav-item-status">Active</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="templates">
+            <span class="nav-item-icon">📋</span>
+            <span>Message Templates</span>
+        </div>
+
+        <div class="nav-item is-disabled" onclick="return false;">
+            <span class="nav-item-icon">⚡</span>
+            <span>AI Agent</span>
+            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+        </div>
+
+        <div class="nav-item is-disabled" onclick="return false;">
+            <span class="nav-item-icon">📣</span>
+            <span>Broadcast Campaign</span>
+            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+        </div>
+
+        <div class="nav-item is-disabled" onclick="return false;">
+            <span class="nav-item-icon">💬</span>
+            <span>Chat Widget</span>
+            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+        </div>
+
+        <div class="nav-item is-disabled" onclick="return false;">
+            <span class="nav-item-icon">⏱️</span>
+            <span>Sequence</span>
+            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+        </div>
+    </div>
+
+    {# ───────── Right Content Panels ───────── #}
+
+    {# 1. Bot Reply Settings Content Pane #}
+    <div class="manager-content-pane is-active" id="pane-bot-reply">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <span>Bot Reply Settings</span>
+                    <span style="font-size: 20px;">🤖</span>
+                </h1>
+                <div class="content-subtitle">Manage triggers, dynamic reply pipelines, and automated response actions.</div>
+            </div>
+            
+            <a href="{{ path('app_bot_flows', {id: 'new'}) }}" class="btn-action btn-create">
+                <span>➕ Create Flow</span>
+            </a>
+        </div>
+
+        {# Toolbar filters #}
+        <div class="toolbar-row">
+            <div class="toolbar-left">
+                <select class="toolbar-select">
+                    <option value="all">All Folders</option>
+                </select>
+                <div class="toolbar-search">
+                    <input type="text" id="flow-search" placeholder="Search flows...">
+                </div>
+            </div>
+        </div>
+
+        {# Table list of bot replies #}
+        <div class="table-container">
+            <table class="custom-table" id="flows-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th style="width: 140px;">Unique ID</th>
+                        <th>Reference Name</th>
+                        <th style="width: 240px;">Keywords</th>
+                        <th style="width: 130px;">Status</th>
+                        <th style="width: 180px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if flows is empty %}
+                        <tr>
+                            <td colspan="6" class="no-data-row">No data available in table</td>
+                        </tr>
+                    {% else %}
+                        {% for flow in flows %}
+                            <tr data-flow-id="{{ flow.id }}" class="flow-row">
+                                <td style="opacity: 0.6;">{{ loop.index }}</td>
+                                <td style="font-family: monospace; font-size: 12px; color: var(--primary-accent);">
+                                    OS-FLOW-{{ flow.id }}
+                                </td>
+                                <td>
+                                    <div style="font-weight: 700; font-size: 14px;">{{ flow.name }}</div>
+                                    <div class="match-mode-badge">{{ flow.matchMode }}</div>
+                                </td>
+                                <td>
+                                    {% if flow.getKeywordList() is empty %}
+                                        <span style="opacity: 0.5; font-style: italic;">None</span>
+                                    {% else %}
+                                        {% for kw in flow.getKeywordList() %}
+                                            <span class="keyword-tag">{{ kw }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <label class="switch-toggle" title="Toggle flow active state">
+                                        <input type="checkbox" {% if flow.isActive() %}checked{% endif %} onchange="toggleFlowStatus({{ flow.id }}, this.checked)">
+                                        <span class="slider-round"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <div class="row-actions" style="justify-content: flex-end;">
+                                        <a href="{{ path('app_bot_flows', {id: flow.id}) }}" class="btn-row-action edit-action" title="Edit flow">
+                                            ✏️
+                                        </a>
+                                        <button onclick="cloneFlow({{ flow.id }})" class="btn-row-action clone-action" title="Clone flow">
+                                            👥
+                                        </button>
+                                        <a href="{{ path('app_bot_flows_export', {id: flow.id}) }}" class="btn-row-action export-action" title="Export flow">
+                                            📥
+                                        </a>
+                                        <button onclick="deleteFlow({{ flow.id }})" class="btn-row-action delete-action" title="Delete flow">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# 2. Message Templates Content Pane #}
+    <div class="manager-content-pane" id="pane-templates">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <span>Message Templates</span>
+                    <span style="font-size: 20px;">📋</span>
+                </h1>
+                <div class="content-subtitle">Create and manage WhatsApp message templates. New templates require Meta review.</div>
+            </div>
+            
+            <div class="row-actions">
+                <button class="btn-action btn-secondary-action" id="syncBtn" onclick="syncTemplates()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    Sync Templates
+                </button>
+                <button class="btn-action btn-create" onclick="openTemplateModal()">
+                    <span>➕ Create Template</span>
+                </button>
+            </div>
+        </div>
+
+        {# Notice box for messages #}
+        <div class="notice-box" id="templates-notice"></div>
+
+        {# Grid showing all templates #}
+        <div class="templates-grid">
+            {% for template in templates %}
+                <div class="template-card">
+                    <div class="template-header">
+                        <div>
+                            <div class="template-name">{{ template.name }}</div>
+                            <div class="template-meta">{{ template.category|capitalize }} &bull; {{ template.language }}</div>
+                        </div>
+                        <span class="badge badge-{{ template.status|lower }}">{{ template.status }}</span>
+                    </div>
+                    
+                    {% set bodyText = '' %}
+                    {% set headerText = '' %}
+                    {% set footerText = '' %}
+                    {% for comp in template.components %}
+                        {% if comp.type == 'BODY' %}{% set bodyText = comp.text %}{% endif %}
+                        {% if comp.type == 'HEADER' and comp.format == 'TEXT' %}{% set headerText = comp.text %}{% endif %}
+                        {% if comp.type == 'FOOTER' %}{% set footerText = comp.text %}{% endif %}
+                    {% endfor %}
+                    
+                    {% if headerText %}
+                        <div style="font-size: 11px; color: var(--primary-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">{{ headerText }}</div>
+                    {% endif %}
+                    <div class="template-body">{{ bodyText ?: 'No body text' }}</div>
+                    {% if footerText %}
+                        <div style="font-size: 11px; color: #64748b; font-style: italic;">{{ footerText }}</div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <h3>No templates yet</h3>
+                    <p>Create a template above, or click "Sync Templates" to pull your approved templates from Meta.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 
-<div class="manager-grid">
-    <!-- Bot Reply (Flow Builder) -->
-    <a href="{{ path('app_bot_flows') }}" class="manager-card">
-        <div class="card-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>
+{# ───────── Create Template Modal Overlay ───────── #}
+<div class="modal-overlay" id="createTemplateModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 class="modal-title">Create Message Template</h2>
+            <button class="modal-close" onclick="closeTemplateModal()">&times;</button>
         </div>
-        <div class="card-content">
-            <div class="card-title">Bot Reply</div>
-            <div class="card-status">
-                <span class="status-dot"></span> Change Settings
-            </div>
-        </div>
-    </a>
 
-    <!-- Message Template -->
-    <a href="{{ path('app_bot_templates') }}" class="manager-card">
-        <div class="card-icon emerald">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 20px; font-size: 13px; color: #94a3b8; line-height: 1.4;">
+            <strong style="color: var(--primary-accent);">ℹ️ Note:</strong> Templates require Meta review before they can be used. UTILITY templates are typically approved within minutes.
         </div>
-        <div class="card-content">
-            <div class="card-title">Message Template</div>
-            <div class="card-status">
-                <span class="status-dot emerald"></span> Synced & Active
-            </div>
-        </div>
-    </a>
 
-    <!-- Add other dummy cards to simulate the screenshot -->
-    <a href="#" class="manager-card" style="opacity: 0.6; cursor: not-allowed;">
-        <div class="card-icon" style="color: #64748b; background: rgba(255,255,255,0.05);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
-        </div>
-        <div class="card-content">
-            <div class="card-title">Broadcast Campaign</div>
-            <div class="card-status">
-                <span class="status-dot offline"></span> Coming Soon
+        <div class="notice-box" id="modal-notice"></div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="tpl-name">Template Name <span>*</span></label>
+                <input type="text" id="tpl-name" class="form-control" placeholder="e.g. order_confirmation" oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+                <p class="form-hint">Lowercase letters, numbers, underscores only.</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="tpl-category">Category <span>*</span></label>
+                <select id="tpl-category" class="form-control">
+                    <option value="UTILITY">UTILITY</option>
+                    <option value="MARKETING">MARKETING</option>
+                    <option value="AUTHENTICATION">AUTHENTICATION</option>
+                </select>
             </div>
         </div>
-    </a>
+
+        <div class="form-group">
+            <label class="form-label" for="tpl-language">Language <span>*</span></label>
+            <select id="tpl-language" class="form-control">
+                <option value="en_US">English (US)</option>
+                <option value="en_GB">English (UK)</option>
+                <option value="ar">Arabic</option>
+                <option value="es">Spanish</option>
+                <option value="hi">Hindi</option>
+                <option value="bn">Bengali</option>
+                <option value="pt_BR">Portuguese (Brazil)</option>
+                <option value="fr">French</option>
+                <option value="id">Indonesian</option>
+                <option value="tr">Turkish</option>
+                <option value="zh_CN">Chinese (Simplified)</option>
+                <option value="ur">Urdu</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="tpl-header">Header <small style="font-weight:400; opacity: 0.6;">(optional)</small></label>
+            <input type="text" id="tpl-header" class="form-control" placeholder="e.g. Order Update" maxlength="60">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="tpl-body">Body Text <span>*</span></label>
+            <textarea id="tpl-body" class="form-control" placeholder="Type your message here. Use {{1}}, {{2}} for variables." maxlength="1024" oninput="updateCount()"></textarea>
+            <div class="char-count"><span id="bodyCount">0</span> / 1024</div>
+            <div class="var-hint">
+                <span style="font-size: 12px; color: #64748b; margin-right: 4px;">Insert variable:</span>
+                <span class="var-chip" onclick="insertVar('{{1}}')">{{1}}</span>
+                <span class="var-chip" onclick="insertVar('{{2}}')">{{2}}</span>
+                <span class="var-chip" onclick="insertVar('{{3}}')">{{3}}</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="tpl-footer">Footer <small style="font-weight:400; opacity: 0.6;">(optional)</small></label>
+            <input type="text" id="tpl-footer" class="form-control" placeholder="e.g. Reply STOP to unsubscribe" maxlength="60">
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeTemplateModal()">Cancel</button>
+            <button class="btn-action btn-create" id="submitBtn" onclick="submitTemplate()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                Submit to Meta
+            </button>
+        </div>
+    </div>
 </div>
+
+<div class="fb-toast" id="fb-toast"></div>
+
+<script>
+    // ───────── Tab Switcher Logic ─────────
+    function switchTab(tabId) {
+        // Toggle Nav Items
+        document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
+            if (el.getAttribute('data-tab-target') === tabId) {
+                el.classList.add('is-active');
+            } else {
+                el.classList.remove('is-active');
+            }
+        });
+
+        // Toggle Content Panes
+        document.querySelectorAll('.manager-content-pane').forEach(el => {
+            if (el.id === 'pane-' + tabId) {
+                el.classList.add('is-active');
+            } else {
+                el.classList.remove('is-active');
+            }
+        });
+
+        // Save selection to URL params
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabId);
+        window.history.replaceState({}, '', url);
+    }
+
+    // Set active tab on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
+        if (tab === 'templates') {
+            switchTab('templates');
+        } else {
+            switchTab('bot-reply');
+        }
+    });
+
+    // Wire click listeners
+    document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
+        el.addEventListener('click', () => {
+            switchTab(el.getAttribute('data-tab-target'));
+        });
+    });
+
+
+    // ───────── Bot Reply Logic ─────────
+    function showToast(msg, kind) {
+        const t = document.getElementById('fb-toast');
+        t.textContent = msg;
+        t.className = 'fb-toast is-shown ' + (kind ? 'is-' + kind : '');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => { t.className = 'fb-toast'; }, 2400);
+    }
+
+    function toggleFlowStatus(id, active) {
+        fetch(`/admin/bot-manager/flows/${id}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isActive: active })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(active ? 'Flow enabled successfully.' : 'Flow disabled successfully.', 'success');
+            } else {
+                showToast('Failed to toggle status: ' + (data.error || 'Unknown error'), 'error');
+                const checkbox = document.querySelector(`.flow-row[data-flow-id="${id}"] .switch-toggle input`);
+                if (checkbox) checkbox.checked = !active;
+            }
+        })
+        .catch(err => {
+            showToast('Toggle error: ' + err.message, 'error');
+            const checkbox = document.querySelector(`.flow-row[data-flow-id="${id}"] .switch-toggle input`);
+            if (checkbox) checkbox.checked = !active;
+        });
+    }
+
+    function cloneFlow(id) {
+        if (!confirm('Are you sure you want to clone this flow?')) return;
+        
+        fetch(`/admin/bot-manager/flows/${id}/clone`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Flow cloned successfully!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Clone failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Clone error: ' + err.message, 'error'));
+    }
+
+    function deleteFlow(id) {
+        if (!confirm('Are you sure you want to delete this flow? This action is irreversible.')) return;
+        
+        fetch(`/admin/bot-manager/flows/${id}/delete`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Flow deleted successfully!', 'success');
+                const row = document.querySelector(`.flow-row[data-flow-id="${id}"]`);
+                if (row) {
+                    row.remove();
+                    const remaining = document.querySelectorAll('.flow-row');
+                    if (remaining.length === 0) {
+                        window.location.reload();
+                    }
+                }
+            } else {
+                showToast('Delete failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Delete error: ' + err.message, 'error'));
+    }
+
+    // Search filter interaction
+    document.getElementById('flow-search').oninput = (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        document.querySelectorAll('.flow-row').forEach(row => {
+            const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+            const keywords = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+            if (name.includes(q) || keywords.includes(q)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    };
+
+
+    // ───────── Message Templates Logic ─────────
+    function openTemplateModal() {
+        document.getElementById('createTemplateModal').classList.add('open');
+    }
+    function closeTemplateModal() {
+        document.getElementById('createTemplateModal').classList.remove('open');
+        document.getElementById('modal-notice').style.display = 'none';
+    }
+
+    function updateCount() {
+        const val = document.getElementById('tpl-body').value;
+        document.getElementById('bodyCount').textContent = val.length;
+    }
+
+    function insertVar(variable) {
+        const ta = document.getElementById('tpl-body');
+        const start = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, start) + variable + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + variable.length;
+        ta.focus();
+        updateCount();
+    }
+
+    function showNotice(pane, type, msg) {
+        const el = document.getElementById(pane + '-notice');
+        el.className = 'notice-box ' + type;
+        el.textContent = msg;
+        el.style.display = 'block';
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function submitTemplate() {
+        const name     = document.getElementById('tpl-name').value.trim();
+        const category = document.getElementById('tpl-category').value;
+        const language = document.getElementById('tpl-language').value;
+        const header   = document.getElementById('tpl-header').value.trim();
+        const body     = document.getElementById('tpl-body').value.trim();
+        const footer   = document.getElementById('tpl-footer').value.trim();
+
+        if (!name || !body) {
+            showNotice('modal', 'error', 'Template name and body text are required.');
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<svg style="animation:spin 1s linear infinite; margin-right: 6px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> Submitting...';
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('category', category);
+        formData.append('language', language);
+        formData.append('header', header);
+        formData.append('body', body);
+        formData.append('footer', footer);
+
+        fetch('{{ path('app_bot_templates_create') }}', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    closeTemplateModal();
+                    showNotice('templates', 'success', data.message + ' Refreshing list in 2 seconds...');
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showNotice('modal', 'error', 'Error: ' + data.error);
+                }
+            })
+            .catch(() => showNotice('modal', 'error', 'An unexpected error occurred.'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Submit to Meta';
+            });
+    }
+
+    function syncTemplates() {
+        const btn = document.getElementById('syncBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        fetch('{{ path('app_bot_templates_sync') }}', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showNotice('templates', 'success', data.message);
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotice('templates', 'error', 'Sync failed: ' + data.error);
+                }
+            })
+            .catch(() => showNotice('templates', 'error', 'An error occurred during sync.'))
+            .finally(() => {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            });
+    }
+
+    // Close modal on overlay click
+    document.getElementById('createTemplateModal').addEventListener('click', function(e) {
+        if (e.target === this) closeTemplateModal();
+    });
+</script>
 {% endblock %}
