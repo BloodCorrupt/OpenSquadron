@@ -58,12 +58,14 @@ CREATE TABLE IF NOT EXISTS `bot_flow` (
 -- ───── Subscribers ─────
 CREATE TABLE IF NOT EXISTS `subscriber` (
     id INT AUTO_INCREMENT NOT NULL,
+    whats_app_connection_id INT DEFAULT NULL,
     phone_number VARCHAR(50) NOT NULL,
     name VARCHAR(255) DEFAULT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'active',
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
-    UNIQUE INDEX UNIQ_AD005B696B01BC5B (phone_number),
+    INDEX IDX_AD005B696381BF43 (whats_app_connection_id),
+    UNIQUE INDEX uniq_subscriber_phone_connection (phone_number, whats_app_connection_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
@@ -138,6 +140,9 @@ ALTER TABLE `bot_flow`
 ALTER TABLE `message_template`
     ADD CONSTRAINT FK_9E46DB92C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
+ALTER TABLE `subscriber`
+    ADD CONSTRAINT FK_AD005B696381BF43 FOREIGN KEY (whats_app_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
+
 -- ───── Seed: Default Admin User ─────
 -- Password: "admin" (bcrypt hash — change immediately after first login)
 INSERT INTO `admin` (email, roles, password) VALUES
@@ -146,5 +151,15 @@ INSERT INTO `admin` (email, roles, password) VALUES
 -- ───── Seed: Default AI Setting Row ─────
 INSERT INTO `ai_setting` (provider, is_active, created_at) VALUES
     ('openai', 0, NOW());
+
+-- ───── Seed: Migration Versions ─────
+INSERT INTO `doctrine_migration_versions` (version, executed_at, execution_time) VALUES
+    ('DoctrineMigrations\\Version20260518173921', NOW(), 11),
+    ('DoctrineMigrations\\Version20260518175227', NOW(), 14),
+    ('DoctrineMigrations\\Version20260519034232', NOW(), 52),
+    ('DoctrineMigrations\\Version20260520071518', NOW(), 153),
+    ('DoctrineMigrations\\Version20260520090507', NOW(), 15),
+    ('DoctrineMigrations\\Version20260520091945', NOW(), 97),
+    ('DoctrineMigrations\\Version20260520093159', NOW(), 82);
 
 SET FOREIGN_KEY_CHECKS = 1;

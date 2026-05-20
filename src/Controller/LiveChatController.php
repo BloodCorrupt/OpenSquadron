@@ -103,12 +103,12 @@ class LiveChatController extends AbstractController
                     $msg->setMediaUrl($mediaUrl);
                     $msg->setContent($content);
                     
-                    $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $type, $absoluteUrl);
+                    $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $type, $absoluteUrl, $subscriber->getWhatsAppConnection());
                     $metaMessageId = $response['messages'][0]['id'] ?? null;
                 }
             } else {
                 // Normal text message
-                $response = $whatsappService->sendMessage($subscriber->getPhoneNumber(), $content);
+                $response = $whatsappService->sendMessage($subscriber->getPhoneNumber(), $content, $subscriber->getWhatsAppConnection());
                 $metaMessageId = $response['messages'][0]['id'] ?? null;
                 $msg->setType('text');
                 $msg->setContent($content);
@@ -156,7 +156,7 @@ class LiveChatController extends AbstractController
         }
 
         try {
-            $response = $whatsappService->sendTemplateMessage($subscriber->getPhoneNumber(), $templateName, $languageCode);
+            $response = $whatsappService->sendTemplateMessage($subscriber->getPhoneNumber(), $templateName, $languageCode, $subscriber->getWhatsAppConnection());
 
             $msg = new Message();
             $msg->setSubscriber($subscriber);

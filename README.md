@@ -37,12 +37,43 @@ To easily host this on XAMPP using a local domain (`opensquadron.local`):
 
 ## 3. Database & Admin Initialization
 
-Once MySQL is running in XAMPP, create the database, run the schema migrations, and create your Admin account:
-```bash
-C:\xampp\php\php.exe bin/console doctrine:database:create
-C:\xampp\php\php.exe bin/console doctrine:migrations:migrate
-C:\xampp\php\php.exe bin/console app:create-admin admin@example.com password123
-```
+Choose **one** of the following methods to initialize your database:
+
+### Option A: Clean Import from Skeleton (Recommended)
+This imports the complete up-to-date schema, seeds the initial tables, and marks the Doctrine migrations history as complete in a single step.
+
+1. **Create the database** (e.g. via phpMyAdmin or MySQL CLI):
+   ```sql
+   CREATE DATABASE IF NOT EXISTS `opensquadron` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+2. **Import the skeleton schema and seed data**:
+   ```bash
+   mysql -u root -p opensquadron < skeleton.sql
+   ```
+   *(Note: If you are using XAMPP's default settings, your user is `root` and has no password, so you can omit `-p` or simply press enter when prompted)*.
+
+3. **Login Details**:
+   The default admin credentials seeded in the skeleton database are:
+   - **Email:** `admin@opensquadron.local`
+   - **Password:** `admin123` *(change immediately after first login)*
+
+---
+
+### Option B: Build Schema via Doctrine Migrations
+If you want to build the database step-by-step from code mappings and create a custom admin user:
+
+1. **Create the database**:
+   ```bash
+   C:\xampp\php\php.exe bin/console doctrine:database:create
+   ```
+2. **Execute migrations**:
+   ```bash
+   C:\xampp\php\php.exe bin/console doctrine:migrations:migrate
+   ```
+3. **Create your admin account**:
+   ```bash
+   C:\xampp\php\php.exe bin/console app:create-admin admin@example.com password123
+   ```
 
 ## 4. Setting up the Cloudflare Tunnel
 

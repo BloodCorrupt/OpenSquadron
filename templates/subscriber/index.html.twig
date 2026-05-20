@@ -1,0 +1,811 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Subscribers - OpenSquadron{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Two-column layout */
+    .manager-shell {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 30px;
+        margin-top: 20px;
+        min-height: calc(100vh - 180px);
+    }
+
+    /* Left Nav Sidebar Panel */
+    .manager-nav {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        height: fit-content;
+    }
+    .nav-header {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.6px;
+        margin-bottom: 5px;
+        padding-left: 10px;
+    }
+    
+    /* Stats Card */
+    .stats-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+    }
+    .stat-label {
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .stat-value {
+        font-weight: 700;
+        color: #fff;
+    }
+
+    /* Right Content Pane */
+    .manager-content-pane {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 20px;
+    }
+    .content-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 6px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .content-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    /* Buttons */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-create {
+        background: linear-gradient(135deg, var(--primary-accent), #0891b2);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+    }
+    .btn-create:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+    }
+
+    /* Toolbar Filter Row */
+    .toolbar-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-grow: 1;
+        max-width: 600px;
+    }
+    .toolbar-select {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--glass-border);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        height: 38px;
+        outline: none;
+    }
+    .toolbar-search {
+        position: relative;
+        flex-grow: 1;
+    }
+    .toolbar-search input {
+        width: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--glass-border);
+        color: #fff;
+        padding: 8px 16px 8px 36px;
+        border-radius: 8px;
+        font-size: 13px;
+        height: 38px;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+    }
+    .toolbar-search input:focus {
+        border-color: var(--primary-accent);
+    }
+    .toolbar-search::before {
+        content: '🔍';
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        opacity: 0.5;
+    }
+
+    /* Tables */
+    .table-container {
+        background: rgba(15, 23, 42, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 13px;
+    }
+    .custom-table th {
+        background: rgba(15, 23, 42, 0.6);
+        padding: 14px 20px;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--glass-border);
+    }
+    .custom-table td {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--glass-border);
+        vertical-align: middle;
+    }
+    .custom-table tr:last-child td {
+        border-bottom: none;
+    }
+    .custom-table tr:hover td {
+        background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Badges & Toggles */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .status-unsubscribed {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .phone-number-cell {
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--primary-accent);
+        font-weight: 500;
+    }
+    .no-data-row {
+        text-align: center;
+        padding: 40px !important;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    /* Action Buttons in Rows */
+    .row-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .btn-row-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-size: 12px;
+    }
+    .btn-row-action:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+    }
+    .btn-row-action.edit-action:hover {
+        color: var(--primary-accent);
+        border-color: rgba(6, 182, 212, 0.4);
+        background: rgba(6, 182, 212, 0.05);
+    }
+    .btn-row-action.chat-action:hover {
+        color: var(--secondary-accent);
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(16, 185, 129, 0.05);
+    }
+    .btn-row-action.delete-action:hover {
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    /* Switch toggle */
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 38px;
+        height: 20px;
+    }
+    .switch-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider-round {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .3s;
+        border-radius: 20px;
+        border: 1px solid var(--glass-border);
+    }
+    .slider-round:before {
+        position: absolute;
+        content: "";
+        height: 12px;
+        width: 12px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    input:checked + .slider-round {
+        background-color: var(--secondary-accent);
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+    input:checked + .slider-round:before {
+        transform: translateX(18px);
+    }
+
+    /* Modal dialog */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(8px);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.is-active {
+        display: flex;
+    }
+    .modal-card {
+        background: #1e293b;
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 480px;
+        padding: 30px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        position: relative;
+        animation: modalFadeIn 0.25s ease;
+    }
+    @keyframes modalFadeIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+        font-size: 18px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-close {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 20px;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .modal-close:hover {
+        color: #fff;
+    }
+    .notice-box {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 15px;
+        display: none;
+    }
+    .notice-box.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #fecaca;
+    }
+    .notice-box.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #a7f3d0;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="manager-shell">
+    {# ───────── Left Sidebar ───────── #}
+    <div class="manager-nav">
+        <div>
+            <div class="nav-header">WhatsApp Account</div>
+            <div style="padding: 0 10px;">
+                <select id="whatsapp-conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
+                    {% if connections is empty %}
+                        <option value="">No Accounts Connected</option>
+                    {% else %}
+                        {% for conn in connections %}
+                            <option value="{{ conn.id }}" {% if connection and connection.id == conn.id %}selected{% endif %}>
+                                {{ conn.label ?: conn.phoneNumber ?: 'Unnamed Connection (' ~ conn.id ~ ')' }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+
+        {% if connection %}
+            <div>
+                <div class="nav-header">Account Details</div>
+                <div style="font-size: 12px; color: var(--text-muted); padding: 0 10px; display: flex; flex-direction: column; gap: 6px;">
+                    <div><strong>Label:</strong> {{ connection.label ?: 'N/A' }}</div>
+                    <div><strong>Phone:</strong> {{ connection.phoneNumber ?: 'N/A' }}</div>
+                    <div><strong>Phone ID:</strong> {{ connection.phoneNumberId ?: 'N/A' }}</div>
+                </div>
+            </div>
+
+            {% set total = subscribers|length %}
+            {% set active_count = 0 %}
+            {% for s in subscribers %}
+                {% if s.status == 'active' %}
+                    {% set active_count = active_count + 1 %}
+                {% endif %}
+            {% endfor %}
+            {% set unsub_count = total - active_count %}
+
+            <div>
+                <div class="nav-header">Channel Statistics</div>
+                <div class="stats-card">
+                    <div class="stat-row">
+                        <div class="stat-label">👥 Total Subscribers</div>
+                        <div class="stat-value">{{ total }}</div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label"><span style="color:#10b981;">●</span> Opted-In</div>
+                        <div class="stat-value">{{ active_count }}</div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label"><span style="color:#ef4444;">●</span> Unsubscribed</div>
+                        <div class="stat-value">{{ unsub_count }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    {# ───────── Right Content ───────── #}
+    <div class="manager-content-pane">
+        {% if not connection %}
+            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                <h2>No WhatsApp Account Selected</h2>
+                <p>Please connect a WhatsApp Business Account first to manage subscribers.</p>
+                <a href="{{ path('whatsapp_connect_show') }}" class="btn btn-primary" style="text-decoration:none; display:inline-block; margin-top:15px;">Connect Account</a>
+            </div>
+        {% else %}
+            <div class="content-header">
+                <div>
+                    <h1 class="content-title">
+                        <span>Subscriber Manager</span>
+                        <span style="font-size: 20px;">👥</span>
+                    </h1>
+                    <div class="content-subtitle">Manage users connected to <strong>{{ connection.label ?: connection.phoneNumber }}</strong>.</div>
+                </div>
+                
+                <button onclick="openCreateModal()" class="btn-action btn-create">
+                    <span>➕ Add Subscriber</span>
+                </button>
+            </div>
+
+            {# Filters Toolbar #}
+            <div class="toolbar-row">
+                <div class="toolbar-left">
+                    <select class="toolbar-select" id="status-filter" onchange="applyFilters()">
+                        <option value="all" {% if status == 'all' %}selected{% endif %}>All Statuses</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active (Opted-in)</option>
+                        <option value="unsubscribed" {% if status == 'unsubscribed' %}selected{% endif %}>Unsubscribed</option>
+                    </select>
+                    
+                    <div class="toolbar-search">
+                        <input type="text" id="subscriber-search" placeholder="Search by name or phone number..." value="{{ search }}" onkeyup="handleSearchKey(event)">
+                    </div>
+                    
+                    <button onclick="applyFilters()" class="btn-action" style="background: rgba(255, 255, 255, 0.05); color: #fff; height: 38px;">
+                        Filter
+                    </button>
+                    {% if search != '' or status != 'all' %}
+                        <button onclick="clearFilters()" class="btn-action" style="background: rgba(239, 68, 68, 0.1); color: #fecaca; height: 38px;">
+                            Clear
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Subscriber Table #}
+            <div class="table-container">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th>Profile Name</th>
+                            <th>Phone Number</th>
+                            <th style="width: 140px;">Opt-In status</th>
+                            <th style="width: 180px;">Joined Date</th>
+                            <th style="width: 150px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if subscribers is empty %}
+                            <tr>
+                                <td colspan="6" class="no-data-row">No subscribers found matching criteria.</td>
+                            </tr>
+                        {% else %}
+                            {% for sub in subscribers %}
+                                <tr data-id="{{ sub.id }}">
+                                    <td style="opacity: 0.6;">{{ loop.index }}</td>
+                                    <td>
+                                        <div style="font-weight: 700; font-size: 14px;">{{ sub.name ?: 'Guest User' }}</div>
+                                    </td>
+                                    <td class="phone-number-cell">
+                                        {{ sub.phoneNumber }}
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <label class="switch-toggle" title="Toggle active status">
+                                                <input type="checkbox" {% if sub.status == 'active' %}checked{% endif %} onchange="toggleSubscriberStatus({{ sub.id }}, this.checked)">
+                                                <span class="slider-round"></span>
+                                            </label>
+                                            <span class="status-badge {% if sub.status == 'active' %}status-active{% else %}status-unsubscribed{% endif %}">
+                                                {{ sub.status }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td style="opacity: 0.8;">
+                                        {{ sub.createdAt|date('d M Y H:i') }}
+                                    </td>
+                                    <td>
+                                        <div class="row-actions" style="justify-content: flex-end;">
+                                            <button onclick="openEditModal({{ sub.id }}, '{{ sub.name|escape('js') }}', '{{ sub.phoneNumber|escape('js') }}', '{{ sub.status|escape('js') }}')" class="btn-row-action edit-action" title="Edit details">
+                                                ✏️
+                                            </button>
+                                            <a href="{{ path('app_inbox_chat', {id: sub.id}) }}" class="btn-row-action chat-action" title="Live chat">
+                                                💬
+                                            </a>
+                                            <button onclick="deleteSubscriber({{ sub.id }})" class="btn-row-action delete-action" title="Delete subscriber">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ───────── Modals ───────── #}
+{% if connection %}
+<div class="modal-overlay" id="subscriber-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span id="modal-title">Create Subscriber</span>
+            <button onclick="closeModal()" class="modal-close">&times;</button>
+        </div>
+        
+        <div class="notice-box error" id="modal-error"></div>
+
+        <form id="subscriber-form" onsubmit="saveSubscriber(event)">
+            <input type="hidden" id="sub-id" name="id">
+            
+            <div class="form-group">
+                <label for="sub-phone">Phone Number (with country code)*</label>
+                <input type="text" id="sub-phone" class="form-control" placeholder="e.g. +14155552671" required>
+                <small style="color:var(--text-muted); font-size:11px; margin-top:5px; display:block;">Include leading country code digits. Only numbers and + symbol are allowed.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="sub-name">Profile Name (Optional)</label>
+                <input type="text" id="sub-name" class="form-control" placeholder="e.g. John Doe">
+            </div>
+
+            <div class="form-group">
+                <label for="sub-status">Opt-In Status</label>
+                <select id="sub-status" class="form-control">
+                    <option value="active">Active (Opted-in)</option>
+                    <option value="unsubscribed">Unsubscribed</option>
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;">
+                <button type="button" onclick="closeModal()" class="btn-action" style="background:rgba(255,255,255,0.05); color:#fff;">Cancel</button>
+                <button type="submit" id="btn-modal-submit" class="btn-action btn-create">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    function changeConnection(connectionId) {
+        const url = new URL(window.location);
+        url.searchParams.set('connectionId', connectionId);
+        // Clear search and status when changing connection
+        url.searchParams.delete('search');
+        url.searchParams.delete('status');
+        window.location.href = url.toString();
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('subscriber-search').value.trim();
+        const status = document.getElementById('status-filter').value;
+        const url = new URL(window.location);
+        
+        if (search) {
+            url.searchParams.set('search', search);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        if (status && status !== 'all') {
+            url.searchParams.set('status', status);
+        } else {
+            url.searchParams.delete('status');
+        }
+        
+        window.location.href = url.toString();
+    }
+
+    function clearFilters() {
+        const url = new URL(window.location);
+        url.searchParams.delete('search');
+        url.searchParams.delete('status');
+        window.location.href = url.toString();
+    }
+
+    function handleSearchKey(event) {
+        if (event.key === 'Enter') {
+            applyFilters();
+        }
+    }
+
+    // Modal Operations
+    function openCreateModal() {
+        document.getElementById('modal-title').textContent = 'Create Subscriber';
+        document.getElementById('sub-id').value = '';
+        document.getElementById('sub-phone').value = '';
+        document.getElementById('sub-phone').readOnly = false;
+        document.getElementById('sub-name').value = '';
+        document.getElementById('sub-status').value = 'active';
+        hideModalError();
+        
+        document.getElementById('subscriber-modal').classList.add('is-active');
+    }
+
+    function openEditModal(id, name, phone, status) {
+        document.getElementById('modal-title').textContent = 'Edit Subscriber';
+        document.getElementById('sub-id').value = id;
+        document.getElementById('sub-phone').value = phone;
+        document.getElementById('sub-phone').readOnly = true; // Lock phone number on edit
+        document.getElementById('sub-name').value = name === 'Guest User' ? '' : name;
+        document.getElementById('sub-status').value = status;
+        hideModalError();
+        
+        document.getElementById('subscriber-modal').classList.add('is-active');
+    }
+
+    function closeModal() {
+        document.getElementById('subscriber-modal').classList.remove('is-active');
+    }
+
+    function showModalError(msg) {
+        const errBox = document.getElementById('modal-error');
+        errBox.textContent = msg;
+        errBox.style.display = 'block';
+    }
+
+    function hideModalError() {
+        document.getElementById('modal-error').style.display = 'none';
+    }
+
+    // Save Action
+    function saveSubscriber(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('sub-id').value;
+        const phone = document.getElementById('sub-phone').value.trim();
+        const name = document.getElementById('sub-name').value.trim();
+        const status = document.getElementById('sub-status').value;
+        const connectionId = '{{ connection ? connection.id : "" }}';
+
+        if (!phone) {
+            showModalError('Phone number is required.');
+            return;
+        }
+
+        const submitBtn = document.getElementById('btn-modal-submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+
+        const formData = new FormData();
+        if (id) formData.append('id', id);
+        formData.append('phoneNumber', phone);
+        formData.append('name', name);
+        formData.append('status', status);
+        formData.append('connectionId', connectionId);
+
+        fetch('{{ path('app_subscribers_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                showModalError(data.error || 'Failed to save subscriber details.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save';
+            }
+        })
+        .catch(() => {
+            showModalError('An unexpected server error occurred.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save';
+        });
+    }
+
+    // Quick Status Toggle
+    function toggleSubscriberStatus(id, checked) {
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('isActive', checked ? 'true' : 'false');
+
+        fetch('{{ path('app_subscribers_toggle_status') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Find row and update the status badge
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) {
+                    const badge = row.querySelector('.status-badge');
+                    if (badge) {
+                        badge.className = 'status-badge ' + (checked ? 'status-active' : 'status-unsubscribed');
+                        badge.textContent = checked ? 'active' : 'unsubscribed';
+                    }
+                }
+            } else {
+                alert('Failed to update subscriber status: ' + (data.error || 'unknown error'));
+                window.location.reload();
+            }
+        })
+        .catch(() => {
+            alert('A network error occurred.');
+            window.location.reload();
+        });
+    }
+
+    // Delete Action
+    function deleteSubscriber(id) {
+        if (!confirm('Are you sure you want to permanently delete this subscriber and their message logs?')) {
+            return;
+        }
+
+        fetch(`/admin/subscribers/delete/${id}`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Smoothly remove from UI
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) {
+                    row.style.transition = 'all 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => {
+                        row.remove();
+                        // If no rows left, reload to show empty state
+                        if (document.querySelectorAll('tbody tr').length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
+            } else {
+                alert('Failed to delete subscriber: ' + (data.error || 'unknown error'));
+            }
+        })
+        .catch(() => {
+            alert('A connection error occurred.');
+        });
+    }
+</script>
+{% endblock %}

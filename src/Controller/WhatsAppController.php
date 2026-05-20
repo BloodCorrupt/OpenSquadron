@@ -124,10 +124,14 @@ class WhatsAppController extends AbstractController
                         $metaMessageId = $message['id'] ?? null;
 
                         if ($msgBody !== '' || $mediaUrl !== null) {
-                            $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy(['phoneNumber' => $from]);
+                            $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
+                                'phoneNumber' => $from,
+                                'whatsAppConnection' => $resolvedConnection
+                            ]);
                             if (!$subscriber) {
                                 $subscriber = new Subscriber();
                                 $subscriber->setPhoneNumber($from);
+                                $subscriber->setWhatsAppConnection($resolvedConnection);
                                 
                                 $name = $entry['changes'][0]['value']['contacts'][0]['profile']['name'] ?? null;
                                 if ($name) {

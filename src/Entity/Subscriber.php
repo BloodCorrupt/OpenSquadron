@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SubscriberRepository::class)]
+#[ORM\UniqueConstraint(name: "uniq_subscriber_phone_connection", columns: ["phone_number", "whats_app_connection_id"])]
 class Subscriber
 {
     #[ORM\Id]
@@ -16,8 +17,12 @@ class Subscriber
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 50, unique: true)]
+    #[ORM\Column(length: 50)]
     private ?string $phoneNumber = null;
+
+    #[ORM\ManyToOne(targetEntity: WhatsAppConnection::class)]
+    #[ORM\JoinColumn(name: "whats_app_connection_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?WhatsAppConnection $whatsAppConnection = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $name = null;
@@ -128,6 +133,17 @@ class Subscriber
             }
         }
 
+        return $this;
+    }
+
+    public function getWhatsAppConnection(): ?WhatsAppConnection
+    {
+        return $this->whatsAppConnection;
+    }
+
+    public function setWhatsAppConnection(?WhatsAppConnection $whatsAppConnection): static
+    {
+        $this->whatsAppConnection = $whatsAppConnection;
         return $this;
     }
 }
