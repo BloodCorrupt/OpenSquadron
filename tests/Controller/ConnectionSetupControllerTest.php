@@ -53,13 +53,14 @@ class ConnectionSetupControllerTest extends WebTestCase
 
         $client->request('POST', '/admin/whatsapp/connect', [
             'businessAccountId' => '',
-            'accessToken' => ''
+            'accessToken' => '',
+            'phoneNumberId' => ''
         ]);
 
         $this->assertResponseRedirects('/admin/whatsapp/connect');
         $client->followRedirect();
         // the class alert-error from base.html.twig will contain the text
-        $this->assertSelectorTextContains('.alert-error', 'Business Account ID and Access Token are required.');
+        $this->assertSelectorTextContains('.alert-error', 'Business Account ID, Access Token, and Phone Number ID are required.');
     }
 
     public function testMetaApiErrorDisplaysMessage(): void
@@ -69,7 +70,8 @@ class ConnectionSetupControllerTest extends WebTestCase
         
         $client->request('POST', '/admin/whatsapp/connect', [
             'businessAccountId' => 'invalid_business_id',
-            'accessToken' => 'invalid_token'
+            'accessToken' => 'invalid_token',
+            'phoneNumberId' => '987654321'
         ]);
 
         $this->assertResponseRedirects('/admin/whatsapp/connect');

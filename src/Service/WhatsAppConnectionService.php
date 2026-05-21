@@ -80,13 +80,16 @@ class WhatsAppConnectionService
     public function saveConnection(
         string $businessAccountId,
         string $plainAccessToken,
-        ?string $phoneNumberId = null,
+        string $phoneNumberId,
         ?string $label = null,
         ?string $phoneNumber = null,
         ?int $existingId = null
     ): WhatsAppConnection {
         if (empty($businessAccountId) || empty($plainAccessToken)) {
             throw new \InvalidArgumentException('Business Account ID and Access Token are required.');
+        }
+        if (empty($phoneNumberId)) {
+            throw new \InvalidArgumentException('Phone Number ID is required.');
         }
 
         $connection = $existingId
@@ -99,10 +102,8 @@ class WhatsAppConnectionService
 
         $connection->setBusinessAccountId($businessAccountId);
         $connection->setEncryptedAccessToken($this->encryptToken($plainAccessToken));
+        $connection->setPhoneNumberId($phoneNumberId);
 
-        if ($phoneNumberId !== null) {
-            $connection->setPhoneNumberId($phoneNumberId);
-        }
         if ($label !== null) {
             $connection->setLabel($label);
         }
@@ -133,10 +134,14 @@ class WhatsAppConnectionService
         int $id,
         string $businessAccountId,
         ?string $plainAccessToken,
-        ?string $phoneNumberId,
+        string $phoneNumberId,
         ?string $label,
         ?string $phoneNumber
     ): ?WhatsAppConnection {
+        if (empty($phoneNumberId)) {
+            throw new \InvalidArgumentException('Phone Number ID is required.');
+        }
+
         $connection = $this->getConnectionById($id);
         if (!$connection) {
             return null;
@@ -147,9 +152,8 @@ class WhatsAppConnectionService
         if ($plainAccessToken !== null && $plainAccessToken !== '') {
             $connection->setEncryptedAccessToken($this->encryptToken($plainAccessToken));
         }
-        if ($phoneNumberId !== null) {
-            $connection->setPhoneNumberId($phoneNumberId);
-        }
+        $connection->setPhoneNumberId($phoneNumberId);
+
         if ($label !== null) {
             $connection->setLabel($label);
         }

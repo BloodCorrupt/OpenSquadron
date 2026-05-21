@@ -26,7 +26,7 @@ class WhatsAppConnection implements TenantAwareInterface
     #[ORM\Column(length: 255)]
     private ?string $businessAccountId = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 255)]
     private ?string $phoneNumberId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -91,7 +91,7 @@ class WhatsAppConnection implements TenantAwareInterface
         return $this->phoneNumberId;
     }
 
-    public function setPhoneNumberId(?string $phoneNumberId): static
+    public function setPhoneNumberId(string $phoneNumberId): static
     {
         $this->phoneNumberId = $phoneNumberId;
 

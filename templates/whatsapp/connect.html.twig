@@ -447,9 +447,9 @@
             </div>
 
             <div class="form-group">
-                <label>Phone Number ID</label>
+                <label>Phone Number ID <span style="color: var(--primary-accent);">*</span></label>
                 <input type="text" name="phoneNumberId" class="form-control"
-                       value="{{ editConnection is defined and editConnection ? editConnection.phoneNumberId : '' }}" placeholder="Enter your WhatsApp Phone Number ID..." autocomplete="new-password">
+                       value="{{ editConnection is defined and editConnection ? editConnection.phoneNumberId : '' }}" placeholder="Enter your WhatsApp Phone Number ID..." required autocomplete="new-password">
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">

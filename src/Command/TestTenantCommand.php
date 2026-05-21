@@ -76,6 +76,7 @@ class TestTenantCommand extends Command
         // Create a connection (implementing TenantAwareInterface)
         $conn = new WhatsAppConnection();
         $conn->setBusinessAccountId('1234567890');
+        $conn->setPhoneNumberId('1141198275740552');
         $conn->setEncryptedAccessToken('abcxyz');
         $conn->setVerifyToken('my_verify_token');
         
@@ -106,6 +107,7 @@ class TestTenantCommand extends Command
         $this->tenantContext->setCurrentOwner($otherOwner);
         $otherConn = new WhatsAppConnection();
         $otherConn->setBusinessAccountId('0987654321');
+        $otherConn->setPhoneNumberId('1141198275740553');
         $otherConn->setEncryptedAccessToken('zyxcba');
         $otherConn->setVerifyToken('other_verify_token');
         $this->entityManager->persist($otherConn);

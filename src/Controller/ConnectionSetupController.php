@@ -39,8 +39,8 @@ class ConnectionSetupController extends AbstractController
         $label = trim($request->request->get('label', ''));
         $phoneNumber = trim($request->request->get('phoneNumber', ''));
 
-        if (empty($businessAccountId) || empty($accessToken)) {
-            $this->addFlash('error', 'Business Account ID and Access Token are required.');
+        if (empty($businessAccountId) || empty($accessToken) || empty($phoneNumberId)) {
+            $this->addFlash('error', 'Business Account ID, Access Token, and Phone Number ID are required.');
             return $this->redirectToRoute('whatsapp_connect_show');
         }
 
@@ -56,7 +56,7 @@ class ConnectionSetupController extends AbstractController
             $this->whatsappService->saveConnection(
                 $businessAccountId,
                 $accessToken,
-                $phoneNumberId ?: null,
+                $phoneNumberId,
                 $label ?: null,
                 $phoneNumber ?: null
             );
@@ -95,8 +95,8 @@ class ConnectionSetupController extends AbstractController
         $label = trim($request->request->get('label', ''));
         $phoneNumber = trim($request->request->get('phoneNumber', ''));
 
-        if (empty($businessAccountId)) {
-            $this->addFlash('error', 'Business Account ID is required.');
+        if (empty($businessAccountId) || empty($phoneNumberId)) {
+            $this->addFlash('error', 'Business Account ID and Phone Number ID are required.');
             return $this->redirectToRoute('whatsapp_connect_edit', ['id' => $id]);
         }
 
@@ -114,7 +114,7 @@ class ConnectionSetupController extends AbstractController
                 $id,
                 $businessAccountId,
                 $accessToken ?: null,
-                $phoneNumberId ?: null,
+                $phoneNumberId,
                 $label ?: null,
                 $phoneNumber ?: null
             );

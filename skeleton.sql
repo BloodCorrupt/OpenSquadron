@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `whatsapp_connection` (
     owner_id INT DEFAULT NULL,
     active_context_id INT DEFAULT NULL,
     business_account_id VARCHAR(255) NOT NULL,
-    phone_number_id VARCHAR(255) DEFAULT NULL,
+    phone_number_id VARCHAR(255) NOT NULL,
     label VARCHAR(255) DEFAULT NULL,
     phone_number VARCHAR(50) DEFAULT NULL,
     encrypted_access_token LONGTEXT NOT NULL,
