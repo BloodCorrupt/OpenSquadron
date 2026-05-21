@@ -347,4 +347,59 @@ class FacebookService
 
         return $content;
     }
+
+    public function exchangeCodeForUserToken(string $appId, string $appSecret, string $code, string $redirectUri): string
+    {
+        $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/oauth/access_token', [
+            'query' => [
+                'client_id' => $appId,
+                'redirect_uri' => $redirectUri,
+                'client_secret' => $appSecret,
+                'code' => $code,
+            ]
+        ]);
+
+        $data = $response->toArray(false);
+        if ($response->getStatusCode() >= 400 || !isset($data['access_token'])) {
+            throw new \RuntimeException($data['error']['message'] ?? 'Failed to exchange authorization code for access token.');
+        }
+
+        return $data['access_token'];
+    }
+
+    public function getLongLivedUserToken(string $appId, string $appSecret, string $shortLivedToken): string
+    {
+        $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/oauth/access_token', [
+            'query' => [
+                'grant_type' => 'fb_exchange_token',
+                'client_id' => $appId,
+                'client_secret' => $appSecret,
+                'fb_exchange_token' => $shortLivedToken,
+            ]
+        ]);
+
+        $data = $response->toArray(false);
+        if ($response->getStatusCode() >= 400 || !isset($data['access_token'])) {
+            return $shortLivedToken;
+        }
+
+        return $data['access_token'];
+    }
+
+    public function getUserPages(string $userAccessToken): array
+    {
+        $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/accounts', [
+            'query' => [
+                'access_token' => $userAccessToken,
+                'fields' => 'id,name,access_token,category,tasks',
+            ]
+        ]);
+
+        $data = $response->toArray(false);
+        if ($response->getStatusCode() >= 400 || !isset($data['data'])) {
+            throw new \RuntimeException($data['error']['message'] ?? 'Failed to retrieve Facebook pages.');
+        }
+
+        return $data['data'];
+    }
 }

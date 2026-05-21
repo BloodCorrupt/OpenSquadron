@@ -109,14 +109,24 @@ To connect your local environment to the Meta Cloud API webhook, your local serv
 7. Click **Verify and Save**.
 8. Underneath the Webhook URL, click **Manage** Webhook fields and subscribe to the `messages` event.
 
-## 6. Going Live (Privacy Policy & Cloudflare Rules)
+## 6. Connecting Facebook (OAuth & Login for Business)
+
+For step-by-step setup details, refer to the [Facebook Page Connection Guide](file:///c:/Users/Bloodtek/Documents/dev/OpenSquadron/documentation/connect_facebook.md).
+1. Go to the **Facebook -> Connect** page inside the OpenSquadron Dashboard.
+2. Enter your **Facebook App ID** and **App Secret** (make sure your App type is **Business** in the Meta Developer portal, and your valid redirect URI is configured to `https://opensquadron.your.domain/admin/facebook/callback`).
+3. Click **Connect with Facebook** to authorize the application.
+4. Select the Facebook Page you want to connect from the list back in OpenSquadron.
+5. Set up your Webhook Callback URL: `https://opensquadron.your.domain/webhook/facebook` with your unique verify token in the Meta Developer dashboard under the **Webhooks** product, and subscribe to `messages` and `messaging_postbacks` events.
+
+## 7. Going Live (Privacy Policy, App Review & Cloudflare Rules)
 
 To receive messages from anyone in the world, your Meta App must be in **Live Mode**:
 1. OpenSquadron automatically generates Meta-compliant policy pages. In the Meta Dashboard -> App Settings -> Basic, paste these URLs:
    - Privacy Policy: `https://opensquadron.your.domain/privacy`
    - Terms of Service: `https://opensquadron.your.domain/terms`
-2. Toggle the App Mode at the top of the screen to **Live**.
-3. **IMPORTANT:** Ensure your Cloudflare WAF or "Bot Fight Mode" is not blocking the `facebookexternalhit` crawler or POST requests to the `/webhook/whatsapp` endpoint.
+2. **App Review**: Submit your Meta App for review for the necessary permissions (`whatsapp_business_messaging` for WhatsApp; or `pages_messaging`, `pages_show_list`, `pages_read_engagement`, `pages_manage_metadata` etc. for Facebook).
+3. Toggle the App Mode at the top of the screen to **Live**.
+4. **IMPORTANT:** Ensure your Cloudflare WAF or "Bot Fight Mode" is not blocking the `facebookexternalhit` crawler or POST requests to the `/webhook/whatsapp` and `/webhook/facebook` endpoints.
 
 You can now use the **Shared Inbox** in the OpenSquadron dashboard to chat with users in real time!
 
