@@ -48,6 +48,7 @@ class FacebookConnectionController extends AbstractController
         $session->set('fb_connect_state', $state);
 
         $redirectUri = $this->generateUrl('facebook_connect_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $redirectUri = str_replace('http://', 'https://', $redirectUri);
 
         // Scopes allowing both Messaging and future full Page/Post Automation
         $scopes = [
@@ -87,6 +88,7 @@ class FacebookConnectionController extends AbstractController
         }
 
         $redirectUri = $this->generateUrl('facebook_connect_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $redirectUri = str_replace('http://', 'https://', $redirectUri);
 
         try {
             // 1. Exchange authorization code for a short-lived user access token
