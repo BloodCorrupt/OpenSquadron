@@ -30,8 +30,76 @@ class FacebookBotManagerController extends AbstractController
         }
 
         $flows = [];
+        $settings = [];
+        
+        // Default realistic settings to populate a fully featured state instantly on first load
+        $defaultSettings = [
+            'broadcast-template' => [
+                ['name' => 'welcome_offer_rcn', 'category' => 'UTILITY', 'language' => 'en_US', 'status' => 'APPROVED'],
+                ['name' => 'abandoned_cart_reminder', 'category' => 'MARKETING', 'language' => 'en_US', 'status' => 'PENDING'],
+            ],
+            'postbacks' => [
+                ['name' => 'MainMenu', 'payload' => 'MAIN_MENU_TRIGGER', 'action' => 'Open Main Menu'],
+                ['name' => 'TalkToHuman', 'payload' => 'ESCALATE_HUMAN_TRIGGER', 'action' => 'Notify Agent'],
+            ],
+            'growth-widgets' => [
+                'widgetType' => 'checkbox',
+                'color' => '#06b6d4',
+                'size' => 'large',
+                'domains' => 'opensquadron.io',
+            ],
+            'sequences' => [
+                ['name' => 'Day 1 Warmup', 'delay' => '24 hours', 'isActive' => true],
+                ['name' => 'Day 3 Promo Offer', 'delay' => '72 hours', 'isActive' => false],
+            ],
+            'user-inputs' => [
+                ['fieldName' => 'user_email', 'dataType' => 'EMAIL', 'prompt' => 'Please share your email address:'],
+                ['fieldName' => 'user_phone', 'dataType' => 'PHONE', 'prompt' => 'Please provide your mobile number:'],
+            ],
+            'persistent-menu' => [
+                ['title' => '🏠 Home Portal', 'type' => 'postback', 'payload' => 'MAIN_MENU_TRIGGER'],
+                ['title' => '🛍️ View Products', 'type' => 'web_url', 'url' => 'https://opensquadron.io/shop'],
+                ['title' => '💬 Contact Support', 'type' => 'postback', 'payload' => 'ESCALATE_HUMAN_TRIGGER'],
+            ],
+            'rcn-notifications' => [
+                ['title' => 'Weekly Product Updates', 'frequency' => 'WEEKLY', 'payload' => 'WEEKLY_UPDATE_RCN'],
+                ['title' => 'Monthly Exclusive Offers', 'frequency' => 'MONTHLY', 'payload' => 'MONTHLY_DEALS_RCN'],
+            ],
+            'whitelisted-domains' => [
+                'domains' => "https://opensquadron.io\nhttps://messenger.opensquadron.io"
+            ],
+            'api-connectors' => [
+                ['name' => 'HubSpot CRM Sync', 'url' => 'https://api.hubspot.com/contacts/v1/contact', 'method' => 'POST'],
+            ],
+            'outbound-webhooks' => [
+                'url' => 'https://webhook.site/#!/your-endpoint-url',
+                'events' => ['message_delivered', 'message_read', 'postback_received']
+            ],
+            'action-buttons' => [
+                ['label' => '📞 Call Main Office', 'type' => 'phone_number', 'value' => '+15550199'],
+                ['label' => '🌐 Open Website', 'type' => 'web_url', 'value' => 'https://opensquadron.io'],
+            ],
+            'welcome-screen' => [
+                'greetingText' => 'Welcome to OpenSquadron! Tap Get Started to explore our automated integrations.',
+                'getStartedPayload' => 'WELCOME_GET_STARTED_TRIGGER',
+                'showGreeting' => true
+            ]
+        ];
+
         if ($selectedConnection) {
             $flows = $em->getRepository(FacebookBotFlow::class)->findBy(['facebookConnection' => $selectedConnection], ['id' => 'DESC']);
+            
+            // Read saved settings
+            $dir = __DIR__ . '/../../var/facebook_bot_settings';
+            $file = $dir . "/conn_{$selectedConnection->getId()}.json";
+            if (file_exists($file)) {
+                $saved = json_decode(file_get_contents($file), true) ?: [];
+                $settings = array_replace_recursive($defaultSettings, $saved);
+            } else {
+                $settings = $defaultSettings;
+            }
+        } else {
+            $settings = $defaultSettings;
         }
 
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
@@ -41,6 +109,52 @@ class FacebookBotManagerController extends AbstractController
             'connection'  => $selectedConnection,
             'connections' => $connections,
             'contexts'    => $contexts,
+            'settings'    => $settings,
+        ]);
+    }
+
+    #[Route('/facebook-bot-manager/save-settings', name: 'app_facebook_bot_save_settings', methods: ['POST'])]
+    public function saveSettings(Request $request): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid Facebook Connection ID.'], 400);
+        }
+
+        $type = trim((string)$request->request->get('type'));
+        if ($type === '') {
+            return new JsonResponse(['success' => false, 'error' => 'Settings target type is required.'], 400);
+        }
+
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $file = $dir . "/conn_{$connectionId}.json";
+        
+        $currentSettings = [];
+        if (file_exists($file)) {
+            $currentSettings = json_decode(file_get_contents($file), true) ?: [];
+        }
+
+        $data = $request->request->get('data');
+        if (\is_string($data)) {
+            $decoded = json_decode($data, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $currentSettings[$type] = $decoded;
+            } else {
+                $currentSettings[$type] = $data;
+            }
+        } else {
+            $currentSettings[$type] = $data;
+        }
+
+        file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Settings saved successfully.',
+            'data'    => $currentSettings[$type]
         ]);
     }
 
@@ -59,8 +173,23 @@ class FacebookBotManagerController extends AbstractController
         }
 
         $flows = [];
+        $defaultTemplates = [
+            ['name' => 'welcome_offer_rcn', 'language' => 'en_US'],
+            ['name' => 'abandoned_cart_reminder', 'language' => 'en_US'],
+        ];
+        $templates = $defaultTemplates;
+
         if ($selectedConnection) {
             $flows = $em->getRepository(FacebookBotFlow::class)->findBy(['facebookConnection' => $selectedConnection], ['id' => 'DESC']);
+            
+            $dir = __DIR__ . '/../../var/facebook_bot_settings';
+            $file = $dir . "/conn_{$selectedConnection->getId()}.json";
+            if (file_exists($file)) {
+                $saved = json_decode(file_get_contents($file), true) ?: [];
+                if (isset($saved['broadcast-template']) && \is_array($saved['broadcast-template'])) {
+                    $templates = $saved['broadcast-template'];
+                }
+            }
         }
 
         $payload = array_map(static fn (FacebookBotFlow $f) => self::flowToArray($f), $flows);
@@ -70,6 +199,7 @@ class FacebookBotManagerController extends AbstractController
             'flowsJson'   => $payload,
             'connection'  => $selectedConnection,
             'connections' => $connections,
+            'templates'   => $templates,
         ]);
     }
 

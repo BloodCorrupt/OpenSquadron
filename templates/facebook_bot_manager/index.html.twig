@@ -1,107 +1,113 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Facebook Bot Manager - OpenSquadron{% endblock %}
+{% block title %}Facebook Bot Console - OpenSquadron{% endblock %}
 
 {% block stylesheets %}
 <style>
-    /* Two-column layout */
+    /* Premium Two-column layout */
     .manager-shell {
         display: grid;
-        grid-template-columns: 260px 1fr;
+        grid-template-columns: 280px 1fr;
         gap: 30px;
         margin-top: 20px;
         min-height: calc(100vh - 180px);
     }
 
-    /* Left Nav Sidebar Panel */
+    /* Grouped Left Nav Sidebar Panel */
     .manager-nav {
-        background: rgba(15, 23, 42, 0.4);
+        background: rgba(15, 23, 42, 0.45);
         backdrop-filter: blur(20px);
         border: 1px solid var(--glass-border);
         border-radius: 16px;
-        padding: 20px;
+        padding: 20px 15px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
         height: fit-content;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     }
     .nav-header {
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         color: var(--text-muted);
-        letter-spacing: 0.6px;
-        margin-bottom: 12px;
-        padding-left: 10px;
+        letter-spacing: 1px;
+        margin-top: 14px;
+        margin-bottom: 6px;
+        padding-left: 12px;
+        opacity: 0.8;
+    }
+    .nav-header:first-of-type {
+        margin-top: 0;
     }
     .nav-item {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px 16px;
-        border-radius: 12px;
+        padding: 10px 14px;
+        border-radius: 10px;
         color: var(--text-muted);
         text-decoration: none;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
-        transition: all 0.2s;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid transparent;
         cursor: pointer;
         user-select: none;
     }
     .nav-item:hover {
         color: var(--text-main);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.04);
+        transform: translateX(2px);
     }
     .nav-item.is-active {
         color: var(--text-main);
-        background: rgba(6, 182, 212, 0.1);
-        border-color: rgba(6, 182, 212, 0.2);
-        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
+        background: rgba(6, 182, 212, 0.12);
+        border-color: rgba(6, 182, 212, 0.25);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.08);
     }
     .nav-item-icon {
-        font-size: 18px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+    }
+    .nav-item-icon svg {
+        width: 16px;
+        height: 16px;
     }
     .nav-item-status {
         margin-left: auto;
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 700;
         text-transform: uppercase;
         padding: 2px 6px;
         border-radius: 6px;
         background: rgba(255, 255, 255, 0.05);
+        letter-spacing: 0.2px;
     }
     .nav-item.is-active .nav-item-status {
-        background: rgba(6, 182, 212, 0.2);
+        background: rgba(6, 182, 212, 0.25);
         color: var(--primary-accent);
-    }
-    .nav-item.is-disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    .nav-item.is-disabled:hover {
-        background: transparent;
-        color: var(--text-muted);
     }
 
     /* Right Content Panels */
     .manager-content-pane {
         display: none;
         background: rgba(15, 23, 42, 0.4);
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(25px);
         border: 1px solid var(--glass-border);
         border-radius: 16px;
         padding: 30px;
         flex-direction: column;
         gap: 24px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        animation: fadeIn 0.3s ease;
+        animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .manager-content-pane.is-active {
         display: flex;
     }
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(4px); }
+        from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
@@ -119,15 +125,325 @@
         margin: 0;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+    }
+    .content-title svg {
+        width: 24px;
+        height: 24px;
+        color: var(--primary-accent);
     }
     .content-subtitle {
         font-size: 13px;
         color: var(--text-muted);
-        margin-top: 4px;
+        margin-top: 5px;
     }
 
-    /* Toolbar Row */
+    /* Glass Console Grid Hub */
+    .console-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin-top: 10px;
+    }
+    .console-card {
+        background: rgba(30, 41, 59, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .console-card:hover {
+        background: rgba(30, 41, 59, 0.55);
+        border-color: rgba(6, 182, 212, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(6, 182, 212, 0.08);
+    }
+    .console-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.6), transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .console-card:hover::before {
+        opacity: 1;
+    }
+    .console-card-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .console-icon-wrapper {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+        transition: all 0.2s;
+    }
+    .console-card:hover .console-icon-wrapper {
+        background: var(--primary-accent);
+        color: #0f172a;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+    .console-icon-wrapper svg {
+        width: 20px;
+        height: 20px;
+    }
+    .console-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+    .console-card-status {
+        margin-left: auto;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+    }
+    .console-card:hover .console-card-status {
+        background: rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+    }
+    .console-card-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        flex: 1;
+    }
+    .console-card-action {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--primary-accent);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 5px;
+    }
+    .console-card-action svg {
+        width: 14px;
+        height: 14px;
+        transition: transform 0.2s;
+    }
+    .console-card:hover .console-card-action svg {
+        transform: translateX(3px);
+    }
+
+    /* Premium forms and inputs */
+    .glass-form-card {
+        background: rgba(15, 23, 42, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #cbd5e1;
+    }
+    .form-helper {
+        font-size: 11px;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+    .glass-input, .glass-textarea {
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 13px;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .glass-input:focus, .glass-textarea:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    .glass-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    /* Mobile Chat Preview Layout (Highly Premium) */
+    .preview-container {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+    .form-side {
+        flex: 1;
+        min-width: 320px;
+    }
+    .preview-side {
+        width: 300px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    .iphone-shell {
+        width: 270px;
+        height: 480px;
+        border: 8px solid #334155;
+        border-radius: 36px;
+        background: #0f172a;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .iphone-header {
+        height: 44px;
+        background: #1e293b;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 0.5px;
+    }
+    .iphone-body {
+        flex: 1;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: radial-gradient(circle at top, #1e293b, #0f172a);
+    }
+    .iphone-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: 40px;
+        gap: 15px;
+    }
+    .iphone-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--primary-accent);
+        display: grid;
+        place-items: center;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 24px;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+    }
+    .iphone-page-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+    }
+    .iphone-page-desc {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    .iphone-welcome-bubble {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 12px;
+        color: #e2e8f0;
+        line-height: 1.5;
+        text-align: left;
+        width: 100%;
+        max-height: 180px;
+        overflow-y: auto;
+    }
+    .iphone-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    .iphone-btn-started {
+        background: var(--primary-accent);
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        width: 100%;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(6, 182, 212, 0.25);
+    }
+
+    /* Table, list and checklist components */
+    .table-container {
+        overflow-x: auto;
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.15);
+    }
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 13px;
+    }
+    .custom-table th {
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid var(--glass-border);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.5px;
+    }
+    .custom-table td {
+        padding: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+    .custom-table tr:last-child td {
+        border-bottom: none;
+    }
+    .custom-table tr:hover td {
+        background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Toolbar search and filter Row */
     .toolbar-row {
         display: flex;
         justify-content: space-between;
@@ -186,7 +502,6 @@
         min-width: 140px;
     }
 
-    /* Button components */
     .btn-action {
         display: inline-flex;
         align-items: center;
@@ -210,66 +525,12 @@
         background: #0891b2;
         transform: translateY(-1px);
     }
-    
-    /* Table styles */
-    .table-container {
-        overflow-x: auto;
-        border: 1px solid var(--glass-border);
-        border-radius: 12px;
-        background: rgba(0, 0, 0, 0.15);
-    }
-    .custom-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-        font-size: 13px;
-    }
-    .custom-table th {
-        padding: 14px 16px;
-        background: rgba(255, 255, 255, 0.02);
-        border-bottom: 1px solid var(--glass-border);
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 11px;
-        color: var(--text-muted);
-        letter-spacing: 0.5px;
-    }
-    .custom-table td {
-        padding: 16px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        color: var(--text-main);
-        vertical-align: middle;
-    }
-    .custom-table tr:last-child td {
-        border-bottom: none;
-    }
-    .custom-table tr:hover td {
-        background: rgba(255, 255, 255, 0.01);
-    }
-
-    /* Tag and Status indicators */
-    .keyword-tag {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 6px;
-        background: rgba(6, 182, 212, 0.1);
-        border: 1px solid rgba(6, 182, 212, 0.2);
-        color: var(--primary-accent);
-        font-size: 11px;
-        font-weight: 600;
-        margin-right: 4px;
-        margin-bottom: 4px;
-    }
-    .match-mode-badge {
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: var(--text-muted);
+    .btn-secondary {
         background: rgba(255, 255, 255, 0.05);
-        padding: 2px 6px;
-        border-radius: 4px;
-        display: inline-block;
-        margin-top: 4px;
+        border: 1px solid var(--glass-border);
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
     }
 
     /* Switch toggle */
@@ -317,12 +578,30 @@
         background-color: var(--primary-accent);
     }
 
-    select.form-control option, select.toolbar-select option, select option {
-        background-color: #0f172a !important;
-        color: #f8fafc !important;
+    .keyword-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+        font-size: 11px;
+        font-weight: 600;
+        margin-right: 4px;
+        margin-bottom: 4px;
+    }
+    .match-mode-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 4px;
     }
 
-    /* Action icons inside table */
     .row-actions {
         display: flex;
         align-items: center;
@@ -374,7 +653,6 @@
         font-style: italic;
     }
 
-    /* Toast system */
     .fb-toast {
         position: fixed;
         bottom: 24px;
@@ -391,19 +669,25 @@
         transition: opacity 0.25s, transform 0.25s;
         z-index: 10000;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
     }
     .fb-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
     .fb-toast.is-success { border-left: 4px solid #10b981; }
     .fb-toast.is-error { border-left: 4px solid #ef4444; }
+
+    select.form-control option, select.toolbar-select option, select option {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+    }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="manager-shell">
-    {# ───────── Left Sidebar Navigation ───────── #}
+    {# ───────── Left Sidebar Navigation (Logical Groups) ───────── #}
     <div class="manager-nav">
         <div class="nav-header">Facebook Page</div>
-        <div style="margin-bottom: 20px; padding: 0 10px;">
+        <div style="margin-bottom: 10px; padding: 0 10px;">
             <select id="facebook-conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
                 {% if connections is empty %}
                     <option value="">No Pages Connected</option>
@@ -417,71 +701,380 @@
             </select>
         </div>
 
-        <div class="nav-header">Bot settings</div>
-        
-        <div class="nav-item is-active" data-tab-target="bot-reply">
+        <!-- 1. General Panel -->
+        <div class="nav-header">Main Console</div>
+        <div class="nav-item is-active" data-tab-target="console">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+            </span>
+            <span>Dashboard Hub</span>
+        </div>
+
+        <!-- 2. Core Responders -->
+        <div class="nav-header">Core Responders</div>
+        <div class="nav-item" data-tab-target="bot-reply">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
             </span>
-            <span>Bot Reply</span>
-            <span class="nav-item-status">Active</span>
+            <span>Autoreply Trigger Flows</span>
         </div>
 
         <div class="nav-item" data-tab-target="ai-agent">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
             </span>
-            <span>AI Agent</span>
-            <span class="nav-item-status" id="ai-nav-status">{% if connection and connection.isAiActive() %}Active{% else %}Inactive{% endif %}</span>
+            <span>Intelligent AI Copilot</span>
+            <span class="nav-item-status" id="ai-nav-status">{% if connection and connection.isAiActive() %}ON{% else %}OFF{% endif %}</span>
         </div>
 
-        <div class="nav-item is-disabled" onclick="return false;">
+        <!-- 3. Campaigns & Messaging -->
+        <div class="nav-header">Campaigns & Drips</div>
+        <div class="nav-item" data-tab-target="broadcast-template">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
             </span>
-            <span>Broadcast Campaign</span>
-            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+            <span>Meta Template Campaigns</span>
         </div>
 
-        <div class="nav-item is-disabled" onclick="return false;">
-            <span class="nav-item-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            </span>
-            <span>Chat Widget</span>
-            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
-        </div>
-
-        <div class="nav-item is-disabled" onclick="return false;">
+        <div class="nav-item" data-tab-target="sequences">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             </span>
-            <span>Sequence</span>
-            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+            <span>Drip Sequences & Delays</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="rcn-notifications">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </span>
+            <span>Recurring Notifications (RCN)</span>
+        </div>
+
+        <!-- 4. Integrations & API -->
+        <div class="nav-header">Integrations & API</div>
+        <div class="nav-item" data-tab-target="api-connectors">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+            </span>
+            <span>API Connectors</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="outbound-webhooks">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
+            </span>
+            <span>Outbound Streams & Webhooks</span>
+        </div>
+
+        <!-- 5. Messenger Customization -->
+        <div class="nav-header">Messenger Options</div>
+        <div class="nav-item" data-tab-target="welcome-screen">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 16 14"></polyline><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            </span>
+            <span>Welcome & Get Started Setup</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="persistent-menu">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </span>
+            <span>Persistent Chat Menu</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="action-buttons">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </span>
+            <span>Action Button Templates</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="user-inputs">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </span>
+            <span>Structured User Inputs</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="growth-widgets">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            </span>
+            <span>Growth & Chat Widgets</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="whitelisted-domains">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </span>
+            <span>Whitelisted Domains</span>
         </div>
     </div>
 
     {# ───────── Right Content Panels ───────── #}
 
-    {# 1. Bot Reply Settings Content Pane #}
-    <div class="manager-content-pane is-active" id="pane-bot-reply">
+    {# 0. Centralized Dashboard Hub Panel #}
+    <div class="manager-content-pane is-active" id="pane-console">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                    <span>Bot Management Console</span>
+                </h1>
+                <div class="content-subtitle">Deploy, configure, and monitor automated integrations on your connected Facebook Page.</div>
+            </div>
+        </div>
+
         {% if connections is empty %}
             <div class="empty-state" style="margin: auto; padding: 100px 40px; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px; background: rgba(15, 23, 42, 0.4); max-width: 600px; width: 100%; align-self: center;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; opacity: 0.5; color: var(--primary-accent); margin-bottom: 24px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                 <h3 style="color: #fff; margin-bottom: 12px; font-size: 24px;">No Facebook Pages Connected</h3>
-                <p style="color: var(--text-muted); margin-bottom: 28px; font-size: 14px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6;">You need to connect at least one Facebook Page before you can manage bot flows and settings.</p>
+                <p style="color: var(--text-muted); margin-bottom: 28px; font-size: 14px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6;">You need to connect at least one Facebook Page before you can manage bot settings.</p>
                 <a href="{{ path('facebook_connect_show') }}" class="btn-action btn-create" style="display: inline-flex; padding: 12px 24px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; margin-right:8px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                     <span>Connect Facebook Page</span>
                 </a>
             </div>
         {% else %}
+            <!-- The 14 Features Grid Console -->
+            <div class="console-grid">
+                <!-- 1. Bot Reply -->
+                <div class="console-card" onclick="switchTab('bot-reply')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
+                        </div>
+                        <span class="console-card-title">Trigger Autoreplies</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Design interactive, multi-node chat builder flows that activate instantly on match keywords.</p>
+                    <div class="console-card-action">
+                        <span>Open Flows</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 2. AI Agent -->
+                <div class="console-card" onclick="switchTab('ai-agent')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        </div>
+                        <span class="console-card-title">Intelligent AI Copilot</span>
+                        <span class="console-card-status">{% if connection and connection.isAiActive() %}ACTIVE{% else %}INACTIVE{% endif %}</span>
+                    </div>
+                    <p class="console-card-desc">Map advanced AI context profiles that ground LLM agents to deliver natural chat responses.</p>
+                    <div class="console-card-action">
+                        <span>Configure Copilot</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 3. Broadcast Template -->
+                <div class="console-card" onclick="switchTab('broadcast-template')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                        </div>
+                        <span class="console-card-title">Meta Templates</span>
+                        <span class="console-card-status">Configured</span>
+                    </div>
+                    <p class="console-card-desc">Submit, coordinate, and review verified notifications and marketing template campaigns.</p>
+                    <div class="console-card-action">
+                        <span>Manage Templates</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 4. Postbacks -->
+                <div class="console-card" onclick="switchTab('post-back')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                        </div>
+                        <span class="console-card-title">Interactive Postbacks</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Assign custom identifiers to quick-reply buttons and payload callbacks to automate transitions.</p>
+                    <div class="console-card-action">
+                        <span>Setup Payloads</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 5. Growth Widgets -->
+                <div class="console-card" onclick="switchTab('growth-widgets')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                        </div>
+                        <span class="console-card-title">Growth & Chat Widgets</span>
+                        <span class="console-card-status">Ready</span>
+                    </div>
+                    <p class="console-card-desc">Deploy responsive Messenger chat bubbles and checkbox widgets on your external websites.</p>
+                    <div class="console-card-action">
+                        <span>Customize Widgets</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 6. Sequences -->
+                <div class="console-card" onclick="switchTab('sequences')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <span class="console-card-title">Drip Sequences</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Queue automated, delayed messages scheduled to run after custom user trigger dates.</p>
+                    <div class="console-card-action">
+                        <span>Manage Sequences</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 7. Input Flow -->
+                <div class="console-card" onclick="switchTab('user-inputs')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <span class="console-card-title">User Input Flows</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Design structured forms that prompt users for details and parse attributes inside chat variables.</p>
+                    <div class="console-card-action">
+                        <span>Define Custom Inputs</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 8. Persistent Menu -->
+                <div class="console-card" onclick="switchTab('persistent-menu')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(45, 212, 191, 0.1); color: #2dd4bf;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        </div>
+                        <span class="console-card-title">Persistent Menu</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Structure the persistent navigation bar visible to users at the bottom of their Messenger screen.</p>
+                    <div class="console-card-action">
+                        <span>Edit Menu Options</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 9. RCN Campaigns -->
+                <div class="console-card" onclick="switchTab('rcn-notifications')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </div>
+                        <span class="console-card-title">Recurring Notifications</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Draft opt-in sequences permitting daily, weekly, or monthly notifications outside standard window rules.</p>
+                    <div class="console-card-action">
+                        <span>Configure RCN Setup</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 10. Whitelisted Domains -->
+                <div class="console-card" onclick="switchTab('whitelisted-domains')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(244, 63, 94, 0.1); color: #f43f5e;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <span class="console-card-title">Whitelisted Domains</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Declare domains securely permitted to render within internal Messenger Webview extension panes.</p>
+                    <div class="console-card-action">
+                        <span>Manage Whitelists</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 11. API Connectors -->
+                <div class="console-card" onclick="switchTab('api-connectors')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                        </div>
+                        <span class="console-card-title">API Connectors</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Define endpoints, request protocols, and variable maps to trigger external database updates.</p>
+                    <div class="console-card-action">
+                        <span>Map API Connectors</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 12. Outbound Webhooks -->
+                <div class="console-card" onclick="switchTab('outbound-webhooks')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(20, 184, 166, 0.1); color: #14b8a6;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
+                        </div>
+                        <span class="console-card-title">Outbound Streams</span>
+                        <span class="console-card-status">Configured</span>
+                    </div>
+                    <p class="console-card-desc">Publish unified real-time conversation message payloads securely to your target external CRMs.</p>
+                    <div class="console-card-action">
+                        <span>Webhook Setup</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 13. Action Buttons -->
+                <div class="console-card" onclick="switchTab('action-buttons')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        </div>
+                        <span class="console-card-title">Action Buttons</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Configure call buttons, template redirections, and instant reply action presets.</p>
+                    <div class="console-card-action">
+                        <span>Edit Button Presets</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 14. Welcome Screen -->
+                <div class="console-card" onclick="switchTab('welcome-screen')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(234, 179, 8, 0.1); color: #eab308;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 16 14"></polyline><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </div>
+                        <span class="console-card-title">Welcome greeting</span>
+                        <span class="console-card-status">Active</span>
+                    </div>
+                    <p class="console-card-desc">Draft welcome greetings and payloads that present to users before they send their first message.</p>
+                    <div class="console-card-action">
+                        <span>Edit Welcome Message</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    {# 1. Bot Reply Settings Content Pane #}
+    <div class="manager-content-pane" id="pane-bot-reply">
+        {% if connections is not empty %}
         <div class="content-header">
             <div>
                 <h1 class="content-title">
-                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
-                    <span>Bot Reply Settings</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
+                    <span>Trigger-Based Autoreplies</span>
                 </h1>
-                <div class="content-subtitle">Manage triggers, dynamic reply pipelines, and automated response actions.</div>
+                <div class="content-subtitle">Manage keyword triggers and interactive conversations builder flows.</div>
             </div>
             
             <a href="{{ path('app_facebook_bot_flows', {id: 'new', connectionId: connection ? connection.id : ''}) }}" class="btn-action btn-create">
@@ -553,16 +1146,16 @@
                                 <td>
                                     <div class="row-actions" style="justify-content: flex-end;">
                                         <a href="{{ path('app_facebook_bot_flows', {id: flow.id, connectionId: connection ? connection.id : ''}) }}" class="btn-row-action edit-action" title="Edit Flow">
-                                            <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                         </a>
                                         <a href="{{ path('app_facebook_bot_flows_export', {id: flow.id}) }}" class="btn-row-action export-action" title="Export JSON" download>
-                                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                         </a>
                                         <button class="btn-row-action clone-action" title="Clone Flow" onclick="cloneFlow({{ flow.id }})">
-                                            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                         </button>
                                         <button class="btn-row-action delete-action" title="Delete Flow" onclick="deleteFlow({{ flow.id }})">
-                                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                         </button>
                                     </div>
                                 </td>
@@ -577,33 +1170,22 @@
 
     {# 2. AI Agent Configuration Content Pane #}
     <div class="manager-content-pane" id="pane-ai-agent">
-        {% if connections is empty %}
-            <div class="empty-state" style="margin: auto; padding: 100px 40px; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px; background: rgba(15, 23, 42, 0.4); max-width: 600px; width: 100%; align-self: center;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; opacity: 0.5; color: var(--primary-accent); margin-bottom: 24px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                <h3 style="color: #fff; margin-bottom: 12px; font-size: 24px;">No Facebook Pages Connected</h3>
-                <p style="color: var(--text-muted); margin-bottom: 28px; font-size: 14px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6;">You need to connect at least one Facebook Page before you can manage bot flows and settings.</p>
-                <a href="{{ path('facebook_connect_show') }}" class="btn-action btn-create" style="display: inline-flex; padding: 12px 24px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; margin-right:8px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                    <span>Connect Facebook Page</span>
-                </a>
-            </div>
-        {% else %}
+        {% if connections is not empty %}
         <div class="content-header">
             <div>
                 <h1 class="content-title">
-                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                    <span>AI Agent Configuration</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    <span>Intelligent AI Copilot</span>
                 </h1>
-                <div class="content-subtitle">Enable and configure which context profile this bot uses to respond to incoming messages.</div>
+                <div class="content-subtitle">Deploy a context-grounded LLM agent responder to handle user conversations.</div>
             </div>
         </div>
 
-        <div style="max-width: 680px; display: flex; flex-direction: column; gap: 20px;">
-            <!-- Enable AI Agent switch -->
-            <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="glass-form-card" style="max-width: 680px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
                 <div>
-                    <div style="font-weight: 600; color: #fff; font-size: 14px;">Enable AI Agent Responder</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Toggle whether this Facebook page bot answers messages using AI.</div>
+                    <div style="font-weight: 700; color: #fff; font-size: 14px;">Enable AI Copilot Active</div>
+                    <div class="form-helper">Toggle whether incoming messages are filtered and processed by the AI Agent.</div>
                 </div>
                 <label class="switch-toggle" style="margin: 0;">
                     <input type="checkbox" id="ai-agent-active" {% if connection and connection.isAiActive() %}checked{% endif %}>
@@ -611,23 +1193,17 @@
                 </label>
             </div>
 
-            <!-- Select Context Profile -->
-            <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-                <div>
-                    <div style="font-weight: 600; color: #fff; font-size: 14px; margin-bottom: 4px;">Context Profile</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Select the context profile to ground this bot's persona and knowledge base.</div>
-                </div>
-
-                <div class="form-group" style="margin: 0;">
-                    <select id="ai-agent-context-select" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 14px; width: 100%;">
-                        <option value="">-- No Context Profile (Use Connection Default) --</option>
-                        {% for ctx in contexts %}
-                            <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
-                                {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-group">
+                <label class="form-label" for="ai-agent-context-select">Active Context Profile</label>
+                <div class="form-helper" style="margin-bottom: 8px;">Select a profile to populate the agent's knowledge, background rules, and response parameters.</div>
+                <select id="ai-agent-context-select" class="glass-input" style="height: 42px;">
+                    <option value="">-- No Context Profile (Use Connection Default) --</option>
+                    {% for ctx in contexts %}
+                        <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
+                            {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
 
             <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
@@ -640,11 +1216,652 @@
         {% endif %}
     </div>
 
+    {# 3. Meta Template Campaigns Content Pane #}
+    <div class="manager-content-pane" id="pane-broadcast-template">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                    <span>Meta Template Campaigns</span>
+                </h1>
+                <div class="content-subtitle">Coordinate and review marketing and transaction notification templates approved by Meta.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="alert('Feature requires connecting to a live Meta Developer App account with WhatsApp Business API access.')">
+                <span>Submit New Template</span>
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Template Name</th>
+                        <th>Category</th>
+                        <th>Language</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in settings['broadcast-template'] %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td style="font-family: monospace; color: var(--primary-accent);">{{ item.name }}</td>
+                        <td><span class="match-mode-badge">{{ item.category }}</span></td>
+                        <td>{{ item.language }}</td>
+                        <td>
+                            <span class="keyword-tag" style="background: {% if item.status == 'APPROVED' %}rgba(16,185,129,0.1){% else %}rgba(245,158,11,0.1){% endif %}; border-color: {% if item.status == 'APPROVED' %}rgba(16,185,129,0.2){% else %}rgba(245,158,11,0.2){% endif %}; color: {% if item.status == 'APPROVED' %}#10b981{% else %}#f59e0b{% endif %};">
+                                {{ item.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-action btn-secondary" style="padding: 6px 12px; font-size:11px;" onclick="showToast('Loading preview details...', 'success')">Preview</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# 4. Interactive Postbacks Content Pane #}
+    <div class="manager-content-pane" id="pane-post-back">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                    <span>Interactive Postbacks</span>
+                </h1>
+                <div class="content-subtitle">Assign custom identifiers to quick-reply buttons and payload callbacks to automate transitions.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="addPostbackRow()">Add Payload</button>
+        </div>
+
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="postbacks-table">
+                    <thead>
+                        <tr>
+                            <th>Postback Action Label</th>
+                            <th>Custom Payload Reference</th>
+                            <th>Trigger Action Description</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in settings['postbacks'] %}
+                        <tr class="postback-row">
+                            <td><input type="text" class="glass-input postback-name" style="width:100%" value="{{ item.name }}"></td>
+                            <td><input type="text" class="glass-input postback-payload" style="width:100%; font-family:monospace;" value="{{ item.payload }}"></td>
+                            <td><input type="text" class="glass-input postback-action" style="width:100%" value="{{ item.action }}"></td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="savePostbacks()">Save Postbacks</button>
+            </div>
+        </div>
+    </div>
+
+    {# 5. Growth & Chat Widgets Content Pane #}
+    <div class="manager-content-pane" id="pane-growth-widgets">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    <span>Growth & Chat Widgets</span>
+                </h1>
+                <div class="content-subtitle">Deploy responsive website chat bubbles and opt-in checkbox components.</div>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <div class="form-side glass-form-card">
+                <div class="form-group">
+                    <label class="form-label">Opt-in Widget Type</label>
+                    <select id="widget-type" class="glass-input" onchange="updateWidgetPreview()">
+                        <option value="checkbox" {% if settings['growth-widgets'].widgetType == 'checkbox' %}selected{% endif %}>Checkbox Plugin (Inline Form)</option>
+                        <option value="chat_bubble" {% if settings['growth-widgets'].widgetType == 'chat_bubble' %}selected{% endif %}>Messenger Chat Bubble (Floating)</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Theme Accent Color</label>
+                        <input type="color" id="widget-color" class="glass-input" style="height:42px; padding:4px;" value="{{ settings['growth-widgets'].color }}" oninput="updateWidgetPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Button Size</label>
+                        <select id="widget-size" class="glass-input" onchange="updateWidgetPreview()">
+                            <option value="medium" {% if settings['growth-widgets'].size == 'medium' %}selected{% endif %}>Medium Accent</option>
+                            <option value="large" {% if settings['growth-widgets'].size == 'large' %}selected{% endif %}>Large Accent</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Domain Integration</label>
+                    <div class="form-helper">The external hostname where this widget is authorized to render.</div>
+                    <input type="text" id="widget-domains" class="glass-input" placeholder="e.g. opensquadron.io" value="{{ settings['growth-widgets'].domains }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Generated Integration Embed Script</label>
+                    <textarea class="glass-textarea" style="font-family:monospace; font-size:11px;" readonly id="widget-embed-code"></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end;">
+                    <button class="btn-action btn-create" onclick="saveGrowthWidgets()">Save Widget Config</button>
+                </div>
+            </div>
+
+            <!-- Custom Website Live Mock Preview -->
+            <div class="preview-side">
+                <div class="form-label">Interactive website mockup</div>
+                <div style="width: 270px; height: 380px; border-radius: 12px; border:1px solid var(--glass-border); background: #0f172a; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; padding:15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                    <!-- Header -->
+                    <div style="display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
+                        <div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div>
+                        <div style="width:10px; height:10px; border-radius:50%; background:#f59e0b;"></div>
+                        <div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div>
+                        <span style="font-size:10px; color:var(--text-muted); margin-left:10px; font-family:monospace;">yoursite.com</span>
+                    </div>
+                    <!-- Body -->
+                    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:10px;">
+                        <h4 style="color:#fff; font-size:13px; margin-bottom:8px;">Checkout Form Page</h4>
+                        <p style="color:var(--text-muted); font-size:10px; line-height:1.4;">Fill checkout details and tick checkbox to get order confirmations on Messenger.</p>
+                        
+                        <!-- Dynamic inline mock widget -->
+                        <div id="mock-inline-widget" style="margin-top:15px; padding:10px; border:1px dashed #334155; border-radius:8px; display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.2);">
+                            <input type="checkbox" checked style="accent-color: var(--primary-accent);" id="mock-checkbox-accent">
+                            <span style="font-size:9px; color:#fff; font-weight:600;">Keep me updated on Messenger</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic floating mock widget -->
+                    <div id="mock-floating-widget" style="position:absolute; bottom:15px; right:15px; width:38px; height:38px; border-radius:50%; display:grid; place-items:center; color:#fff; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.4); background:var(--primary-accent);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px; height:18px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# 6. Drip Sequences Content Pane #}
+    <div class="manager-content-pane" id="pane-sequences">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Drip Sequences & Delays</span>
+                </h1>
+                <div class="content-subtitle">Queue automated, delayed messages scheduled to run after custom user trigger dates.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="addSequenceRow()">Add Delayed Drip</button>
+        </div>
+
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="sequences-table">
+                    <thead>
+                        <tr>
+                            <th>Sequence Campaign Name</th>
+                            <th>Time Delay Interval</th>
+                            <th style="width: 100px; text-align: center;">Active Status</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in settings['sequences'] %}
+                        <tr class="sequence-row">
+                            <td><input type="text" class="glass-input seq-name" style="width:100%" value="{{ item.name }}"></td>
+                            <td>
+                                <select class="glass-input seq-delay" style="width:100%">
+                                    <option value="1 hour" {% if item.delay == '1 hour' %}selected{% endif %}>1 Hour Delay</option>
+                                    <option value="4 hours" {% if item.delay == '4 hours' %}selected{% endif %}>4 Hours Delay</option>
+                                    <option value="24 hours" {% if item.delay == '24 hours' %}selected{% endif %}>24 Hours (Next Day)</option>
+                                    <option value="72 hours" {% if item.delay == '72 hours' %}selected{% endif %}>72 Hours Delay</option>
+                                </select>
+                            </td>
+                            <td style="text-align: center;">
+                                <label class="switch-toggle">
+                                    <input type="checkbox" class="seq-active" {% if item.isActive %}checked{% endif %}>
+                                    <span class="slider-round"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="saveSequences()">Save Sequences</button>
+            </div>
+        </div>
+    </div>
+
+    {# 7. User Input Flow Content Pane #}
+    <div class="manager-content-pane" id="pane-user-inputs">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span>Structured User Inputs</span>
+                </h1>
+                <div class="content-subtitle">Define custom fields and variables that are gathered from users and mapped to CRM attributes.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="addUserInputRow()">Add Field</button>
+        </div>
+
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="user-inputs-table">
+                    <thead>
+                        <tr>
+                            <th>Variable Field Name</th>
+                            <th>Validation Type</th>
+                            <th>Prompt Question Text</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in settings['user-inputs'] %}
+                        <tr class="user-input-row">
+                            <td><input type="text" class="glass-input ui-name" style="width:100%; font-family:monospace;" value="{{ item.fieldName }}"></td>
+                            <td>
+                                <select class="glass-input ui-type" style="width:100%">
+                                    <option value="TEXT" {% if item.dataType == 'TEXT' %}selected{% endif %}>Free-form Text</option>
+                                    <option value="EMAIL" {% if item.dataType == 'EMAIL' %}selected{% endif %}>Email Address</option>
+                                    <option value="PHONE" {% if item.dataType == 'PHONE' %}selected{% endif %}>Phone Number</option>
+                                    <option value="NUMBER" {% if item.dataType == 'NUMBER' %}selected{% endif %}>Numeric Value</option>
+                                </select>
+                            </td>
+                            <td><input type="text" class="glass-input ui-prompt" style="width:100%" value="{{ item.prompt }}"></td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="saveUserInputs()">Save Input Fields</button>
+            </div>
+        </div>
+    </div>
+
+    {# 8. Persistent Menu Content Pane #}
+    <div class="manager-content-pane" id="pane-persistent-menu">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    <span>Persistent Chat Menu</span>
+                </h1>
+                <div class="content-subtitle">Structure the persistent navigation bar visible to users at the bottom of their Messenger screen.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="addMenuRow()">Add Menu Item</button>
+        </div>
+
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="menu-table">
+                    <thead>
+                        <tr>
+                            <th>Menu Button Label</th>
+                            <th>Action Type</th>
+                            <th>Action Value (Payload or Web URL)</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in settings['persistent-menu'] %}
+                        <tr class="menu-row">
+                            <td><input type="text" class="glass-input menu-title" style="width:100%" value="{{ item.title }}"></td>
+                            <td>
+                                <select class="glass-input menu-type" style="width:100%" onchange="toggleMenuValInput(this)">
+                                    <option value="postback" {% if item.type == 'postback' %}selected{% endif %}>Trigger Postback Payload</option>
+                                    <option value="web_url" {% if item.type == 'web_url' %}selected{% endif %}>Redirect to Web URL</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="glass-input menu-val" style="width:100%" value="{{ item.type == 'postback' ? item.payload : item.url }}">
+                            </td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="savePersistentMenu()">Save Persistent Menu</button>
+            </div>
+        </div>
+    </div>
+
+    {# 9. RCN Campaigns Content Pane #}
+    <div class="manager-content-pane" id="pane-rcn-notifications">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <span>Recurring Notifications (RCN)</span>
+                </h1>
+                <div class="content-subtitle">Draft custom opt-in campaigns allowing daily, weekly, or monthly notifications outside standard window rules.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="addRcnRow()">Add Opt-in Topic</button>
+        </div>
+
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="rcn-table">
+                    <thead>
+                        <tr>
+                            <th>Opt-in Topic Title</th>
+                            <th>Notification Frequency</th>
+                            <th>Postback Opt-in Payload</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in settings['rcn-notifications'] %}
+                        <tr class="rcn-row">
+                            <td><input type="text" class="glass-input rcn-title" style="width:100%" value="{{ item.title }}"></td>
+                            <td>
+                                <select class="glass-input rcn-freq" style="width:100%">
+                                    <option value="DAILY" {% if item.frequency == 'DAILY' %}selected{% endif %}>Daily notifications</option>
+                                    <option value="WEEKLY" {% if item.frequency == 'WEEKLY' %}selected{% endif %}>Weekly notifications</option>
+                                    <option value="MONTHLY" {% if item.frequency == 'MONTHLY' %}selected{% endif %}>Monthly notifications</option>
+                                </select>
+                            </td>
+                            <td><input type="text" class="glass-input rcn-payload" style="width:100%; font-family:monospace;" value="{{ item.payload }}"></td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="saveRcn()">Save RCN Settings</button>
+            </div>
+        </div>
+    </div>
+
+    {# 10. Whitelisted Domains Content Pane #}
+    <div class="manager-content-pane" id="pane-whitelisted-domains">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span>Whitelisted Domains</span>
+                </h1>
+                <div class="content-subtitle">Declare domains securely permitted to render within internal Messenger Webview extension panes.</div>
+            </div>
+        </div>
+
+        <div class="glass-form-card" style="max-width: 680px;">
+            <div class="form-group">
+                <label class="form-label">Authorized Whitelist URLs</label>
+                <div class="form-helper" style="margin-bottom: 8px;">Enter one absolute secure domain URL (HTTPS) per line. Meta strictly rejects unsecured (HTTP) domain integrations.</div>
+                <textarea id="whitelisted-domains-input" class="glass-textarea" style="font-family:monospace; min-height:150px;">{{ settings['whitelisted-domains'].domains }}</textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="saveWhitelistedDomains()">Save Domains Whitelist</button>
+            </div>
+        </div>
+    </div>
+
+    {# 11. API Connectors Content Pane #}
+    <div class="manager-content-pane" id="pane-api-connectors">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                    <span>API Connectors</span>
+                </h1>
+                <div class="content-subtitle">Define endpoints, request protocols, and variable maps to trigger external database updates.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="addConnectorRow()">Add Connector</button>
+        </div>
+
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="connectors-table">
+                    <thead>
+                        <tr>
+                            <th>Connector Label</th>
+                            <th>Request Endpoint URL</th>
+                            <th style="width: 140px;">HTTP Protocol</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in settings['api-connectors'] %}
+                        <tr class="connector-row">
+                            <td><input type="text" class="glass-input conn-name" style="width:100%" value="{{ item.name }}"></td>
+                            <td><input type="url" class="glass-input conn-url" style="width:100%; font-family:monospace;" value="{{ item.url }}"></td>
+                            <td>
+                                <select class="glass-input conn-method" style="width:100%">
+                                    <option value="POST" {% if item.method == 'POST' %}selected{% endif %}>POST Request</option>
+                                    <option value="GET" {% if item.method == 'GET' %}selected{% endif %}>GET Request</option>
+                                    <option value="PUT" {% if item.method == 'PUT' %}selected{% endif %}>PUT Request</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="saveApiConnectors()">Save API Connectors</button>
+            </div>
+        </div>
+    </div>
+
+    {# 12. Outbound Webhooks Content Pane #}
+    <div class="manager-content-pane" id="pane-outbound-webhooks">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
+                    <span>Outbound Streams & Webhooks</span>
+                </h1>
+                <div class="content-subtitle">Publish unified real-time conversation message payloads securely to your target external CRMs.</div>
+            </div>
+        </div>
+
+        <div class="glass-form-card" style="max-width: 680px;">
+            <div class="form-group">
+                <label class="form-label" for="webhook-url">Target Stream Endpoint URL</label>
+                <div class="form-helper" style="margin-bottom: 6px;">The server address where OpenSquadron will publish real-time HTTP POST JSON event updates.</div>
+                <input type="url" id="webhook-url" class="glass-input" style="font-family:monospace;" placeholder="https://api.yourcrm.com/v1/webhook" value="{{ settings['outbound-webhooks'].url }}">
+            </div>
+
+            <div class="form-group" style="margin-top:10px;">
+                <label class="form-label">Subscribed Stream Events</label>
+                <div class="form-helper" style="margin-bottom: 12px;">Toggle which event payloads are pushed to the target server.</div>
+                
+                <div style="display:flex; flex-direction:column; gap:12px; background:rgba(0,0,0,0.15); border-radius:8px; padding:15px; border:1px solid var(--glass-border);">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" class="webhook-event-cb" value="message_received" checked style="accent-color: var(--primary-accent);">
+                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Received (Incoming user messages)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" class="webhook-event-cb" value="message_delivered" {% if 'message_delivered' in settings['outbound-webhooks'].events %}checked{% endif %} style="accent-color: var(--primary-accent);">
+                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Delivered (Delivery report callbacks)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" class="webhook-event-cb" value="message_read" {% if 'message_read' in settings['outbound-webhooks'].events %}checked{% endif %} style="accent-color: var(--primary-accent);">
+                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Read (Opened receipts)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" class="webhook-event-cb" value="postback_received" {% if 'postback_received' in settings['outbound-webhooks'].events %}checked{% endif %} style="accent-color: var(--primary-accent);">
+                        <span style="font-size:13px; color:#fff; font-weight:600;">Postback Triggered (Quick action button clicks)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="saveOutboundWebhooks()">Save Webhook Stream</button>
+            </div>
+        </div>
+    </div>
+
+    {# 13. Action Buttons Content Pane #}
+    <div class="manager-content-pane" id="pane-action-buttons">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span>Action Button Templates</span>
+                </h1>
+                <div class="content-subtitle">Configure quick-action templates and interactive call-to-actions presets.</div>
+            </div>
+            <button class="btn-action btn-create" onclick="addButtonRow()">Add Button Preset</button>
+        </div>
+
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="buttons-table">
+                    <thead>
+                        <tr>
+                            <th>Action Button Text Label</th>
+                            <th>Action Type</th>
+                            <th>Action Connection Target (Phone Number / URL)</th>
+                            <th style="width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in settings['action-buttons'] %}
+                        <tr class="btn-row">
+                            <td><input type="text" class="glass-input btn-label" style="width:100%" value="{{ item.label }}"></td>
+                            <td>
+                                <select class="glass-input btn-type" style="width:100%">
+                                    <option value="phone_number" {% if item.type == 'phone_number' %}selected{% endif %}>Initiate Phone Call</option>
+                                    <option value="web_url" {% if item.type == 'web_url' %}selected{% endif %}>Redirect to Web URL</option>
+                                </select>
+                            </td>
+                            <td><input type="text" class="glass-input btn-val" style="width:100%" value="{{ item.value }}"></td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button class="btn-action btn-create" onclick="saveActionButtons()">Save Button Presets</button>
+            </div>
+        </div>
+    </div>
+
+    {# 14. Welcome Screen Content Pane #}
+    <div class="manager-content-pane" id="pane-welcome-screen">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 16 14"></polyline><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    <span>Welcome & Get Started Setup</span>
+                </h1>
+                <div class="content-subtitle">Draft welcome greetings and payloads that present to users before they send their first message.</div>
+            </div>
+        </div>
+
+        {% if connections is not empty %}
+        <div class="preview-container">
+            <div class="form-side glass-form-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+                    <div>
+                        <div style="font-weight: 700; color: #fff; font-size: 14px;">Show Welcome Page Greeting</div>
+                        <div class="form-helper">Toggle whether users are greeted with customized greeting panels.</div>
+                    </div>
+                    <label class="switch-toggle" style="margin: 0;">
+                        <input type="checkbox" id="welcome-show" {% if settings['welcome-screen'].showGreeting %}checked{% endif %} onchange="updateGreetingPreview()">
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="welcome-greeting-text">Custom Welcome Greeting Text</label>
+                    <textarea id="welcome-greeting-text" class="glass-textarea" oninput="updateGreetingPreview()">{{ settings['welcome-screen'].greetingText }}</textarea>
+                    <div class="form-helper">Maximum 160 characters. Highlight details of what the bot performs.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="welcome-payload">Get Started Trigger Payload</label>
+                    <div class="form-helper" style="margin-bottom: 4px;">The postback identifier triggered when a user selects the "Get Started" prompt button.</div>
+                    <input type="text" id="welcome-payload" class="glass-input" style="font-family:monospace;" value="{{ settings['welcome-screen'].getStartedPayload }}">
+                </div>
+
+                <div style="display:flex; justify-content:flex-end;">
+                    <button class="btn-action btn-create" onclick="saveWelcomeScreen()">Save Welcome Greeting</button>
+                </div>
+            </div>
+
+            <!-- iOS Live Messenger Preview -->
+            <div class="preview-side">
+                <div class="form-label">iOS Messenger live preview</div>
+                <div class="iphone-shell">
+                    <div class="iphone-header">
+                        <span>{{ connection ? connection.pageName ?: 'Facebook Page' : 'Facebook Page' }}</span>
+                    </div>
+                    <div class="iphone-body">
+                        <div class="iphone-content" id="preview-greeting-container">
+                            <div class="iphone-avatar">
+                                {{ connection ? connection.pageName|default('F')|slice(0,1)|upper : 'F' }}
+                            </div>
+                            <div class="iphone-page-name">{{ connection ? connection.pageName ?: 'Facebook Page' : 'Facebook Page' }}</div>
+                            <div class="iphone-page-desc">Authorized OpenSquadron Integration</div>
+                            
+                            <div class="iphone-welcome-bubble" id="preview-greeting-bubble">
+                                Welcome to OpenSquadron! Tap Get Started to explore our automated integrations.
+                            </div>
+                        </div>
+                        
+                        <div class="iphone-footer">
+                            <div class="iphone-btn-started">Get Started</div>
+                            <div style="font-size:8px; color:var(--text-muted); text-align:center; line-height:1.3; width:100%;">Clicking Get Started triggers the welcome webhook callback.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
 </div>
 
 <div id="toast" class="fb-toast">Message</div>
 
 <script>
+    const activeConnectionId = '{{ connection ? connection.id : "" }}';
+
     function showToast(msg, type = 'success') {
         const el = document.getElementById('toast');
         el.textContent = msg;
@@ -652,6 +1869,362 @@
         setTimeout(() => el.classList.remove('is-shown'), 3000);
     }
 
+    // Save Unified Settings AJAX Helper
+    function postSettingsSave(type, dataStructure) {
+        if (!activeConnectionId) {
+            showToast('Please connect a Facebook page first.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+        formData.append('type', type);
+        formData.append('data', JSON.stringify(dataStructure));
+
+        fetch('{{ path('app_facebook_bot_save_settings') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Settings saved successfully!', 'success');
+            } else {
+                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Save error: ' + err.message, 'error'));
+    }
+
+    // 4. Postbacks Saver
+    function addPostbackRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'postback-row';
+        tr.innerHTML = `
+            <td><input type="text" class="glass-input postback-name" style="width:100%"></td>
+            <td><input type="text" class="glass-input postback-payload" style="width:100%; font-family:monospace;"></td>
+            <td><input type="text" class="glass-input postback-action" style="width:100%"></td>
+            <td>
+                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </td>
+        `;
+        document.querySelector('#postbacks-table tbody').appendChild(tr);
+    }
+
+    function savePostbacks() {
+        const rows = [];
+        document.querySelectorAll('.postback-row').forEach(tr => {
+            const name = tr.querySelector('.postback-name').value.trim();
+            const payload = tr.querySelector('.postback-payload').value.trim();
+            const action = tr.querySelector('.postback-action').value.trim();
+            if (name !== '' && payload !== '') {
+                rows.push({ name, payload, action });
+            }
+        });
+        postSettingsSave('postbacks', rows);
+    }
+
+    // 5. Growth Widget Previewer & Saver
+    function updateWidgetPreview() {
+        const type = document.getElementById('widget-type').value;
+        const color = document.getElementById('widget-color').value;
+        const size = document.getElementById('widget-size').value;
+
+        const mockInline = document.getElementById('mock-inline-widget');
+        const mockFloating = document.getElementById('mock-floating-widget');
+        const mockCheckbox = document.getElementById('mock-checkbox-accent');
+
+        if (type === 'checkbox') {
+            mockInline.style.display = 'flex';
+            mockFloating.style.display = 'none';
+            if (mockCheckbox) mockCheckbox.style.accentColor = color;
+        } else {
+            mockInline.style.display = 'none';
+            mockFloating.style.display = 'grid';
+            mockFloating.style.backgroundColor = color;
+            mockFloating.style.transform = size === 'large' ? 'scale(1.15)' : 'scale(1.0)';
+        }
+
+        const embedCode = `<!-- OpenSquadron Messenger Growth Widget Embed -->\n<div class="opensquadron-messenger-widget"\n  data-page-id="${activeConnectionId}"\n  data-widget-type="${type}"\n  data-color="${color}"\n  data-size="${size}">\n</div>\n<script src="https://opensquadron.io/js/widget.js" async defer><\/script>`;
+        const textarea = document.getElementById('widget-embed-code');
+        if (textarea) textarea.value = embedCode;
+    }
+
+    function saveGrowthWidgets() {
+        const type = document.getElementById('widget-type').value;
+        const color = document.getElementById('widget-color').value;
+        const size = document.getElementById('widget-size').value;
+        const domains = document.getElementById('widget-domains').value.trim();
+        postSettingsSave('growth-widgets', { widgetType: type, color, size, domains });
+    }
+
+    // 6. Drip Sequences Saver
+    function addSequenceRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'sequence-row';
+        tr.innerHTML = `
+            <td><input type="text" class="glass-input seq-name" style="width:100%"></td>
+            <td>
+                <select class="glass-input seq-delay" style="width:100%">
+                    <option value="1 hour">1 Hour Delay</option>
+                    <option value="4 hours">4 Hours Delay</option>
+                    <option value="24 hours" selected>24 Hours (Next Day)</option>
+                    <option value="72 hours">72 Hours Delay</option>
+                </select>
+            </td>
+            <td style="text-align: center;">
+                <label class="switch-toggle">
+                    <input type="checkbox" class="seq-active" checked>
+                    <span class="slider-round"></span>
+                </label>
+            </td>
+            <td>
+                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </td>
+        `;
+        document.querySelector('#sequences-table tbody').appendChild(tr);
+    }
+
+    function saveSequences() {
+        const rows = [];
+        document.querySelectorAll('.sequence-row').forEach(tr => {
+            const name = tr.querySelector('.seq-name').value.trim();
+            const delay = tr.querySelector('.seq-delay').value;
+            const isActive = tr.querySelector('.seq-active').checked;
+            if (name !== '') {
+                rows.push({ name, delay, isActive });
+            }
+        });
+        postSettingsSave('sequences', rows);
+    }
+
+    // 7. Structured User Inputs Saver
+    function addUserInputRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'user-input-row';
+        tr.innerHTML = `
+            <td><input type="text" class="glass-input ui-name" style="width:100%; font-family:monospace;"></td>
+            <td>
+                <select class="glass-input ui-type" style="width:100%">
+                    <option value="TEXT" selected>Free-form Text</option>
+                    <option value="EMAIL">Email Address</option>
+                    <option value="PHONE">Phone Number</option>
+                    <option value="NUMBER">Numeric Value</option>
+                </select>
+            </td>
+            <td><input type="text" class="glass-input ui-prompt" style="width:100%"></td>
+            <td>
+                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </td>
+        `;
+        document.querySelector('#user-inputs-table tbody').appendChild(tr);
+    }
+
+    function saveUserInputs() {
+        const rows = [];
+        document.querySelectorAll('.user-input-row').forEach(tr => {
+            const fieldName = tr.querySelector('.ui-name').value.trim();
+            const dataType = tr.querySelector('.ui-type').value;
+            const prompt = tr.querySelector('.ui-prompt').value.trim();
+            if (fieldName !== '' && prompt !== '') {
+                rows.push({ fieldName, dataType, prompt });
+            }
+        });
+        postSettingsSave('user-inputs', rows);
+    }
+
+    // 8. Persistent Menu Saver
+    function addMenuRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'menu-row';
+        tr.innerHTML = `
+            <td><input type="text" class="glass-input menu-title" style="width:100%"></td>
+            <td>
+                <select class="glass-input menu-type" style="width:100%" onchange="toggleMenuValInput(this)">
+                    <option value="postback" selected>Trigger Postback Payload</option>
+                    <option value="web_url">Redirect to Web URL</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="glass-input menu-val" style="width:100%">
+            </td>
+            <td>
+                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </td>
+        `;
+        document.querySelector('#menu-table tbody').appendChild(tr);
+    }
+
+    function toggleMenuValInput(select) {
+        const row = select.closest('tr');
+        const valInput = row.querySelector('.menu-val');
+        if (select.value === 'web_url') {
+            valInput.placeholder = 'e.g. https://yoursite.com';
+            valInput.type = 'url';
+        } else {
+            valInput.placeholder = 'e.g. PAYLOAD_KEY';
+            valInput.type = 'text';
+        }
+    }
+
+    function savePersistentMenu() {
+        const rows = [];
+        document.querySelectorAll('.menu-row').forEach(tr => {
+            const title = tr.querySelector('.menu-title').value.trim();
+            const type = tr.querySelector('.menu-type').value;
+            const val = tr.querySelector('.menu-val').value.trim();
+            if (title !== '' && val !== '') {
+                if (type === 'postback') {
+                    rows.push({ title, type, payload: val });
+                } else {
+                    rows.push({ title, type, url: val });
+                }
+            }
+        });
+        postSettingsSave('persistent-menu', rows);
+    }
+
+    // 9. RCN Topics Saver
+    function addRcnRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'rcn-row';
+        tr.innerHTML = `
+            <td><input type="text" class="glass-input rcn-title" style="width:100%"></td>
+            <td>
+                <select class="glass-input rcn-freq" style="width:100%">
+                    <option value="DAILY">Daily notifications</option>
+                    <option value="WEEKLY" selected>Weekly notifications</option>
+                    <option value="MONTHLY">Monthly notifications</option>
+                </select>
+            </td>
+            <td><input type="text" class="glass-input rcn-payload" style="width:100%; font-family:monospace;"></td>
+            <td>
+                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </td>
+        `;
+        document.querySelector('#rcn-table tbody').appendChild(tr);
+    }
+
+    function saveRcn() {
+        const rows = [];
+        document.querySelectorAll('.rcn-row').forEach(tr => {
+            const title = tr.querySelector('.rcn-title').value.trim();
+            const frequency = tr.querySelector('.rcn-freq').value;
+            const payload = tr.querySelector('.rcn-payload').value.trim();
+            if (title !== '' && payload !== '') {
+                rows.push({ title, frequency, payload });
+            }
+        });
+        postSettingsSave('rcn-notifications', rows);
+    }
+
+    // 10. Whitelisted Domains Saver
+    function saveWhitelistedDomains() {
+        const domains = document.getElementById('whitelisted-domains-input').value.trim();
+        postSettingsSave('whitelisted-domains', { domains });
+    }
+
+    // 11. API Connectors Saver
+    function addConnectorRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'connector-row';
+        tr.innerHTML = `
+            <td><input type="text" class="glass-input conn-name" style="width:100%"></td>
+            <td><input type="url" class="glass-input conn-url" style="width:100%; font-family:monospace;"></td>
+            <td>
+                <select class="glass-input conn-method" style="width:100%">
+                    <option value="POST" selected>POST Request</option>
+                    <option value="GET">GET Request</option>
+                    <option value="PUT">PUT Request</option>
+                </select>
+            </td>
+            <td>
+                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </td>
+        `;
+        document.querySelector('#connectors-table tbody').appendChild(tr);
+    }
+
+    function saveApiConnectors() {
+        const rows = [];
+        document.querySelectorAll('.connector-row').forEach(tr => {
+            const name = tr.querySelector('.conn-name').value.trim();
+            const url = tr.querySelector('.conn-url').value.trim();
+            const method = tr.querySelector('.conn-method').value;
+            if (name !== '' && url !== '') {
+                rows.push({ name, url, method });
+            }
+        });
+        postSettingsSave('api-connectors', rows);
+    }
+
+    // 12. Outbound Webhooks Saver
+    function saveOutboundWebhooks() {
+        const url = document.getElementById('webhook-url').value.trim();
+        const events = [];
+        document.querySelectorAll('.webhook-event-cb:checked').forEach(cb => {
+            events.push(cb.value);
+        });
+        postSettingsSave('outbound-webhooks', { url, events });
+    }
+
+    // 13. Action Buttons Saver
+    function addButtonRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'btn-row';
+        tr.innerHTML = `
+            <td><input type="text" class="glass-input btn-label" style="width:100%"></td>
+            <td>
+                <select class="glass-input btn-type" style="width:100%">
+                    <option value="phone_number" selected>Initiate Phone Call</option>
+                    <option value="web_url">Redirect to Web URL</option>
+                </select>
+            </td>
+            <td><input type="text" class="glass-input btn-val" style="width:100%"></td>
+            <td>
+                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </td>
+        `;
+        document.querySelector('#buttons-table tbody').appendChild(tr);
+    }
+
+    function saveActionButtons() {
+        const rows = [];
+        document.querySelectorAll('.btn-row').forEach(tr => {
+            const label = tr.querySelector('.btn-label').value.trim();
+            const type = tr.querySelector('.btn-type').value;
+            const value = tr.querySelector('.btn-val').value.trim();
+            if (label !== '' && value !== '') {
+                rows.push({ label, type, value });
+            }
+        });
+        postSettingsSave('action-buttons', rows);
+    }
+
+    // 14. Welcome Screen Previewer & Saver
+    function updateGreetingPreview() {
+        const isShown = document.getElementById('welcome-show').checked;
+        const text = document.getElementById('welcome-greeting-text').value;
+
+        const bubble = document.getElementById('preview-greeting-bubble');
+        const container = document.getElementById('preview-greeting-container');
+
+        if (bubble) {
+            bubble.textContent = text ? text : 'No greeting defined.';
+        }
+        if (container) {
+            container.style.opacity = isShown ? '1' : '0.25';
+        }
+    }
+
+    function saveWelcomeScreen() {
+        const showGreeting = document.getElementById('welcome-show').checked;
+        const greetingText = document.getElementById('welcome-greeting-text').value.trim();
+        const getStartedPayload = document.getElementById('welcome-payload').value.trim();
+        postSettingsSave('welcome-screen', { showGreeting, greetingText, getStartedPayload });
+    }
+
+    // Existing Trigger Autoreply toggles and actions
     function toggleFlow(id, isActive) {
         fetch('{{ path('app_facebook_bot_flows_toggle', {id: 0}) }}'.replace('0', id), {
             method: 'POST',
@@ -661,7 +2234,7 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                showToast(isActive ? 'Flow enabled.' : 'Flow disabled.', 'success');
+                showToast(isActive ? 'Autoreply Flow enabled.' : 'Autoreply Flow disabled.', 'success');
             } else {
                 showToast('Update failed.', 'error');
             }
@@ -710,7 +2283,45 @@
         .catch(err => showToast('Delete error: ' + err.message, 'error'));
     }
 
-    // Search filter interaction
+    // Existing AI Agent Saver
+    function saveAiAgentSettings() {
+        const aiActive = document.getElementById('ai-agent-active').checked;
+        const activeContextId = document.getElementById('ai-agent-context-select').value;
+        const btn = document.getElementById('btn-save-ai-agent-settings');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+        formData.append('configType', 'agent');
+        formData.append('aiActive', aiActive ? '1' : '0');
+        formData.append('activeContextId', activeContextId);
+
+        fetch('{{ path('app_facebook_bot_ai_agent_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('AI Agent Settings saved successfully!', 'success');
+                const statusBadge = document.getElementById('ai-nav-status');
+                if (statusBadge) {
+                    statusBadge.textContent = aiActive ? 'ON' : 'OFF';
+                }
+            } else {
+                showToast('Failed to save AI settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Save error: ' + err.message, 'error'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> <span>Save AI Agent Settings</span>';
+        });
+    }
+
+    // Flow list search
     const flowSearch = document.getElementById('flow-search');
     if (flowSearch) {
         flowSearch.oninput = (e) => {
@@ -733,9 +2344,9 @@
         window.location.href = url.toString();
     }
 
-    // Tab switcher logic
+    // Dynamic Tab Switcher Logic
     function switchTab(tabId) {
-        // Toggle Nav Items
+        // Toggle Nav item states
         document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
             if (el.getAttribute('data-tab-target') === tabId) {
                 el.classList.add('is-active');
@@ -744,7 +2355,7 @@
             }
         });
 
-        // Toggle Content Panes
+        // Toggle Content Pane states
         document.querySelectorAll('.manager-content-pane').forEach(el => {
             if (el.id === 'pane-' + tabId) {
                 el.classList.add('is-active');
@@ -755,63 +2366,30 @@
             }
         });
 
-        // Save selection to URL params
+        // Trigger previews when tab is opened
+        if (tabId === 'growth-widgets') {
+            updateWidgetPreview();
+        } else if (tabId === 'welcome-screen') {
+            updateGreetingPreview();
+        }
+
+        // Save selected tab state to URL
         const url = new URL(window.location);
         url.searchParams.set('tab', tabId);
         window.history.replaceState({}, '', url);
     }
 
-    // Set active tab on load
+    // Wire-up DOM actions on load
     document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
-        const tab = params.get('tab') || 'bot-reply';
+        const tab = params.get('tab') || 'console';
         switchTab(tab);
     });
 
-    // Wire click listeners
     document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
         el.addEventListener('click', () => {
             switchTab(el.getAttribute('data-tab-target'));
         });
     });
-
-    function saveAiAgentSettings() {
-        const aiActive = document.getElementById('ai-agent-active').checked;
-        const activeContextId = document.getElementById('ai-agent-context-select').value;
-        const btn = document.getElementById('btn-save-ai-agent-settings');
-
-        btn.disabled = true;
-        btn.innerHTML = '<span>Saving...</span>';
-
-        const formData = new FormData();
-        formData.append('connectionId', '{{ connection ? connection.id : "" }}');
-        formData.append('configType', 'agent');
-        formData.append('aiActive', aiActive ? '1' : '0');
-        formData.append('activeContextId', activeContextId);
-
-        fetch('{{ path('app_facebook_bot_ai_agent_save') }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                showToast('AI Agent Settings saved successfully!', 'success');
-                const statusBadge = document.getElementById('ai-nav-status');
-                if (statusBadge) {
-                    statusBadge.textContent = aiActive ? 'Active' : 'Inactive';
-                }
-            } else {
-                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(err => {
-            showToast('Save error: ' + err.message, 'error');
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> <span>Save AI Agent Settings</span>';
-        });
-    }
 </script>
 {% endblock %}
