@@ -113,7 +113,7 @@ To connect your local environment to the Meta Cloud API webhook, your local serv
 
 For step-by-step setup details, refer to the [Facebook Page Connection Guide](file:///c:/Users/Bloodtek/Documents/dev/OpenSquadron/documentation/connect_facebook.md).
 1. Go to the **Facebook -> Connect** page inside the OpenSquadron Dashboard.
-2. Enter your **Facebook App ID** and **App Secret** (make sure your App type is **Business** in the Meta Developer portal, and your valid redirect URI is configured to `https://opensquadron.your.domain/admin/facebook/callback`).
+2. Enter your **Facebook App ID** and **App Secret** (make sure your App type is **Business** in the Meta Developer portal, and your valid redirect URI is configured to `https://opensquadron.your.domain/facebook/callback`).
 3. Click **Connect with Facebook** to authorize the application.
 4. Select the Facebook Page you want to connect from the list back in OpenSquadron.
 5. Set up your Webhook Callback URL: `https://opensquadron.your.domain/webhook/facebook` with your unique verify token in the Meta Developer dashboard under the **Webhooks** product, and subscribe to `messages` and `messaging_postbacks` events.

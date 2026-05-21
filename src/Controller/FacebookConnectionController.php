@@ -70,7 +70,7 @@ class FacebookConnectionController extends AbstractController
         return $this->redirect($fbAuthUrl);
     }
 
-    #[Route('/admin/facebook/callback', name: 'facebook_connect_callback', methods: ['GET'])]
+    #[Route('/facebook/callback', name: 'facebook_connect_callback', methods: ['GET'])]
     public function callback(Request $request): Response
     {
         $code = $request->query->get('code');

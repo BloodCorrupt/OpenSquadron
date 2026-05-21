@@ -30,6 +30,7 @@ security:
         - { path: ^/whatsapp/test, roles: PUBLIC_ACCESS }
         - { path: ^/privacy, roles: PUBLIC_ACCESS }
         - { path: ^/terms, roles: PUBLIC_ACCESS }
+        - { path: ^/facebook/callback, roles: ROLE_ADMIN }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/$, roles: ROLE_ADMIN }
 

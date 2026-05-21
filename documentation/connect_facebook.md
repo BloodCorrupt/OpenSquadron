@@ -35,7 +35,7 @@ Follow these steps one by one. Do not skip any!
 3. Under **Client OAuth settings**:
    * Find the box that says **Valid OAuth Redirect URIs**.
    * **Do not guess this link!** Go to your OpenSquadron page under **Bot Channels** -> **Connect Facebook**. Look at **Step 1: Facebook Login Credentials** and copy the **Valid OAuth Redirect URI** shown in the blue box.
-   * Paste that exact link into this box. It should look like `https://your-domain.com/admin/facebook/callback` (where `your-domain.com` is your actual site address).
+   * Paste that exact link into this box. It should look like `https://your-domain.com/facebook/callback` (where `your-domain.com` is your actual site address).
    * Make sure the switch for **Web OAuth Login** is turned **ON** (Yes).
 4. Click the **Save Changes** button at the bottom-right.
 
