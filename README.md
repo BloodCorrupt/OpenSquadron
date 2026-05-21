@@ -132,4 +132,4 @@ You can now use the **Shared Inbox** in the OpenSquadron dashboard to chat with 
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0 (GPL-3.0)](https://www.gnu.org/licenses/gpl-3.0.html). You are free to use, modify, and distribute this software under the terms of the GPLv3 license.
+This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](https://www.gnu.org/licenses/agpl-3.0.html). You are free to use, modify, and distribute this software under the terms of the AGPLv3 license.
