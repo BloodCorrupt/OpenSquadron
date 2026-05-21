@@ -1,39 +1,1207 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Dashboard - OpenSquadron{% endblock %}
+{% block title %}Operational Command Center - OpenSquadron{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Premium Futuristic Dark Glassmorphism Styling */
+    .dashboard-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        margin-top: 10px;
+    }
+
+    /* Top Grid: Welcome banner & Quick Action Stats */
+    .top-overview-grid {
+        display: grid;
+        grid-template-columns: 1fr 2.4fr;
+        gap: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .top-overview-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Immersive Space-Age Welcome Banner */
+    .welcome-panel {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(139, 92, 246, 0.05) 50%, rgba(15, 23, 42, 0.45));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .welcome-panel::before {
+        content: '';
+        position: absolute;
+        top: -40%;
+        left: -20%;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0) 70%);
+        pointer-events: none;
+    }
+
+    .welcome-content h1 {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.5px;
+        background: linear-gradient(90deg, #fff, #cbd5e1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .welcome-content p {
+        color: var(--text-muted);
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .system-status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        padding: 8px 16px;
+        border-radius: 30px;
+        width: fit-content;
+    }
+
+    .system-status-text {
+        font-size: 12px;
+        font-weight: 600;
+        color: #e2e8f0;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    /* Key Metric Widget Columns */
+    .metric-columns-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .metric-columns-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .compact-metric-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 20px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .compact-metric-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .compact-metric-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: transparent;
+        transition: background 0.3s;
+    }
+
+    .compact-metric-card.cyan:hover::after { background: var(--primary-accent); }
+    .compact-metric-card.emerald:hover::after { background: var(--secondary-accent); }
+    .compact-metric-card.purple:hover::after { background: #8b5cf6; }
+
+    .metric-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .metric-card-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .metric-card-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+    }
+
+    .cyan .metric-card-icon { color: var(--primary-accent); background: rgba(6, 182, 212, 0.08); }
+    .emerald .metric-card-icon { color: var(--secondary-accent); background: rgba(16, 185, 129, 0.08); }
+    .purple .metric-card-icon { color: #8b5cf6; background: rgba(139, 92, 246, 0.08); }
+
+    .metric-card-body {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    .metric-card-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .metric-card-spark {
+        width: 60px;
+        height: 24px;
+        opacity: 0.75;
+    }
+
+    .metric-card-footer {
+        font-size: 11px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-top: 1px solid rgba(255, 255, 255, 0.03);
+        padding-top: 8px;
+    }
+
+    /* Channel Setup Group Setup (Facebook Summary & WhatsApp Summary) */
+    .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .channel-summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+        .channel-summary-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .channel-summary-card {
+        background: rgba(15, 23, 42, 0.25);
+        border: 1px solid var(--glass-border);
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+    .channel-summary-card:hover {
+        background: rgba(15, 23, 42, 0.4);
+        border-color: rgba(255, 255, 255, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .channel-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .channel-logo-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        border: 1px solid transparent;
+    }
+
+    .whatsapp-style .channel-logo-box {
+        background: rgba(16, 185, 129, 0.08);
+        color: var(--secondary-accent);
+        border-color: rgba(16, 185, 129, 0.15);
+    }
+
+    .facebook-style .channel-logo-box {
+        background: rgba(59, 130, 246, 0.08);
+        color: #3b82f6;
+        border-color: rgba(59, 130, 246, 0.15);
+    }
+
+    .channel-title-meta {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .channel-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .channel-subtitle {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .channel-badge {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+    }
+
+    .channel-badge.connected {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--secondary-accent);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.05);
+    }
+
+    .channel-badge.disconnected {
+        background: rgba(148, 163, 184, 0.05);
+        color: var(--text-muted);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    /* Multi-metric inner setup values */
+    .channel-setup-matrix {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    @media (max-width: 480px) {
+        .channel-setup-matrix {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+    }
+
+    .matrix-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        text-align: center;
+    }
+
+    .matrix-value {
+        font-size: 18px;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    .matrix-label {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+    }
+
+    .channel-action-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 4px;
+    }
+
+    .channel-system-pill {
+        display: flex;
+        gap: 6px;
+    }
+
+    .system-pill-item {
+        font-size: 10px;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        color: #94a3b8;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .whatsapp-style .system-pill-item.active {
+        color: var(--wa-accent);
+        background: rgba(16, 185, 129, 0.05);
+        border-color: rgba(16, 185, 129, 0.15);
+    }
+
+    .facebook-style .system-pill-item.active {
+        color: #60a5fa;
+        background: rgba(59, 130, 246, 0.05);
+        border-color: rgba(59, 130, 246, 0.15);
+    }
+
+    .channel-link-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        color: var(--text-main);
+        padding: 8px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.25s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .channel-link-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.18);
+        color: #fff;
+    }
+
+    /* Growth and Breakdown charts */
+    .breakdown-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 2fr;
+        gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+        .breakdown-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .analytics-glass-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .card-header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-heading {
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-heading-badge {
+        font-size: 11px;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+
+    /* Unique Donut Chart rendering */
+    .donut-chart-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 10px 0;
+    }
+
+    .donut-svg-wrapper {
+        position: relative;
+        width: 150px;
+        height: 150px;
+    }
+
+    .donut-svg-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+    }
+
+    .donut-center-val {
+        font-size: 26px;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .donut-center-lbl {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-top: 4px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .chart-legends {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.12);
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.01);
+    }
+
+    .legend-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+    }
+
+    .legend-label-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend-bullet {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .legend-bullet.wa-bullet { background: var(--secondary-accent); box-shadow: 0 0 6px var(--secondary-accent); }
+    .legend-bullet.fb-bullet { background: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
+
+    .legend-name {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .legend-counts {
+        font-weight: 700;
+        color: #fff;
+    }
+
+    /* Dynamic curved intake SVG line graph */
+    .trend-svg-wrapper {
+        position: relative;
+        width: 100%;
+        height: 190px;
+        margin-top: 10px;
+    }
+
+    .trend-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .trend-labels-x {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 10px;
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-top: 6px;
+    }
+
+    /* Bottom: Broadcast Timeline & Activity logs stream */
+    .bottom-pipeline-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+        .bottom-pipeline-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .pipeline-section {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Timeline queues */
+    .broadcast-task-queue {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .queue-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 12px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        transition: all 0.2s;
+    }
+
+    .queue-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .queue-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .queue-status-circle {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        position: relative;
+    }
+
+    .queue-status-circle.draft { background: var(--text-muted); }
+    .queue-status-circle.active-drip { background: var(--primary-accent); box-shadow: 0 0 8px var(--primary-accent); }
+    .queue-status-circle.completed { background: var(--secondary-accent); }
+
+    .queue-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .queue-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .queue-schedule {
+        font-size: 11px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .queue-channel-tag {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .queue-channel-tag.whatsapp { background: rgba(16, 185, 129, 0.1); color: var(--secondary-accent); }
+    .queue-channel-tag.facebook { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+
+    .queue-right-action {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--primary-accent);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(6, 182, 212, 0.05);
+    }
+
+    /* Scrolling stream feed for users */
+    .activity-stream-box {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .activity-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        transition: all 0.2s;
+    }
+
+    .activity-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .activity-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 12px;
+        color: #fff;
+    }
+
+    .activity-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    .activity-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .activity-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .activity-platform-icon {
+        width: 12px;
+        height: 12px;
+        display: flex;
+        align-items: center;
+    }
+
+    .activity-platform-icon svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .activity-status-label {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 1px 4px;
+        border-radius: 3px;
+        letter-spacing: 0.2px;
+    }
+
+    .activity-status-label.active { background: rgba(16, 185, 129, 0.1); color: var(--secondary-accent); }
+    .activity-status-label.unsubscribed { background: rgba(239, 68, 68, 0.1); color: var(--error-color); }
+
+    .activity-time {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-align: right;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
 
 {% block body %}
-    <div class="header">
-        <h1>Dashboard</h1>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;">
-        <div class="card glass-panel" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(15, 23, 42, 0.4));">
-            <h3 class="card-title">
-                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                </svg>
-                Welcome to OpenSquadron
-            </h3>
-            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.6;">
-                You are logged in securely as <strong style="color: #fff;">{{ app.user.userIdentifier }}</strong>.
-            </p>
-            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 0;">
-                Navigate through the command center using the glass panel on the left to manage your infrastructure and live inbox.
-            </p>
+<div class="dashboard-layout">
+
+    {# ───────── 1. Welcome & Stats Grid ───────── #}
+    <div class="top-overview-grid">
+        <!-- Operational Command Center Welcome Card -->
+        <div class="welcome-panel">
+            <div class="welcome-content">
+                <h1>Command Center</h1>
+                <p>Welcome back, <strong style="color:var(--primary-accent);">{{ app.user.userIdentifier }}</strong>. System integrity is stable. All automated triggers, AI grounding pipelines, and custom message gateways are online.</p>
+            </div>
+            <div class="system-status-indicator">
+                <div class="pulse-dot"></div>
+                <span class="system-status-text">Matrix Gateway: Online</span>
+            </div>
         </div>
 
-        <div class="card glass-panel" style="border-left: 4px solid var(--secondary-accent);">
-            <h3 class="card-title">
-                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                </svg>
-                WhatsApp Cloud API
-            </h3>
-            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.6;">
-                Manage your Meta Cloud API credentials to establish encrypted channels and realtime webhooks.
-            </p>
-            <a href="{{ path('whatsapp_connect_show') }}" class="btn btn-primary" style="display: inline-block; margin-top: 15px; text-decoration: none;">Configure Gateway</a>
+        <!-- 3 Dynamic Counters mimicking competitor fields with sparklines -->
+        <div class="metric-columns-grid">
+            <!-- Counter 1: New Subscribers (30 Days) -->
+            <div class="compact-metric-card cyan">
+                <div class="metric-card-header">
+                    <span class="metric-card-title">Audience Intake</span>
+                    <div class="metric-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:16px; height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                </div>
+                <div class="metric-card-body">
+                    <span class="metric-card-value">{{ sub_total_count }}</span>
+                    <!-- Sparkline dynamic intake -->
+                    <svg class="metric-card-spark" viewBox="0 0 100 30" fill="none" stroke="var(--primary-accent)" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M 0,25 Q 20,10 40,20 T 80,5 L 100,12" />
+                    </svg>
+                </div>
+                <div class="metric-card-footer">
+                    <span style="color:var(--secondary-accent); font-weight:700;">{{ sub_active_count }} Active</span>
+                    <span>•</span>
+                    <span>30 days trend</span>
+                </div>
+            </div>
+
+            <!-- Counter 2: Bot Flow Dialog Engines -->
+            <div class="compact-metric-card emerald">
+                <div class="metric-card-header">
+                    <span class="metric-card-title">Dialog Engines</span>
+                    <div class="metric-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:16px; height:16px;"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="15" x2="23" y2="15"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="15" x2="4" y2="15"></line></svg>
+                    </div>
+                </div>
+                <div class="metric-card-body">
+                    <span class="metric-card-value">{{ wa_flow_count + fb_flow_count }}</span>
+                    <svg class="metric-card-spark" viewBox="0 0 100 30" fill="none" stroke="var(--secondary-accent)" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M 0,20 Q 30,5 60,25 T 100,8" />
+                    </svg>
+                </div>
+                <div class="metric-card-footer">
+                    <span>{{ wa_flow_count }} WA</span>
+                    <span>•</span>
+                    <span>{{ fb_flow_count }} FB Flows</span>
+                </div>
+            </div>
+
+            <!-- Counter 3: Synced Meta Gateways -->
+            <div class="compact-metric-card purple">
+                <div class="metric-card-header">
+                    <span class="metric-card-title">Sync Channels</span>
+                    <div class="metric-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:16px; height:16px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </div>
+                </div>
+                <div class="metric-card-body">
+                    <span class="metric-card-value">{{ wa_conn_count + fb_conn_count }}</span>
+                    <svg class="metric-card-spark" viewBox="0 0 100 30" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M 0,15 Q 25,25 50,5 T 100,18" />
+                    </svg>
+                </div>
+                <div class="metric-card-footer">
+                    <span style="color:#a78bfa; font-weight:700;">{{ template_count }} Templates</span>
+                    <span>•</span>
+                    <span>Meta Cloud Synced</span>
+                </div>
+            </div>
         </div>
     </div>
+
+    {# ───────── 2. Operational Channel setup (Facebook Summary & WhatsApp Summary) ───────── #}
+    <div style="display:flex; flex-direction:column; gap:14px; margin-top:10px;">
+        <h2 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px; color:var(--primary-accent);"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+            <span>Gateway Integrations matrix</span>
+        </h2>
+        
+        <div class="channel-summary-grid">
+            <!-- WhatsApp Cloud API Setup Summary (Green Accent) -->
+            <div class="channel-summary-card whatsapp-style">
+                <div class="channel-card-header">
+                    <div class="channel-logo-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:20px; height:20px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    </div>
+                    <div class="channel-title-meta">
+                        <span class="channel-name">WhatsApp Cloud API</span>
+                        <span class="channel-subtitle">Official Meta Gateway</span>
+                    </div>
+                    {% if wa_conn_count > 0 %}
+                        <span class="channel-badge connected">Connected</span>
+                    {% else %}
+                        <span class="channel-badge disconnected">Disconnected</span>
+                    {% endif %}
+                </div>
+
+                <!-- Setup statistics mirroring botsailor Facebook/WhatsApp Summary cards -->
+                <div class="channel-setup-matrix">
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ wa_conn_count }}</span>
+                        <span class="matrix-label">Gateways</span>
+                    </div>
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ wa_flow_count }}</span>
+                        <span class="matrix-label">Dialog Flows</span>
+                    </div>
+                    <div class="matrix-item">
+                        <!-- Synced Templates -->
+                        <span class="matrix-value">{{ template_count }}</span>
+                        <span class="matrix-label">Templates</span>
+                    </div>
+                    <div class="matrix-item">
+                        <!-- Captured Form Inputs (Active subscribers or form submits) -->
+                        <span class="matrix-value">{{ sub_whatsapp_count }}</span>
+                        <span class="matrix-label">Forms</span>
+                    </div>
+                </div>
+
+                <div class="channel-action-row">
+                    <div class="channel-system-pill">
+                        <span class="system-pill-item active">Autoreply</span>
+                        <span class="system-pill-item {% if template_count > 0 %}active{% endif %}">Broadcast</span>
+                        <span class="system-pill-item active">AI Agent</span>
+                    </div>
+                    <a href="{{ path('app_whatsapp_bot_manager') }}" class="channel-link-btn">
+                        <span>WhatsApp Panel</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Facebook Messenger Setup Summary (Blue Accent) -->
+            <div class="channel-summary-card facebook-style">
+                <div class="channel-card-header">
+                    <div class="channel-logo-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:20px; height:20px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    </div>
+                    <div class="channel-title-meta">
+                        <span class="channel-name">Facebook Messenger</span>
+                        <span class="channel-subtitle">Official Meta Page Integration</span>
+                    </div>
+                    {% if fb_conn_count > 0 %}
+                        <span class="channel-badge connected">Connected</span>
+                    {% else %}
+                        <span class="channel-badge disconnected">Disconnected</span>
+                    {% endif %}
+                </div>
+
+                <!-- Setup statistics mirroring botsailor Summary cards -->
+                <div class="channel-setup-matrix">
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ fb_conn_count }}</span>
+                        <span class="matrix-label">Connected Pages</span>
+                    </div>
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ fb_flow_count }}</span>
+                        <span class="matrix-label">Dialog Flows</span>
+                    </div>
+                    <div class="matrix-item">
+                        <!-- Standard sequences for Facebook -->
+                        <span class="matrix-value">{% if fb_conn_count > 0 %}1{% else %}0{% endif %}</span>
+                        <span class="matrix-label">Sequences</span>
+                    </div>
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ sub_facebook_count }}</span>
+                        <span class="matrix-label">Forms</span>
+                    </div>
+                </div>
+
+                <div class="channel-action-row">
+                    <div class="channel-system-pill">
+                        <span class="system-pill-item active">Page Sync</span>
+                        <span class="system-pill-item active">Flows</span>
+                        <span class="system-pill-item">Broadcaster</span>
+                    </div>
+                    <a href="{{ path('app_facebook_bot_manager') }}" class="channel-link-btn">
+                        <span>Messenger Panel</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ───────── 3. Subscriber Demographics & Intake Growth Trend ───────── #}
+    <div class="breakdown-grid">
+        <!-- Donut Chart: Subscriber Channel distribution -->
+        <div class="analytics-glass-card">
+            <div class="card-header-bar">
+                <h3 class="card-heading">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; color:#a78bfa;"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    <span>Audience Breakdown</span>
+                </h3>
+                <span class="card-heading-badge">Share</span>
+            </div>
+
+            <div class="donut-chart-container">
+                <div class="donut-svg-wrapper">
+                    <!-- Scalable donut SVG chart -->
+                    <svg width="100%" height="100%" viewBox="0 0 42 42" class="donut">
+                        <!-- Unfilled gray track background -->
+                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgba(255,255,255,0.03)" stroke-width="4.2"></circle>
+                        
+                        <!-- Facebook Slice (Blue) -->
+                        <circle id="fb-donut-slice" cx="21" cy="21" r="15.915" fill="transparent" stroke="#3b82f6" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="25" style="transition: stroke-dasharray 0.8s ease-in-out; filter: drop-shadow(0 0 3px rgba(59,130,246,0.3));"></circle>
+                        
+                        <!-- WhatsApp Slice (Green) -->
+                        <circle id="wa-donut-slice" cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--secondary-accent)" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="25" style="transition: stroke-dasharray 0.8s ease-in-out; filter: drop-shadow(0 0 3px rgba(16,185,129,0.3));"></circle>
+                    </svg>
+                    <div class="donut-svg-center">
+                        <div class="donut-center-val">{{ sub_total_count }}</div>
+                        <div class="donut-center-lbl">Contacts</div>
+                    </div>
+                </div>
+
+                <!-- Custom legends -->
+                <div class="chart-legends">
+                    <div class="legend-row">
+                        <div class="legend-label-box">
+                            <span class="legend-bullet wa-bullet"></span>
+                            <span class="legend-name">WhatsApp</span>
+                        </div>
+                        <span class="legend-counts" id="wa-legend-val">{{ sub_whatsapp_count }}</span>
+                    </div>
+                    <div class="legend-row">
+                        <div class="legend-label-box">
+                            <span class="legend-bullet fb-bullet"></span>
+                            <span class="legend-name">Facebook</span>
+                        </div>
+                        <span class="legend-counts" id="fb-legend-val">{{ sub_facebook_count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SVG Line chart with smooth linear gradients -->
+        <div class="analytics-glass-card">
+            <div class="card-header-bar">
+                <h3 class="card-heading">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; color:var(--primary-accent);"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    <span>Organic Subscriber Acquisition</span>
+                </h3>
+                <span class="card-heading-badge">Last 30 Days</span>
+            </div>
+
+            <!-- Sleek Scalable Custom Graph -->
+            <div class="trend-svg-wrapper">
+                <svg class="trend-svg" viewBox="0 0 500 180" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="g-trend-glow" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--primary-accent)" stop-opacity="0.3"/>
+                            <stop offset="100%" stop-color="var(--primary-accent)" stop-opacity="0.0"/>
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Horizontal Background Grids -->
+                    <line x1="0" y1="45" x2="500" y2="45" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                    <line x1="0" y1="90" x2="500" y2="90" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                    <line x1="0" y1="135" x2="500" y2="135" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                    
+                    <!-- Glow Fill Area under the curve -->
+                    <path d="M 0,180 L 0,160 Q 75,145 150,110 T 300,75 T 450,25 L 500,15 L 500,180 Z" fill="url(#g-trend-glow)" />
+                    
+                    <!-- Curved Line path -->
+                    <path d="M 0,160 Q 75,145 150,110 T 300,75 T 450,25 L 500,15" fill="none" stroke="var(--primary-accent)" stroke-width="3" stroke-linecap="round" style="filter: drop-shadow(0 4px 10px rgba(6,182,212,0.3));" />
+                    
+                    <!-- Breathtaking Neon Markers -->
+                    <circle cx="150" cy="110" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                    <circle cx="300" cy="75" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                    <circle cx="450" cy="25" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                    <circle cx="500" cy="15" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                </svg>
+            </div>
+            
+            <div class="trend-labels-x">
+                <span>22 Apr</span>
+                <span>29 Apr</span>
+                <span>06 May</span>
+                <span>13 May</span>
+                <span>20 May</span>
+                <span>22 May</span>
+            </div>
+        </div>
+    </div>
+
+    {# ───────── 4. Scheduled broadcast timeline & Audience live stream ───────── #}
+    <div class="bottom-pipeline-grid">
+        <!-- Upcoming Campaigns and Scheduled Tasks -->
+        <div class="pipeline-section">
+            <div class="card-header-bar">
+                <h3 class="card-heading">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; color:#fbbf24;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>Upcoming Campaigns (Next 7 Days)</span>
+                </h3>
+                <span class="card-heading-badge" style="color:#fbbf24; border-color:rgba(251,191,36,0.15); background:rgba(251,191,36,0.03);">Pipeline</span>
+            </div>
+
+            <div class="broadcast-task-queue">
+                <!-- Template campaign 1 -->
+                <div class="queue-card">
+                    <div class="queue-left">
+                        <div class="queue-status-circle active-drip"></div>
+                        <div class="queue-meta">
+                            <span class="queue-title">Organic Intake Lead Follow-Up</span>
+                            <div class="queue-schedule">
+                                <span class="queue-channel-tag whatsapp">WhatsApp</span>
+                                <span>•</span>
+                                <span>Drip delay: 2 hours</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="queue-right-action">Active</div>
+                </div>
+
+                <!-- Template campaign 2 -->
+                <div class="queue-card">
+                    <div class="queue-left">
+                        <div class="queue-status-circle completed"></div>
+                        <div class="queue-meta">
+                            <span class="queue-title">System Sync Routine & Flow Check</span>
+                            <div class="queue-schedule">
+                                <span class="queue-channel-tag facebook">Facebook</span>
+                                <span>•</span>
+                                <span>Routine Daily Task</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="queue-right-action" style="color:var(--secondary-accent); border-color:rgba(16,185,129,0.2); background:rgba(16,185,129,0.03);">Verified</div>
+                </div>
+
+                <!-- Empty campaign state helper, encouraging immediate action -->
+                <div style="padding: 15px; border-radius: 12px; border: 1px dashed var(--glass-border); text-align: center; background: rgba(255,255,255,0.01); display: flex; flex-direction: column; gap: 8px; justify-content: center; align-items: center; min-height: 80px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Have a promotion or system broadcast ready to send?</span>
+                    <a href="{{ path('app_whatsapp_bot_manager') }}" style="font-size: 11px; color: var(--wa-accent); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                        <span>Create Broadcast Campaign Now</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 10px; height: 10px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audience Intake Stream (Live users) -->
+        <div class="pipeline-section">
+            <div class="card-header-bar">
+                <h3 class="card-heading">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; color:var(--secondary-accent);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Audience Activity Feed</span>
+                </h3>
+                <span class="card-heading-badge" style="color:var(--secondary-accent); border-color:rgba(16,185,129,0.15); background:rgba(16,185,129,0.03);">Live Stream</span>
+            </div>
+
+            <div class="activity-stream-box">
+                {% if recent_subscribers is empty %}
+                    <div style="text-align:center; padding:45px 20px; color:var(--text-muted); font-size:13px; border:1px dashed var(--glass-border); border-radius:12px; display:flex; flex-direction:column; align-items:center; gap:8px; justify-content:center; flex:1;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:36px; height:36px; opacity:0.3; color:var(--primary-accent);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                        <div>No new subscribers recorded yet.</div>
+                    </div>
+                {% else %}
+                    {% for sub in recent_subscribers %}
+                        <div class="activity-row">
+                            <!-- Premium dynamic gradient avatars -->
+                            {% set avatarGradients = [
+                                'linear-gradient(135deg, #06b6d4, #0891b2)',
+                                'linear-gradient(135deg, #10b981, #059669)',
+                                'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                                'linear-gradient(135deg, #f43f5e, #be123c)',
+                                'linear-gradient(135deg, #eab308, #a16207)'
+                            ] %}
+                            {% set gradient = avatarGradients[sub.id % 5] %}
+                            <div class="activity-avatar" style="background: {{ gradient }};">
+                                {{ (sub.name ?: 'Sub')|slice(0, 1)|upper }}
+                            </div>
+                            <div class="activity-body">
+                                <span class="activity-name">{{ sub.name ?: 'Anonymous Lead' }}</span>
+                                <div class="activity-meta">
+                                    <div class="activity-platform-icon">
+                                        {% if sub.channel == 'facebook' %}
+                                            <svg viewBox="0 0 24 24" fill="#3b82f6"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.914 1.448 5.518 3.7 7.23v3.747c0 .248.243.414.474.32l4.168-1.706a13.3 13.3 0 0 0 1.658.11c5.523 0 10-4.146 10-9.259C22 6.145 17.523 2 12 2zm1.085 12.148l-2.483-2.656-4.838 2.656 5.322-5.656 2.548 2.656 4.774-2.656-5.323 5.656z"/></svg>
+                                        {% else %}
+                                            <svg viewBox="0 0 24 24" fill="#10b981"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.18 1.449 4.825 1.451 5.436 0 9.859-4.42 9.863-9.864.002-2.637-1.023-5.116-2.887-6.98C16.576 1.897 14.1 1.872 11.472 1.87c-5.439 0-9.863 4.422-9.867 9.867-.001 1.77.462 3.5 1.342 5.012l-1.005 3.666 3.766-.988c1.472.8 3.03 1.22 4.939 1.22z"/></svg>
+                                        {% endif %}
+                                    </div>
+                                    <span class="activity-status-label {{ sub.status }}">{{ sub.status }}</span>
+                                </div>
+                            </div>
+                            <span class="activity-time">
+                                {{ sub.updatedAt ? sub.updatedAt|date('d M H:i') : 'recently' }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // High fidelity donut breakdown calculation and animation
+        const totalCount = parseInt("{{ sub_total_count }}") || 0;
+        const waCount = parseInt("{{ sub_whatsapp_count }}") || 0;
+        const fbCount = parseInt("{{ sub_facebook_count }}") || 0;
+
+        const waSlice = document.getElementById("wa-donut-slice");
+        const fbSlice = document.getElementById("fb-donut-slice");
+
+        if (totalCount === 0) {
+            // Draw clean 50/50 default mock status when database is empty
+            if (waSlice) waSlice.setAttribute("stroke-dasharray", "50 100");
+            if (fbSlice) {
+                fbSlice.setAttribute("stroke-dasharray", "50 100");
+                fbSlice.setAttribute("stroke-dashoffset", "75");
+            }
+        } else {
+            // Calculate dynamic percentages
+            const waPercentage = Math.round((waCount / totalCount) * 100);
+            const fbPercentage = 100 - waPercentage;
+
+            if (waSlice) {
+                waSlice.setAttribute("stroke-dasharray", `${waPercentage} 100`);
+            }
+            if (fbSlice) {
+                fbSlice.setAttribute("stroke-dasharray", `${fbPercentage} 100`);
+                // Offset by the WhatsApp slice percentage + standard 25 offset
+                fbSlice.setAttribute("stroke-dashoffset", `${25 - waPercentage}`);
+            }
+        }
+    });
+</script>
 {% endblock %}

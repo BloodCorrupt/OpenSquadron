@@ -26,8 +26,8 @@
         height: fit-content;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     }
-    .nav-header {
-        font-size: 11px;
+    .manager-nav .nav-header {
+        font-size: 13px;
         font-weight: 700;
         text-transform: uppercase;
         color: var(--text-muted);
@@ -37,10 +37,10 @@
         padding-left: 12px;
         opacity: 0.8;
     }
-    .nav-header:first-of-type {
+    .manager-nav .nav-header:first-of-type {
         margin-top: 0;
     }
-    .nav-item {
+    .manager-nav .nav-item {
         display: flex;
         align-items: center;
         gap: 12px;
@@ -48,36 +48,36 @@
         border-radius: 10px;
         color: var(--text-muted);
         text-decoration: none;
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 600;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid transparent;
         cursor: pointer;
         user-select: none;
     }
-    .nav-item:hover {
+    .manager-nav .nav-item:hover {
         color: var(--text-main);
         background: rgba(255, 255, 255, 0.04);
         transform: translateX(2px);
     }
-    .nav-item.is-active {
+    .manager-nav .nav-item.is-active {
         color: var(--text-main);
         background: rgba(6, 182, 212, 0.12);
         border-color: rgba(6, 182, 212, 0.25);
         box-shadow: 0 4px 15px rgba(6, 182, 212, 0.08);
     }
-    .nav-item-icon {
+    .manager-nav .nav-item-icon {
         font-size: 16px;
         display: flex;
         align-items: center;
     }
-    .nav-item-icon svg {
+    .manager-nav .nav-item-icon svg {
         width: 16px;
         height: 16px;
     }
-    .nav-item-status {
+    .manager-nav .nav-item-status {
         margin-left: auto;
-        font-size: 9px;
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         padding: 2px 6px;
@@ -85,7 +85,7 @@
         background: rgba(255, 255, 255, 0.05);
         letter-spacing: 0.2px;
     }
-    .nav-item.is-active .nav-item-status {
+    .manager-nav .nav-item.is-active .nav-item-status {
         background: rgba(6, 182, 212, 0.25);
         color: var(--primary-accent);
     }
@@ -133,7 +133,7 @@
         color: var(--primary-accent);
     }
     .content-subtitle {
-        font-size: 13px;
+        font-size: 15px;
         color: var(--text-muted);
         margin-top: 5px;
     }
@@ -204,13 +204,13 @@
         height: 20px;
     }
     .console-card-title {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 700;
         color: #f8fafc;
     }
     .console-card-status {
         margin-left: auto;
-        font-size: 9px;
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         padding: 2px 6px;
@@ -223,13 +223,13 @@
         color: var(--primary-accent);
     }
     .console-card-desc {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--text-muted);
         line-height: 1.5;
         flex: 1;
     }
     .console-card-action {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--primary-accent);
         display: flex;
@@ -267,12 +267,12 @@
         gap: 8px;
     }
     .form-label {
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 600;
         color: #cbd5e1;
     }
     .form-helper {
-        font-size: 11px;
+        font-size: 13px;
         color: var(--text-muted);
         line-height: 1.4;
     }
@@ -282,7 +282,7 @@
         border-radius: 8px;
         padding: 10px 14px;
         color: #fff;
-        font-size: 13px;
+        font-size: 15px;
         outline: none;
         transition: all 0.2s;
     }
@@ -418,7 +418,7 @@
         width: 100%;
         border-collapse: collapse;
         text-align: left;
-        font-size: 13px;
+        font-size: 15px;
     }
     .custom-table th {
         padding: 14px 16px;
@@ -426,7 +426,7 @@
         border-bottom: 1px solid var(--glass-border);
         font-weight: 700;
         text-transform: uppercase;
-        font-size: 11px;
+        font-size: 13px;
         color: var(--text-muted);
         letter-spacing: 0.5px;
     }
@@ -468,7 +468,7 @@
         background: rgba(0, 0, 0, 0.25);
         border: 1px solid var(--glass-border);
         border-radius: 10px;
-        font-size: 13px;
+        font-size: 15px;
         color: #fff;
         outline: none;
         transition: all 0.2s;
@@ -495,7 +495,7 @@
         background: rgba(0, 0, 0, 0.25);
         border: 1px solid var(--glass-border);
         border-radius: 10px;
-        font-size: 13px;
+        font-size: 15px;
         color: #fff;
         outline: none;
         cursor: pointer;
@@ -508,7 +508,7 @@
         gap: 8px;
         padding: 10px 18px;
         border-radius: 10px;
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
@@ -585,13 +585,13 @@
         background: rgba(6, 182, 212, 0.1);
         border: 1px solid rgba(6, 182, 212, 0.2);
         color: var(--primary-accent);
-        font-size: 11px;
+        font-size: 13px;
         font-weight: 600;
         margin-right: 4px;
         margin-bottom: 4px;
     }
     .match-mode-badge {
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
         color: var(--text-muted);
@@ -662,7 +662,7 @@
         color: #ffffff;
         padding: 12px 24px;
         border-radius: 8px;
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 600;
         opacity: 0;
         pointer-events: none;
@@ -688,7 +688,7 @@
     <div class="manager-nav">
         <div class="nav-header">Facebook Page</div>
         <div style="margin-bottom: 10px; padding: 0 10px;">
-            <select id="facebook-conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
+            <select id="facebook-conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 15px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
                 {% if connections is empty %}
                     <option value="">No Pages Connected</option>
                 {% else %}
@@ -793,7 +793,7 @@
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             </span>
-            <span>Structured User Inputs</span>
+            <span>Captured Forms & Inputs</span>
         </div>
 
         <div class="nav-item" data-tab-target="growth-widgets">
@@ -940,7 +940,7 @@
                         <div class="console-icon-wrapper" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         </div>
-                        <span class="console-card-title">User Input Flows</span>
+                        <span class="console-card-title">Captured Form Inputs</span>
                         <span class="console-card-status">Active</span>
                     </div>
                     <p class="console-card-desc">Design structured forms that prompt users for details and parse attributes inside chat variables.</p>
@@ -1451,13 +1451,13 @@
         </div>
     </div>
 
-    {# 7. User Input Flow Content Pane #}
+    {# 7. Captured Forms & Inputs Content Pane #}
     <div class="manager-content-pane" id="pane-user-inputs">
         <div class="content-header">
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    <span>Structured User Inputs</span>
+                    <span>Captured Forms & Inputs</span>
                 </h1>
                 <div class="content-subtitle">Define custom fields and variables that are gathered from users and mapped to CRM attributes.</div>
             </div>
@@ -1998,7 +1998,7 @@
         postSettingsSave('sequences', rows);
     }
 
-    // 7. Structured User Inputs Saver
+    // 7. Captured Forms & Inputs Saver
     function addUserInputRow() {
         const tr = document.createElement('tr');
         tr.className = 'user-input-row';

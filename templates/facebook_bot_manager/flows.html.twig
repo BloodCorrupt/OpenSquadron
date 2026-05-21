@@ -79,13 +79,57 @@
         border-color: var(--fb-active-border);
         box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
     }
-    .fb-search-box::before {
-        content: '🔍';
+    .fb-search-icon {
         position: absolute;
         left: 11px;
-        top: 9px;
-        font-size: 13px;
+        top: 11px;
+        width: 14px;
+        height: 14px;
+        stroke: var(--fb-text-muted);
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
         opacity: 0.5;
+     }
+
+    /* Clean custom vector icons styling */
+    .fb-svg-icon {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .fb-stat-svg {
+        width: 11px;
+        height: 11px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        margin-bottom: 2px;
+    }
+
+    .fb-row-svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: transform 0.2s;
+    }
+    .fb-row-svg:hover {
+        transform: scale(1.15);
     }
 
     .fb-sidebar-flows {
@@ -375,9 +419,11 @@
         overflow: hidden;
     }
     .fb-node-icon {
-        font-size: 14px;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
-    }
+     }
     .fb-node-title {
         overflow: hidden;
         text-overflow: ellipsis;
@@ -829,16 +875,18 @@
     {# ───────── Left Sidebar Block Palette ───────── #}
     <div class="fb-sidebar">
         <div class="fb-sidebar-header">
-            <a href="{{ path('app_facebook_bot_manager') }}?tab=bot-reply" style="display: inline-block; margin-bottom: 16px; color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, 0.05); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--glass-border); transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='var(--text-muted)';">
-                ⬅️ Back to Bot Manager
+            <a href="{{ path('app_facebook_bot_manager') }}?tab=bot-reply" style="display: inline-flex; align-items: center; margin-bottom: 16px; color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, 0.05); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--glass-border); transition: all 0.2s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='var(--text-muted)';">
+                <svg viewBox="0 0 24 24" class="fb-svg-icon" style="margin-right: 6px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back to Bot Manager
             </a>
             <h2 class="fb-sidebar-title">
                 <span>Flow blocks</span>
-                <span style="font-size: 20px;">🧩</span>
+                <svg viewBox="0 0 24 24" class="fb-svg-icon" style="width: 20px; height: 20px; stroke: var(--fb-active-border);"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             </h2>
             <p class="fb-sidebar-subtitle">Drag a block onto the canvas</p>
             
             <div class="fb-search-box">
+                <svg class="fb-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="text" id="fb-search-blocks" placeholder="Search blocks...">
             </div>
         </div>
@@ -855,91 +903,125 @@
         </div>
 
         <div class="fb-sidebar-body">
-            {# Category: Messages #}
+            {# Category: Visual Responses #}
             <div class="fb-palette-category">
-                <div class="fb-category-title">Messages</div>
+                <div class="fb-category-title">Visual Responses</div>
                 <div class="fb-palette-item" draggable="true" data-block="send_text">
-                    <div class="fb-pi-icon pi-messages">💬</div>
-                    <span>Text</span>
+                    <div class="fb-pi-icon pi-messages">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    </div>
+                    <span>Message Body</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="send_image">
-                    <div class="fb-pi-icon pi-messages">🖼️</div>
-                    <span>Image</span>
+                    <div class="fb-pi-icon pi-messages">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                    <span>Image Media</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="send_audio">
-                    <div class="fb-pi-icon pi-messages">🎵</div>
-                    <span>Audio</span>
+                    <div class="fb-pi-icon pi-messages">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                    </div>
+                    <span>Audio Player</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="send_video">
-                    <div class="fb-pi-icon pi-messages">🎥</div>
-                    <span>Video</span>
+                    <div class="fb-pi-icon pi-messages">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                    </div>
+                    <span>Video Player</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="send_file">
-                    <div class="fb-pi-icon pi-messages">📎</div>
-                    <span>File</span>
+                    <div class="fb-pi-icon pi-messages">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                    </div>
+                    <span>Document Attachment</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="send_location">
-                    <div class="fb-pi-icon pi-messages">📍</div>
-                    <span>Location</span>
+                    <div class="fb-pi-icon pi-messages">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </div>
+                    <span>Location Pin</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="ai_reply">
-                    <div class="fb-pi-icon pi-messages">🤖</div>
-                    <span>AI Reply</span>
+                    <div class="fb-pi-icon pi-messages">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="15" x2="23" y2="15"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="15" x2="4" y2="15"></line></svg>
+                    </div>
+                    <span>AI Responder</span>
                 </div>
             </div>
 
-            {# Category: Data Collection #}
+            {# Category: Form Capture #}
             <div class="fb-palette-category">
-                <div class="fb-category-title">Data Collection</div>
+                <div class="fb-category-title">Form Capture</div>
                 <div class="fb-palette-item" draggable="true" data-block="user_input">
-                    <div class="fb-pi-icon pi-collection">📊</div>
-                    <span>User Input Flow</span>
+                    <div class="fb-pi-icon pi-collection">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    </div>
+                    <span>Form Data Input</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="whatsapp_flows">
-                    <div class="fb-pi-icon pi-collection">💬</div>
-                    <span>Whatsapp Flows</span>
+                    <div class="fb-pi-icon pi-collection">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>
+                    </div>
+                    <span>WhatsApp Flow</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="appointment">
-                    <div class="fb-pi-icon pi-collection">📅</div>
-                    <span>Appointment</span>
+                    <div class="fb-pi-icon pi-collection">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </div>
+                    <span>Booking Calendar</span>
                 </div>
             </div>
 
-            {# Category: Interactive #}
+            {# Category: Interactive Menus #}
             <div class="fb-palette-category">
-                <div class="fb-category-title">Interactive</div>
+                <div class="fb-category-title">Interactive Menus</div>
                 <div class="fb-palette-item" draggable="true" data-block="interactive">
-                    <div class="fb-pi-icon pi-interactive">🗂️</div>
-                    <span>Interactive</span>
+                    <div class="fb-pi-icon pi-interactive">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    </div>
+                    <span>Selection Menu</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="send_template">
-                    <div class="fb-pi-icon pi-interactive">📋</div>
-                    <span>Template Message</span>
+                    <div class="fb-pi-icon pi-interactive">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    </div>
+                    <span>Message Template</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="cta_button">
-                    <div class="fb-pi-icon pi-interactive">🔗</div>
-                    <span>CTA URL Button</span>
+                    <div class="fb-pi-icon pi-interactive">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </div>
+                    <span>Call-to-Action Link</span>
                 </div>
             </div>
 
-            {# Category: Flow Control #}
+            {# Category: Smart Routing #}
             <div class="fb-palette-category">
-                <div class="fb-category-title">Flow Control</div>
+                <div class="fb-category-title">Smart Routing</div>
                 <div class="fb-palette-item" draggable="true" data-block="condition">
-                    <div class="fb-pi-icon pi-control">⌥</div>
-                    <span>Condition</span>
+                    <div class="fb-pi-icon pi-control">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+                    </div>
+                    <span>Routing Logic</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="delay">
-                    <div class="fb-pi-icon pi-control">⏱️</div>
-                    <span>Delay</span>
+                    <div class="fb-pi-icon pi-control">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <span>Wait Timeout</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="sequence">
-                    <div class="fb-pi-icon pi-control">📣</div>
-                    <span>New Sequence Campaign</span>
+                    <div class="fb-pi-icon pi-control">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                    </div>
+                    <span>Sequence Drip</span>
                 </div>
                 <div class="fb-palette-item" draggable="true" data-block="random_num">
-                    <div class="fb-pi-icon pi-control">🎲</div>
-                    <span>Random Number Generator</span>
+                    <div class="fb-pi-icon pi-control">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                    </div>
+                    <span>Random Selector</span>
                 </div>
             </div>
         </div>
@@ -1094,8 +1176,8 @@
     // ─── Blocks Catalog definitions ───
     const BLOCKS = {
         start: {
-            label: 'Start Bot Flow',
-            icon: '🏃',
+            label: 'Flow Entry Point',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
             defaults: {},
             render: () => `
                 <div class="fb-node-meta-box">
@@ -1171,8 +1253,8 @@
             },
         },
         send_text: {
-            label: 'Text Message',
-            icon: '💬',
+            label: 'Message Body',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>',
             defaults: { text: '' },
             render: (d) => d.text
                 ? '<div class="fb-node-preview">' + escapeHtml(d.text) + '</div>'
@@ -1188,8 +1270,8 @@
             },
         },
         send_image: {
-            label: 'Image',
-            icon: '🖼️',
+            label: 'Image Media',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
             defaults: { url: '', caption: '' },
             render: (d) => d.url
                 ? '<div class="fb-node-preview" style="font-family:monospace;font-size:11px;">' + escapeHtml(truncate(d.url, 40)) + '</div>'
@@ -1213,8 +1295,8 @@
             },
         },
         send_audio: {
-            label: 'Audio',
-            icon: '🎵',
+            label: 'Audio Player',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>',
             defaults: { url: '' },
             render: (d) => d.url
                 ? '<div class="fb-node-preview" style="font-family:monospace;font-size:11px;">' + escapeHtml(truncate(d.url, 40)) + '</div>'
@@ -1229,8 +1311,8 @@
             }
         },
         send_video: {
-            label: 'Video',
-            icon: '🎥',
+            label: 'Video Player',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>',
             defaults: { url: '' },
             render: (d) => d.url
                 ? '<div class="fb-node-preview" style="font-family:monospace;font-size:11px;">' + escapeHtml(truncate(d.url, 40)) + '</div>'
@@ -1245,8 +1327,8 @@
             }
         },
         send_file: {
-            label: 'File',
-            icon: '📎',
+            label: 'Document Attachment',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>',
             defaults: { url: '' },
             render: (d) => d.url
                 ? '<div class="fb-node-preview" style="font-family:monospace;font-size:11px;">' + escapeHtml(truncate(d.url, 40)) + '</div>'
@@ -1261,8 +1343,8 @@
             }
         },
         send_location: {
-            label: 'Location',
-            icon: '📍',
+            label: 'Location Pin',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
             defaults: { latitude: '', longitude: '', name: '', address: '' },
             render: (d) => d.name
                 ? '<div class="fb-node-preview"><strong>' + escapeHtml(d.name) + '</strong></div>'
@@ -1296,8 +1378,8 @@
             }
         },
         ai_reply: {
-            label: 'AI Reply',
-            icon: '🤖',
+            label: 'AI Responder',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="15" x2="23" y2="15"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="15" x2="4" y2="15"></line></svg>',
             defaults: { prompt: '' },
             render: (d) => d.prompt
                 ? '<div class="fb-node-preview">' + escapeHtml(d.prompt) + '</div>'
@@ -1313,8 +1395,8 @@
             }
         },
         user_input: {
-            label: 'User Input Flow',
-            icon: '📊',
+            label: 'Form Data Input',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
             defaults: { question: '', variable: '' },
             render: (d) => d.question
                 ? '<div class="fb-node-preview">Save reply as: <strong style="color:var(--fb-active-border);">' + escapeHtml(d.variable) + '</strong></div>'
@@ -1322,7 +1404,7 @@
             inspector: (d, onChange) => {
                 const wrap = document.createDocumentFragment();
                 const q = document.createElement('input');
-                q.type = 'text'; q.className = 'fb-input'; p.placeholder = 'What is your email address?';
+                q.type = 'text'; q.className = 'fb-input'; q.placeholder = 'What is your email address?';
                 q.value = d.question || '';
                 q.oninput = () => onChange({ question: q.value });
                 wrap.appendChild(wrapField('Question text', q));
@@ -1336,23 +1418,24 @@
             }
         },
         whatsapp_flows: {
-            label: 'Whatsapp Flows',
-            icon: '💬',
+            label: 'WhatsApp Flow',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>',
             defaults: { flow_id: '' },
             render: (d) => d.flow_id
                 ? '<div class="fb-node-preview">Flow ID: ' + escapeHtml(d.flow_id) + '</div>'
                 : '<div class="fb-empty">Attach Meta Flow ID…</div>',
             inspector: (d, onChange) => {
                 const f = document.createElement('input');
-                f.type = 'text'; f.className = 'fb-input'; f.placeholder = 'e.g. 124958195819';
+                f.type = 'text'; f.className = 'fb-input';
+                f.placeholder = 'e.g. 124958195819';
                 f.value = d.flow_id || '';
                 f.oninput = () => onChange({ flow_id: f.value });
                 return wrapField('Meta Flow ID', f, 'Trigger custom multi-step WhatsApp Forms.');
             }
         },
         appointment: {
-            label: 'Appointment',
-            icon: '📅',
+            label: 'Booking Calendar',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
             defaults: { duration: '30' },
             render: (d) => '<div>Book duration: <strong>' + escapeHtml(d.duration) + ' mins</strong></div>',
             inspector: (d, onChange) => {
@@ -1369,15 +1452,15 @@
             }
         },
         interactive: {
-            label: 'Interactive',
-            icon: '🗂️',
+            label: 'Selection Menu',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>',
             defaults: { type: 'list' },
             render: () => `
                 <div class="fb-node-stats">
-                    <div class="stat-item"><span class="stat-icon">📤</span><span class="stat-val">0</span><span class="stat-lbl">Sent</span></div>
-                    <div class="stat-item"><span class="stat-icon">✔️</span><span class="stat-val">0</span><span class="stat-lbl">Deliv.</span></div>
-                    <div class="stat-item"><span class="stat-icon">👤</span><span class="stat-val">0</span><span class="stat-lbl">Sub.</span></div>
-                    <div class="stat-item"><span class="stat-icon">❌</span><span class="stat-val">0</span><span class="stat-lbl">Errors</span></div>
+                    <div class="stat-item"><span class="stat-icon"><svg class="fb-stat-svg" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span><span class="stat-val">0</span><span class="stat-lbl">Sent</span></div>
+                    <div class="stat-item"><span class="stat-icon"><svg class="fb-stat-svg" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span class="stat-val">0</span><span class="stat-lbl">Deliv.</span></div>
+                    <div class="stat-item"><span class="stat-icon"><svg class="fb-stat-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span><span class="stat-val">0</span><span class="stat-lbl">Sub.</span></div>
+                    <div class="stat-item"><span class="stat-icon"><svg class="fb-stat-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span><span class="stat-val">0</span><span class="stat-lbl">Errors</span></div>
                 </div>
                 <div class="fb-node-ports-list">
                     <div class="port-row">
@@ -1411,8 +1494,8 @@
             }
         },
         quick_reply: {
-            label: 'Quick Reply',
-            icon: '💬',
+            label: 'Shortcut Option',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>',
             defaults: {},
             render: () => `
                 <button class="fb-node-btn">List Messages</button>
@@ -1427,8 +1510,8 @@
             }
         },
         section: {
-            label: 'Section',
-            icon: '🧩',
+            label: 'Menu Section Group',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M12 22a4 4 0 0 1-4-4v-1.5a.5.5 0 0 0-.5-.5H6a4 4 0 0 1-4-4v-1.5a.5.5 0 0 1 .5-.5H4a4 4 0 0 0 0-8H2.5A.5.5 0 0 1 2 6V4.5A4 4 0 0 1 6 1.5h1.5a.5.5 0 0 1 .5.5V3a4 4 0 0 0 8 0V2a.5.5 0 0 1 .5-.5H18a4 4 0 0 1 4 4V6a.5.5 0 0 1-.5.5H20a4 4 0 0 0 0 8h1.5a.5.5 0 0 1 .5.5V18a4 4 0 0 1-4 4h-1.5a.5.5 0 0 1-.5-.5V20a4 4 0 0 0-8 0v1.5a.5.5 0 0 1-.5.5z"></path></svg>',
             defaults: {},
             render: () => `
                 <div class="empty-body"></div>
@@ -1443,12 +1526,12 @@
             }
         },
         row: {
-            label: 'Row',
-            icon: '☰',
+            label: 'Row Item Selector',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>',
             defaults: {},
             render: () => `
                 <div class="click-body">
-                    <span class="hand-cursor-icon">👆</span>
+                    <span class="hand-cursor-icon"><svg class="fb-row-svg" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg></span>
                 </div>
             `,
             inspector: () => {
@@ -1461,8 +1544,8 @@
             }
         },
         send_template: {
-            label: 'Template Message',
-            icon: '📋',
+            label: 'Message Template',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>',
             defaults: { name: '', language: 'en_US' },
             render: (d) => d.name
                 ? '<div><strong style="color:var(--fb-active-border);">' + escapeHtml(d.name) + '</strong><br><span style="opacity:0.6;font-size:11px;">' + escapeHtml(d.language || 'en_US') + '</span></div>'
@@ -1499,8 +1582,8 @@
             },
         },
         cta_button: {
-            label: 'CTA URL Button',
-            icon: '🔗',
+            label: 'Call-to-Action Link',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>',
             defaults: { label: '', url: '' },
             render: (d) => d.label
                 ? '<div class="fb-node-preview">Label: ' + escapeHtml(d.label) + '</div>'
@@ -1514,7 +1597,7 @@
                 wrap.appendChild(wrapField('Button Label', l));
 
                 const u = document.createElement('input');
-                u.type = 'text'; u.className = 'fb-input'; p.placeholder = 'https://opensquadron.local';
+                u.type = 'text'; u.className = 'fb-input'; u.placeholder = 'https://opensquadron.local';
                 u.value = d.url || '';
                 u.oninput = () => onChange({ url: u.value });
                 wrap.appendChild(wrapField('Button Redirect URL', u));
@@ -1522,8 +1605,8 @@
             }
         },
         condition: {
-            label: 'Condition',
-            icon: '⌥',
+            label: 'Routing Logic',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>',
             defaults: { condition: '' },
             render: (d) => d.condition
                 ? '<div class="fb-node-preview">Match: ' + escapeHtml(d.condition) + '</div>'
@@ -1537,8 +1620,8 @@
             }
         },
         delay: {
-            label: 'Delay',
-            icon: '⏱️',
+            label: 'Wait Timeout',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
             defaults: { seconds: 1 },
             render: (d) => '<div>Wait <strong>' + (parseInt(d.seconds, 10) || 0) + 's</strong> before next step.</div>',
             inspector: (d, onChange) => {
@@ -1551,8 +1634,8 @@
             },
         },
         sequence: {
-            label: 'Sequence Campaign',
-            icon: '📣',
+            label: 'Sequence Drip',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>',
             defaults: { campaign: '' },
             render: (d) => d.campaign
                 ? '<div class="fb-node-preview">Campaign: ' + escapeHtml(d.campaign) + '</div>'
@@ -1566,8 +1649,8 @@
             }
         },
         random_num: {
-            label: 'Random Generator',
-            icon: '🎲',
+            label: 'Random Selector',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>',
             defaults: { min: 1, max: 10 },
             render: (d) => '<div>Range: <strong>' + (parseInt(d.min, 10) || 1) + '</strong> to <strong>' + (parseInt(d.max, 10) || 10) + '</strong></div>',
             inspector: (d, onChange) => {
