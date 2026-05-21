@@ -54,8 +54,23 @@ CREATE TABLE IF NOT EXISTS `ai_setting` (
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
--- ───── Bot Flows ─────
-CREATE TABLE IF NOT EXISTS `bot_flow` (
+-- ───── Facebook Bot Flows ─────
+CREATE TABLE IF NOT EXISTS `facebook_bot_flow` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT DEFAULT NULL,
+    facebook_connection_id INT DEFAULT NULL,
+    name VARCHAR(120) DEFAULT NULL,
+    trigger_keyword VARCHAR(500) DEFAULT NULL,
+    match_mode VARCHAR(20) DEFAULT 'exact' NOT NULL,
+    flow_data JSON NOT NULL,
+    is_active TINYINT NOT NULL,
+    INDEX IDX_14C7C9AA7E3C61F9 (owner_id),
+    INDEX IDX_14C7C9AABE73D3C2 (facebook_connection_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
+-- ───── WhatsApp Bot Flows ─────
+CREATE TABLE IF NOT EXISTS `whatsapp_bot_flow` (
     id INT AUTO_INCREMENT NOT NULL,
     owner_id INT DEFAULT NULL,
     whatsapp_connection_id INT DEFAULT NULL,
@@ -63,11 +78,12 @@ CREATE TABLE IF NOT EXISTS `bot_flow` (
     trigger_keyword VARCHAR(500) DEFAULT NULL,
     match_mode VARCHAR(20) DEFAULT 'exact' NOT NULL,
     flow_data JSON NOT NULL,
-    is_active TINYINT NOT NULL DEFAULT 1,
-    INDEX IDX_BOT_FLOW_OWNER (owner_id),
-    INDEX IDX_D3665A02C664C80F (whatsapp_connection_id),
+    is_active TINYINT NOT NULL,
+    INDEX IDX_68901F927E3C61F9 (owner_id),
+    INDEX IDX_68901F92C664C80F (whatsapp_connection_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
+
 
 -- ───── Subscribers ─────
 CREATE TABLE IF NOT EXISTS `subscriber` (
@@ -76,19 +92,29 @@ CREATE TABLE IF NOT EXISTS `subscriber` (
     whats_app_connection_id INT DEFAULT NULL,
     facebook_connection_id INT DEFAULT NULL,
     phone_number VARCHAR(50) DEFAULT NULL,
-    channel VARCHAR(20) NOT NULL DEFAULT 'whatsapp',
+    channel VARCHAR(20) NOT NULL,
     psid VARCHAR(255) DEFAULT NULL,
     name VARCHAR(255) DEFAULT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    status VARCHAR(20) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
-    INDEX IDX_SUBSCRIBER_OWNER (owner_id),
+    tags JSON DEFAULT NULL,
+    custom_attributes JSON DEFAULT NULL,
+    notes JSON DEFAULT NULL,
+    assigned_operator_id INT DEFAULT NULL,
+    assigned_whatsapp_flow_id INT DEFAULT NULL,
+    assigned_facebook_flow_id INT DEFAULT NULL,
+    INDEX IDX_AD005B697E3C61F9 (owner_id),
     INDEX IDX_AD005B696381BF43 (whats_app_connection_id),
-    INDEX IDX_SUBSCRIBER_FB_CONN (facebook_connection_id),
+    INDEX IDX_AD005B69BE73D3C2 (facebook_connection_id),
+    INDEX IDX_AD005B697F7F786A (assigned_operator_id),
+    INDEX IDX_AD005B6942F7871F (assigned_whatsapp_flow_id),
+    INDEX IDX_AD005B69C9CE08D1 (assigned_facebook_flow_id),
     UNIQUE INDEX uniq_subscriber_phone_connection (phone_number, whats_app_connection_id),
     UNIQUE INDEX uniq_subscriber_facebook_connection (psid, facebook_connection_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
+
 
 -- ───── Messages ─────
 CREATE TABLE IF NOT EXISTS `message` (
@@ -179,7 +205,7 @@ CREATE TABLE IF NOT EXISTS `doctrine_migration_versions` (
 
 -- ───── Foreign Keys ─────
 ALTER TABLE `message`
-    ADD CONSTRAINT FK_B6BD307F7808B1AD FOREIGN KEY (subscriber_id) REFERENCES subscriber (id) ON DELETE CASCADE;
+    ADD CONSTRAINT FK_B6BD307F7808B1AD FOREIGN KEY (subscriber_id) REFERENCES subscriber (id);
 
 ALTER TABLE `whatsapp_connection`
     ADD CONSTRAINT FK_5E00F7954AA2A339 FOREIGN KEY (active_context_id) REFERENCES ai_context (id) ON DELETE SET NULL;
@@ -187,15 +213,16 @@ ALTER TABLE `whatsapp_connection`
 ALTER TABLE `facebook_connection`
     ADD CONSTRAINT FK_262F40D84AA2A339 FOREIGN KEY (active_context_id) REFERENCES ai_context (id) ON DELETE SET NULL;
 
-ALTER TABLE `bot_flow`
-    ADD CONSTRAINT FK_D3665A02C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
-
 ALTER TABLE `message_template`
     ADD CONSTRAINT FK_9E46DB92C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
 ALTER TABLE `subscriber`
     ADD CONSTRAINT FK_AD005B696381BF43 FOREIGN KEY (whats_app_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE,
-    ADD CONSTRAINT FK_SUBSCRIBER_FB_CONN FOREIGN KEY (facebook_connection_id) REFERENCES facebook_connection (id) ON DELETE CASCADE;
+    ADD CONSTRAINT FK_SUBSCRIBER_FB_CONN FOREIGN KEY (facebook_connection_id) REFERENCES facebook_connection (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_SUBSCRIBER_OWNER FOREIGN KEY (owner_id) REFERENCES admin (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_AD005B697F7F786A FOREIGN KEY (assigned_operator_id) REFERENCES `admin` (id) ON DELETE SET NULL,
+    ADD CONSTRAINT FK_AD005B6942F7871F FOREIGN KEY (assigned_whatsapp_flow_id) REFERENCES whatsapp_bot_flow (id),
+    ADD CONSTRAINT FK_AD005B69C9CE08D1 FOREIGN KEY (assigned_facebook_flow_id) REFERENCES facebook_bot_flow (id) ON DELETE SET NULL;
 
 -- ───── Workspace Owner Constraints ─────
 ALTER TABLE `ai_context`
@@ -210,14 +237,16 @@ ALTER TABLE `whatsapp_connection`
 ALTER TABLE `facebook_connection`
     ADD CONSTRAINT FK_FACEBOOK_CONN_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
 
-ALTER TABLE `bot_flow`
-    ADD CONSTRAINT FK_BOT_FLOW_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
-
-ALTER TABLE `subscriber`
-    ADD CONSTRAINT FK_SUBSCRIBER_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
-
 ALTER TABLE `message_template`
     ADD CONSTRAINT FK_MSG_TEMP_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
+
+ALTER TABLE `facebook_bot_flow`
+    ADD CONSTRAINT FK_14C7C9AA7E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_14C7C9AABE73D3C2 FOREIGN KEY (facebook_connection_id) REFERENCES facebook_connection (id) ON DELETE CASCADE;
+
+ALTER TABLE `whatsapp_bot_flow`
+    ADD CONSTRAINT FK_68901F927E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_68901F92C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
 -- ───── Seed: Default Admin User ─────
 -- Password: "admin123" (bcrypt hash — change immediately after first login)
@@ -236,6 +265,7 @@ INSERT INTO `doctrine_migration_versions` (version, executed_at, execution_time)
     ('DoctrineMigrations\\Version20260520071518', NOW(), 153),
     ('DoctrineMigrations\\Version20260520090507', NOW(), 15),
     ('DoctrineMigrations\\Version20260520091945', NOW(), 97),
-    ('DoctrineMigrations\\Version20260520093159', NOW(), 82);
+    ('DoctrineMigrations\\Version20260520093159', NOW(), 82),
+    ('DoctrineMigrations\\Version20260521094438', NOW(), 100);
 
 SET FOREIGN_KEY_CHECKS = 1;

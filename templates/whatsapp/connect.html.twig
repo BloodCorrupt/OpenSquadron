@@ -492,8 +492,8 @@
                 <div class="endpoint-item">
                     <div class="endpoint-info">
                         <div class="endpoint-label">Privacy Policy Compliance Route</div>
-                        <input type="hidden" id="url-privacy" value="{{ app.request.schemeAndHttpHost }}/policy/privacy">
-                        <div class="endpoint-value">{{ app.request.schemeAndHttpHost }}/policy/privacy</div>
+                        <input type="hidden" id="url-privacy" value="{{ url('app_privacy')|replace({'http://': 'https://'}) }}">
+                        <div class="endpoint-value">{{ url('app_privacy')|replace({'http://': 'https://'}) }}</div>
                     </div>
                     <button type="button" class="copy-btn" onclick="copyToClipboard('url-privacy')">Copy Policy URL</button>
                 </div>
@@ -501,8 +501,8 @@
                 <div class="endpoint-item">
                     <div class="endpoint-info">
                         <div class="endpoint-label">Terms of Service Compliance Route</div>
-                        <input type="hidden" id="url-terms" value="{{ app.request.schemeAndHttpHost }}/policy/terms">
-                        <div class="endpoint-value">{{ app.request.schemeAndHttpHost }}/policy/terms</div>
+                        <input type="hidden" id="url-terms" value="{{ url('app_terms')|replace({'http://': 'https://'}) }}">
+                        <div class="endpoint-value">{{ url('app_terms')|replace({'http://': 'https://'}) }}</div>
                     </div>
                     <button type="button" class="copy-btn" onclick="copyToClipboard('url-terms')">Copy Terms URL</button>
                 </div>
@@ -542,8 +542,8 @@
                 <div class="endpoint-item">
                     <div class="endpoint-info">
                         <div class="endpoint-label">Privacy Policy Compliance Route</div>
-                        <input type="hidden" id="url-privacy" value="{{ app.request.schemeAndHttpHost }}/policy/privacy">
-                        <div class="endpoint-value">{{ app.request.schemeAndHttpHost }}/policy/privacy</div>
+                        <input type="hidden" id="url-privacy" value="{{ url('app_privacy')|replace({'http://': 'https://'}) }}">
+                        <div class="endpoint-value">{{ url('app_privacy')|replace({'http://': 'https://'}) }}</div>
                     </div>
                     <button type="button" class="copy-btn" onclick="copyToClipboard('url-privacy')">Copy Policy URL</button>
                 </div>
@@ -551,8 +551,8 @@
                 <div class="endpoint-item">
                     <div class="endpoint-info">
                         <div class="endpoint-label">Terms of Service Compliance Route</div>
-                        <input type="hidden" id="url-terms" value="{{ app.request.schemeAndHttpHost }}/policy/terms">
-                        <div class="endpoint-value">{{ app.request.schemeAndHttpHost }}/policy/terms</div>
+                        <input type="hidden" id="url-terms" value="{{ url('app_terms')|replace({'http://': 'https://'}) }}">
+                        <div class="endpoint-value">{{ url('app_terms')|replace({'http://': 'https://'}) }}</div>
                     </div>
                     <button type="button" class="copy-btn" onclick="copyToClipboard('url-terms')">Copy Terms URL</button>
                 </div>
