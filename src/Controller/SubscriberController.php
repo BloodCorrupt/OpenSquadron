@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Subscriber;
 use App\Entity\WhatsAppConnection;
+use App\Entity\FacebookConnection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,12 +17,28 @@ class SubscriberController extends AbstractController
     #[Route('/admin/subscribers', name: 'app_subscribers', methods: ['GET'])]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
-        $connections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
-        
+        $whatsappConnections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
+        $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
+
+        $channel = $request->query->get('channel');
+        if (!$channel) {
+            if (empty($whatsappConnections) && !empty($facebookConnections)) {
+                $channel = 'facebook';
+            } else {
+                $channel = 'whatsapp';
+            }
+        }
+
+        $connections = ($channel === 'facebook') ? $facebookConnections : $whatsappConnections;
+
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
         if ($selectedConnectionId) {
-            $selectedConnection = $em->getRepository(WhatsAppConnection::class)->find($selectedConnectionId);
+            if ($channel === 'facebook') {
+                $selectedConnection = $em->getRepository(FacebookConnection::class)->find($selectedConnectionId);
+            } else {
+                $selectedConnection = $em->getRepository(WhatsAppConnection::class)->find($selectedConnectionId);
+            }
         }
         if (!$selectedConnection && !empty($connections)) {
             $selectedConnection = $connections[0];
@@ -32,13 +49,23 @@ class SubscriberController extends AbstractController
         $status = trim($request->query->get('status', 'all'));
 
         if ($selectedConnection) {
-            $qb = $em->getRepository(Subscriber::class)->createQueryBuilder('s')
-                ->where('s.whatsAppConnection = :connection')
-                ->setParameter('connection', $selectedConnection);
+            $qb = $em->getRepository(Subscriber::class)->createQueryBuilder('s');
+            if ($channel === 'facebook') {
+                $qb->where('s.facebookConnection = :connection')
+                   ->setParameter('connection', $selectedConnection);
 
-            if ($search !== '') {
-                $qb->andWhere('s.name LIKE :search OR s.phoneNumber LIKE :search')
-                   ->setParameter('search', '%' . $search . '%');
+                if ($search !== '') {
+                    $qb->andWhere('s.name LIKE :search OR s.psid LIKE :search')
+                       ->setParameter('search', '%' . $search . '%');
+                }
+            } else {
+                $qb->where('s.whatsAppConnection = :connection')
+                   ->setParameter('connection', $selectedConnection);
+
+                if ($search !== '') {
+                    $qb->andWhere('s.name LIKE :search OR s.phoneNumber LIKE :search')
+                       ->setParameter('search', '%' . $search . '%');
+                }
             }
 
             if ($status !== 'all') {
@@ -51,8 +78,11 @@ class SubscriberController extends AbstractController
         }
 
         return $this->render('subscriber/index.html.twig', [
+            'whatsappConnections' => $whatsappConnections,
+            'facebookConnections' => $facebookConnections,
             'connections' => $connections,
             'connection' => $selectedConnection,
+            'channel' => $channel,
             'subscribers' => $subscribers,
             'search' => $search,
             'status' => $status,
@@ -64,25 +94,38 @@ class SubscriberController extends AbstractController
     {
         $id = $request->request->get('id');
         $phoneNumber = trim($request->request->get('phoneNumber', ''));
+        $psid = trim($request->request->get('psid', ''));
         $name = trim($request->request->get('name', ''));
         $status = trim($request->request->get('status', 'active'));
         $connectionId = $request->request->get('connectionId');
+        $channel = trim($request->request->get('channel', 'whatsapp'));
 
         if (!$connectionId) {
-            return new JsonResponse(['success' => false, 'error' => 'No active WhatsApp connection selected.'], 400);
+            return new JsonResponse(['success' => false, 'error' => 'No active connection selected.'], 400);
         }
 
-        $connection = $em->getRepository(WhatsAppConnection::class)->find($connectionId);
-        if (!$connection) {
-            return new JsonResponse(['success' => false, 'error' => 'WhatsApp connection not found.'], 404);
-        }
+        if ($channel === 'facebook') {
+            $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+            if (!$connection) {
+                return new JsonResponse(['success' => false, 'error' => 'Facebook connection not found.'], 404);
+            }
 
-        if ($phoneNumber === '') {
-            return new JsonResponse(['success' => false, 'error' => 'Phone number is required.'], 400);
-        }
+            if ($psid === '') {
+                return new JsonResponse(['success' => false, 'error' => 'PSID is required.'], 400);
+            }
+        } else {
+            $connection = $em->getRepository(WhatsAppConnection::class)->find($connectionId);
+            if (!$connection) {
+                return new JsonResponse(['success' => false, 'error' => 'WhatsApp connection not found.'], 404);
+            }
 
-        // Clean phone number (keep only digits and optional + at the beginning)
-        $cleanPhone = preg_replace('/[^\d+]/', '', $phoneNumber);
+            if ($phoneNumber === '') {
+                return new JsonResponse(['success' => false, 'error' => 'Phone number is required.'], 400);
+            }
+
+            // Clean phone number (keep only digits and optional + at the beginning)
+            $cleanPhone = preg_replace('/[^\d+]/', '', $phoneNumber);
+        }
 
         if ($id) {
             $subscriber = $em->getRepository(Subscriber::class)->find($id);
@@ -90,29 +133,59 @@ class SubscriberController extends AbstractController
                 return new JsonResponse(['success' => false, 'error' => 'Subscriber not found.'], 404);
             }
 
-            // Verify another subscriber doesn't exist with the same clean number on this connection
-            $existing = $em->getRepository(Subscriber::class)->findOneBy([
-                'phoneNumber' => $cleanPhone,
-                'whatsAppConnection' => $connection
-            ]);
+            if ($channel === 'facebook') {
+                $existing = $em->getRepository(Subscriber::class)->findOneBy([
+                    'psid' => $psid,
+                    'facebookConnection' => $connection
+                ]);
+            } else {
+                $existing = $em->getRepository(Subscriber::class)->findOneBy([
+                    'phoneNumber' => $cleanPhone,
+                    'whatsAppConnection' => $connection
+                ]);
+            }
+
             if ($existing && $existing->getId() !== $subscriber->getId()) {
-                return new JsonResponse(['success' => false, 'error' => 'A subscriber with this phone number already exists for this connection.'], 400);
+                $errorMsg = ($channel === 'facebook')
+                    ? 'A subscriber with this PSID already exists for this connection.'
+                    : 'A subscriber with this phone number already exists for this connection.';
+                return new JsonResponse(['success' => false, 'error' => $errorMsg], 400);
             }
         } else {
             // Check uniqueness on creation
-            $existing = $em->getRepository(Subscriber::class)->findOneBy([
-                'phoneNumber' => $cleanPhone,
-                'whatsAppConnection' => $connection
-            ]);
+            if ($channel === 'facebook') {
+                $existing = $em->getRepository(Subscriber::class)->findOneBy([
+                    'psid' => $psid,
+                    'facebookConnection' => $connection
+                ]);
+            } else {
+                $existing = $em->getRepository(Subscriber::class)->findOneBy([
+                    'phoneNumber' => $cleanPhone,
+                    'whatsAppConnection' => $connection
+                ]);
+            }
+
             if ($existing) {
-                return new JsonResponse(['success' => false, 'error' => 'A subscriber with this phone number already exists for this connection.'], 400);
+                $errorMsg = ($channel === 'facebook')
+                    ? 'A subscriber with this PSID already exists for this connection.'
+                    : 'A subscriber with this phone number already exists for this connection.';
+                return new JsonResponse(['success' => false, 'error' => $errorMsg], 400);
             }
 
             $subscriber = new Subscriber();
-            $subscriber->setWhatsAppConnection($connection);
+            $subscriber->setChannel($channel);
+            if ($channel === 'facebook') {
+                $subscriber->setFacebookConnection($connection);
+            } else {
+                $subscriber->setWhatsAppConnection($connection);
+            }
         }
 
-        $subscriber->setPhoneNumber($cleanPhone);
+        if ($channel === 'facebook') {
+            $subscriber->setPsid($psid);
+        } else {
+            $subscriber->setPhoneNumber($cleanPhone);
+        }
         $subscriber->setName($name !== '' ? $name : null);
         $subscriber->setStatus($status);
         $subscriber->setUpdatedAt(new \DateTime('now', new \DateTimeZone('UTC')));

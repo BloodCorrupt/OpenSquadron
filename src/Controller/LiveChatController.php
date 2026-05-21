@@ -38,7 +38,8 @@ class LiveChatController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        $flows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $whatsappFlows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $facebookFlows = $em->getRepository(\App\Entity\FacebookBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
 
         return $this->render('chat/inbox.html.twig', [
             'subscribers' => $subscribers,
@@ -48,7 +49,8 @@ class LiveChatController extends AbstractController
             'whatsappConnections' => $whatsappConnections,
             'facebookConnections' => $facebookConnections,
             'operators' => $operators,
-            'flows' => $flows,
+            'whatsappFlows' => $whatsappFlows,
+            'facebookFlows' => $facebookFlows,
             'chatWindow' => [
                 'isOpen' => false,
                 'expiresAt' => null,
@@ -77,7 +79,8 @@ class LiveChatController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        $flows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $whatsappFlows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $facebookFlows = $em->getRepository(\App\Entity\FacebookBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
 
         $chatWindow = $this->getChatWindowStatus($subscriber, $em);
 
@@ -89,7 +92,8 @@ class LiveChatController extends AbstractController
             'whatsappConnections' => $whatsappConnections,
             'facebookConnections' => $facebookConnections,
             'operators' => $operators,
-            'flows' => $flows,
+            'whatsappFlows' => $whatsappFlows,
+            'facebookFlows' => $facebookFlows,
             'chatWindow' => $chatWindow,
             'serverTimestamp' => time()
         ]);
@@ -339,7 +343,9 @@ class LiveChatController extends AbstractController
             'psid' => $subscriber->getPsid(),
             'assignedOperatorId' => $subscriber->getAssignedOperator() ? $subscriber->getAssignedOperator()->getId() : null,
             'tags' => $subscriber->getTags(),
-            'assignedFlowId' => $subscriber->getAssignedWhatsappFlow() ? $subscriber->getAssignedWhatsappFlow()->getId() : null,
+            'assignedFlowId' => $subscriber->getChannel() === 'facebook'
+                ? ($subscriber->getAssignedFacebookFlow() ? $subscriber->getAssignedFacebookFlow()->getId() : null)
+                : ($subscriber->getAssignedWhatsappFlow() ? $subscriber->getAssignedWhatsappFlow()->getId() : null),
             'customAttributes' => $subscriber->getCustomAttributes(),
             'notes' => $subscriber->getNotes(),
             'channel' => $subscriber->getChannel() ?? 'whatsapp',
@@ -391,12 +397,23 @@ class LiveChatController extends AbstractController
         $flowId = $request->request->get('flow_id');
         if (empty($flowId)) {
             $subscriber->setAssignedWhatsappFlow(null);
+            $subscriber->setAssignedFacebookFlow(null);
         } else {
-            $flow = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->find($flowId);
-            if (!$flow) {
-                return new JsonResponse(['success' => false, 'error' => 'Flow not found'], 404);
+            if ($subscriber->getChannel() === 'facebook') {
+                $flow = $em->getRepository(\App\Entity\FacebookBotFlow::class)->find($flowId);
+                if (!$flow) {
+                    return new JsonResponse(['success' => false, 'error' => 'Flow not found'], 404);
+                }
+                $subscriber->setAssignedFacebookFlow($flow);
+                $subscriber->setAssignedWhatsappFlow(null);
+            } else {
+                $flow = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->find($flowId);
+                if (!$flow) {
+                    return new JsonResponse(['success' => false, 'error' => 'Flow not found'], 404);
+                }
+                $subscriber->setAssignedWhatsappFlow($flow);
+                $subscriber->setAssignedFacebookFlow(null);
             }
-            $subscriber->setAssignedWhatsappFlow($flow);
         }
         
         $em->flush();

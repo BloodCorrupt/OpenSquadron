@@ -737,9 +737,6 @@
             <label class="sidebar-field-label">Campaign Flow</label>
             <select id="flowSelect" onchange="updateAssignedFlow()" class="sidebar-select">
                 <option value="">Select Action Flow</option>
-                {% for flow in flows|default([]) %}
-                    <option value="{{ flow.id }}" {% if activeSubscriber and activeSubscriber.assignedFlow and activeSubscriber.assignedFlow.id == flow.id %}selected{% endif %}>{{ flow.name }}</option>
-                {% endfor %}
             </select>
         </div>
 
@@ -828,6 +825,17 @@
 
 {% block javascripts %}
 <script>
+    const whatsappFlows = [
+        {% for f in whatsappFlows|default([]) %}
+            { id: {{ f.id }}, name: "{{ f.name|escape('js') }}" },
+        {% endfor %}
+    ];
+    const facebookFlows = [
+        {% for f in facebookFlows|default([]) %}
+            { id: {{ f.id }}, name: "{{ f.name|escape('js') }}" },
+        {% endfor %}
+    ];
+
     let activeSubscriberId = {{ activeSubscriber ? activeSubscriber.id : 'null' }};
     let lastMessageId = 0;
     let subscribersCacheJson = '';
@@ -1401,8 +1409,17 @@
             // Set operator
             document.getElementById('operatorSelect').value = sub.assignedOperatorId || '';
             
-            // Set flow
-            document.getElementById('flowSelect').value = sub.assignedFlowId || '';
+            // Rebuild flow options dynamically based on channel
+            const flowSelect = document.getElementById('flowSelect');
+            flowSelect.innerHTML = '<option value="">Select Action Flow</option>';
+            const targetFlows = sub.channel === 'facebook' ? facebookFlows : whatsappFlows;
+            targetFlows.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name;
+                flowSelect.appendChild(opt);
+            });
+            flowSelect.value = sub.assignedFlowId || '';
             
             // Render tags
             const tagContainer = document.getElementById('tagContainer');

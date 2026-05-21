@@ -403,16 +403,32 @@
 <div class="manager-shell">
     {# ───────── Left Sidebar ───────── #}
     <div class="manager-nav">
+        {# Channel Tab Selector #}
+        <div style="display: flex; gap: 4px; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 10px; border: 1px solid var(--glass-border);">
+            <button onclick="changeChannel('whatsapp')" class="btn-action" style="flex: 1; justify-content: center; padding: 6px 12px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; transition: all 0.2s; background: {% if channel == 'whatsapp' %}rgba(6, 182, 212, 0.15){% else %}transparent{% endif %}; color: {% if channel == 'whatsapp' %}#fff{% else %}var(--text-muted){% endif %}; font-weight: {% if channel == 'whatsapp' %}700{% else %}600{% endif %}; gap: 4px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <span>WhatsApp</span>
+            </button>
+            <button onclick="changeChannel('facebook')" class="btn-action" style="flex: 1; justify-content: center; padding: 6px 12px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; transition: all 0.2s; background: {% if channel == 'facebook' %}rgba(6, 182, 212, 0.15){% else %}transparent{% endif %}; color: {% if channel == 'facebook' %}#fff{% else %}var(--text-muted){% endif %}; font-weight: {% if channel == 'facebook' %}700{% else %}600{% endif %}; gap: 4px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                <span>Facebook</span>
+            </button>
+        </div>
+
         <div>
-            <div class="nav-header">WhatsApp Account</div>
+            <div class="nav-header">{% if channel == 'facebook' %}Facebook Page{% else %}WhatsApp Account{% endif %}</div>
             <div style="padding: 0 10px;">
-                <select id="whatsapp-conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
+                <select id="conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
                     {% if connections is empty %}
                         <option value="">No Accounts Connected</option>
                     {% else %}
                         {% for conn in connections %}
                             <option value="{{ conn.id }}" {% if connection and connection.id == conn.id %}selected{% endif %}>
-                                {{ conn.label ?: conn.phoneNumber ?: 'Unnamed Connection (' ~ conn.id ~ ')' }}
+                                {% if channel == 'facebook' %}
+                                    {{ conn.label ?: conn.pageName ?: 'Unnamed Page (' ~ conn.id ~ ')' }}
+                                {% else %}
+                                    {{ conn.label ?: conn.phoneNumber ?: 'Unnamed Connection (' ~ conn.id ~ ')' }}
+                                {% endif %}
                             </option>
                         {% endfor %}
                     {% endif %}
@@ -424,9 +440,15 @@
             <div>
                 <div class="nav-header">Account Details</div>
                 <div style="font-size: 12px; color: var(--text-muted); padding: 0 10px; display: flex; flex-direction: column; gap: 6px;">
-                    <div><strong>Label:</strong> {{ connection.label ?: 'N/A' }}</div>
-                    <div><strong>Phone:</strong> {{ connection.phoneNumber ?: 'N/A' }}</div>
-                    <div><strong>Phone ID:</strong> {{ connection.phoneNumberId ?: 'N/A' }}</div>
+                    {% if channel == 'facebook' %}
+                        <div><strong>Label:</strong> {{ connection.label ?: 'N/A' }}</div>
+                        <div><strong>Page Name:</strong> {{ connection.pageName ?: 'N/A' }}</div>
+                        <div><strong>Page ID:</strong> {{ connection.pageId ?: 'N/A' }}</div>
+                    {% else %}
+                        <div><strong>Label:</strong> {{ connection.label ?: 'N/A' }}</div>
+                        <div><strong>Phone:</strong> {{ connection.phoneNumber ?: 'N/A' }}</div>
+                        <div><strong>Phone ID:</strong> {{ connection.phoneNumberId ?: 'N/A' }}</div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -466,9 +488,15 @@
     <div class="manager-content-pane">
         {% if not connection %}
             <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                <h2>No WhatsApp Account Selected</h2>
-                <p>Please connect a WhatsApp Business Account first to manage subscribers.</p>
-                <a href="{{ path('whatsapp_connect_show') }}" class="btn btn-primary" style="text-decoration:none; display:inline-block; margin-top:15px;">Connect Account</a>
+                {% if channel == 'facebook' %}
+                    <h2>No Facebook Page Selected</h2>
+                    <p>Please connect a Facebook Page first to manage subscribers.</p>
+                    <a href="{{ path('facebook_connect_show') }}" class="btn btn-primary" style="text-decoration:none; display:inline-block; margin-top:15px;">Connect Facebook Page</a>
+                {% else %}
+                    <h2>No WhatsApp Account Selected</h2>
+                    <p>Please connect a WhatsApp Business Account first to manage subscribers.</p>
+                    <a href="{{ path('whatsapp_connect_show') }}" class="btn btn-primary" style="text-decoration:none; display:inline-block; margin-top:15px;">Connect Account</a>
+                {% endif %}
             </div>
         {% else %}
             <div class="content-header">
@@ -477,7 +505,7 @@
                         <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                         <span>Subscriber Manager</span>
                     </h1>
-                    <div class="content-subtitle">Manage users connected to <strong>{{ connection.label ?: connection.phoneNumber }}</strong>.</div>
+                    <div class="content-subtitle">Manage users connected to <strong>{% if channel == 'facebook' %}{{ connection.label ?: connection.pageName }}{% else %}{{ connection.label ?: connection.phoneNumber }}{% endif %}</strong>.</div>
                 </div>
                 
                 <button onclick="openCreateModal()" class="btn-action btn-create">
@@ -497,7 +525,7 @@
                     
                     <div class="toolbar-search">
                         <svg viewBox="0 0 24 24" fill="none" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="subscriber-search" placeholder="Search by name or phone number..." value="{{ search }}" onkeyup="handleSearchKey(event)">
+                        <input type="text" id="subscriber-search" placeholder="{% if channel == 'facebook' %}Search by name or PSID...{% else %}Search by name or phone number...{% endif %}" value="{{ search }}" onkeyup="handleSearchKey(event)">
                     </div>
                     
                     <button onclick="applyFilters()" class="btn-action" style="background: rgba(255, 255, 255, 0.05); color: #fff; height: 38px;">
@@ -518,7 +546,7 @@
                         <tr>
                             <th style="width: 60px;">#</th>
                             <th>Profile Name</th>
-                            <th>Phone Number</th>
+                            <th>{% if channel == 'facebook' %}PSID (Facebook ID){% else %}Phone Number{% endif %}</th>
                             <th style="width: 140px;">Opt-In status</th>
                             <th style="width: 180px;">Joined Date</th>
                             <th style="width: 150px; text-align: right;">Actions</th>
@@ -537,7 +565,11 @@
                                         <div style="font-weight: 700; font-size: 14px;">{{ sub.name ?: 'Guest User' }}</div>
                                     </td>
                                     <td class="phone-number-cell">
-                                        {{ sub.phoneNumber }}
+                                        {% if channel == 'facebook' %}
+                                            {{ sub.psid }}
+                                        {% else %}
+                                            {{ sub.phoneNumber }}
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <div style="display: flex; align-items: center; gap: 10px;">
@@ -555,7 +587,7 @@
                                     </td>
                                     <td>
                                         <div class="row-actions" style="justify-content: flex-end;">
-                                            <button onclick="openEditModal({{ sub.id }}, '{{ sub.name|escape('js') }}', '{{ sub.phoneNumber|escape('js') }}', '{{ sub.status|escape('js') }}')" class="btn-row-action edit-action" title="Edit details">
+                                            <button onclick="openEditModal({{ sub.id }}, '{{ sub.name|escape('js') }}', '{% if channel == 'facebook' %}{{ sub.psid|escape('js') }}{% else %}{{ sub.phoneNumber|escape('js') }}{% endif %}', '{{ sub.status|escape('js') }}')" class="btn-row-action edit-action" title="Edit details">
                                                 <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                             </button>
                                             <a href="{{ path('app_inbox_chat', {id: sub.id}) }}" class="btn-row-action chat-action" title="Live chat">
@@ -591,9 +623,15 @@
             <input type="hidden" id="sub-id" name="id">
             
             <div class="form-group">
-                <label for="sub-phone">Phone Number (with country code)*</label>
-                <input type="text" id="sub-phone" class="form-control" placeholder="e.g. +14155552671" required>
-                <small style="color:var(--text-muted); font-size:11px; margin-top:5px; display:block;">Include leading country code digits. Only numbers and + symbol are allowed.</small>
+                <label for="sub-phone" id="modal-field-label">{% if channel == 'facebook' %}PSID (Facebook Page-Scoped ID)*{% else %}Phone Number (with country code)*{% endif %}</label>
+                <input type="text" id="sub-phone" class="form-control" placeholder="{% if channel == 'facebook' %}e.g. 562894012304895{% else %}e.g. +14155552671{% endif %}" required>
+                <small style="color:var(--text-muted); font-size:11px; margin-top:5px; display:block;" id="modal-field-hint">
+                    {% if channel == 'facebook' %}
+                        Page-Scoped ID of the user. Only numbers are allowed.
+                    {% else %}
+                        Include leading country code digits. Only numbers and + symbol are allowed.
+                    {% endif %}
+                </small>
             </div>
 
             <div class="form-group">
@@ -625,6 +663,16 @@
 
 {% block javascripts %}
 <script>
+    function changeChannel(channel) {
+        const url = new URL(window.location);
+        url.searchParams.set('channel', channel);
+        url.searchParams.delete('connectionId');
+        // Clear search and status when changing channel
+        url.searchParams.delete('search');
+        url.searchParams.delete('status');
+        window.location.href = url.toString();
+    }
+
     function changeConnection(connectionId) {
         const url = new URL(window.location);
         url.searchParams.set('connectionId', connectionId);
@@ -711,13 +759,14 @@
         e.preventDefault();
         
         const id = document.getElementById('sub-id').value;
-        const phone = document.getElementById('sub-phone').value.trim();
+        const phoneOrPsid = document.getElementById('sub-phone').value.trim();
         const name = document.getElementById('sub-name').value.trim();
         const status = document.getElementById('sub-status').value;
         const connectionId = '{{ connection ? connection.id : "" }}';
+        const channel = '{{ channel }}';
 
-        if (!phone) {
-            showModalError('Phone number is required.');
+        if (!phoneOrPsid) {
+            showModalError(channel === 'facebook' ? 'PSID is required.' : 'Phone number is required.');
             return;
         }
 
@@ -727,10 +776,15 @@
 
         const formData = new FormData();
         if (id) formData.append('id', id);
-        formData.append('phoneNumber', phone);
+        if (channel === 'facebook') {
+            formData.append('psid', phoneOrPsid);
+        } else {
+            formData.append('phoneNumber', phoneOrPsid);
+        }
         formData.append('name', name);
         formData.append('status', status);
         formData.append('connectionId', connectionId);
+        formData.append('channel', channel);
 
         fetch('{{ path('app_subscribers_save') }}', {
             method: 'POST',
