@@ -55,11 +55,14 @@
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
+        "check-licenses": "@php bin/check-licenses.php",
         "post-install-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "@check-licenses"
         ],
         "post-update-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "@check-licenses"
         ]
     },
     "conflict": {
