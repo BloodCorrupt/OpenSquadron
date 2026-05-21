@@ -2,14 +2,15 @@
 
 namespace App\Entity;
 
-use App\Repository\BotFlowRepository;
+use App\Repository\WhatsappBotFlowRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 use App\Entity\TenantAwareInterface;
 use App\Entity\Admin;
 
-#[ORM\Entity(repositoryClass: BotFlowRepository::class)]
-class BotFlow implements TenantAwareInterface
+#[ORM\Entity(repositoryClass: WhatsappBotFlowRepository::class)]
+#[ORM\Table(name: 'whatsapp_bot_flow')]
+class WhatsappBotFlow implements TenantAwareInterface
 {
     public const MATCH_EXACT = 'exact';
     public const MATCH_CONTAINS = 'contains';

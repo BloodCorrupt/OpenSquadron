@@ -10,10 +10,13 @@ use Doctrine\ORM\Mapping as ORM;
 
 use App\Entity\TenantAwareInterface;
 use App\Entity\Admin;
-use App\Entity\BotFlow;
+use App\Entity\WhatsappBotFlow;
+use App\Entity\FacebookBotFlow;
+use App\Entity\FacebookConnection;
 
 #[ORM\Entity(repositoryClass: SubscriberRepository::class)]
 #[ORM\UniqueConstraint(name: "uniq_subscriber_phone_connection", columns: ["phone_number", "whats_app_connection_id"])]
+#[ORM\UniqueConstraint(name: "uniq_subscriber_facebook_connection", columns: ["psid", "facebook_connection_id"])]
 class Subscriber implements TenantAwareInterface
 {
     #[ORM\Id]
@@ -25,12 +28,22 @@ class Subscriber implements TenantAwareInterface
     #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
     private ?Admin $owner = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 50, nullable: true)]
     private ?string $phoneNumber = null;
+
+    #[ORM\Column(length: 20)]
+    private ?string $channel = 'whatsapp';
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $psid = null;
 
     #[ORM\ManyToOne(targetEntity: WhatsAppConnection::class)]
     #[ORM\JoinColumn(name: "whats_app_connection_id", referencedColumnName: "id", onDelete: "CASCADE")]
     private ?WhatsAppConnection $whatsAppConnection = null;
+
+    #[ORM\ManyToOne(targetEntity: FacebookConnection::class)]
+    #[ORM\JoinColumn(name: "facebook_connection_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?FacebookConnection $facebookConnection = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $name = null;
@@ -54,9 +67,13 @@ class Subscriber implements TenantAwareInterface
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $tags = [];
 
-    #[ORM\ManyToOne(targetEntity: BotFlow::class)]
-    #[ORM\JoinColumn(name: "assigned_flow_id", referencedColumnName: "id", onDelete: "SET NULL")]
-    private ?BotFlow $assignedFlow = null;
+    #[ORM\ManyToOne(targetEntity: WhatsappBotFlow::class)]
+    #[ORM\JoinColumn(name: 'assigned_whatsapp_flow_id', referencedColumnName: 'id')]
+    private ?WhatsappBotFlow $assignedWhatsappFlow = null;
+
+    #[ORM\ManyToOne(targetEntity: FacebookBotFlow::class)]
+    #[ORM\JoinColumn(name: "assigned_facebook_flow_id", referencedColumnName: "id", onDelete: "SET NULL")]
+    private ?FacebookBotFlow $assignedFacebookFlow = null;
 
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $customAttributes = [];
@@ -81,9 +98,42 @@ class Subscriber implements TenantAwareInterface
         return $this->phoneNumber;
     }
 
-    public function setPhoneNumber(string $phoneNumber): static
+    public function setPhoneNumber(?string $phoneNumber): static
     {
         $this->phoneNumber = $phoneNumber;
+        return $this;
+    }
+
+    public function getChannel(): ?string
+    {
+        return $this->channel;
+    }
+
+    public function setChannel(string $channel): static
+    {
+        $this->channel = $channel;
+        return $this;
+    }
+
+    public function getPsid(): ?string
+    {
+        return $this->psid;
+    }
+
+    public function setPsid(?string $psid): static
+    {
+        $this->psid = $psid;
+        return $this;
+    }
+
+    public function getFacebookConnection(): ?FacebookConnection
+    {
+        return $this->facebookConnection;
+    }
+
+    public function setFacebookConnection(?FacebookConnection $facebookConnection): static
+    {
+        $this->facebookConnection = $facebookConnection;
         return $this;
     }
 
@@ -223,14 +273,26 @@ class Subscriber implements TenantAwareInterface
         return $this;
     }
 
-    public function getAssignedFlow(): ?BotFlow
+    public function getAssignedWhatsappFlow(): ?WhatsappBotFlow
     {
-        return $this->assignedFlow;
+        return $this->assignedWhatsappFlow;
     }
 
-    public function setAssignedFlow(?BotFlow $assignedFlow): static
+    public function setAssignedWhatsappFlow(?WhatsappBotFlow $assignedWhatsappFlow): static
     {
-        $this->assignedFlow = $assignedFlow;
+        $this->assignedWhatsappFlow = $assignedWhatsappFlow;
+
+        return $this;
+    }
+
+    public function getAssignedFacebookFlow(): ?FacebookBotFlow
+    {
+        return $this->assignedFacebookFlow;
+    }
+
+    public function setAssignedFacebookFlow(?FacebookBotFlow $assignedFacebookFlow): static
+    {
+        $this->assignedFacebookFlow = $assignedFacebookFlow;
         return $this;
     }
 

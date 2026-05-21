@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Entity\BotFlow;
+use App\Entity\WhatsappBotFlow;
 use App\Entity\Message;
 use App\Entity\Subscriber;
 use Doctrine\ORM\EntityManagerInterface;
@@ -10,9 +10,9 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * Walks a saved BotFlow and dispatches its actions through the WhatsApp API.
+ * Walks a saved WhatsappBotFlow and dispatches its actions through the WhatsApp API.
  *
- * Supports two payload shapes inside BotFlow::flowData:
+ * Supports two payload shapes inside WhatsappBotFlow::flowData:
  *
  *  1. Legacy flat list:  [ {type:'send_text', text:'...'}, ... ]
  *  2. Graph format:      { format:'graph', nodes:[...], edges:[...] }
@@ -24,7 +24,7 @@ use Psr\Log\NullLogger;
  *   - send_template ({ name, language })
  *   - delay         ({ seconds }) — best effort, capped to 5s in the webhook path
  */
-class BotFlowExecutor
+class WhatsappBotFlowExecutor
 {
     /** Hard ceiling so a flow can never spam recipients or hold the webhook. */
     private const MAX_STEPS = 25;
@@ -38,7 +38,7 @@ class BotFlowExecutor
         $this->logger ??= new NullLogger();
     }
 
-    public function execute(BotFlow $flow, Subscriber $subscriber): void
+    public function execute(WhatsappBotFlow $flow, Subscriber $subscriber): void
     {
         $data = $flow->getFlowData();
         $connection = $flow->getWhatsAppConnection();
@@ -210,7 +210,7 @@ class BotFlowExecutor
                     return;
             }
         } catch (\Throwable $e) {
-            $this->logger?->warning('BotFlowExecutor action failed', [
+            $this->logger?->warning('WhatsappBotFlowExecutor action failed', [
                 'type' => $type,
                 'error' => $e->getMessage(),
             ]);

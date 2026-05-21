@@ -2,17 +2,17 @@
 
 namespace App\Repository;
 
-use App\Entity\BotFlow;
+use App\Entity\WhatsappBotFlow;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<BotFlow>
+ * @extends ServiceEntityRepository<WhatsappBotFlow>
  */
-class BotFlowRepository extends ServiceEntityRepository
+class WhatsappBotFlowRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, BotFlow::class);
+        parent::__construct($registry, WhatsappBotFlow::class);
     }
 }

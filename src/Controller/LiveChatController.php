@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Message;
 use App\Entity\Subscriber;
 use App\Service\WhatsAppConnectionService;
+use App\Service\FacebookService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -13,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 use App\Entity\WhatsAppConnection;
+use App\Entity\FacebookConnection;
 
 class LiveChatController extends AbstractController
 {
@@ -22,7 +24,8 @@ class LiveChatController extends AbstractController
         // Get all subscribers ordered by the most recently updated (newest message)
         $subscribers = $em->getRepository(Subscriber::class)->findBy([], ['updatedAt' => 'DESC']);
         $templates = $em->getRepository(\App\Entity\MessageTemplate::class)->findAll();
-        $connections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['label' => 'ASC']);
+        $whatsappConnections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['label' => 'ASC']);
+        $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['label' => 'ASC']);
 
         $currentUser = $this->getUser();
         $tenantOwner = $currentUser->getParent() ?: $currentUser;
@@ -35,14 +38,15 @@ class LiveChatController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        $flows = $em->getRepository(\App\Entity\BotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $flows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
 
         return $this->render('chat/inbox.html.twig', [
             'subscribers' => $subscribers,
             'activeSubscriber' => null,
             'messages' => [],
             'templates' => $templates,
-            'connections' => $connections,
+            'whatsappConnections' => $whatsappConnections,
+            'facebookConnections' => $facebookConnections,
             'operators' => $operators,
             'flows' => $flows,
             'chatWindow' => [
@@ -59,7 +63,8 @@ class LiveChatController extends AbstractController
         $subscribers = $em->getRepository(Subscriber::class)->findBy([], ['updatedAt' => 'DESC']);
         $messages = $em->getRepository(Message::class)->findBy(['subscriber' => $subscriber], ['timestamp' => 'ASC']);
         $templates = $em->getRepository(\App\Entity\MessageTemplate::class)->findAll();
-        $connections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['label' => 'ASC']);
+        $whatsappConnections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['label' => 'ASC']);
+        $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['label' => 'ASC']);
 
         $currentUser = $this->getUser();
         $tenantOwner = $currentUser->getParent() ?: $currentUser;
@@ -72,7 +77,7 @@ class LiveChatController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        $flows = $em->getRepository(\App\Entity\BotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $flows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
 
         $chatWindow = $this->getChatWindowStatus($subscriber, $em);
 
@@ -81,7 +86,8 @@ class LiveChatController extends AbstractController
             'activeSubscriber' => $subscriber,
             'messages' => $messages,
             'templates' => $templates,
-            'connections' => $connections,
+            'whatsappConnections' => $whatsappConnections,
+            'facebookConnections' => $facebookConnections,
             'operators' => $operators,
             'flows' => $flows,
             'chatWindow' => $chatWindow,
@@ -109,9 +115,12 @@ class LiveChatController extends AbstractController
             
             $data[] = [
                 'id' => $sub->getId(),
-                'name' => $sub->getName() ?: $sub->getPhoneNumber(),
-                'phoneNumber' => $sub->getPhoneNumber(),
-                'connectionId' => $sub->getWhatsAppConnection() ? $sub->getWhatsAppConnection()->getId() : null,
+                'name' => $sub->getName() ?: ($sub->getPhoneNumber() ?: $sub->getPsid()),
+                'phoneNumber' => $sub->getPhoneNumber() ?: $sub->getPsid(),
+                'channel' => $sub->getChannel() ?? 'whatsapp',
+                'connectionId' => $sub->getChannel() === 'facebook'
+                    ? ($sub->getFacebookConnection() ? 'facebook-' . $sub->getFacebookConnection()->getId() : null)
+                    : ($sub->getWhatsAppConnection() ? 'whatsapp-' . $sub->getWhatsAppConnection()->getId() : null),
                 'lastMessage' => $lastMessage,
             ];
         }
@@ -155,7 +164,7 @@ class LiveChatController extends AbstractController
     }
 
     #[Route('/admin/inbox/api/send', name: 'app_inbox_send', methods: ['POST'])]
-    public function send(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService): JsonResponse
+    public function send(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService, FacebookService $facebookService): JsonResponse
     {
         $subscriberId = $request->request->get('subscriber_id');
         $content = $request->request->get('content', '');
@@ -170,13 +179,17 @@ class LiveChatController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Subscriber not found'], 404);
         }
 
-        // Enforce 24-hour customer service window
-        $chatWindow = $this->getChatWindowStatus($subscriber, $em);
-        if (!$chatWindow['isOpen']) {
-            return new JsonResponse([
-                'success' => false,
-                'error' => 'The 24-hour customer service window has expired. You can only respond using approved message templates.'
-            ], 403);
+        $channel = $subscriber->getChannel() ?? 'whatsapp';
+
+        // Enforce 24-hour customer service window (WhatsApp only)
+        if ($channel === 'whatsapp') {
+            $chatWindow = $this->getChatWindowStatus($subscriber, $em);
+            if (!$chatWindow['isOpen']) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => 'The 24-hour customer service window has expired. You can only respond using approved message templates.'
+                ], 403);
+            }
         }
 
         try {
@@ -222,13 +235,23 @@ class LiveChatController extends AbstractController
                     $msg->setMediaUrl($mediaUrl);
                     $msg->setContent($content);
                     
-                    $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $type, $absoluteUrl, $subscriber->getWhatsAppConnection());
-                    $metaMessageId = $response['messages'][0]['id'] ?? null;
+                    if ($channel === 'facebook') {
+                        $response = $facebookService->sendMediaMessage($subscriber->getPsid(), $type, $absoluteUrl, $subscriber->getFacebookConnection());
+                        $metaMessageId = $response['message_id'] ?? null;
+                    } else {
+                        $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $type, $absoluteUrl, $subscriber->getWhatsAppConnection());
+                        $metaMessageId = $response['messages'][0]['id'] ?? null;
+                    }
                 }
             } else {
                 // Normal text message
-                $response = $whatsappService->sendMessage($subscriber->getPhoneNumber(), $content, $subscriber->getWhatsAppConnection());
-                $metaMessageId = $response['messages'][0]['id'] ?? null;
+                if ($channel === 'facebook') {
+                    $response = $facebookService->sendMessage($subscriber->getPsid(), $content, $subscriber->getFacebookConnection());
+                    $metaMessageId = $response['message_id'] ?? null;
+                } else {
+                    $response = $whatsappService->sendMessage($subscriber->getPhoneNumber(), $content, $subscriber->getWhatsAppConnection());
+                    $metaMessageId = $response['messages'][0]['id'] ?? null;
+                }
                 $msg->setType('text');
                 $msg->setContent($content);
             }
@@ -313,11 +336,13 @@ class LiveChatController extends AbstractController
             'id' => $subscriber->getId(),
             'name' => $subscriber->getName(),
             'phoneNumber' => $subscriber->getPhoneNumber(),
+            'psid' => $subscriber->getPsid(),
             'assignedOperatorId' => $subscriber->getAssignedOperator() ? $subscriber->getAssignedOperator()->getId() : null,
             'tags' => $subscriber->getTags(),
-            'assignedFlowId' => $subscriber->getAssignedFlow() ? $subscriber->getAssignedFlow()->getId() : null,
+            'assignedFlowId' => $subscriber->getAssignedWhatsappFlow() ? $subscriber->getAssignedWhatsappFlow()->getId() : null,
             'customAttributes' => $subscriber->getCustomAttributes(),
             'notes' => $subscriber->getNotes(),
+            'channel' => $subscriber->getChannel() ?? 'whatsapp',
             'chatWindow' => $chatWindow,
             'serverTimestamp' => time()
         ]);
@@ -365,13 +390,13 @@ class LiveChatController extends AbstractController
     {
         $flowId = $request->request->get('flow_id');
         if (empty($flowId)) {
-            $subscriber->setAssignedFlow(null);
+            $subscriber->setAssignedWhatsappFlow(null);
         } else {
-            $flow = $em->getRepository(\App\Entity\BotFlow::class)->find($flowId);
+            $flow = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->find($flowId);
             if (!$flow) {
                 return new JsonResponse(['success' => false, 'error' => 'Flow not found'], 404);
             }
-            $subscriber->setAssignedFlow($flow);
+            $subscriber->setAssignedWhatsappFlow($flow);
         }
         
         $em->flush();
@@ -424,6 +449,19 @@ class LiveChatController extends AbstractController
 
     private function getChatWindowStatus(Subscriber $subscriber, EntityManagerInterface $em): array
     {
+        // Facebook Messenger uses the HUMAN_AGENT tag which allows a 7-day window.
+        // For beta, we skip the lockdown entirely for Facebook subscribers.
+        $channel = $subscriber->getChannel() ?? 'whatsapp';
+        if ($channel === 'facebook') {
+            return [
+                'isOpen' => true,
+                'expiresAt' => null,
+                'expiresAtTimestamp' => null,
+                'remainingSeconds' => 0,
+                'noWindow' => true
+            ];
+        }
+
         $lastInboundMessage = $em->getRepository(Message::class)->createQueryBuilder('m')
             ->where('m.subscriber = :subscriber')
             ->andWhere('m.direction = :direction')

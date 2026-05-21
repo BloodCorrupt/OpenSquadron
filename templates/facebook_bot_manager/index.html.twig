@@ -1,0 +1,817 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Facebook Bot Manager - OpenSquadron{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Two-column layout */
+    .manager-shell {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 30px;
+        margin-top: 20px;
+        min-height: calc(100vh - 180px);
+    }
+
+    /* Left Nav Sidebar Panel */
+    .manager-nav {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: fit-content;
+    }
+    .nav-header {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.6px;
+        margin-bottom: 12px;
+        padding-left: 10px;
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        cursor: pointer;
+        user-select: none;
+    }
+    .nav-item:hover {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .nav-item.is-active {
+        color: var(--text-main);
+        background: rgba(6, 182, 212, 0.1);
+        border-color: rgba(6, 182, 212, 0.2);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
+    }
+    .nav-item-icon {
+        font-size: 18px;
+    }
+    .nav-item-status {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .nav-item.is-active .nav-item-status {
+        background: rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+    }
+    .nav-item.is-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .nav-item.is-disabled:hover {
+        background: transparent;
+        color: var(--text-muted);
+    }
+
+    /* Right Content Panels */
+    .manager-content-pane {
+        display: none;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        flex-direction: column;
+        gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.3s ease;
+    }
+    .manager-content-pane.is-active {
+        display: flex;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed var(--glass-border);
+        padding-bottom: 18px;
+    }
+    .content-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .content-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    /* Toolbar Row */
+    .toolbar-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        max-width: 600px;
+    }
+    .toolbar-search {
+        position: relative;
+        flex: 1;
+    }
+    .toolbar-search input {
+        width: 100%;
+        padding: 10px 14px 10px 36px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        font-size: 13px;
+        color: #fff;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .toolbar-search input:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    .toolbar-search .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        stroke: #fff;
+        opacity: 0.5;
+        pointer-events: none;
+        fill: none;
+        stroke-width: 2.2;
+    }
+    .toolbar-select {
+        padding: 10px 14px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        font-size: 13px;
+        color: #fff;
+        outline: none;
+        cursor: pointer;
+        min-width: 140px;
+    }
+
+    /* Button components */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        color: #fff;
+        text-decoration: none;
+        user-select: none;
+    }
+    .btn-create {
+        background: var(--primary-accent);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+    }
+    .btn-create:hover {
+        background: #0891b2;
+        transform: translateY(-1px);
+    }
+    
+    /* Table styles */
+    .table-container {
+        overflow-x: auto;
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.15);
+    }
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 13px;
+    }
+    .custom-table th {
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid var(--glass-border);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.5px;
+    }
+    .custom-table td {
+        padding: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+    .custom-table tr:last-child td {
+        border-bottom: none;
+    }
+    .custom-table tr:hover td {
+        background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Tag and Status indicators */
+    .keyword-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+        font-size: 11px;
+        font-weight: 600;
+        margin-right: 4px;
+        margin-bottom: 4px;
+    }
+    .match-mode-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 4px;
+    }
+
+    /* Switch toggle */
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 22px;
+        vertical-align: middle;
+    }
+    .switch-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider-round {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        transition: .3s;
+        border-radius: 34px;
+    }
+    .slider-round:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #64748b;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    .switch-toggle input:checked + .slider-round {
+        background-color: rgba(6, 182, 212, 0.2);
+        border-color: rgba(6, 182, 212, 0.4);
+    }
+    .switch-toggle input:checked + .slider-round:before {
+        transform: translateX(22px);
+        background-color: var(--primary-accent);
+    }
+
+    select.form-control option, select.toolbar-select option, select option {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+    }
+
+    /* Action icons inside table */
+    .row-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-row-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-muted);
+        transition: all 0.15s;
+        text-decoration: none;
+    }
+    .btn-row-action:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .btn-row-action.edit-action:hover {
+        border-color: var(--primary-accent);
+        color: var(--primary-accent);
+        background: rgba(6, 182, 212, 0.05);
+    }
+    .btn-row-action.delete-action:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+    .btn-row-action.clone-action:hover {
+        border-color: #f59e0b;
+        color: #f59e0b;
+        background: rgba(245, 158, 11, 0.05);
+    }
+    .btn-row-action.export-action:hover {
+        border-color: #10b981;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .no-data-row {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 40px !important;
+        font-style: italic;
+    }
+
+    /* Toast system */
+    .fb-toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #0f172a;
+        color: #ffffff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s, transform 0.25s;
+        z-index: 10000;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    .fb-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .fb-toast.is-success { border-left: 4px solid #10b981; }
+    .fb-toast.is-error { border-left: 4px solid #ef4444; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="manager-shell">
+    {# ───────── Left Sidebar Navigation ───────── #}
+    <div class="manager-nav">
+        <div class="nav-header">Facebook Page</div>
+        <div style="margin-bottom: 20px; padding: 0 10px;">
+            <select id="facebook-conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
+                {% if connections is empty %}
+                    <option value="">No Pages Connected</option>
+                {% else %}
+                    {% for conn in connections %}
+                        <option value="{{ conn.id }}" {% if connection and connection.id == conn.id %}selected{% endif %}>
+                            {{ conn.label ?: conn.pageName ?: 'Unnamed Page (' ~ conn.id ~ ')' }}
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="nav-header">Bot settings</div>
+        
+        <div class="nav-item is-active" data-tab-target="bot-reply">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
+            </span>
+            <span>Bot Reply</span>
+            <span class="nav-item-status">Active</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="ai-agent">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </span>
+            <span>AI Agent</span>
+            <span class="nav-item-status" id="ai-nav-status">{% if connection and connection.isAiActive() %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+
+        <div class="nav-item is-disabled" onclick="return false;">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            </span>
+            <span>Broadcast Campaign</span>
+            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+        </div>
+
+        <div class="nav-item is-disabled" onclick="return false;">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </span>
+            <span>Chat Widget</span>
+            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+        </div>
+
+        <div class="nav-item is-disabled" onclick="return false;">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </span>
+            <span>Sequence</span>
+            <span class="nav-item-status" style="opacity: 0.5;">Soon</span>
+        </div>
+    </div>
+
+    {# ───────── Right Content Panels ───────── #}
+
+    {# 1. Bot Reply Settings Content Pane #}
+    <div class="manager-content-pane is-active" id="pane-bot-reply">
+        {% if connections is empty %}
+            <div class="empty-state" style="margin: auto; padding: 100px 40px; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px; background: rgba(15, 23, 42, 0.4); max-width: 600px; width: 100%; align-self: center;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; opacity: 0.5; color: var(--primary-accent); margin-bottom: 24px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                <h3 style="color: #fff; margin-bottom: 12px; font-size: 24px;">No Facebook Pages Connected</h3>
+                <p style="color: var(--text-muted); margin-bottom: 28px; font-size: 14px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6;">You need to connect at least one Facebook Page before you can manage bot flows and settings.</p>
+                <a href="{{ path('facebook_connect_show') }}" class="btn-action btn-create" style="display: inline-flex; padding: 12px 24px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; margin-right:8px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span>Connect Facebook Page</span>
+                </a>
+            </div>
+        {% else %}
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
+                    <span>Bot Reply Settings</span>
+                </h1>
+                <div class="content-subtitle">Manage triggers, dynamic reply pipelines, and automated response actions.</div>
+            </div>
+            
+            <a href="{{ path('app_facebook_bot_flows', {id: 'new', connectionId: connection ? connection.id : ''}) }}" class="btn-action btn-create">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Create Flow</span>
+            </a>
+        </div>
+
+        {# Toolbar filters #}
+        <div class="toolbar-row">
+            <div class="toolbar-left">
+                <select class="toolbar-select">
+                    <option value="all">All Folders</option>
+                </select>
+                <div class="toolbar-search">
+                    <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="flow-search" placeholder="Search flows...">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="custom-table" id="flows-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Unique ID</th>
+                        <th>Reference Name</th>
+                        <th>Keywords</th>
+                        <th style="width: 100px; text-align: center;">Status</th>
+                        <th style="width: 160px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if flows is empty %}
+                    <tr>
+                        <td colspan="6" class="no-data-row">
+                            No flows available. Click "Create Flow" to get started.
+                        </td>
+                    </tr>
+                    {% else %}
+                        {% for flow in flows %}
+                            <tr class="flow-row" data-flow-id="{{ flow.id }}">
+                                <td>{{ loop.index }}</td>
+                                <td style="font-family: monospace; color: var(--primary-accent);">
+                                    #{{ flow.id|default('0') }}
+                                </td>
+                                <td style="font-weight: 600;">
+                                    {{ flow.name }}
+                                </td>
+                                <td>
+                                    {% if flow.triggerKeyword %}
+                                        {% for kw in flow.triggerKeyword|split(',') %}
+                                            <span class="keyword-tag">{{ kw|trim }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span style="color:var(--text-muted); font-style:italic;">None</span>
+                                    {% endif %}
+                                    {% if flow.matchMode %}
+                                        <br><span class="match-mode-badge">{{ flow.matchMode }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: center;">
+                                    <label class="switch-toggle">
+                                        <input type="checkbox" {% if flow.isActive %}checked{% endif %} onchange="toggleFlow({{ flow.id }}, this.checked)">
+                                        <span class="slider-round"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <div class="row-actions" style="justify-content: flex-end;">
+                                        <a href="{{ path('app_facebook_bot_flows', {id: flow.id, connectionId: connection ? connection.id : ''}) }}" class="btn-row-action edit-action" title="Edit Flow">
+                                            <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                        </a>
+                                        <a href="{{ path('app_facebook_bot_flows_export', {id: flow.id}) }}" class="btn-row-action export-action" title="Export JSON" download>
+                                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        </a>
+                                        <button class="btn-row-action clone-action" title="Clone Flow" onclick="cloneFlow({{ flow.id }})">
+                                            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                        </button>
+                                        <button class="btn-row-action delete-action" title="Delete Flow" onclick="deleteFlow({{ flow.id }})">
+                                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    {# 2. AI Agent Configuration Content Pane #}
+    <div class="manager-content-pane" id="pane-ai-agent">
+        {% if connections is empty %}
+            <div class="empty-state" style="margin: auto; padding: 100px 40px; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px; background: rgba(15, 23, 42, 0.4); max-width: 600px; width: 100%; align-self: center;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; opacity: 0.5; color: var(--primary-accent); margin-bottom: 24px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                <h3 style="color: #fff; margin-bottom: 12px; font-size: 24px;">No Facebook Pages Connected</h3>
+                <p style="color: var(--text-muted); margin-bottom: 28px; font-size: 14px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6;">You need to connect at least one Facebook Page before you can manage bot flows and settings.</p>
+                <a href="{{ path('facebook_connect_show') }}" class="btn-action btn-create" style="display: inline-flex; padding: 12px 24px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; margin-right:8px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span>Connect Facebook Page</span>
+                </a>
+            </div>
+        {% else %}
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    <span>AI Agent Configuration</span>
+                </h1>
+                <div class="content-subtitle">Enable and configure which context profile this bot uses to respond to incoming messages.</div>
+            </div>
+        </div>
+
+        <div style="max-width: 680px; display: flex; flex-direction: column; gap: 20px;">
+            <!-- Enable AI Agent switch -->
+            <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; color: #fff; font-size: 14px;">Enable AI Agent Responder</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Toggle whether this Facebook page bot answers messages using AI.</div>
+                </div>
+                <label class="switch-toggle" style="margin: 0;">
+                    <input type="checkbox" id="ai-agent-active" {% if connection and connection.isAiActive() %}checked{% endif %}>
+                    <span class="slider-round"></span>
+                </label>
+            </div>
+
+            <!-- Select Context Profile -->
+            <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <div style="font-weight: 600; color: #fff; font-size: 14px; margin-bottom: 4px;">Context Profile</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Select the context profile to ground this bot's persona and knowledge base.</div>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <select id="ai-agent-context-select" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 14px; width: 100%;">
+                        <option value="">-- No Context Profile (Use Connection Default) --</option>
+                        {% for ctx in contexts %}
+                            <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
+                                {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                <button type="button" class="btn-action btn-create" id="btn-save-ai-agent-settings" onclick="saveAiAgentSettings()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    <span>Save AI Agent Settings</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<div id="toast" class="fb-toast">Message</div>
+
+<script>
+    function showToast(msg, type = 'success') {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.className = 'fb-toast is-shown ' + (type === 'success' ? 'is-success' : 'is-error');
+        setTimeout(() => el.classList.remove('is-shown'), 3000);
+    }
+
+    function toggleFlow(id, isActive) {
+        fetch('{{ path('app_facebook_bot_flows_toggle', {id: 0}) }}'.replace('0', id), {
+            method: 'POST',
+            body: JSON.stringify({ isActive }),
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(isActive ? 'Flow enabled.' : 'Flow disabled.', 'success');
+            } else {
+                showToast('Update failed.', 'error');
+            }
+        })
+        .catch(err => showToast('Network error.', 'error'));
+    }
+
+    function cloneFlow(id) {
+        if (!confirm('Are you sure you want to duplicate this flow?')) return;
+        fetch('{{ path('app_facebook_bot_flows_clone', {id: 0}) }}'.replace('0', id), {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Flow cloned successfully!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Clone failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Clone error: ' + err.message, 'error'));
+    }
+
+    function deleteFlow(id) {
+        if (!confirm('Are you absolutely sure you want to delete this flow? This cannot be undone.')) return;
+        fetch('{{ path('app_facebook_bot_flows_delete', {id: 0}) }}'.replace('0', id), {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Flow deleted successfully!', 'success');
+                const row = document.querySelector(`.flow-row[data-flow-id="${id}"]`);
+                if (row) {
+                    row.remove();
+                    const remaining = document.querySelectorAll('.flow-row');
+                    if (remaining.length === 0) {
+                        window.location.reload();
+                    }
+                }
+            } else {
+                showToast('Delete failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Delete error: ' + err.message, 'error'));
+    }
+
+    // Search filter interaction
+    const flowSearch = document.getElementById('flow-search');
+    if (flowSearch) {
+        flowSearch.oninput = (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('.flow-row').forEach(row => {
+                const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const keywords = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                if (name.includes(q) || keywords.includes(q)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        };
+    }
+
+    function changeConnection(connectionId) {
+        const url = new URL(window.location);
+        url.searchParams.set('connectionId', connectionId);
+        window.location.href = url.toString();
+    }
+
+    // Tab switcher logic
+    function switchTab(tabId) {
+        // Toggle Nav Items
+        document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
+            if (el.getAttribute('data-tab-target') === tabId) {
+                el.classList.add('is-active');
+            } else {
+                el.classList.remove('is-active');
+            }
+        });
+
+        // Toggle Content Panes
+        document.querySelectorAll('.manager-content-pane').forEach(el => {
+            if (el.id === 'pane-' + tabId) {
+                el.classList.add('is-active');
+                el.style.display = 'flex';
+            } else {
+                el.classList.remove('is-active');
+                el.style.display = 'none';
+            }
+        });
+
+        // Save selection to URL params
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabId);
+        window.history.replaceState({}, '', url);
+    }
+
+    // Set active tab on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab') || 'bot-reply';
+        switchTab(tab);
+    });
+
+    // Wire click listeners
+    document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
+        el.addEventListener('click', () => {
+            switchTab(el.getAttribute('data-tab-target'));
+        });
+    });
+
+    function saveAiAgentSettings() {
+        const aiActive = document.getElementById('ai-agent-active').checked;
+        const activeContextId = document.getElementById('ai-agent-context-select').value;
+        const btn = document.getElementById('btn-save-ai-agent-settings');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const formData = new FormData();
+        formData.append('connectionId', '{{ connection ? connection.id : "" }}');
+        formData.append('configType', 'agent');
+        formData.append('aiActive', aiActive ? '1' : '0');
+        formData.append('activeContextId', activeContextId);
+
+        fetch('{{ path('app_facebook_bot_ai_agent_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('AI Agent Settings saved successfully!', 'success');
+                const statusBadge = document.getElementById('ai-nav-status');
+                if (statusBadge) {
+                    statusBadge.textContent = aiActive ? 'Active' : 'Inactive';
+                }
+            } else {
+                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Save error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> <span>Save AI Agent Settings</span>';
+        });
+    }
+</script>
+{% endblock %}

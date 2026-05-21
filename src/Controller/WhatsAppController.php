@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Service\BotFlowExecutor;
+use App\Service\WhatsappBotFlowExecutor;
 use App\Service\WhatsAppConnectionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,7 +31,7 @@ class WhatsAppController extends AbstractController
         HttpClientInterface $httpClient,
         WhatsAppConnectionService $whatsappService,
         private EntityManagerInterface $entityManager,
-        private BotFlowExecutor $botFlowExecutor,
+        private WhatsappBotFlowExecutor $WhatsappBotFlowExecutor,
         private \App\Service\AiAgentService $aiAgentService,
         private \App\Service\TenantDatabaseService $tenantDbService,
         private \App\Service\TenantContext $tenantContext
@@ -181,7 +181,7 @@ class WhatsAppController extends AbstractController
                             // active flow whose keyword/match-mode matches wins.
                             if ($msgType === 'text' && $msgBody !== '') {
                                 $flows = $this->entityManager
-                                    ->getRepository(\App\Entity\BotFlow::class)
+                                    ->getRepository(\App\Entity\WhatsappBotFlow::class)
                                     ->findBy([
                                         'isActive' => true,
                                         'whatsAppConnection' => $resolvedConnection,
@@ -190,7 +190,7 @@ class WhatsAppController extends AbstractController
                                 $matched = false;
                                 foreach ($flows as $candidate) {
                                     if ($candidate->matches($msgBody)) {
-                                        $this->botFlowExecutor->execute($candidate, $subscriber);
+                                        $this->WhatsappBotFlowExecutor->execute($candidate, $subscriber);
                                         $matched = true;
                                         break;
                                     }

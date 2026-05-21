@@ -74,14 +74,19 @@ CREATE TABLE IF NOT EXISTS `subscriber` (
     id INT AUTO_INCREMENT NOT NULL,
     owner_id INT DEFAULT NULL,
     whats_app_connection_id INT DEFAULT NULL,
-    phone_number VARCHAR(50) NOT NULL,
+    facebook_connection_id INT DEFAULT NULL,
+    phone_number VARCHAR(50) DEFAULT NULL,
+    channel VARCHAR(20) NOT NULL DEFAULT 'whatsapp',
+    psid VARCHAR(255) DEFAULT NULL,
     name VARCHAR(255) DEFAULT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'active',
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     INDEX IDX_SUBSCRIBER_OWNER (owner_id),
     INDEX IDX_AD005B696381BF43 (whats_app_connection_id),
+    INDEX IDX_SUBSCRIBER_FB_CONN (facebook_connection_id),
     UNIQUE INDEX uniq_subscriber_phone_connection (phone_number, whats_app_connection_id),
+    UNIQUE INDEX uniq_subscriber_facebook_connection (psid, facebook_connection_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
@@ -139,6 +144,31 @@ CREATE TABLE IF NOT EXISTS `whatsapp_connection` (
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
+-- ───── Facebook Connections ─────
+CREATE TABLE IF NOT EXISTS `facebook_connection` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT DEFAULT NULL,
+    active_context_id INT DEFAULT NULL,
+    page_id VARCHAR(255) NOT NULL,
+    page_name VARCHAR(255) DEFAULT NULL,
+    encrypted_page_access_token LONGTEXT NOT NULL,
+    app_id VARCHAR(255) NOT NULL,
+    encrypted_app_secret LONGTEXT NOT NULL,
+    verify_token VARCHAR(64) NOT NULL,
+    webhook_url VARCHAR(255) DEFAULT NULL,
+    label VARCHAR(255) DEFAULT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'active',
+    ai_active TINYINT NOT NULL DEFAULT 0,
+    agent_name VARCHAR(255) DEFAULT NULL,
+    agent_role VARCHAR(255) DEFAULT NULL,
+    context_data LONGTEXT DEFAULT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME DEFAULT NULL,
+    INDEX IDX_FACEBOOK_CONNECTION_OWNER (owner_id),
+    INDEX IDX_262F40D84AA2A339 (active_context_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
 -- ───── Doctrine Migrations Tracking ─────
 CREATE TABLE IF NOT EXISTS `doctrine_migration_versions` (
     version VARCHAR(191) NOT NULL,
@@ -154,6 +184,9 @@ ALTER TABLE `message`
 ALTER TABLE `whatsapp_connection`
     ADD CONSTRAINT FK_5E00F7954AA2A339 FOREIGN KEY (active_context_id) REFERENCES ai_context (id) ON DELETE SET NULL;
 
+ALTER TABLE `facebook_connection`
+    ADD CONSTRAINT FK_262F40D84AA2A339 FOREIGN KEY (active_context_id) REFERENCES ai_context (id) ON DELETE SET NULL;
+
 ALTER TABLE `bot_flow`
     ADD CONSTRAINT FK_D3665A02C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
@@ -161,7 +194,8 @@ ALTER TABLE `message_template`
     ADD CONSTRAINT FK_9E46DB92C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
 ALTER TABLE `subscriber`
-    ADD CONSTRAINT FK_AD005B696381BF43 FOREIGN KEY (whats_app_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
+    ADD CONSTRAINT FK_AD005B696381BF43 FOREIGN KEY (whats_app_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_SUBSCRIBER_FB_CONN FOREIGN KEY (facebook_connection_id) REFERENCES facebook_connection (id) ON DELETE CASCADE;
 
 -- ───── Workspace Owner Constraints ─────
 ALTER TABLE `ai_context`
@@ -172,6 +206,9 @@ ALTER TABLE `ai_setting`
 
 ALTER TABLE `whatsapp_connection`
     ADD CONSTRAINT FK_WHATSAPP_CONN_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
+
+ALTER TABLE `facebook_connection`
+    ADD CONSTRAINT FK_FACEBOOK_CONN_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
 
 ALTER TABLE `bot_flow`
     ADD CONSTRAINT FK_BOT_FLOW_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;

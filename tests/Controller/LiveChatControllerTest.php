@@ -175,4 +175,69 @@ class LiveChatControllerTest extends WebTestCase
             $em->flush();
         }
     }
+
+    public function testInboxPageRendersSuccessfully(): void
+    {
+        $client = static::createClient();
+        $admin = $this->createAndLoginAdmin($client);
+
+        $client->request('GET', '/admin/inbox');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.inbox-container');
+
+        // Clean up
+        $container = static::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $this->cleanTestData($em);
+        $admin = $em->getRepository(Admin::class)->find($admin->getId());
+        if ($admin) {
+            $em->remove($admin);
+            $em->flush();
+        }
+    }
+
+    public function testInboxChatPageRendersSuccessfully(): void
+    {
+        $client = static::createClient();
+        $admin = $this->createAndLoginAdmin($client);
+
+        $container = static::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+
+        // 1. Create a WhatsApp Connection
+        $connection = new WhatsAppConnection();
+        $connection->setBusinessAccountId('123456789');
+        $connection->setPhoneNumberId('987654321');
+        $connection->setEncryptedAccessToken('dummy_encrypted_token');
+        $connection->setVerifyToken('dummy_verify_token');
+        $connection->setStatus('active');
+        $connection->setOwner($admin);
+        $em->persist($connection);
+
+        // 2. Create a Subscriber
+        $subscriber = new Subscriber();
+        $subscriber->setPhoneNumber('15550001111');
+        $subscriber->setName('Test Subscriber');
+        $subscriber->setWhatsAppConnection($connection);
+        $subscriber->setOwner($admin);
+        $subscriber->setCreatedAt(new \DateTime());
+        $subscriber->setUpdatedAt(new \DateTime());
+        $em->persist($subscriber);
+        $em->flush();
+
+        $subId = $subscriber->getId();
+
+        $client->request('GET', "/admin/inbox/{$subId}");
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.inbox-container');
+
+        // Clean up
+        $em = $container->get(EntityManagerInterface::class);
+        $this->cleanTestData($em);
+        $admin = $em->getRepository(Admin::class)->find($admin->getId());
+        if ($admin) {
+            $em->remove($admin);
+            $em->flush();
+        }
+    }
 }

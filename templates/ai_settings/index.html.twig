@@ -649,7 +649,7 @@
         const formData = new FormData(form);
         formData.set('isActive', document.getElementById('ai-isActive').checked ? '1' : '0');
 
-        fetch('{{ path('app_bot_ai_settings_save') }}', {
+        fetch('{{ path('app_ai_settings_save') }}', {
             method: 'POST',
             body: formData
         })
@@ -750,7 +750,7 @@
         const formData = new FormData();
         formData.append('contextData', rawText);
 
-        fetch('/admin/bot-manager/ai-settings/generate-faqs', {
+        fetch('{{ path('app_ai_generate_faqs') }}', {
             method: 'POST',
             body: formData
         })
@@ -783,7 +783,7 @@
         const form = document.getElementById('ai-context-form');
         const formData = new FormData(form);
 
-        fetch('{{ path('app_bot_ai_context_save') }}', {
+        fetch('{{ path('app_ai_context_save') }}', {
             method: 'POST',
             body: formData
         })
@@ -961,7 +961,7 @@
         formData.append('apiKey', apiKey);
         formData.append('apiEndpoint', endpoint);
 
-        fetch('{{ path('app_bot_ai_models_fetch') }}', {
+        fetch('{{ path('app_ai_models_fetch') }}', {
             method: 'POST',
             body: formData
         })
