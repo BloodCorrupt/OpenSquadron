@@ -54,6 +54,20 @@ CREATE TABLE IF NOT EXISTS `ai_setting` (
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
+-- ───── Facebook Settings ─────
+CREATE TABLE IF NOT EXISTS `facebook_setting` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT DEFAULT NULL,
+    app_id VARCHAR(255) NOT NULL,
+    encrypted_app_secret LONGTEXT NOT NULL,
+    verify_token VARCHAR(64) DEFAULT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME DEFAULT NULL,
+    INDEX IDX_E94FA4E37E3C61F9 (owner_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
+
 -- ───── Facebook Bot Flows ─────
 CREATE TABLE IF NOT EXISTS `facebook_bot_flow` (
     id INT AUTO_INCREMENT NOT NULL,
@@ -231,6 +245,9 @@ ALTER TABLE `ai_context`
 ALTER TABLE `ai_setting`
     ADD CONSTRAINT FK_AI_SETTING_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
 
+ALTER TABLE `facebook_setting`
+    ADD CONSTRAINT FK_E94FA4E37E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
+
 ALTER TABLE `whatsapp_connection`
     ADD CONSTRAINT FK_WHATSAPP_CONN_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
 
@@ -266,6 +283,7 @@ INSERT INTO `doctrine_migration_versions` (version, executed_at, execution_time)
     ('DoctrineMigrations\\Version20260520090507', NOW(), 15),
     ('DoctrineMigrations\\Version20260520091945', NOW(), 97),
     ('DoctrineMigrations\\Version20260520093159', NOW(), 82),
-    ('DoctrineMigrations\\Version20260521094438', NOW(), 100);
+    ('DoctrineMigrations\\Version20260521094438', NOW(), 100),
+    ('DoctrineMigrations\\Version20260521102506', NOW(), 58);
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\FacebookSetting;
 use App\Service\FacebookService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,27 +19,75 @@ class FacebookConnectionController extends AbstractController
     ) {
     }
 
+    #[Route('/admin/settings/facebook', name: 'app_facebook_settings', methods: ['GET'])]
+    public function facebookSettings(): Response
+    {
+        $setting = $this->facebookService->getSetting() ?? new FacebookSetting();
+
+        return $this->render('facebook/settings.html.twig', [
+            'setting' => $setting,
+        ]);
+    }
+
+    #[Route('/admin/settings/facebook/save', name: 'app_facebook_settings_save', methods: ['POST'])]
+    public function saveFacebookSettings(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $appId = trim($request->request->get('appId', ''));
+        $appSecret = trim($request->request->get('appSecret', ''));
+
+        if (empty($appId)) {
+            return new JsonResponse(['success' => false, 'error' => 'App ID is required.'], 400);
+        }
+
+        $setting = $this->facebookService->getSetting();
+        if (!$setting) {
+            $setting = new FacebookSetting();
+            $setting->setVerifyToken($this->facebookService->generateVerifyToken());
+            $em->persist($setting);
+        }
+
+        $setting->setAppId($appId);
+        
+        if ($appSecret !== '') {
+            $setting->setEncryptedAppSecret($this->facebookService->encryptToken($appSecret));
+        } elseif (!$setting->getEncryptedAppSecret()) {
+            return new JsonResponse(['success' => false, 'error' => 'App Secret is required.'], 400);
+        }
+
+        $em->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Facebook Settings saved successfully.',
+            'verifyToken' => $setting->getVerifyToken(),
+        ]);
+    }
+
     #[Route('/admin/facebook/connect', name: 'facebook_connect_show', methods: ['GET'])]
     public function show(): Response
     {
         $connections = $this->facebookService->getAllConnections();
+        $setting = $this->facebookService->getSetting();
 
         return $this->render('facebook/connect.html.twig', [
             'connections' => $connections,
+            'setting' => $setting,
         ]);
     }
 
     #[Route('/admin/facebook/connect', name: 'facebook_connect', methods: ['POST'])]
     public function connect(Request $request): Response
     {
-        $appId = trim($request->request->get('appId', ''));
-        $appSecret = trim($request->request->get('appSecret', ''));
-        $label = trim($request->request->get('label', ''));
+        $setting = $this->facebookService->getSetting();
 
-        if (empty($appId) || empty($appSecret)) {
-            $this->addFlash('error', 'App ID and App Secret are required to initiate connection.');
+        if (!$setting || empty($setting->getAppId()) || empty($setting->getEncryptedAppSecret())) {
+            $this->addFlash('error', 'Facebook Settings (App ID and App Secret) must be configured under Settings > Facebook Settings first.');
             return $this->redirectToRoute('facebook_connect_show');
         }
+
+        $appId = $setting->getAppId();
+        $appSecret = $this->facebookService->decryptToken($setting->getEncryptedAppSecret());
+        $label = trim($request->request->get('label', ''));
 
         $session = $request->getSession();
         $session->set('fb_connect_app_id', $appId);
@@ -79,8 +129,9 @@ class FacebookConnectionController extends AbstractController
         $session = $request->getSession();
 
         $savedState = $session->get('fb_connect_state');
-        $appId = $session->get('fb_connect_app_id');
-        $appSecret = $session->get('fb_connect_app_secret');
+        $setting = $this->facebookService->getSetting();
+        $appId = $session->get('fb_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
+        $appSecret = $session->get('fb_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
 
         if (!$code || !$state || $state !== $savedState || !$appId || !$appSecret) {
             $this->addFlash('error', 'Invalid request or session expired. Please try connecting again.');
@@ -129,8 +180,9 @@ class FacebookConnectionController extends AbstractController
         $session = $request->getSession();
 
         $pagesSession = $session->get('fb_pages_list', []);
-        $appId = $session->get('fb_connect_app_id');
-        $appSecret = $session->get('fb_connect_app_secret');
+        $setting = $this->facebookService->getSetting();
+        $appId = $session->get('fb_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
+        $appSecret = $session->get('fb_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
         $label = $session->get('fb_connect_label');
 
         if (!$pageId || !isset($pagesSession[$pageId]) || !$appId || !$appSecret) {
@@ -158,7 +210,13 @@ class FacebookConnectionController extends AbstractController
             $session->remove('fb_connect_label');
             $session->remove('fb_connect_state');
 
-            $this->addFlash('success', sprintf('Successfully connected Facebook Page: %s!', $pageData['name']));
+            // Subscribe Page to App Webhooks
+            $subResult = $this->facebookService->subscribePage($pageData['id'], $pageData['access_token']);
+            if (isset($subResult['success']) && $subResult['success']) {
+                $this->addFlash('success', sprintf('Successfully connected Facebook Page and subscribed webhooks: %s!', $pageData['name']));
+            } else {
+                $this->addFlash('warning', sprintf('Connected Facebook Page %s, but failed to subscribe webhooks: %s', $pageData['name'], $subResult['error'] ?? 'Unknown error'));
+            }
         } catch (\Exception $e) {
             $this->addFlash('error', 'Failed to save connection: ' . $e->getMessage());
         }
@@ -176,10 +234,12 @@ class FacebookConnectionController extends AbstractController
         }
 
         $connections = $this->facebookService->getAllConnections();
+        $setting = $this->facebookService->getSetting();
 
         return $this->render('facebook/connect.html.twig', [
             'connections' => $connections,
             'editConnection' => $connection,
+            'setting' => $setting,
         ]);
     }
 
@@ -221,4 +281,69 @@ class FacebookConnectionController extends AbstractController
         $success = $this->facebookService->deleteConnection($id);
         return new JsonResponse(['success' => $success]);
     }
+
+    #[Route('/admin/facebook/connect/{id}/subscribe', name: 'facebook_connect_subscribe', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function subscribe(int $id): Response
+    {
+        try {
+            $connection = $this->facebookService->getConnectionById($id);
+            if (!$connection) {
+                $this->addFlash('error', 'Connection not found.');
+                return $this->redirectToRoute('facebook_connect_show');
+            }
+
+            $pageId = $connection->getPageId();
+            $pageAccessToken = $this->facebookService->decryptToken($connection->getEncryptedPageAccessToken());
+
+            $subResult = $this->facebookService->subscribePage($pageId, $pageAccessToken);
+
+            if (isset($subResult['success']) && $subResult['success']) {
+                $this->addFlash('success', sprintf('Successfully subscribed webhooks for Facebook Page: %s!', $connection->getPageName()));
+            } else {
+                $this->addFlash('error', sprintf('Failed to subscribe webhooks for Facebook Page: %s. Error: %s', $connection->getPageName(), $subResult['error'] ?? 'Unknown error'));
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'An error occurred during webhook subscription: ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('facebook_connect_show');
+    }
+
+    #[Route('/facebook/data-deletion', name: 'facebook_data_deletion', methods: ['POST'])]
+    public function dataDeletion(Request $request): JsonResponse
+    {
+        $signedRequest = $request->request->get('signed_request');
+        if (!$signedRequest) {
+            return new JsonResponse(['error' => 'Missing signed_request parameter.'], 400);
+        }
+
+        $data = $this->facebookService->parseSignedRequest($signedRequest);
+        if (!$data) {
+            return new JsonResponse(['error' => 'Invalid signed_request.'], 400);
+        }
+
+        $userId = $data['user_id'] ?? 'unknown';
+        // Generate a unique tracking confirmation code
+        $confirmationCode = 'del_' . substr(hash('sha256', $userId . time() . uniqid('', true)), 0, 16);
+
+        // Generate absolute status check URL, enforcing HTTPS
+        $statusUrl = $this->generateUrl('facebook_deletion_status', ['code' => $confirmationCode], UrlGeneratorInterface::ABSOLUTE_URL);
+        $statusUrl = str_replace('http://', 'https://', $statusUrl);
+
+        return new JsonResponse([
+            'url' => $statusUrl,
+            'confirmation_code' => $confirmationCode,
+        ]);
+    }
+
+    #[Route('/facebook/deletion-status', name: 'facebook_deletion_status', methods: ['GET'])]
+    public function deletionStatus(Request $request): Response
+    {
+        $code = $request->query->get('code', '');
+
+        return $this->render('facebook/deletion_status.html.twig', [
+            'code' => $code,
+        ]);
+    }
 }
+

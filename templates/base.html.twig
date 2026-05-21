@@ -669,7 +669,7 @@
                     </div>
                 </div>
                 <div class="nav-dropdown">
-                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
+                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'accounts' in app.request.attributes.get('_route')|default('') or 'facebook_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </span> Settings <span class="dropdown-caret">▼</span>
@@ -684,6 +684,11 @@
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                             </span> AI Settings
+                        </a>
+                        <a href="{{ path('app_facebook_settings') }}" class="dropdown-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') or 'facebook_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                            </span> Facebook Settings
                         </a>
                         {% if app.user and app.user.parent is null and (app.user.accountType == 'admin' or (app.user.accountType == 'user' and app.user.teamEnabled)) %}
                             <a href="{{ path('app_accounts_index') }}" class="dropdown-item {% if 'accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %}">

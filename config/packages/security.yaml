@@ -27,9 +27,12 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/webhook/whatsapp, roles: PUBLIC_ACCESS }
+        - { path: ^/webhook/facebook, roles: PUBLIC_ACCESS }
         - { path: ^/whatsapp/test, roles: PUBLIC_ACCESS }
         - { path: ^/privacy, roles: PUBLIC_ACCESS }
         - { path: ^/terms, roles: PUBLIC_ACCESS }
+        - { path: ^/facebook/data-deletion, roles: PUBLIC_ACCESS }
+        - { path: ^/facebook/deletion-status, roles: PUBLIC_ACCESS }
         - { path: ^/facebook/callback, roles: ROLE_ADMIN }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/$, roles: ROLE_ADMIN }

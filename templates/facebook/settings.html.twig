@@ -1,0 +1,608 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Facebook Settings - OpenSquadron{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Two-column layout */
+    .manager-shell {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 30px;
+        margin-top: 20px;
+        min-height: calc(100vh - 180px);
+    }
+
+    /* Left Nav Sidebar Panel */
+    .manager-nav {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: fit-content;
+    }
+    .nav-header {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.6px;
+        margin-bottom: 12px;
+        padding-left: 10px;
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        cursor: pointer;
+        user-select: none;
+    }
+    .nav-item:hover {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .nav-item.is-active {
+        color: var(--text-main);
+        background: rgba(6, 182, 212, 0.1);
+        border-color: rgba(6, 182, 212, 0.2);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
+    }
+    .nav-item-icon {
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+    }
+    .nav-item-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Right Content Panel */
+    .manager-content-pane {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed var(--glass-border);
+        padding-bottom: 18px;
+    }
+    .content-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .content-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    /* Form Styles */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 0;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e2e8f0;
+    }
+    .form-label span {
+        color: var(--primary-accent);
+    }
+    .form-control {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s;
+        height: 42px;
+        box-sizing: border-box;
+    }
+    .form-control:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    .form-hint {
+        font-size: 12px;
+        color: #64748b;
+        margin: 4px 0 0 0;
+    }
+
+    /* Eye toggle btn */
+    .password-container {
+        position: relative;
+    }
+    .password-toggle-btn {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+    }
+    .password-toggle-btn:hover {
+        color: #fff;
+    }
+
+    /* Endpoints Styles */
+    .endpoint-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .endpoint-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        padding: 18px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    .endpoint-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .endpoint-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .endpoint-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: bold;
+        margin-bottom: 6px;
+        letter-spacing: 0.8px;
+    }
+    .endpoint-value {
+        font-family: 'Courier New', Courier, monospace;
+        color: var(--primary-accent);
+        font-size: 14px;
+        word-break: break-all;
+        padding-right: 15px;
+    }
+    .copy-btn {
+        background: rgba(6, 182, 212, 0.1);
+        color: var(--primary-accent);
+        border: 1px solid rgba(6, 182, 212, 0.25);
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .copy-btn:hover {
+        background: var(--primary-accent);
+        color: #0f172a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+    }
+
+    /* Toast component */
+    .fb-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastSlideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .fb-toast.toast-success {
+        background: rgba(16, 185, 129, 0.9);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .fb-toast.toast-error {
+        background: rgba(239, 68, 68, 0.9);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Buttons */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        color: #fff;
+        text-decoration: none;
+        user-select: none;
+    }
+    .btn-create {
+        background: linear-gradient(135deg, var(--primary-accent) 0%, #0891b2 100%);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+    }
+    .btn-create:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="manager-shell">
+    {# ───────── Left Sidebar Navigation ───────── #}
+    <div class="manager-nav">
+        <div class="nav-header">Facebook Settings</div>
+        
+        <div class="nav-item is-active" data-tab-target="api-config" onclick="switchFbSubtab('api-config')">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+            </span>
+            <span>API Configuration</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="webhook-endpoints" onclick="switchFbSubtab('webhook-endpoints')">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </span>
+            <span>Webhook & Endpoints</span>
+        </div>
+    </div>
+
+    {# ───────── Right Content Panel ───────── #}
+    <div class="manager-content-pane">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <span id="fb-settings-title-icon"><svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg></span>
+                    <span id="fb-settings-title-text">API Configuration</span>
+                </h1>
+                <div class="content-subtitle" id="fb-settings-title-desc">Configure global Meta API credentials for workspace integrations.</div>
+            </div>
+        </div>
+
+        <!-- Inner Content Area containing sub-panes -->
+        <div class="fb-settings-subpane-container" style="width: 100%; display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Sub-pane 1: API Configuration -->
+            <div class="fb-settings-subpane" id="fb-subpane-api-config" style="display: block; width: 100%;">
+                <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">
+                    <strong style="color: var(--primary-accent);">💡 Connection Setup:</strong> Enter your Meta App credentials below. You can find these in your <a href="https://developers.facebook.com/" target="_blank" style="color: var(--primary-accent); text-decoration: underline;">Meta App Dashboard</a> under App Settings → Basic.
+                </div>
+
+                <form id="fb-api-config-form" onsubmit="saveFbApiConfig(event)" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+                    <!-- Fake fields to bypass autofill -->
+                    <input type="text" name="fake_username" style="display:none" aria-hidden="true" autocomplete="off" />
+                    <input type="password" name="fake_password" style="display:none" aria-hidden="true" autocomplete="off" />
+
+                    <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                        <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0 0 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                            Meta App Credentials
+                        </h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="appId">Facebook App ID <span>*</span></label>
+                                <input type="text" id="appId" name="appId" class="form-control" value="{{ setting.appId }}" placeholder="e.g. 1481875743132196" required autocomplete="off">
+                                <p class="form-hint">Obtained from Meta App Dashboard.</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="appSecret">Facebook App Secret {% if not setting.appId %}<span>*</span>{% endif %}</label>
+                                <div class="password-container">
+                                    <input type="password" id="appSecret" name="appSecret" class="form-control" 
+                                           placeholder="{% if setting.encryptedAppSecret %}•••••••••••••••• (saved){% else %}Enter App Secret...{% endif %}"
+                                           {% if not setting.encryptedAppSecret %}required{% endif %} autocomplete="new-password">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()">
+                                        <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </button>
+                                </div>
+                                <p class="form-hint">{% if setting.encryptedAppSecret %}Leave blank to keep existing secret. {% endif %}Keep this private and secure.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                        <button type="submit" class="btn-action btn-create" id="btn-save-fb-api">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                            <span>Save Settings</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Sub-pane 2: Webhook & Endpoints -->
+            <div class="fb-settings-subpane" id="fb-subpane-webhook-endpoints" style="display: none; width: 100%;">
+                <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">
+                    Configure these integration URLs in your Facebook Developer Console under your app's Messenger / Webhook settings to enable chat reception.
+                </div>
+
+                <div class="endpoint-list">
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Valid OAuth Redirect URI</div>
+                            <div class="endpoint-value" id="oauth-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('facebook_connect_callback') }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('oauth-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Webhook Callback URL</div>
+                            <div class="endpoint-value" id="webhook-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('facebook_webhook_verify') }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('webhook-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Webhook Verify Token</div>
+                            <div class="endpoint-value" id="verify-val">
+                                {%- if setting.verifyToken -%}
+                                    {{ setting.verifyToken }}
+                                {%- else -%}
+                                    <span style="color: var(--text-muted); font-style: italic;">Will be generated automatically when you save credentials under API Configuration.</span>
+                                {%- endif -%}
+                            </div>
+                        </div>
+                        <button type="button" class="copy-btn" id="btn-copy-verify" onclick="copyToClipboardText('verify-val')" {% if not setting.verifyToken %}style="display: none;"{% endif %}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Data Deletion Callback URL</div>
+                            <div class="endpoint-value" id="deletion-callback-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('facebook_data_deletion') }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('deletion-callback-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Privacy Policy URL</div>
+                            <div class="endpoint-value" id="privacy-val">{{ url('app_privacy')|replace({'http://': 'https://'}) }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('privacy-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Terms of Service URL</div>
+                            <div class="endpoint-value" id="terms-val">{{ url('app_terms')|replace({'http://': 'https://'}) }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('terms-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="fb-toast" id="fb-toast"></div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('fb-toast');
+        toast.className = 'fb-toast ' + (type === 'success' ? 'toast-success' : 'toast-error');
+        toast.textContent = message;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+
+    // ───────── Facebook Sub-Tab Switcher Logic ─────────
+    function switchFbSubtab(subtabId) {
+        // Toggle active nav-item highlight
+        document.querySelectorAll('.manager-nav .nav-item').forEach(el => {
+            if (el.getAttribute('data-tab-target') === subtabId) {
+                el.classList.add('is-active');
+            } else {
+                el.classList.remove('is-active');
+            }
+        });
+
+        // Toggle active subpane visibility
+        document.querySelectorAll('.fb-settings-subpane').forEach(el => {
+            if (el.id === 'fb-subpane-' + subtabId) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+
+        // Update headers based on selection
+        const titleText = document.getElementById('fb-settings-title-text');
+        const titleIcon = document.getElementById('fb-settings-title-icon');
+        const titleDesc = document.getElementById('fb-settings-title-desc');
+        if (subtabId === 'api-config') {
+            titleText.textContent = 'API Configuration';
+            titleIcon.innerHTML = '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>';
+            titleDesc.textContent = 'Configure global Meta API credentials for workspace integrations.';
+        } else {
+            titleText.textContent = 'Webhook & Endpoints';
+            titleIcon.innerHTML = '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
+            titleDesc.textContent = 'Copy Callback URLs and verify tokens to complete your Meta App Developer setup.';
+        }
+
+        // Save sub-tab selection to URL params
+        const url = new URL(window.location);
+        url.searchParams.set('fb_subtab', subtabId);
+        window.history.replaceState({}, '', url);
+    }
+
+    // Set active tab on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const fbSubtab = params.get('fb_subtab') || 'api-config';
+        switchFbSubtab(fbSubtab);
+    });
+
+    function saveFbApiConfig(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-save-fb-api');
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const form = document.getElementById('fb-api-config-form');
+        const formData = new FormData(form);
+
+        fetch('{{ path('app_facebook_settings_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(data => { throw new Error(data.error || 'Server error'); });
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Settings saved successfully!', 'success');
+                
+                // Update verify token display dynamically in second subtab if returned
+                if (data.verifyToken) {
+                    const verifyValEl = document.getElementById('verify-val');
+                    const copyVerifyBtn = document.getElementById('btn-copy-verify');
+                    if (verifyValEl) {
+                        verifyValEl.textContent = data.verifyToken;
+                    }
+                    if (copyVerifyBtn) {
+                        copyVerifyBtn.style.display = 'inline-flex';
+                    }
+                }
+                
+                // If it is the first time saving, update required fields placeholders
+                const appSecretInput = document.getElementById('appSecret');
+                if (appSecretInput) {
+                    appSecretInput.placeholder = '•••••••••••••••• (saved)';
+                    appSecretInput.required = false;
+                }
+            } else {
+                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Save error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> <span>Save Settings</span>';
+        });
+    }
+
+    function togglePasswordVisibility() {
+        const input = document.getElementById('appSecret');
+        const eyeIcon = document.getElementById('eye-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            input.type = 'password';
+            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+    }
+
+    function copyToClipboardText(id) {
+        const element = document.getElementById(id);
+        if (!element) return;
+        const text = element.textContent.trim();
+        navigator.clipboard.writeText(text).then(function() {
+            showToast("Copied to clipboard!", "success");
+        }, function(err) {
+            console.error('Could not copy text: ', err);
+            showToast("Failed to copy text.", "error");
+        });
+    }
+</script>
+{% endblock %}

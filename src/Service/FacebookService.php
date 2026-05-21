@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\FacebookConnection;
+use App\Entity\FacebookSetting;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -23,6 +24,16 @@ class FacebookService
     }
 
     // ───────────────────────── Connection CRUD ─────────────────────────
+
+    /**
+     * Get the active FacebookSetting for the current tenant.
+     */
+    public function getSetting(): ?FacebookSetting
+    {
+        return $this->entityManager
+            ->getRepository(FacebookSetting::class)
+            ->findOneBy([]);
+    }
 
     /**
      * Return ALL Facebook connections ordered newest-first.
@@ -402,4 +413,89 @@ class FacebookService
 
         return $data['data'];
     }
+
+    /**
+     * Subscribe the Facebook Page to the App's webhook events.
+     */
+    public function subscribePage(string $pageId, string $pageAccessToken): array
+    {
+        try {
+            $url = "https://graph.facebook.com/v21.0/{$pageId}/subscribed_apps";
+            $response = $this->httpClient->request('POST', $url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$pageAccessToken}",
+                ],
+                'query' => [
+                    'subscribed_fields' => 'messages,messaging_postbacks',
+                ],
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $content = $response->toArray(false);
+
+            if ($statusCode >= 200 && $statusCode < 300) {
+                return ['success' => true, 'data' => $content];
+            }
+
+            return [
+                'success' => false,
+                'error' => $content['error']['message'] ?? 'Unknown error from Graph API',
+                'code' => $statusCode
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Parses and verifies Facebook's signed_request parameter.
+     */
+    public function parseSignedRequest(string $signedRequest): ?array
+    {
+        if (strpos($signedRequest, '.') === false) {
+            return null;
+        }
+
+        list($encodedSig, $payload) = explode('.', $signedRequest, 2);
+
+        $sig = $this->base64UrlDecode($encodedSig);
+        $data = json_decode($this->base64UrlDecode($payload), true);
+
+        if (!$data) {
+            return null;
+        }
+
+        if (!isset($data['algorithm']) || strtoupper($data['algorithm']) !== 'HMAC-SHA256') {
+            return null;
+        }
+
+        $setting = $this->getSetting();
+        if (!$setting || !$setting->getEncryptedAppSecret()) {
+            return null;
+        }
+
+        try {
+            $appSecret = $this->decryptToken($setting->getEncryptedAppSecret());
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $expectedSig = hash_hmac('sha256', $payload, $appSecret, true);
+        if (!hash_equals($sig, $expectedSig)) {
+            return null;
+        }
+
+        return $data;
+    }
+
+    private function base64UrlDecode(string $input): string
+    {
+        $remainder = strlen($input) % 4;
+        if ($remainder) {
+            $padlen = 4 - $remainder;
+            $input .= str_repeat('=', $padlen);
+        }
+        return base64_decode(strtr($input, '-_', '+/'));
+    }
 }
+

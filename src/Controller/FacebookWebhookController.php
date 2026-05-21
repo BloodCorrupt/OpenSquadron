@@ -42,15 +42,27 @@ class FacebookWebhookController extends AbstractController
                 if ($owner) {
                     $this->tenantContext->setCurrentOwner($owner);
                 }
+            } else {
+                $setting = $this->entityManager->getRepository(\App\Entity\FacebookSetting::class)->findOneBy(['verifyToken' => $token]);
+                if ($setting) {
+                    $owner = $setting->getOwner();
+                    if ($owner) {
+                        $this->tenantContext->setCurrentOwner($owner);
+                    }
+                }
             }
         }
 
         if ($mode && $token) {
-            // Find a connection with this verify token
+            // Find a connection or setting with this verify token
             $this->tenantContext->disableTenantFilter();
             $connection = $this->entityManager->getRepository(FacebookConnection::class)->findOneBy(['verifyToken' => $token]);
+            $setting = null;
+            if (!$connection) {
+                $setting = $this->entityManager->getRepository(\App\Entity\FacebookSetting::class)->findOneBy(['verifyToken' => $token]);
+            }
 
-            if ($mode === 'subscribe' && $connection) {
+            if ($mode === 'subscribe' && ($connection || $setting)) {
                 return new Response($challenge, 200);
             }
             return new Response('Forbidden', 403);
