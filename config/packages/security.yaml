@@ -34,7 +34,14 @@ security:
         - { path: ^/facebook/data-deletion, roles: PUBLIC_ACCESS }
         - { path: ^/facebook/deletion-status, roles: PUBLIC_ACCESS }
         - { path: ^/facebook/callback, roles: ROLE_ADMIN }
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/inbox, roles: ROLE_ADMIN }
+        - { path: ^/subscribers, roles: ROLE_ADMIN }
+        - { path: ^/whatsapp-bot-manager, roles: ROLE_ADMIN }
+        - { path: ^/facebook-bot-manager, roles: ROLE_ADMIN }
+        - { path: ^/settings/facebook, roles: ROLE_ADMIN }
+        - { path: ^/facebook/connect, roles: ROLE_ADMIN }
+        - { path: ^/whatsapp-business/connect, roles: ROLE_ADMIN }
+        - { path: ^/ai-settings, roles: ROLE_ADMIN }
         - { path: ^/$, roles: ROLE_ADMIN }
 
 when@test:

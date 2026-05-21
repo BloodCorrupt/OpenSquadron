@@ -19,7 +19,7 @@ class FacebookConnectionController extends AbstractController
     ) {
     }
 
-    #[Route('/admin/settings/facebook', name: 'app_facebook_settings', methods: ['GET'])]
+    #[Route('/settings/facebook', name: 'app_facebook_settings', methods: ['GET'])]
     public function facebookSettings(): Response
     {
         $setting = $this->facebookService->getSetting() ?? new FacebookSetting();
@@ -29,7 +29,7 @@ class FacebookConnectionController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/settings/facebook/save', name: 'app_facebook_settings_save', methods: ['POST'])]
+    #[Route('/settings/facebook/save', name: 'app_facebook_settings_save', methods: ['POST'])]
     public function saveFacebookSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $appId = trim($request->request->get('appId', ''));
@@ -63,7 +63,7 @@ class FacebookConnectionController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/facebook/connect', name: 'facebook_connect_show', methods: ['GET'])]
+    #[Route('/facebook/connect', name: 'facebook_connect_show', methods: ['GET'])]
     public function show(): Response
     {
         $connections = $this->facebookService->getAllConnections();
@@ -75,7 +75,7 @@ class FacebookConnectionController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/facebook/connect', name: 'facebook_connect', methods: ['POST'])]
+    #[Route('/facebook/connect', name: 'facebook_connect', methods: ['POST'])]
     public function connect(Request $request): Response
     {
         $setting = $this->facebookService->getSetting();
@@ -173,7 +173,7 @@ class FacebookConnectionController extends AbstractController
         }
     }
 
-    #[Route('/admin/facebook/connect-page', name: 'facebook_connect_page_submit', methods: ['POST'])]
+    #[Route('/facebook/connect-page', name: 'facebook_connect_page_submit', methods: ['POST'])]
     public function connectPage(Request $request): Response
     {
         $pageId = $request->request->get('pageId');
@@ -224,7 +224,7 @@ class FacebookConnectionController extends AbstractController
         return $this->redirectToRoute('facebook_connect_show');
     }
 
-    #[Route('/admin/facebook/connect/{id}/edit', name: 'facebook_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook/connect/{id}/edit', name: 'facebook_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function edit(int $id): Response
     {
         $connection = $this->facebookService->getConnectionById($id);
@@ -243,7 +243,7 @@ class FacebookConnectionController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/facebook/connect/{id}/update', name: 'facebook_connect_update', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook/connect/{id}/update', name: 'facebook_connect_update', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function update(int $id, Request $request): Response
     {
         $label = trim($request->request->get('label', ''));
@@ -275,14 +275,14 @@ class FacebookConnectionController extends AbstractController
         return $this->redirectToRoute('facebook_connect_show');
     }
 
-    #[Route('/admin/facebook/connect/{id}/delete', name: 'facebook_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook/connect/{id}/delete', name: 'facebook_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(int $id): JsonResponse
     {
         $success = $this->facebookService->deleteConnection($id);
         return new JsonResponse(['success' => $success]);
     }
 
-    #[Route('/admin/facebook/connect/{id}/subscribe', name: 'facebook_connect_subscribe', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook/connect/{id}/subscribe', name: 'facebook_connect_subscribe', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function subscribe(int $id): Response
     {
         try {

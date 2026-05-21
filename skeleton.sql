@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `admin` (
     name VARCHAR(255) DEFAULT NULL,
     avatar VARCHAR(255) DEFAULT NULL,
     UNIQUE INDEX UNIQ_880E0D76E7927C74 (email),
-    INDEX IDX_ADMIN_PARENT (parent_id),
+    INDEX IDX_880E0D76727ACA70 (parent_id),
     CONSTRAINT FK_ADMIN_PARENT FOREIGN KEY (parent_id) REFERENCES `admin` (id) ON DELETE SET NULL,
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS `ai_context` (
     agent_role VARCHAR(255) DEFAULT NULL,
     system_instruction LONGTEXT DEFAULT NULL,
     context_data LONGTEXT DEFAULT NULL,
-    is_active TINYINT NOT NULL DEFAULT 0,
-    INDEX IDX_AI_CONTEXT_OWNER (owner_id),
+    is_active TINYINT NOT NULL,
+    INDEX IDX_DE588BAD7E3C61F9 (owner_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
@@ -47,10 +47,10 @@ CREATE TABLE IF NOT EXISTS `ai_setting` (
     api_endpoint LONGTEXT DEFAULT NULL,
     model VARCHAR(255) DEFAULT NULL,
     system_instruction LONGTEXT DEFAULT NULL,
-    is_active TINYINT NOT NULL DEFAULT 0,
+    is_active TINYINT NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME DEFAULT NULL,
-    INDEX IDX_AI_SETTING_OWNER (owner_id),
+    INDEX IDX_A371B64B7E3C61F9 (owner_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
@@ -137,9 +137,9 @@ CREATE TABLE IF NOT EXISTS `message` (
     direction VARCHAR(20) NOT NULL,
     content LONGTEXT DEFAULT NULL,
     meta_message_id VARCHAR(255) DEFAULT NULL,
-    type VARCHAR(20) NOT NULL DEFAULT 'text',
+    type VARCHAR(20) NOT NULL,
     media_url VARCHAR(255) DEFAULT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'received',
+    status VARCHAR(20) NOT NULL,
     timestamp DATETIME NOT NULL,
     INDEX IDX_B6BD307F7808B1AD (subscriber_id),
     PRIMARY KEY (id)
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `message_template` (
     status VARCHAR(50) NOT NULL,
     category VARCHAR(50) NOT NULL,
     components JSON DEFAULT NULL,
-    INDEX IDX_MESSAGE_TEMPLATE_OWNER (owner_id),
+    INDEX IDX_9E46DB927E3C61F9 (owner_id),
     INDEX IDX_9E46DB92C664C80F (whatsapp_connection_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
@@ -172,14 +172,14 @@ CREATE TABLE IF NOT EXISTS `whatsapp_connection` (
     encrypted_access_token LONGTEXT NOT NULL,
     verify_token VARCHAR(64) NOT NULL,
     webhook_url VARCHAR(255) DEFAULT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'active',
-    ai_active TINYINT NOT NULL DEFAULT 0,
+    status VARCHAR(50) NOT NULL,
+    ai_active TINYINT NOT NULL,
     agent_name VARCHAR(255) DEFAULT NULL,
     agent_role VARCHAR(255) DEFAULT NULL,
     context_data LONGTEXT DEFAULT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME DEFAULT NULL,
-    INDEX IDX_WHATSAPP_CONNECTION_OWNER (owner_id),
+    INDEX IDX_5E00F7957E3C61F9 (owner_id),
     INDEX IDX_5E00F7954AA2A339 (active_context_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
@@ -197,14 +197,14 @@ CREATE TABLE IF NOT EXISTS `facebook_connection` (
     verify_token VARCHAR(64) NOT NULL,
     webhook_url VARCHAR(255) DEFAULT NULL,
     label VARCHAR(255) DEFAULT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'active',
-    ai_active TINYINT NOT NULL DEFAULT 0,
+    status VARCHAR(50) NOT NULL,
+    ai_active TINYINT NOT NULL,
     agent_name VARCHAR(255) DEFAULT NULL,
     agent_role VARCHAR(255) DEFAULT NULL,
     context_data LONGTEXT DEFAULT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME DEFAULT NULL,
-    INDEX IDX_FACEBOOK_CONNECTION_OWNER (owner_id),
+    INDEX IDX_262F40D87E3C61F9 (owner_id),
     INDEX IDX_262F40D84AA2A339 (active_context_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;

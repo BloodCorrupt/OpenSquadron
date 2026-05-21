@@ -576,7 +576,7 @@
 function deleteConnection(id) {
     if (!confirm('Are you sure you want to remove this WhatsApp connection? This cannot be undone.')) return;
 
-    fetch('/admin/whatsapp/connect/' + id + '/delete', { method: 'POST' })
+    fetch('/whatsapp-business/connect/' + id + '/delete', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (data.success) {

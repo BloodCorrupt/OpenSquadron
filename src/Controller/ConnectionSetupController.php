@@ -19,7 +19,7 @@ class ConnectionSetupController extends AbstractController
     ) {
     }
 
-    #[Route('/admin/whatsapp/connect', name: 'whatsapp_connect_show', methods: ['GET'])]
+    #[Route('/whatsapp-business/connect', name: 'whatsapp_connect_show', methods: ['GET'])]
     public function show(): Response
     {
         $connections = $this->whatsappService->getAllConnections();
@@ -30,7 +30,7 @@ class ConnectionSetupController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/whatsapp/connect', name: 'whatsapp_connect', methods: ['POST'])]
+    #[Route('/whatsapp-business/connect', name: 'whatsapp_connect', methods: ['POST'])]
     public function connect(Request $request): Response
     {
         $businessAccountId = trim($request->request->get('businessAccountId', ''));
@@ -68,7 +68,7 @@ class ConnectionSetupController extends AbstractController
         return $this->redirectToRoute('whatsapp_connect_show');
     }
 
-    #[Route('/admin/whatsapp/connect/{id}/edit', name: 'whatsapp_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/whatsapp-business/connect/{id}/edit', name: 'whatsapp_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function edit(int $id): Response
     {
         $connection = $this->whatsappService->getConnectionById($id);
@@ -86,7 +86,7 @@ class ConnectionSetupController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/whatsapp/connect/{id}/update', name: 'whatsapp_connect_update', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/whatsapp-business/connect/{id}/update', name: 'whatsapp_connect_update', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function update(int $id, Request $request): Response
     {
         $businessAccountId = trim($request->request->get('businessAccountId', ''));
@@ -131,7 +131,7 @@ class ConnectionSetupController extends AbstractController
         return $this->redirectToRoute('whatsapp_connect_show');
     }
 
-    #[Route('/admin/whatsapp/connect/{id}/delete', name: 'whatsapp_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/whatsapp-business/connect/{id}/delete', name: 'whatsapp_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(int $id): JsonResponse
     {
         $success = $this->whatsappService->deleteConnection($id);

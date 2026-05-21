@@ -18,7 +18,7 @@ use App\Entity\FacebookConnection;
 
 class LiveChatController extends AbstractController
 {
-    #[Route('/admin/inbox', name: 'app_inbox', methods: ['GET'])]
+    #[Route('/inbox', name: 'app_inbox', methods: ['GET'])]
     public function index(EntityManagerInterface $em): Response
     {
         // Get all subscribers ordered by the most recently updated (newest message)
@@ -59,7 +59,7 @@ class LiveChatController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/inbox/{id}', name: 'app_inbox_chat', methods: ['GET'])]
+    #[Route('/inbox/{id}', name: 'app_inbox_chat', methods: ['GET'])]
     public function chat(Subscriber $subscriber, EntityManagerInterface $em): Response
     {
         $subscribers = $em->getRepository(Subscriber::class)->findBy([], ['updatedAt' => 'DESC']);
@@ -99,7 +99,7 @@ class LiveChatController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/inbox/api/subscribers', name: 'app_inbox_api_subscribers', methods: ['GET'])]
+    #[Route('/inbox/api/subscribers', name: 'app_inbox_api_subscribers', methods: ['GET'])]
     public function getSubscribers(EntityManagerInterface $em): JsonResponse
     {
         $subscribers = $em->getRepository(Subscriber::class)->findBy([], ['updatedAt' => 'DESC']);
@@ -132,7 +132,7 @@ class LiveChatController extends AbstractController
         return new JsonResponse($data);
     }
 
-    #[Route('/admin/inbox/api/messages/{id}', name: 'app_inbox_api_messages', methods: ['GET'])]
+    #[Route('/inbox/api/messages/{id}', name: 'app_inbox_api_messages', methods: ['GET'])]
     public function getMessages(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $afterId = $request->query->getInt('after_id', 0);
@@ -167,7 +167,7 @@ class LiveChatController extends AbstractController
         return new JsonResponse($data);
     }
 
-    #[Route('/admin/inbox/api/send', name: 'app_inbox_send', methods: ['POST'])]
+    #[Route('/inbox/api/send', name: 'app_inbox_send', methods: ['POST'])]
     public function send(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService, FacebookService $facebookService): JsonResponse
     {
         $subscriberId = $request->request->get('subscriber_id');
@@ -285,7 +285,7 @@ class LiveChatController extends AbstractController
         }
     }
 
-    #[Route('/admin/inbox/api/send-template', name: 'app_inbox_send_template', methods: ['POST'])]
+    #[Route('/inbox/api/send-template', name: 'app_inbox_send_template', methods: ['POST'])]
     public function sendTemplate(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService): JsonResponse
     {
         $subscriberId = $request->request->get('subscriber_id');
@@ -332,7 +332,7 @@ class LiveChatController extends AbstractController
         }
     }
 
-    #[Route('/admin/inbox/api/subscriber/{id}/details', name: 'app_inbox_api_subscriber_details', methods: ['GET'])]
+    #[Route('/inbox/api/subscriber/{id}/details', name: 'app_inbox_api_subscriber_details', methods: ['GET'])]
     public function details(Subscriber $subscriber, EntityManagerInterface $em): JsonResponse
     {
         $chatWindow = $this->getChatWindowStatus($subscriber, $em);
@@ -354,7 +354,7 @@ class LiveChatController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/inbox/api/subscriber/{id}/assign-operator', name: 'app_inbox_api_assign_operator', methods: ['POST'])]
+    #[Route('/inbox/api/subscriber/{id}/assign-operator', name: 'app_inbox_api_assign_operator', methods: ['POST'])]
     public function assignOperator(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $operatorId = $request->request->get('operator_id');
@@ -382,7 +382,7 @@ class LiveChatController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/inbox/api/subscriber/{id}/tags', name: 'app_inbox_api_tags', methods: ['POST'])]
+    #[Route('/inbox/api/subscriber/{id}/tags', name: 'app_inbox_api_tags', methods: ['POST'])]
     public function updateTags(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $tagsData = $request->request->all('tags') ?: [];
@@ -391,7 +391,7 @@ class LiveChatController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/inbox/api/subscriber/{id}/assign-flow', name: 'app_inbox_api_assign_flow', methods: ['POST'])]
+    #[Route('/inbox/api/subscriber/{id}/assign-flow', name: 'app_inbox_api_assign_flow', methods: ['POST'])]
     public function assignFlow(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $flowId = $request->request->get('flow_id');
@@ -420,7 +420,7 @@ class LiveChatController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/inbox/api/subscriber/{id}/attribute', name: 'app_inbox_api_attribute', methods: ['POST'])]
+    #[Route('/inbox/api/subscriber/{id}/attribute', name: 'app_inbox_api_attribute', methods: ['POST'])]
     public function updateAttribute(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $key = trim((string)$request->request->get('key'));
@@ -443,7 +443,7 @@ class LiveChatController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/inbox/api/subscriber/{id}/notes', name: 'app_inbox_api_notes', methods: ['POST'])]
+    #[Route('/inbox/api/subscriber/{id}/notes', name: 'app_inbox_api_notes', methods: ['POST'])]
     public function addNote(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $text = trim((string)$request->request->get('text'));

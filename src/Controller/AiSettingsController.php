@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class AiSettingsController extends AbstractController
 {
-    #[Route('/admin/ai-settings', name: 'app_ai_settings')]
+    #[Route('/ai-settings', name: 'app_ai_settings')]
     public function aiSettings(EntityManagerInterface $em): Response
     {
         $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]) ?? new AiSetting();
@@ -26,7 +26,7 @@ class AiSettingsController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/ai-settings/save', name: 'app_ai_settings_save', methods: ['POST'])]
+    #[Route('/ai-settings/save', name: 'app_ai_settings_save', methods: ['POST'])]
     public function saveAiSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $configType = $request->request->get('configType', 'all');
@@ -59,7 +59,7 @@ class AiSettingsController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/ai-settings/fetch-models', name: 'app_ai_models_fetch', methods: ['POST'])]
+    #[Route('/ai-settings/fetch-models', name: 'app_ai_models_fetch', methods: ['POST'])]
     public function fetchModels(Request $request, AiAgentService $aiAgentService): JsonResponse
     {
         $provider = $request->request->get('provider', '');
@@ -87,7 +87,7 @@ class AiSettingsController extends AbstractController
         }
     }
 
-    #[Route('/admin/ai-settings/generate-faqs', name: 'app_ai_generate_faqs', methods: ['POST'])]
+    #[Route('/ai-settings/generate-faqs', name: 'app_ai_generate_faqs', methods: ['POST'])]
     public function generateFaqs(Request $request, AiAgentService $aiAgentService, EntityManagerInterface $em): JsonResponse
     {
         $contextData = trim($request->request->get('contextData', ''));
@@ -111,7 +111,7 @@ class AiSettingsController extends AbstractController
         }
     }
 
-    #[Route('/admin/ai-settings/context/save', name: 'app_ai_context_save', methods: ['POST'])]
+    #[Route('/ai-settings/context/save', name: 'app_ai_context_save', methods: ['POST'])]
     public function saveAiContext(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $id = $request->request->get('id');
@@ -155,7 +155,7 @@ class AiSettingsController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/ai-settings/context/{id}/toggle', name: 'app_ai_context_toggle', methods: ['POST'])]
+    #[Route('/ai-settings/context/{id}/toggle', name: 'app_ai_context_toggle', methods: ['POST'])]
     public function toggleAiContext(int $id, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $context = $em->getRepository(AiContext::class)->find($id);
@@ -187,7 +187,7 @@ class AiSettingsController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/ai-settings/context/{id}/delete', name: 'app_ai_context_delete', methods: ['POST'])]
+    #[Route('/ai-settings/context/{id}/delete', name: 'app_ai_context_delete', methods: ['POST'])]
     public function deleteAiContext(int $id, EntityManagerInterface $em): JsonResponse
     {
         $context = $em->getRepository(AiContext::class)->find($id);

@@ -846,7 +846,7 @@
             return;
         }
 
-        fetch(`/admin/subscribers/delete/${id}`, {
+        fetch(`/subscribers/delete/${id}`, {
             method: 'POST'
         })
         .then(res => res.json())

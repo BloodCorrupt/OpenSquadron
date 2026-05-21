@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class WhatsappBotManagerController extends AbstractController
 {
-    #[Route('/admin/whatsapp-bot-manager', name: 'app_whatsapp_bot_manager')]
+    #[Route('/whatsapp-bot-manager', name: 'app_whatsapp_bot_manager')]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
         $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
@@ -50,7 +50,7 @@ class WhatsappBotManagerController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/whatsapp-bot-manager/flows/{id}/clone', name: 'app_whatsapp_bot_flows_clone', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/whatsapp-bot-manager/flows/{id}/clone', name: 'app_whatsapp_bot_flows_clone', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function cloneFlow(int $id, EntityManagerInterface $em): JsonResponse
     {
         $flow = $em->getRepository(WhatsappBotFlow::class)->find($id);
@@ -72,7 +72,7 @@ class WhatsappBotManagerController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/whatsapp-bot-manager/flows/{id}/export', name: 'app_whatsapp_bot_flows_export', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/whatsapp-bot-manager/flows/{id}/export', name: 'app_whatsapp_bot_flows_export', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function exportFlow(int $id, EntityManagerInterface $em): Response
     {
         $flow = $em->getRepository(WhatsappBotFlow::class)->find($id);
@@ -97,13 +97,13 @@ class WhatsappBotManagerController extends AbstractController
 
     // ───────────────────────── Templates ─────────────────────────
 
-    #[Route('/admin/whatsapp-bot-manager/templates', name: 'app_whatsapp_bot_templates', methods: ['GET'])]
+    #[Route('/whatsapp-bot-manager/templates', name: 'app_whatsapp_bot_templates', methods: ['GET'])]
     public function templates(): Response
     {
         return $this->redirectToRoute('app_whatsapp_bot_manager', ['tab' => 'templates']);
     }
 
-    #[Route('/admin/whatsapp-bot-manager/templates/sync', name: 'app_whatsapp_bot_templates_sync', methods: ['POST'])]
+    #[Route('/whatsapp-bot-manager/templates/sync', name: 'app_whatsapp_bot_templates_sync', methods: ['POST'])]
     public function syncTemplates(Request $request, WhatsAppConnectionService $whatsappService, EntityManagerInterface $em): JsonResponse
     {
         $connectionId = $request->request->get('connectionId');
@@ -123,7 +123,7 @@ class WhatsappBotManagerController extends AbstractController
         }
     }
 
-    #[Route('/admin/whatsapp-bot-manager/templates/create', name: 'app_whatsapp_bot_templates_create', methods: ['POST'])]
+    #[Route('/whatsapp-bot-manager/templates/create', name: 'app_whatsapp_bot_templates_create', methods: ['POST'])]
     public function createTemplate(Request $request, WhatsAppConnectionService $whatsappService, EntityManagerInterface $em): JsonResponse
     {
         $connectionId = $request->request->get('connectionId');
@@ -163,7 +163,7 @@ class WhatsappBotManagerController extends AbstractController
 
     // ───────────────────────── Flows ─────────────────────────
 
-    #[Route('/admin/whatsapp-bot-manager/flows', name: 'app_whatsapp_bot_flows', methods: ['GET'])]
+    #[Route('/whatsapp-bot-manager/flows', name: 'app_whatsapp_bot_flows', methods: ['GET'])]
     public function flows(Request $request, EntityManagerInterface $em): Response
     {
         $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
@@ -197,7 +197,7 @@ class WhatsappBotManagerController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/whatsapp-bot-manager/flows/save', name: 'app_whatsapp_bot_flows_save', methods: ['POST'])]
+    #[Route('/whatsapp-bot-manager/flows/save', name: 'app_whatsapp_bot_flows_save', methods: ['POST'])]
     public function saveFlow(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $payload = json_decode($request->getContent(), true);
@@ -261,7 +261,7 @@ class WhatsappBotManagerController extends AbstractController
         return new JsonResponse(['success' => true, 'flow' => self::flowToArray($flow)]);
     }
 
-    #[Route('/admin/whatsapp-bot-manager/flows/{id}/delete', name: 'app_whatsapp_bot_flows_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/whatsapp-bot-manager/flows/{id}/delete', name: 'app_whatsapp_bot_flows_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function deleteFlow(int $id, EntityManagerInterface $em): JsonResponse
     {
         $flow = $em->getRepository(WhatsappBotFlow::class)->find($id);
@@ -274,7 +274,7 @@ class WhatsappBotManagerController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/whatsapp-bot-manager/flows/{id}/toggle', name: 'app_whatsapp_bot_flows_toggle', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/whatsapp-bot-manager/flows/{id}/toggle', name: 'app_whatsapp_bot_flows_toggle', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function toggleFlow(int $id, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $flow = $em->getRepository(WhatsappBotFlow::class)->find($id);
@@ -291,7 +291,7 @@ class WhatsappBotManagerController extends AbstractController
         return new JsonResponse(['success' => true, 'isActive' => $flow->isActive()]);
     }
 
-    #[Route('/admin/whatsapp-bot-manager/ai-settings/agent', name: 'app_whatsapp_bot_ai_agent_save', methods: ['POST'])]
+    #[Route('/whatsapp-bot-manager/ai-settings/agent', name: 'app_whatsapp_bot_ai_agent_save', methods: ['POST'])]
     public function saveAiAgentSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $connectionId = $request->request->get('connectionId');

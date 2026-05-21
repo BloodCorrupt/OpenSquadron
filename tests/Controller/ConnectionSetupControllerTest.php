@@ -38,10 +38,10 @@ class ConnectionSetupControllerTest extends WebTestCase
         $client = static::createClient();
         $this->createAndLoginAdmin($client);
 
-        $crawler = $client->request('GET', '/admin/whatsapp/connect');
+        $crawler = $client->request('GET', '/whatsapp-business/connect');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('form[action="/admin/whatsapp/connect"]');
+        $this->assertSelectorExists('form[action="/whatsapp-business/connect"]');
         $this->assertSelectorExists('input[name="businessAccountId"]');
         $this->assertSelectorExists('input[name="accessToken"]');
     }
@@ -51,13 +51,13 @@ class ConnectionSetupControllerTest extends WebTestCase
         $client = static::createClient();
         $this->createAndLoginAdmin($client);
 
-        $client->request('POST', '/admin/whatsapp/connect', [
+        $client->request('POST', '/whatsapp-business/connect', [
             'businessAccountId' => '',
             'accessToken' => '',
             'phoneNumberId' => ''
         ]);
 
-        $this->assertResponseRedirects('/admin/whatsapp/connect');
+        $this->assertResponseRedirects('/whatsapp-business/connect');
         $client->followRedirect();
         // the class alert-error from base.html.twig will contain the text
         $this->assertSelectorTextContains('.alert-error', 'Business Account ID, Access Token, and Phone Number ID are required.');
@@ -68,13 +68,13 @@ class ConnectionSetupControllerTest extends WebTestCase
         $client = static::createClient();
         $this->createAndLoginAdmin($client);
         
-        $client->request('POST', '/admin/whatsapp/connect', [
+        $client->request('POST', '/whatsapp-business/connect', [
             'businessAccountId' => 'invalid_business_id',
             'accessToken' => 'invalid_token',
             'phoneNumberId' => '987654321'
         ]);
 
-        $this->assertResponseRedirects('/admin/whatsapp/connect');
+        $this->assertResponseRedirects('/whatsapp-business/connect');
         $client->followRedirect();
         
         // Since it's an invalid token, Meta API will reject it

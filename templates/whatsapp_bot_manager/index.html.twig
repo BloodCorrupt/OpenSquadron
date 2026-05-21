@@ -1189,7 +1189,7 @@
     }
 
     function toggleFlowStatus(id, active) {
-        fetch(`/admin/bot-manager/flows/${id}/toggle`, {
+        fetch(`/whatsapp-bot-manager/flows/${id}/toggle`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isActive: active })
@@ -1214,7 +1214,7 @@
     function cloneFlow(id) {
         if (!confirm('Are you sure you want to clone this flow?')) return;
         
-        fetch(`/admin/bot-manager/flows/${id}/clone`, {
+        fetch(`/whatsapp-bot-manager/flows/${id}/clone`, {
             method: 'POST'
         })
         .then(res => res.json())
@@ -1232,7 +1232,7 @@
     function deleteFlow(id) {
         if (!confirm('Are you sure you want to delete this flow? This action is irreversible.')) return;
         
-        fetch(`/admin/bot-manager/flows/${id}/delete`, {
+        fetch(`/whatsapp-bot-manager/flows/${id}/delete`, {
             method: 'POST'
         })
         .then(res => res.json())

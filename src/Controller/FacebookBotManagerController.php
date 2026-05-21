@@ -15,7 +15,7 @@ use App\Entity\AiContext;
 
 class FacebookBotManagerController extends AbstractController
 {
-    #[Route('/admin/facebook-bot-manager', name: 'app_facebook_bot_manager')]
+    #[Route('/facebook-bot-manager', name: 'app_facebook_bot_manager')]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
         $connections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
@@ -44,7 +44,7 @@ class FacebookBotManagerController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/facebook-bot-manager/flows', name: 'app_facebook_bot_flows', methods: ['GET'])]
+    #[Route('/facebook-bot-manager/flows', name: 'app_facebook_bot_flows', methods: ['GET'])]
     public function flows(Request $request, EntityManagerInterface $em): Response
     {
         $connections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
@@ -73,7 +73,7 @@ class FacebookBotManagerController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/facebook-bot-manager/flows/save', name: 'app_facebook_bot_flows_save', methods: ['POST'])]
+    #[Route('/facebook-bot-manager/flows/save', name: 'app_facebook_bot_flows_save', methods: ['POST'])]
     public function saveFlow(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $payload = json_decode($request->getContent(), true);
@@ -137,7 +137,7 @@ class FacebookBotManagerController extends AbstractController
         return new JsonResponse(['success' => true, 'flow' => self::flowToArray($flow)]);
     }
 
-    #[Route('/admin/facebook-bot-manager/flows/{id}/delete', name: 'app_facebook_bot_flows_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook-bot-manager/flows/{id}/delete', name: 'app_facebook_bot_flows_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function deleteFlow(int $id, EntityManagerInterface $em): JsonResponse
     {
         $flow = $em->getRepository(FacebookBotFlow::class)->find($id);
@@ -150,7 +150,7 @@ class FacebookBotManagerController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/facebook-bot-manager/flows/{id}/toggle', name: 'app_facebook_bot_flows_toggle', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook-bot-manager/flows/{id}/toggle', name: 'app_facebook_bot_flows_toggle', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function toggleFlow(int $id, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $flow = $em->getRepository(FacebookBotFlow::class)->find($id);
@@ -167,7 +167,7 @@ class FacebookBotManagerController extends AbstractController
         return new JsonResponse(['success' => true, 'isActive' => $flow->isActive()]);
     }
 
-    #[Route('/admin/facebook-bot-manager/flows/{id}/clone', name: 'app_facebook_bot_flows_clone', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook-bot-manager/flows/{id}/clone', name: 'app_facebook_bot_flows_clone', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function cloneFlow(int $id, EntityManagerInterface $em): JsonResponse
     {
         $flow = $em->getRepository(FacebookBotFlow::class)->find($id);
@@ -189,7 +189,7 @@ class FacebookBotManagerController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/facebook-bot-manager/flows/{id}/export', name: 'app_facebook_bot_flows_export', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/facebook-bot-manager/flows/{id}/export', name: 'app_facebook_bot_flows_export', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function exportFlow(int $id, EntityManagerInterface $em): Response
     {
         $flow = $em->getRepository(FacebookBotFlow::class)->find($id);
@@ -212,7 +212,7 @@ class FacebookBotManagerController extends AbstractController
         return $response;
     }
 
-    #[Route('/admin/facebook-bot-manager/ai-settings/agent', name: 'app_facebook_bot_ai_agent_save', methods: ['POST'])]
+    #[Route('/facebook-bot-manager/ai-settings/agent', name: 'app_facebook_bot_ai_agent_save', methods: ['POST'])]
     public function saveAiAgentSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $connectionId = $request->request->get('connectionId');

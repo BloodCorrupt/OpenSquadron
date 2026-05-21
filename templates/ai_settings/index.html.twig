@@ -810,7 +810,7 @@
     window.submitContextForm = submitContextForm;
 
     function toggleContextActive(id, isActive) {
-        fetch('/admin/ai-settings/context/' + id + '/toggle', {
+        fetch('/ai-settings/context/' + id + '/toggle', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -846,7 +846,7 @@
             return;
         }
 
-        fetch('/admin/ai-settings/context/' + id + '/delete', {
+        fetch('/ai-settings/context/' + id + '/delete', {
             method: 'POST'
         })
         .then(res => res.json())

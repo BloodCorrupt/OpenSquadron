@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class SubscriberController extends AbstractController
 {
-    #[Route('/admin/subscribers', name: 'app_subscribers', methods: ['GET'])]
+    #[Route('/subscribers', name: 'app_subscribers', methods: ['GET'])]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
         $whatsappConnections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
@@ -89,7 +89,7 @@ class SubscriberController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/subscribers/save', name: 'app_subscribers_save', methods: ['POST'])]
+    #[Route('/subscribers/save', name: 'app_subscribers_save', methods: ['POST'])]
     public function save(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $id = $request->request->get('id');
@@ -196,7 +196,7 @@ class SubscriberController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/subscribers/toggle-status', name: 'app_subscribers_toggle_status', methods: ['POST'])]
+    #[Route('/subscribers/toggle-status', name: 'app_subscribers_toggle_status', methods: ['POST'])]
     public function toggleStatus(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $id = $request->request->get('id');
@@ -218,7 +218,7 @@ class SubscriberController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/subscribers/delete/{id}', name: 'app_subscribers_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/subscribers/delete/{id}', name: 'app_subscribers_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(int $id, EntityManagerInterface $em): JsonResponse
     {
         $subscriber = $em->getRepository(Subscriber::class)->find($id);

@@ -100,14 +100,14 @@ class LiveChatControllerTest extends WebTestCase
         $em->clear();
 
         // 3. Test scenario A: No inbound messages at all -> chat window is closed
-        $client->request('GET', "/admin/inbox/api/subscriber/{$subId}/details");
+        $client->request('GET', "/inbox/api/subscriber/{$subId}/details");
         $this->assertResponseIsSuccessful();
         $responseContent = json_decode($client->getResponse()->getContent(), true);
         
         $this->assertFalse($responseContent['chatWindow']['isOpen'], 'Chat window should be closed when there are no inbound messages.');
 
         // Verify POST api/send is rejected with 403
-        $client->request('POST', '/admin/inbox/api/send', [
+        $client->request('POST', '/inbox/api/send', [
             'subscriber_id' => $subId,
             'content' => 'Hello standard message'
         ]);
@@ -132,13 +132,13 @@ class LiveChatControllerTest extends WebTestCase
 
         $em->clear();
 
-        $client->request('GET', "/admin/inbox/api/subscriber/{$subId}/details");
+        $client->request('GET', "/inbox/api/subscriber/{$subId}/details");
         $this->assertResponseIsSuccessful();
         $responseContent = json_decode($client->getResponse()->getContent(), true);
         $this->assertFalse($responseContent['chatWindow']['isOpen'], 'Chat window should be closed when the last inbound message is older than 24 hours.');
 
         // Verify POST api/send is still rejected with 403
-        $client->request('POST', '/admin/inbox/api/send', [
+        $client->request('POST', '/inbox/api/send', [
             'subscriber_id' => $subId,
             'content' => 'Hello standard message'
         ]);
@@ -160,7 +160,7 @@ class LiveChatControllerTest extends WebTestCase
 
         $em->clear();
 
-        $client->request('GET', "/admin/inbox/api/subscriber/{$subId}/details");
+        $client->request('GET', "/inbox/api/subscriber/{$subId}/details");
         $this->assertResponseIsSuccessful();
         $responseContent = json_decode($client->getResponse()->getContent(), true);
         $this->assertTrue($responseContent['chatWindow']['isOpen'], 'Chat window should be open when there is a recent inbound message.');
@@ -181,7 +181,7 @@ class LiveChatControllerTest extends WebTestCase
         $client = static::createClient();
         $admin = $this->createAndLoginAdmin($client);
 
-        $client->request('GET', '/admin/inbox');
+        $client->request('GET', '/inbox');
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.inbox-container');
 
@@ -227,7 +227,7 @@ class LiveChatControllerTest extends WebTestCase
 
         $subId = $subscriber->getId();
 
-        $client->request('GET', "/admin/inbox/{$subId}");
+        $client->request('GET', "/inbox/{$subId}");
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.inbox-container');
 

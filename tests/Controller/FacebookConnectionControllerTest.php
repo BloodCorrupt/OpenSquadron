@@ -52,14 +52,14 @@ class FacebookConnectionControllerTest extends WebTestCase
         $this->createAndLoginAdmin($client);
 
         // 1. Load settings page
-        $crawler = $client->request('GET', '/admin/settings/facebook');
+        $crawler = $client->request('GET', '/settings/facebook');
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('form#fb-api-config-form');
         $this->assertSelectorExists('input[name="appId"]');
         $this->assertSelectorExists('input[name="appSecret"]');
 
         // 2. Submit credentials via AJAX
-        $client->request('POST', '/admin/settings/facebook/save', [
+        $client->request('POST', '/settings/facebook/save', [
             'appId' => '1234567890',
             'appSecret' => 'super_secret_app_key'
         ]);
@@ -86,10 +86,10 @@ class FacebookConnectionControllerTest extends WebTestCase
         $this->createAndLoginAdmin($client);
 
         // 1. Without settings configured
-        $client->request('GET', '/admin/facebook/connect');
+        $client->request('GET', '/facebook/connect');
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.glass-card', 'Configuration Required');
-        $this->assertSelectorExists('a[href="/admin/settings/facebook"]');
+        $this->assertSelectorExists('a[href="/settings/facebook"]');
 
         // 2. Configure settings
         $container = static::getContainer();
@@ -102,7 +102,7 @@ class FacebookConnectionControllerTest extends WebTestCase
         $em->flush();
 
         // 3. Check connection page again
-        $client->request('GET', '/admin/facebook/connect');
+        $client->request('GET', '/facebook/connect');
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('button[type="submit"]', 'Connect Facebook Account');
     }
@@ -240,10 +240,10 @@ class FacebookConnectionControllerTest extends WebTestCase
         $connId = $connection->getId();
 
         // 2. Request the subscribe route
-        $client->request('POST', "/admin/facebook/connect/{$connId}/subscribe");
+        $client->request('POST', "/facebook/connect/{$connId}/subscribe");
         
         // Should redirect back to the connect show page
-        $this->assertResponseRedirects('/admin/facebook/connect');
+        $this->assertResponseRedirects('/facebook/connect');
         
         $client->followRedirect();
         

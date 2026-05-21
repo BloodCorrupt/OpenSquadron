@@ -41,7 +41,7 @@ Navigate to the WhatsApp **API Setup** page inside your developer sidebar and ex
 
 ## Step 4: Configure the Connection in OpenSquadron
 1. Log in to your OpenSquadron Admin Dashboard.
-2. Navigate to **Infrastructure Gateway** via `/admin/whatsapp/connect` in your browser.
+2. Navigate to **Infrastructure Gateway** via `/whatsapp-business/connect` in your browser.
 3. Fill out the **Add New WhatsApp Number** configuration wizard:
    * **Connection Label**: Enter a descriptive name (e.g., `Primary Sales Bot`, `Support Line`).
    * **Display Phone Number**: Enter your display number formatted with country code (e.g., `+1 415 740 0552`).
