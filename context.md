@@ -10,14 +10,14 @@ OpenSquadron is an open-source, Symfony-based alternative to commercial marketin
 * **ORM / Database**: Doctrine ORM (`doctrine/orm` `^3.6`, `doctrine/doctrine-bundle` `^2.18`) with MySQL/MariaDB database compatibility.
 * **Templating Engine**: Twig (`symfony/twig-bundle` `7.4.*`) featuring a modern glassmorphism design system.
 * **HTTP Client**: Symfony Http Client (`symfony/http-client` `7.4.*`) to interface with Meta's Graph API.
-* **Security & Auth**: Symfony Security Bundle (`symfony/security-bundle` `7.4.*`) configuring form logins, secure logout, and path-based firewalls for Admin routes.
+* **Security & Auth**: Symfony Security Bundle (`symfony/security-bundle` `7.4.*`) configuring form logins, secure logout, and path-based access control for administrative endpoints.
 * **Local Hosting & Tunneling**: XAMPP Integration + Cloudflared CLI (Cloudflare Tunnel) to pipe Meta's webhook POST requests to the local environment.
 
 ---
 
 ## 2. Directory Structure & Key Files
 
-Below is a breakdown of the key files in the OpenSquadron project directory. Each link is a relative reference to the file in the project:
+Below is a breakdown of the key files in the OpenSquadron project directory. Each link is a reference to the file in the project:
 
 ### ⚙️ Configuration & Project Setup
 * [composer.json](composer.json) — Defines PHP dependencies, PSR-4 autoload rules (`App\` mapped to `src/`), and development scripts.
@@ -27,39 +27,56 @@ Below is a breakdown of the key files in the OpenSquadron project directory. Eac
 * [start-cf.bat](start-cf.bat) — Batch launcher with a pre-configured Cloudflare Tunnel token.
 * [test_webhook.php](test_webhook.php) — A local cURL test script that mimics Meta's WhatsApp webhook callback payload, facilitating local validation of message parsing and auto-replies.
 * [config/services.yaml](config/services.yaml) — Defines container configuration parameters, autowiring, and autoconfiguration defaults.
-* [config/packages/security.yaml](config/packages/security.yaml) — Handles the admin firewall configuration, password hashing, and endpoint-level authorization rules (e.g., locking `/admin` routes to `ROLE_ADMIN`).
+* [config/packages/security.yaml](config/packages/security.yaml) — Handles the firewall configuration, password hashing, and endpoint-level authorization rules (locking secure administrative routes like `/inbox`, `/subscribers`, `/whatsapp-business/connect`, `/facebook/connect`, etc. to `ROLE_ADMIN`).
 
 ### 📦 Database Entities (Models)
-* [Admin.php](src/Entity/Admin.php) — Represents the backend platform administrator user, implementing `UserInterface` and `PasswordAuthenticatedUserInterface`.
-* [WhatsAppConnection.php](src/Entity/WhatsAppConnection.php) — Stores Meta credentials (Business Account ID, Phone Number ID, encrypted Access Token, Verify Token, and Webhook URL) for the workspace connection. Links to an active `AiContext`.
-* [Subscriber.php](src/Entity/Subscriber.php) — Represents a user who has engaged with the WhatsApp Business channel. Stores the phone number, profile name, and system metadata.
+* [Admin.php](src/Entity/Admin.php) — Represents the platform administrator user and sub-account operators. Implements `UserInterface` and `PasswordAuthenticatedUserInterface`.
+* [TenantAwareInterface.php](src/Entity/TenantAwareInterface.php) — Interface implemented by tenant-owned entities (associated with an `owner_id` referencing an `Admin`) for workspace safety checks.
+* [WhatsAppConnection.php](src/Entity/WhatsAppConnection.php) — Stores Meta credentials (Business Account ID, Phone Number ID, display phone number, encrypted Access Token, Verify Token, and Webhook URL) for a WhatsApp connection, linking to an active `AiContext`.
+* [FacebookConnection.php](src/Entity/FacebookConnection.php) — Stores Meta credentials (Page ID, Page name, encrypted page Access Token, App ID, App Secret, Verify Token, and Webhook URL) for a Facebook connection, linking to an active `AiContext`.
+* [FacebookSetting.php](src/Entity/FacebookSetting.php) — Holds the workspace global Facebook login credentials (App ID, App Secret, and optional Verify Token).
+* [Subscriber.php](src/Entity/Subscriber.php) — Represents a user who has engaged with the WhatsApp Business or Facebook Messenger channels.
 * [Message.php](src/Entity/Message.php) — Models chat messages, including direction (inbound/outbound), type (text, image, audio, template), status, content, media URL, timestamps, and Meta's unique message ID.
 * [MessageTemplate.php](src/Entity/MessageTemplate.php) — Caches WhatsApp templates approved by Meta, storing name, language, status, category, and structural components.
-* [BotFlow.php](src/Entity/BotFlow.php) — Stores keyword-triggered auto-reply rule maps as JSON schemas containing action pipelines (e.g., text responses).
+* [WhatsappBotFlow.php](src/Entity/WhatsappBotFlow.php) — Stores keyword-triggered auto-reply rule maps as JSON flow data for WhatsApp Business.
+* [FacebookBotFlow.php](src/Entity/FacebookBotFlow.php) — Stores keyword-triggered auto-reply rule maps as JSON flow data for Facebook Page Messenger.
 * [AiSetting.php](src/Entity/AiSetting.php) — Holds global configuration for AI integration, storing the active API provider (OpenAI, Gemini, Moonshot, DeepSeek, OpenRouter, Custom), endpoints, models, and API keys.
-* [AiContext.php](src/Entity/AiContext.php) — Represents custom bot personas and knowledge bases. Allows administrators to create profiles dictating the agent's name, role, system instructions, and RAG data.
+* [AiContext.php](src/Entity/AiContext.php) — Represents custom bot personas and knowledge bases (RAG data) shared across WhatsApp and Facebook connections.
 
 ### 🛠️ Core Services
-* [WhatsAppConnectionService.php](src/Service/WhatsAppConnectionService.php) — The primary layer for Meta API communication. It encapsulates symmetric token encryption/decryption (AES-256-GCM using `APP_SECRET`), validates credentials against the Meta Graph API, transmits text/media/template messages, creates templates, and downloads media payloads to the local storage.
-* [AiAgentService.php](src/Service/AiAgentService.php) — Responsible for formatting prompts and communicating with various AI provider APIs (Gemini, OpenAI, DeepSeek, etc.) to generate intelligent automated bot replies using context data.
+* [WhatsAppConnectionService.php](src/Service/WhatsAppConnectionService.php) — Encapsulates symmetric token encryption/decryption, validates credentials against the Meta Graph API, transmits text/media/template messages, and manages template synchronization.
+* [FacebookService.php](src/Service/FacebookService.php) — Encapsulates Facebook Login for Business flow, processes Page OAuth exchanges, saves Facebook settings and connections, and transmits messages to the Facebook Page webhooks.
+* [AiAgentService.php](src/Service/AiAgentService.php) — Handles prompts format and API calls to AI providers (OpenAI, Gemini, Moonshot, DeepSeek, OpenRouter, Custom) to generate automated responses.
+* [WhatsappBotFlowExecutor.php](src/Service/WhatsappBotFlowExecutor.php) — Executes keyword-triggered chatbot automation response pipelines for WhatsApp messages.
+* [FacebookBotFlowExecutor.php](src/Service/FacebookBotFlowExecutor.php) — Executes keyword-triggered chatbot automation response pipelines for Facebook Page messages.
+* [TenantContext.php](src/Service/TenantContext.php) — Manages the current active tenant/workspace session context dynamically.
+* [TenantDatabaseService.php](src/Service/TenantDatabaseService.php) — Filters and secures data operations to enforce workspace multi-tenant isolation.
 
 ### 🎮 Controllers (HTTP Handlers)
 * [SecurityController.php](src/Controller/SecurityController.php) — Intercepts login and logout route firewalls.
-* [DashboardController.php](src/Controller/DashboardController.php) — Renders the administrator landing area and platform overview.
-* [ConnectionSetupController.php](src/Controller/ConnectionSetupController.php) — Manages the forms to capture, validate, and store Meta Business Account settings.
-* [WhatsAppController.php](src/Controller/WhatsAppController.php) — Exposes `/webhook/whatsapp` for incoming GET requests (webhook verification challenge) and POST requests (handling incoming messages, downloading media, triggering bot flows). Also provides a test route `/whatsapp/test`.
-* [LiveChatController.php](src/Controller/LiveChatController.php) — Renders the Shared Inbox user interface, listing subscribers and message history. Includes AJAX endpoints for sending text messages, media uploads, and message templates.
-* [BotManagerController.php](src/Controller/BotManagerController.php) — Handles chatbot automation dashboard controls, syncing templates from Meta, submitting template draft payloads, and editing keyword Bot Flows.
-* [PolicyController.php](src/Controller/PolicyController.php) — Renders basic, Meta-compliant Terms of Service and Privacy Policy templates to satisfy Meta app validation.
+* [DashboardController.php](src/Controller/DashboardController.php) — Renders the administrator landing area, platform overview, and metrics.
+* [ConnectionSetupController.php](src/Controller/ConnectionSetupController.php) — Manages forms to capture, validate, update, and delete WhatsApp connection parameters at `/whatsapp-business/connect`.
+* [FacebookConnectionController.php](src/Controller/FacebookConnectionController.php) — Handles Facebook settings, OAuth flow, page selector screens, and connection storage under `/facebook/connect`.
+* [WhatsAppController.php](src/Controller/WhatsAppController.php) — Exposes `/webhook/whatsapp` for verification challenges, inbound messages processing, media downloads, and bot trigger executions.
+* [FacebookWebhookController.php](src/Controller/FacebookWebhookController.php) — Exposes `/webhook/facebook` for page messages, postback events, and data deletion status callbacks.
+* [LiveChatController.php](src/Controller/LiveChatController.php) — Renders the Shared Live Inbox user interface, handles message synchronization frames, and supports sending free-form responses or templates.
+* [WhatsappBotManagerController.php](src/Controller/WhatsappBotManagerController.php) — Handles WhatsApp bot settings, syncs/creates Meta templates, and updates keyword flows.
+* [FacebookBotManagerController.php](src/Controller/FacebookBotManagerController.php) — Handles Facebook bot settings and updates keyword flows.
+* [AiSettingsController.php](src/Controller/AiSettingsController.php) — Manages global AI Settings configurations and context profiles.
+* [SubscriberController.php](src/Controller/SubscriberController.php) — Manages subscribers list, tagging, custom attributes, notes, and operator assignments.
+* [AccountManagementController.php](src/Controller/AccountManagementController.php) — Handles registration of operators, workspace delegation, and sub-account access profiles.
+* [AccountExtrasController.php](src/Controller/AccountExtrasController.php) — Contains secondary account routes and password settings.
+* [PolicyController.php](src/Controller/PolicyController.php) — Renders Meta-compliant public Terms of Service and Privacy Policy pages.
 
 ### 🖥️ User Interface Layouts (Twig Templates)
-* [base.html.twig](templates/base.html.twig) — System-wide boilerplate styling containing a premium dark-mode, glassmorphic design theme with responsive side/top navigation.
-* [inbox.html.twig](templates/chat/inbox.html.twig) — Full-screen Shared Inbox template containing active chat sidebars, bubbles for inbound/outbound files, attachment modals, and manual polling javascript (which reloads the history frame every 10 seconds if idle).
-* [flows.html.twig](templates/bot_manager/flows.html.twig) — Visual interface to configure keyword triggers and sequence response events.
-* [templates.html.twig](templates/bot_manager/templates.html.twig) — Template creation form and synced templates list.
-* [index.html.twig (Bot Manager)](templates/bot_manager/index.html.twig) — Routing dashboard for bot configuration and connection-specific AI context activation.
-* [index.html.twig (AI Settings)](templates/ai_settings/index.html.twig) — Dashboard for Global AI API configuration and managing multiple context profiles/personas.
-* [connect.html.twig](templates/whatsapp/connect.html.twig) — UI for editing and checking connection parameters.
+* [base.html.twig](templates/base.html.twig) — System-wide glassmorphism layout containing navigation headers and the UI theme.
+* [inbox.html.twig](templates/chat/inbox.html.twig) — Full-screen Shared Inbox UI supporting both WhatsApp and Facebook messaging.
+* [connect.html.twig](templates/whatsapp/connect.html.twig) — WhatsApp connection settings and credentials wizard.
+* [connect.html.twig](templates/facebook/connect.html.twig) — Facebook settings, OAuth triggers, and verification setup.
+* [select_pages.html.twig](templates/facebook/select_pages.html.twig) — Authorised Facebook Page listing selector dashboard.
+* [settings.html.twig](templates/facebook/settings.html.twig) — Page settings configuration and status checker.
+* [flows.html.twig](templates/whatsapp_bot_manager/flows.html.twig) — Visual automation designer for WhatsApp bot keywords.
+* [flows.html.twig](templates/facebook_bot_manager/flows.html.twig) — Visual automation designer for Facebook bot keywords.
 * [login.html.twig](templates/security/login.html.twig) — Admin login screen.
 * [privacy.html.twig](templates/policy/privacy.html.twig) — Privacy policy boilerplate.
 * [terms.html.twig](templates/policy/terms.html.twig) — Terms of Service boilerplate.
@@ -76,51 +93,108 @@ The schema maps out the relations between subscribers, connection states, messag
 erDiagram
     Admin {
         int id PK
+        int parent_id FK
         string email UK
-        string password
         json roles
+        string password
+        string account_type
+        boolean team_enabled
+        string name
+        string avatar
     }
 
     WhatsAppConnection {
         int id PK
-        string businessAccountId
-        string phoneNumberId
-        text encryptedAccessToken
-        string verifyToken
-        string webhookUrl
-        string status
-        boolean aiActive
+        int owner_id FK
         int active_context_id FK
-        datetime createdAt
-        datetime updatedAt
+        string business_account_id
+        string phone_number_id
+        string label
+        string phone_number
+        text encrypted_access_token
+        string verify_token
+        string webhook_url
+        string status
+        boolean ai_active
+        string agent_name
+        string agent_role
+        text context_data
+        datetime created_at
+        datetime updated_at
+    }
+
+    FacebookConnection {
+        int id PK
+        int owner_id FK
+        int active_context_id FK
+        string page_id
+        string page_name
+        text encrypted_page_access_token
+        string app_id
+        text encrypted_app_secret
+        string verify_token
+        string webhook_url
+        string label
+        string status
+        boolean ai_active
+        string agent_name
+        string agent_role
+        text context_data
+        datetime created_at
+        datetime updated_at
     }
 
     AiSetting {
         int id PK
+        int owner_id FK
         string provider
-        string apiKey
-        string apiEndpoint
+        text api_key
+        text api_endpoint
         string model
-        string systemInstruction
-        boolean isActive
+        text system_instruction
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    FacebookSetting {
+        int id PK
+        int owner_id FK
+        string app_id
+        text encrypted_app_secret
+        string verify_token
+        datetime created_at
+        datetime updated_at
     }
 
     AiContext {
         int id PK
+        int owner_id FK
         string name
-        string agentRole
-        text systemInstruction
-        text contextData
-        boolean isActive
+        string agent_role
+        text system_instruction
+        text context_data
+        boolean is_active
     }
 
     Subscriber {
         int id PK
-        string phoneNumber UK
+        int owner_id FK
+        int whats_app_connection_id FK
+        int facebook_connection_id FK
+        string phone_number
+        string channel
+        string psid
         string name
         string status
-        datetime createdAt
-        datetime updatedAt
+        datetime created_at
+        datetime updated_at
+        json tags
+        json custom_attributes
+        json notes
+        int assigned_operator_id FK
+        int assigned_whatsapp_flow_id FK
+        int assigned_facebook_flow_id FK
     }
 
     Message {
@@ -128,15 +202,17 @@ erDiagram
         int subscriber_id FK
         string direction
         text content
-        string metaMessageId
+        string meta_message_id
         string type
-        string mediaUrl
+        string media_url
         string status
         datetime timestamp
     }
 
     MessageTemplate {
         int id PK
+        int owner_id FK
+        int whatsapp_connection_id FK
         string name
         string language
         string status
@@ -144,15 +220,52 @@ erDiagram
         json components
     }
 
-    BotFlow {
+    WhatsappBotFlow {
         int id PK
-        string triggerKeyword UK
-        json flowData
-        boolean isActive
+        int owner_id FK
+        int whatsapp_connection_id FK
+        string name
+        string trigger_keyword
+        string match_mode
+        json flow_data
+        boolean is_active
     }
 
-    Subscriber ||--o{ Message : has
-    AiContext ||--o{ WhatsAppConnection : provides_context
+    FacebookBotFlow {
+        int id PK
+        int owner_id FK
+        int facebook_connection_id FK
+        string name
+        string trigger_keyword
+        string match_mode
+        json flow_data
+        boolean is_active
+    }
+
+    Admin ||--o{ Admin : "manages"
+    Admin ||--o{ AiContext : "owns"
+    Admin ||--o{ AiSetting : "owns"
+    Admin ||--o{ FacebookSetting : "owns"
+    Admin ||--o{ WhatsAppConnection : "owns"
+    Admin ||--o{ FacebookConnection : "owns"
+    Admin ||--o{ MessageTemplate : "owns"
+    Admin ||--o{ WhatsappBotFlow : "owns"
+    Admin ||--o{ FacebookBotFlow : "owns"
+    Admin ||--o{ Subscriber : "owns"
+    Admin ||--o{ Subscriber : "assigned_operator"
+
+    AiContext ||--o{ WhatsAppConnection : "active_context"
+    AiContext ||--o{ FacebookConnection : "active_context"
+
+    WhatsAppConnection ||--o{ WhatsappBotFlow : "manages"
+    FacebookConnection ||--o{ FacebookBotFlow : "manages"
+    WhatsAppConnection ||--o{ MessageTemplate : "caches"
+    WhatsAppConnection ||--o{ Subscriber : "messages"
+    FacebookConnection ||--o{ Subscriber : "messages"
+
+    Subscriber ||--o{ Message : "receives"
+    Subscriber ||--o{ WhatsappBotFlow : "active_whatsapp_flow"
+    Subscriber ||--o{ FacebookBotFlow : "active_facebook_flow"
 ```
 
 ---
@@ -195,8 +308,8 @@ sequenceDiagram
         WC->>DB: Persist Message (Inbound status, type, content/mediaUrl)
         
         alt Msg Type is Text (Keyword Automation Check)
-            WC->>DB: Fetch active BotFlow matching keyword
-            alt Active Flow Found
+            WC->>DB: Fetch active WhatsappBotFlow matching keyword
+            alt Active WhatsappBotFlow Found
                 loop Each Action in Flow
                     WC->>WCS: sendMessage(to, actionText)
                     WCS->>Meta: POST /v21.0/{phoneId}/messages
@@ -215,8 +328,8 @@ sequenceDiagram
 ---
 
 ## 5. Security & Encryption Details
-To avoid exposing sensitive Meta credentials (such as permanent Access Tokens) in plain text within the database:
-1. **Symmetric Encryption**: When saving credentials through [ConnectionSetupController](src/Controller/ConnectionSetupController.php), the plain access token is passed to [WhatsAppConnectionService](src/Service/WhatsAppConnectionService.php).
+To avoid exposing sensitive Meta credentials (such as permanent Access Tokens and App Secrets) in plain text within the database:
+1. **Symmetric Encryption**: When saving credentials through [ConnectionSetupController](src/Controller/ConnectionSetupController.php) or [FacebookConnectionController](src/Controller/FacebookConnectionController.php), the plain access tokens and app secrets are encrypted via [WhatsAppConnectionService](src/Service/WhatsAppConnectionService.php) or [FacebookService](src/Service/FacebookService.php) respectively.
 2. **Cipher Algorithm**: The service utilizes `aes-256-gcm`.
 3. **Encryption Mechanism**:
    * Uses the application's unique `APP_SECRET` (configured via env variables) hashed into a key via `sha256`.

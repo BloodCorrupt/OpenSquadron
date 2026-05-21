@@ -101,7 +101,7 @@ To connect your local environment to the Meta Cloud API webhook, your local serv
 ## 5. Connecting WhatsApp & Meta Webhook
 
 1. Log in to your OpenSquadron Dashboard (`https://opensquadron.your.domain/login`).
-2. Go to the **WhatsApp -> Connect** page and input your `Phone Number ID`, `Access Token`, and create a `Verify Token`.
+2. Go to the **Bot Channels** -> **Connect WhatsApp** page (or `/whatsapp-business/connect` directly) and input your `Phone Number ID`, `Access Token`, and create a `Verify Token`.
 3. In your **Meta App Dashboard**, go to **WhatsApp -> Configuration** (do not use the generic "Webhooks" product tab).
 4. Click **Edit Webhook**.
 5. Set the **Callback URL** to: `https://opensquadron.your.domain/webhook/whatsapp`
@@ -112,7 +112,7 @@ To connect your local environment to the Meta Cloud API webhook, your local serv
 ## 6. Connecting Facebook (OAuth & Login for Business)
 
 For step-by-step setup details, refer to the [Facebook Page Connection Guide](file:///c:/Users/Bloodtek/Documents/dev/OpenSquadron/documentation/connect_facebook.md).
-1. Go to the **Facebook -> Connect** page inside the OpenSquadron Dashboard.
+1. Go to the **Bot Channels** -> **Connect Facebook** page (or `/facebook/connect` directly) inside the OpenSquadron Dashboard.
 2. Enter your **Facebook App ID** and **App Secret** (make sure your App type is **Business** in the Meta Developer portal, and your valid redirect URI is configured to `https://opensquadron.your.domain/facebook/callback`).
 3. Click **Connect with Facebook** to authorize the application.
 4. Select the Facebook Page you want to connect from the list back in OpenSquadron.

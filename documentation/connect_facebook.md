@@ -53,7 +53,7 @@ You need two keys to link Facebook with OpenSquadron:
 
 ## 🔗 Step 4: Connect OpenSquadron to Your App
 1. Log in to your OpenSquadron Admin Dashboard.
-2. Go to **Bot Channels** (top menu) -> **Connect Facebook** (or go to `/admin/facebook/connect` directly).
+2. Go to **Bot Channels** (top menu) -> **Connect Facebook** (or go to `/facebook/connect` directly).
 3. Under **1. Facebook Login Credentials**:
    * **Connection Label (Optional)**: Type any nickname to help you identify it (e.g., `Main Bot Connection`).
    * **Facebook App ID**: Paste the **App ID** you copied in Step 3.
