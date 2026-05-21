@@ -6,15 +6,22 @@ use App\Repository\WhatsAppConnectionRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Entity\TenantAwareInterface;
+use App\Entity\Admin;
+
 #[ORM\Entity(repositoryClass: WhatsAppConnectionRepository::class)]
 #[ORM\Table(name: 'whatsapp_connection')]
 #[ORM\HasLifecycleCallbacks]
-class WhatsAppConnection
+class WhatsAppConnection implements TenantAwareInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Admin::class)]
+    #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?Admin $owner = null;
 
     #[ORM\Column(length: 255)]
     private ?string $businessAccountId = null;
@@ -250,5 +257,16 @@ class WhatsAppConnection
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new \DateTime();
+    }
+
+    public function getOwner(): ?Admin
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?Admin $owner): static
+    {
+        $this->owner = $owner;
+        return $this;
     }
 }

@@ -6,16 +6,22 @@
 
 {% block stylesheets %}
 <style>
+    body .content-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        height: calc(100vh - 70px) !important;
+        overflow: hidden !important;
+    }
+    
     .inbox-container {
         display: flex;
-        height: calc(100vh - 160px);
-        background: var(--glass-bg);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-radius: 16px;
+        height: 100% !important;
+        background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%) !important;
+        border-radius: 0 !important;
         overflow: hidden;
-        border: 1px solid var(--glass-border);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        border: none !important;
+        box-shadow: none !important;
     }
     
     .inbox-sidebar {
@@ -23,12 +29,14 @@
         border-right: 1px solid var(--glass-border);
         display: flex;
         flex-direction: column;
-        background: rgba(0, 0, 0, 0.2);
+        background: rgba(15, 23, 42, 0.4) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
     
     .inbox-header {
         padding: 20px 24px;
-        background: rgba(0, 0, 0, 0.3);
+        background: rgba(15, 23, 42, 0.6) !important;
         border-bottom: 1px solid var(--glass-border);
         font-weight: 700;
         font-size: 18px;
@@ -41,6 +49,10 @@
     .subscriber-list {
         overflow-y: auto;
         flex: 1;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     .subscriber-list::-webkit-scrollbar {
         width: 6px;
@@ -51,25 +63,32 @@
     }
     
     .subscriber-item {
-        padding: 16px 24px;
-        border-bottom: 1px solid var(--glass-border);
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
         cursor: pointer;
         display: flex;
         flex-direction: column;
         text-decoration: none;
         color: inherit;
-        transition: background 0.2s, padding-left 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         border-left: 3px solid transparent;
+        position: relative;
     }
     
     .subscriber-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-        padding-left: 28px;
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(6, 182, 212, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     }
     
     .subscriber-item.active {
-        background: rgba(6, 182, 212, 0.1);
-        border-left-color: var(--primary-accent);
+        background: rgba(6, 182, 212, 0.12);
+        border-color: var(--primary-accent);
+        border-left: 3px solid var(--primary-accent);
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
     }
     
     .subscriber-name {
@@ -84,6 +103,70 @@
         color: var(--text-muted);
     }
     
+    /* Sidebar Filter and Search box glassmorphic visual upgrades */
+    .sidebar-filters {
+        padding: 16px 20px !important;
+        background: rgba(15, 23, 42, 0.3) !important;
+        border-bottom: 1px solid var(--glass-border) !important;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .sidebar-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .sidebar-input-wrapper svg.left-icon {
+        position: absolute;
+        left: 14px;
+        pointer-events: none;
+        stroke: rgba(255, 255, 255, 0.35);
+        transition: stroke 0.3s;
+    }
+    
+    .sidebar-input-wrapper svg.right-icon {
+        position: absolute;
+        right: 14px;
+        pointer-events: none;
+        stroke: rgba(255, 255, 255, 0.35);
+        transition: stroke 0.3s;
+    }
+    
+    .sidebar-filter-select, .sidebar-search-input {
+        width: 100%;
+        padding: 10px 16px 10px 38px !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 12px !important;
+        color: #fff !important;
+        font-size: 13px !important;
+        outline: none !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    .sidebar-filter-select:hover, .sidebar-search-input:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(6, 182, 212, 0.25) !important;
+    }
+    
+    .sidebar-filter-select:focus, .sidebar-search-input:focus {
+        border-color: var(--primary-accent) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 0 12px rgba(6, 182, 212, 0.2) !important;
+    }
+    
+    .sidebar-input-wrapper:focus-within svg.left-icon {
+        stroke: var(--primary-accent);
+    }
+    
     .inbox-main {
         flex: 1;
         display: flex;
@@ -94,12 +177,14 @@
     
     .chat-header {
         padding: 16px 24px;
-        background: rgba(0, 0, 0, 0.3);
+        background: rgba(15, 23, 42, 0.5) !important;
         border-bottom: 1px solid var(--glass-border);
         font-weight: 600;
         display: flex;
         align-items: center;
         gap: 15px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
     
     .chat-messages {
@@ -154,10 +239,12 @@
     
     .chat-input-area {
         padding: 20px 24px;
-        background: rgba(0, 0, 0, 0.3);
+        background: rgba(15, 23, 42, 0.5) !important;
         border-top: 1px solid var(--glass-border);
         display: flex;
         gap: 15px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
     
     .chat-input {
@@ -223,6 +310,204 @@
         color: var(--text-muted);
         text-align: center;
     }
+    
+    #connectionFilter:focus, #subscriberSearch:focus {
+        border-color: var(--primary-accent) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+    }
+    #connectionFilter option {
+        background: #15151e !important;
+        color: #fff;
+    }
+
+    /* Right Sidebar styling */
+    .inbox-right-sidebar {
+        width: 300px;
+        border-left: 1px solid var(--glass-border);
+        display: flex;
+        flex-direction: column;
+        background: rgba(15, 23, 42, 0.4) !important;
+        overflow-y: auto;
+        padding: 20px;
+        gap: 20px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    .inbox-right-sidebar,
+    .inbox-right-sidebar * {
+        box-sizing: border-box;
+    }
+    .inbox-right-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .inbox-right-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+    
+    .sidebar-section {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .sidebar-section-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--primary-accent);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .sidebar-field-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+    
+    .sidebar-input, .sidebar-select {
+        width: 100%;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+    .sidebar-input:focus, .sidebar-select:focus {
+        border-color: var(--primary-accent);
+    }
+    .sidebar-select option {
+        background: #15151e !important;
+        color: #fff;
+    }
+    
+    /* Flex row layout fix for inputs inside rows with buttons */
+    .sidebar-flex-row {
+        display: flex !important;
+        gap: 8px !important;
+        width: 100% !important;
+        align-items: center !important;
+    }
+    .sidebar-flex-row .sidebar-input {
+        flex: 1 !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+    
+    /* Tags style */
+    .tag-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+    .chat-tag {
+        background: rgba(6, 182, 212, 0.15);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        color: #22d3ee;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .chat-tag .remove-tag {
+        cursor: pointer;
+        color: #ef4444;
+        font-weight: 700;
+    }
+    
+    /* Attributes list style */
+    .attributes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .attribute-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--glass-border);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+    }
+    .attribute-key {
+        color: var(--text-muted);
+        font-weight: 600;
+        word-break: break-all;
+    }
+    .attribute-value {
+        color: #fff;
+        word-break: break-all;
+        text-align: right;
+    }
+    .attribute-remove {
+        cursor: pointer;
+        color: #ef4444;
+        margin-left: 6px;
+        font-weight: bold;
+    }
+    
+    /* Notes style */
+    .notes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+    .notes-list::-webkit-scrollbar {
+        width: 4px;
+    }
+    .notes-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+    .note-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .note-meta {
+        display: flex;
+        justify-content: space-between;
+        color: var(--text-muted);
+        font-size: 10px;
+    }
+    .note-text {
+        color: #ddd;
+        white-space: pre-wrap;
+        line-height: 1.4;
+    }
+    @keyframes pulse-timer {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.85; transform: scale(0.97); }
+    }
+    @keyframes spin-timer {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
 </style>
 {% endblock %}
 
@@ -230,14 +515,60 @@
 <div class="inbox-container">
     <!-- Sidebar -->
     <div class="inbox-sidebar">
-        <div class="inbox-header">
+        <div class="inbox-header" style="border-bottom: none;">
             Chats
         </div>
-        <div class="subscriber-list">
+        
+        <!-- Filter and Search Area -->
+        <div class="sidebar-filters">
+            <div class="sidebar-input-wrapper">
+                <!-- Connected Channel Link Icon -->
+                <svg class="left-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <select id="connectionFilter" onchange="filterSubscribers()" class="sidebar-filter-select">
+                    <option value="" style="background: #111;">All Connected Accounts</option>
+                    {% for conn in connections %}
+                        <option value="{{ conn.id }}" style="background: #111;">{{ conn.label ?: conn.phoneNumber }}</option>
+                    {% endfor %}
+                </select>
+                <svg class="right-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="sidebar-input-wrapper">
+                <svg class="left-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="subscriberSearch" oninput="filterSubscribers()" placeholder="Search by name or phone..." class="sidebar-search-input" autocomplete="off">
+            </div>
+        </div>
+        
+        <div class="subscriber-list" id="subscriber-list-container">
             {% for sub in subscribers %}
-                <a href="{{ path('app_inbox_chat', {'id': sub.id}) }}" class="subscriber-item {% if activeSubscriber and activeSubscriber.id == sub.id %}active{% endif %}">
-                    <div class="subscriber-name">{{ sub.name ?: sub.phoneNumber }}</div>
-                    <div class="subscriber-phone">{{ sub.phoneNumber }}</div>
+                {% set name = sub.name ?: sub.phoneNumber %}
+                {% set phone = sub.phoneNumber %}
+                <a href="{{ path('app_inbox_chat', {'id': sub.id}) }}" 
+                   class="subscriber-item {% if activeSubscriber and activeSubscriber.id == sub.id %}active{% endif %}"
+                   data-id="{{ sub.id }}"
+                   data-name="{{ name|lower }}"
+                   data-phone="{{ phone|lower }}"
+                   data-connection-id="{{ sub.whatsAppConnection ? sub.whatsAppConnection.id : '' }}"
+                   onclick="selectSubscriber(event, {{ sub.id }}, '{{ name|escape('js') }}', '{{ phone|escape('js') }}')">
+                    <div class="subscriber-name">{{ name }}</div>
+                    
+                    {% set lastMessage = sub.messages|last %}
+                    {% if lastMessage %}
+                        {% set preview = lastMessage.content %}
+                        {% if lastMessage.type == 'image' %}
+                            {% set preview = '📷 Photo' %}
+                        {% elseif lastMessage.type == 'audio' %}
+                            {% set preview = '🎵 Voice message' %}
+                        {% endif %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 4px;">
+                            <div class="subscriber-phone" style="max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {% if lastMessage.direction == 'outbound' %}You: {% endif %}{{ preview }}
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ lastMessage.timestamp|date('H:i', 'UTC') }}</div>
+                        </div>
+                    {% else %}
+                        <div class="subscriber-phone">{{ phone }}</div>
+                    {% endif %}
                 </a>
             {% else %}
                 <div style="padding: 20px; text-align: center; color: #888; font-size: 14px;">
@@ -249,60 +580,177 @@
     
     <!-- Main Chat Area -->
     <div class="inbox-main">
-        {% if activeSubscriber %}
+        <div id="empty-state" class="empty-state" style="{% if activeSubscriber %}display: none;{% else %}display: flex;{% endif %} flex: 1; align-items: center; justify-content: center; color: #888; font-size: 16px; width: 100%; height: 100%;">
+            Select a chat from the sidebar to start messaging.
+        </div>
+
+        <div id="chat-container" style="{% if activeSubscriber %}display: flex;{% else %}display: none;{% endif %} flex-direction: column; height: 100%; width: 100%;">
             <div class="chat-header">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);">
-                    {{ activeSubscriber.name ? activeSubscriber.name|first|upper : '#' }}
+                <div id="chat-header-avatar" style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);">
+                    {{ activeSubscriber ? (activeSubscriber.name ? activeSubscriber.name|slice(0, 1)|upper : '#') : '' }}
                 </div>
-                <div>
-                    <div style="font-weight: 700; color: #fff; font-size: 16px;">{{ activeSubscriber.name ?: activeSubscriber.phoneNumber }}</div>
-                    <div style="font-size: 13px; color: var(--primary-accent);">{{ activeSubscriber.phoneNumber }}</div>
+                <div style="display: flex; flex-direction: column; justify-content: center; height: 44px;">
+                    <div id="chat-header-name" style="font-weight: 700; color: #fff; font-size: 16px; line-height: 1.2;">{{ activeSubscriber ? (activeSubscriber.name ?: activeSubscriber.phoneNumber) : '' }}</div>
+                    <div id="chat-header-phone" style="font-size: 13px; color: var(--primary-accent); line-height: 1.2; margin-top: 2px;">{{ activeSubscriber ? activeSubscriber.phoneNumber : '' }}</div>
+                </div>
+                
+                <!-- 24h Countdown Timer Pill -->
+                <div id="chat-window-timer" style="margin-left: auto; display: {% if activeSubscriber and chatWindow.isOpen %}flex{% else %}none{% endif %}; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: #34d399; font-weight: 600; font-family: 'Courier New', Courier, monospace; animation: pulse-timer 2s infinite ease-in-out; backdrop-filter: blur(5px);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin-timer 10s infinite linear; flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span id="chat-window-timer-text">24h 00m 00s</span>
                 </div>
             </div>
             
             <div class="chat-messages" id="chat-messages">
-                {% for message in messages %}
-                    <div class="message-bubble {% if message.direction == 'inbound' %}message-inbound{% else %}message-outbound{% endif %}">
-                        {% if message.type == 'image' and message.mediaUrl %}
-                            <a href="/{{ message.mediaUrl }}" target="_blank">
-                                <img src="/{{ message.mediaUrl }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
-                            </a>
-                        {% elseif message.type == 'audio' and message.mediaUrl %}
-                            <audio controls style="max-width: 100%; margin-bottom: 8px;">
-                                <source src="/{{ message.mediaUrl }}">
-                            </audio>
-                        {% endif %}
-                        
-                        {% if message.content %}
-                            <div>{{ message.content|nl2br }}</div>
-                        {% endif %}
-                        <div class="message-time">{{ message.timestamp|date('H:i') }}</div>
-                    </div>
-                {% endfor %}
+                {% if activeSubscriber %}
+                    {% for message in messages %}
+                        <div class="message-bubble {% if message.direction == 'inbound' %}message-inbound{% else %}message-outbound{% endif %}" data-message-id="{{ message.id }}">
+                            {% if message.type == 'image' and message.mediaUrl %}
+                                <a href="/{{ message.mediaUrl }}" target="_blank">
+                                    <img src="/{{ message.mediaUrl }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                                </a>
+                            {% elseif message.type == 'audio' and message.mediaUrl %}
+                                <audio controls style="max-width: 100%; margin-bottom: 8px;">
+                                    <source src="/{{ message.mediaUrl }}">
+                                </audio>
+                            {% endif %}
+                            
+                            {% if message.content %}
+                                <div>{{ message.content|nl2br }}</div>
+                            {% endif %}
+                            <div class="message-time">{{ message.timestamp|date('H:i', 'UTC') }}</div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </div>
             
+            <!-- 24-hour warning banner -->
+            <div id="chat-window-warning" style="{% if activeSubscriber and not chatWindow.isOpen %}display: flex;{% else %}display: none;{% endif %} background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 10px 16px; margin: 10px 24px 0 24px; font-size: 13px; color: #fca5a5; align-items: center; gap: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>The 24-hour customer service window has expired. You can only respond using approved message templates.</span>
+            </div>
+
             <div class="chat-input-area">
                 <button class="attachment-btn" onclick="openTemplateModal()" title="Send Template" style="margin-right: 10px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </button>
                 <input type="file" id="media-upload" accept="image/*,audio/*" style="display: none;" onchange="handleFileSelect(this)">
-                <button class="attachment-btn" onclick="document.getElementById('media-upload').click()" title="Attach File">
+                <button id="media-upload-btn" class="attachment-btn" onclick="document.getElementById('media-upload').click()" title="Attach File" {% if activeSubscriber and not chatWindow.isOpen %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
                 </button>
                 <div id="file-preview" style="display: none; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 20px; font-size: 12px; color: #fff; gap: 10px;">
                     <span id="file-name">file.jpg</span>
                     <button onclick="clearFile()" style="background: none; border: none; color: #ff4444; cursor: pointer; padding: 0;">&times;</button>
                 </div>
-                <input type="text" id="message-input" class="chat-input" placeholder="Type a message..." autocomplete="off" onkeypress="if(event.keyCode == 13) sendMessage()">
-                <button class="send-btn" onclick="sendMessage()">
+                <input type="text" id="message-input" class="chat-input" placeholder="{% if activeSubscriber and not chatWindow.isOpen %}Window expired. Choose a template message...{% else %}Type a message...{% endif %}" autocomplete="off" onkeypress="if(event.keyCode == 13) sendMessage()" {% if activeSubscriber and not chatWindow.isOpen %}disabled{% endif %}>
+                <button id="chat-send-btn" class="send-btn" onclick="sendMessage()" {% if activeSubscriber and not chatWindow.isOpen %}disabled style="opacity: 0.5; cursor: not-allowed; box-shadow: none;"{% endif %}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
-        {% else %}
-            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #888; font-size: 16px;">
-                Select a chat from the sidebar to start messaging.
+        </div>
+    </div>
+    
+    <!-- Right Sidebar -->
+    <div class="inbox-right-sidebar" id="inbox-right-sidebar" style="{% if activeSubscriber %}display: flex;{% else %}display: none;{% endif %}">
+        <!-- Section 1: Contact Profile Header -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Contact Profile & Hub
             </div>
-        {% endif %}
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+                Manage conversation details, tags, custom attributes, action flows, and staff notes.
+            </div>
+        </div>
+
+        <!-- Section 2: Assigned Operator -->
+        <div class="sidebar-section">
+            <label class="sidebar-field-label">Assigned Operator</label>
+            <select id="operatorSelect" onchange="updateAssignedOperator()" class="sidebar-select">
+                <option value="">Select Operator</option>
+                {% for op in operators|default([]) %}
+                    <option value="{{ op.id }}" {% if activeSubscriber and activeSubscriber.assignedOperator and activeSubscriber.assignedOperator.id == op.id %}selected{% endif %}>{{ op.name ?: op.email }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Section 3: Conversation Tags -->
+        <div class="sidebar-section">
+            <label class="sidebar-field-label">Conversation Tags</label>
+            <div class="sidebar-flex-row">
+                <input type="text" id="newTagInput" class="sidebar-input" placeholder="Add tag..." onkeypress="if(event.keyCode == 13) addTag()" style="padding: 6px 10px;">
+                <button onclick="addTag()" style="background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); color: #22d3ee; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; outline: none; display: flex; align-items: center; justify-content: center; height: 32px;">Add</button>
+            </div>
+            <div class="tag-container" id="tagContainer">
+                {% if activeSubscriber %}
+                    {% for tag in activeSubscriber.tags|default([]) %}
+                        <span class="chat-tag" data-tag-value="{{ tag|escape('html_attr') }}">
+                            {{ tag }}
+                            <span class="remove-tag" onclick="removeTag('{{ tag|escape('js') }}')">&times;</span>
+                        </span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section 4: Campaign Flow -->
+        <div class="sidebar-section">
+            <label class="sidebar-field-label">Campaign Flow</label>
+            <select id="flowSelect" onchange="updateAssignedFlow()" class="sidebar-select">
+                <option value="">Select Action Flow</option>
+                {% for flow in flows|default([]) %}
+                    <option value="{{ flow.id }}" {% if activeSubscriber and activeSubscriber.assignedFlow and activeSubscriber.assignedFlow.id == flow.id %}selected{% endif %}>{{ flow.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Section 5: Contact Attributes -->
+        <div class="sidebar-section">
+            <label class="sidebar-field-label">Contact Attributes</label>
+            <div class="attributes-list" id="attributesContainer">
+                {% if activeSubscriber %}
+                    {% for key, val in activeSubscriber.customAttributes|default([]) %}
+                        <div class="attribute-item" data-attr-key="{{ key|escape('html_attr') }}">
+                            <span class="attribute-key">{{ key }}</span>
+                            <div style="display: flex; align-items: center;">
+                                <span class="attribute-value">{{ val }}</span>
+                                <span class="attribute-remove" onclick="removeAttribute('{{ key|escape('js') }}')">&times;</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; border-top: 1px solid var(--glass-border); padding-top: 10px;">
+                <input type="text" id="newAttrKey" class="sidebar-input" placeholder="Property name..." style="padding: 6px 10px;">
+                <div class="sidebar-flex-row">
+                    <input type="text" id="newAttrVal" class="sidebar-input" placeholder="Value..." style="padding: 6px 10px;">
+                    <button onclick="addAttribute()" style="background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); color: #22d3ee; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; outline: none; height: 32px; display: flex; align-items: center; justify-content: center;">Set</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Operator Notes -->
+        <div class="sidebar-section">
+            <label class="sidebar-field-label">Operator Notes</label>
+            <div class="notes-list" id="notesContainer">
+                {% if activeSubscriber %}
+                    {% for note in activeSubscriber.notes|default([]) %}
+                        <div class="note-item">
+                            <div class="note-meta">
+                                <span>{{ note.operatorName }}</span>
+                                <span>{{ note.createdAt }}</span>
+                            </div>
+                            <div class="note-text">{{ note.text }}</div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; border-top: 1px solid var(--glass-border); padding-top: 10px;">
+                <textarea id="newNoteText" class="sidebar-input" placeholder="Write staff note..." rows="2" style="resize: none; font-family: inherit;"></textarea>
+                <button onclick="addNote()" style="background: linear-gradient(135deg, var(--primary-accent), #0284c7); border: none; color: #fff; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; box-shadow: 0 2px 10px rgba(6, 182, 212, 0.2); outline: none;">Add Note</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -340,11 +788,36 @@
 {% endblock %}
 
 {% block javascripts %}
-{% if activeSubscriber %}
 <script>
-    // Scroll to bottom on load
+    let activeSubscriberId = {{ activeSubscriber ? activeSubscriber.id : 'null' }};
+    let lastMessageId = 0;
+    let subscribersCacheJson = '';
+    
+    // Global Unix epoch offset for clock-skew compensation
+    let chatWindowExpiresAtTimestamp = {% if activeSubscriber and chatWindow.isOpen and chatWindow.expiresAtTimestamp %}{{ chatWindow.expiresAtTimestamp }}{% else %}null{% endif %};
+    let serverTimeSec = {{ serverTimestamp|default('null') }};
+    let localToServerOffset = serverTimeSec ? (serverTimeSec * 1000 - Date.now()) : 0;
+    
+    let chatWindowTimerInterval = null;
+
     const messagesContainer = document.getElementById('chat-messages');
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Scroll to bottom on load
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    updateLastMessageId();
+
+    function updateLastMessageId() {
+        const bubbles = document.querySelectorAll('.message-bubble[data-message-id]');
+        bubbles.forEach(bubble => {
+            const id = parseInt(bubble.getAttribute('data-message-id'), 10);
+            if (id > lastMessageId) {
+                lastMessageId = id;
+            }
+        });
+    }
 
     function handleFileSelect(input) {
         const file = input.files[0];
@@ -359,20 +832,110 @@
         document.getElementById('file-preview').style.display = 'none';
     }
 
+    function renderMessage(msg) {
+        const bubble = document.createElement('div');
+        bubble.className = `message-bubble ${msg.direction === 'inbound' ? 'message-inbound' : 'message-outbound'}`;
+        bubble.setAttribute('data-message-id', msg.id);
+        
+        let mediaHtml = '';
+        if (msg.type === 'image' && msg.mediaUrl) {
+            mediaHtml = `<a href="${msg.mediaUrl}" target="_blank"><img src="${msg.mediaUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;"></a>`;
+        } else if (msg.type === 'audio' && msg.mediaUrl) {
+            mediaHtml = `<audio controls style="max-width: 100%; margin-bottom: 8px;"><source src="${msg.mediaUrl}"></audio>`;
+        }
+        
+        let contentHtml = '';
+        if (msg.content) {
+            contentHtml = `<div>${msg.content.replace(/\n/g, '<br>')}</div>`;
+        }
+        
+        bubble.innerHTML = mediaHtml + contentHtml + `<div class="message-time">${msg.timeOnly || ''}</div>`;
+        return bubble;
+    }
+
+    function selectSubscriber(event, id, name, phone) {
+        if (event) {
+            event.preventDefault();
+        }
+        
+        activeSubscriberId = id;
+        
+        // Update active class in sidebar
+        document.querySelectorAll('.subscriber-item').forEach(item => {
+            if (parseInt(item.getAttribute('data-id'), 10) === id) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+        
+        // Force list re-render cache refresh on next poll
+        subscribersCacheJson = ''; 
+        
+        // Toggle view containers
+        document.getElementById('empty-state').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+        document.getElementById('inbox-right-sidebar').style.display = 'flex';
+        
+        // Update header details
+        document.getElementById('chat-header-avatar').innerText = name ? name.charAt(0).toUpperCase() : '#';
+        document.getElementById('chat-header-name').innerText = name || phone;
+        document.getElementById('chat-header-phone').innerText = phone;
+        
+        // Clear chat content and show loading state
+        messagesContainer.innerHTML = '<div style="color: var(--text-muted); text-align: center; margin: 20px auto;">Loading chat messages...</div>';
+        
+        // Update URL state without page reload
+        window.history.pushState(null, '', `/admin/inbox/${id}`);
+        
+        // Load messages
+        loadChatArea(id);
+        
+        // Load subscriber right sidebar details
+        loadSubscriberDetails(id);
+    }
+
+    function loadChatArea(id) {
+        fetch(`/admin/inbox/api/messages/${id}`)
+        .then(res => res.json())
+        .then(messages => {
+            if (activeSubscriberId !== id) return;
+            
+            messagesContainer.innerHTML = '';
+            lastMessageId = 0;
+            
+            if (messages.length === 0) {
+                messagesContainer.innerHTML = '<div style="color: var(--text-muted); text-align: center; margin: 20px auto;">No messages in this chat.</div>';
+            } else {
+                messages.forEach(msg => {
+                    const bubble = renderMessage(msg);
+                    messagesContainer.appendChild(bubble);
+                    if (msg.id > lastMessageId) {
+                        lastMessageId = msg.id;
+                    }
+                });
+            }
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .catch(err => {
+            console.error('Error loading messages:', err);
+            messagesContainer.innerHTML = '<div style="color: #ef4444; text-align: center; margin: 20px auto;">Failed to load messages.</div>';
+        });
+    }
+
     function sendMessage() {
         const input = document.getElementById('message-input');
         const fileInput = document.getElementById('media-upload');
         const content = input.value.trim();
         const file = fileInput.files[0];
-        const subscriberId = {{ activeSubscriber.id }};
         
+        if (!activeSubscriberId) return;
         if (!content && !file) return;
         
-        // Disable input while sending
         input.disabled = true;
         
         const formData = new FormData();
-        formData.append('subscriber_id', subscriberId);
+        formData.append('subscriber_id', activeSubscriberId);
         formData.append('content', content);
         if (file) {
             formData.append('media', file);
@@ -388,23 +951,31 @@
                 input.value = '';
                 clearFile();
                 
-                // Add message to UI
-                const bubble = document.createElement('div');
-                bubble.className = 'message-bubble message-outbound';
-                
-                let mediaHtml = '';
-                if (data.message.type === 'image' && data.message.mediaUrl) {
-                    mediaHtml = `<a href="${data.message.mediaUrl}" target="_blank"><img src="${data.message.mediaUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px;"></a>`;
-                } else if (data.message.type === 'audio' && data.message.mediaUrl) {
-                    mediaHtml = `<audio controls style="max-width: 100%; margin-bottom: 8px;"><source src="${data.message.mediaUrl}"></audio>`;
+                if (activeSubscriberId === data.message.subscriber_id || data.message.id) {
+                    if (!document.querySelector(`.message-bubble[data-message-id="${data.message.id}"]`)) {
+                        const bubble = renderMessage({
+                            id: data.message.id,
+                            type: data.message.type,
+                            content: data.message.content,
+                            mediaUrl: data.message.mediaUrl,
+                            timeOnly: 'Just now',
+                            direction: 'outbound'
+                        });
+                        
+                        const emptyPlaceholder = messagesContainer.querySelector('div[style*="text-align: center"]');
+                        if (emptyPlaceholder) {
+                            emptyPlaceholder.remove();
+                        }
+                        
+                        messagesContainer.appendChild(bubble);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        
+                        if (data.message.id > lastMessageId) {
+                            lastMessageId = data.message.id;
+                        }
+                    }
                 }
-                
-                let textHtml = data.message.content ? `<div>${data.message.content.replace(/\n/g, "<br>")}</div>` : '';
-                
-                bubble.innerHTML = mediaHtml + textHtml + '<div class="message-time">Just now</div>';
-                
-                messagesContainer.appendChild(bubble);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                refreshSidebar();
             } else {
                 alert('Error sending message: ' + data.error);
             }
@@ -429,11 +1000,10 @@
 
     function sendTemplate(templateName, languageCode) {
         closeTemplateModal();
-        const subscriberId = {{ activeSubscriber.id|default('null') }};
-        if (!subscriberId) return;
+        if (!activeSubscriberId) return;
 
         const formData = new FormData();
-        formData.append('subscriber_id', subscriberId);
+        formData.append('subscriber_id', activeSubscriberId);
         formData.append('template_name', templateName);
         formData.append('language_code', languageCode);
 
@@ -444,11 +1014,28 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const bubble = document.createElement('div');
-                bubble.className = 'message-bubble message-outbound';
-                bubble.innerHTML = `<div>${data.message.content}</div><div class="message-time">Just now</div>`;
-                messagesContainer.appendChild(bubble);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                if (!document.querySelector(`.message-bubble[data-message-id="${data.message.id}"]`)) {
+                    const bubble = renderMessage({
+                        id: data.message.id,
+                        type: 'template',
+                        content: data.message.content,
+                        timeOnly: 'Just now',
+                        direction: 'outbound'
+                    });
+                    
+                    const emptyPlaceholder = messagesContainer.querySelector('div[style*="text-align: center"]');
+                    if (emptyPlaceholder) {
+                        emptyPlaceholder.remove();
+                    }
+                    
+                    messagesContainer.appendChild(bubble);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    
+                    if (data.message.id > lastMessageId) {
+                        lastMessageId = data.message.id;
+                    }
+                }
+                refreshSidebar();
             } else {
                 alert('Error sending template: ' + data.error);
             }
@@ -458,15 +1045,571 @@
             alert('Failed to send template.');
         });
     }
-    
-    // Simple polling to refresh the page every 10 seconds to show new messages
-    // For a production app, use WebSockets (Mercure) or an AJAX fetch instead of a full reload.
-    setInterval(function() {
-        // Only reload if user isn't typing
-        if (document.getElementById('message-input').value.trim() === '') {
-            window.location.reload();
+
+    function filterSubscribers() {
+        const searchQuery = document.getElementById('subscriberSearch').value.toLowerCase().trim();
+        const connectionFilter = document.getElementById('connectionFilter').value;
+        
+        const items = document.querySelectorAll('.subscriber-item');
+        items.forEach(item => {
+            const name = item.getAttribute('data-name') || '';
+            const phone = item.getAttribute('data-phone') || '';
+            const connId = item.getAttribute('data-connection-id') || '';
+            
+            const matchesSearch = name.includes(searchQuery) || phone.includes(searchQuery);
+            const matchesConnection = !connectionFilter || connId === connectionFilter;
+            
+            if (matchesSearch && matchesConnection) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    function renderSubscriberList(data) {
+        const container = document.getElementById('subscriber-list-container');
+        if (!container) return;
+        
+        if (data.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: #888; font-size: 14px;">
+                    No subscribers yet. When someone messages your WhatsApp number, they will appear here.
+                </div>
+            `;
+            return;
         }
-    }, 10000);
+        
+        let html = '';
+        data.forEach(sub => {
+            const isActive = sub.id === activeSubscriberId;
+            const name = sub.name || sub.phoneNumber;
+            const phone = sub.phoneNumber;
+            
+            let lastMsgHtml = '';
+            if (sub.lastMessage) {
+                let preview = sub.lastMessage.content || '';
+                if (sub.lastMessage.type === 'image') {
+                    preview = '📷 Photo';
+                } else if (sub.lastMessage.type === 'audio') {
+                    preview = '🎵 Voice message';
+                }
+                
+                if (preview.length > 30) {
+                    preview = preview.substring(0, 27) + '...';
+                }
+                
+                const prefix = sub.lastMessage.direction === 'outbound' ? 'You: ' : '';
+                lastMsgHtml = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 4px;">
+                        <div class="subscriber-phone" style="max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${prefix}${preview}
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${sub.lastMessage.timestamp}</div>
+                    </div>
+                `;
+            } else {
+                lastMsgHtml = `<div class="subscriber-phone">${phone}</div>`;
+            }
+            
+            html += `
+                <a href="/admin/inbox/${sub.id}" 
+                   class="subscriber-item ${isActive ? 'active' : ''}" 
+                   data-id="${sub.id}"
+                   data-name="${name.toLowerCase()}"
+                   data-phone="${phone.toLowerCase()}"
+                   data-connection-id="${sub.connectionId || ''}"
+                   onclick="selectSubscriber(event, ${sub.id}, '${name.replace(/'/g, "\\'")}', '${phone}')">
+                    <div class="subscriber-name">${name}</div>
+                    ${lastMsgHtml}
+                </a>
+            `;
+        });
+        
+        container.innerHTML = html;
+        filterSubscribers();
+    }
+
+    function refreshSidebar() {
+        fetch('/admin/inbox/api/subscribers')
+        .then(res => res.json())
+        .then(data => {
+            const jsonString = JSON.stringify(data);
+            if (jsonString !== subscribersCacheJson) {
+                subscribersCacheJson = jsonString;
+                renderSubscriberList(data);
+            }
+        })
+        .catch(err => console.error('Error syncing subscribers:', err));
+    }
+
+    function syncNewMessages() {
+        if (!activeSubscriberId) return;
+        const currentSubId = activeSubscriberId;
+        fetch(`/admin/inbox/api/messages/${currentSubId}?after_id=${lastMessageId}`)
+        .then(res => res.json())
+        .then(newMessages => {
+            if (activeSubscriberId !== currentSubId) return;
+            
+            if (newMessages && newMessages.length > 0) {
+                const emptyPlaceholder = messagesContainer.querySelector('div[style*="text-align: center"]');
+                if (emptyPlaceholder) {
+                    emptyPlaceholder.remove();
+                }
+                
+                let hasNewInbound = false;
+                newMessages.forEach(msg => {
+                    if (!document.querySelector(`.message-bubble[data-message-id="${msg.id}"]`)) {
+                        const bubble = renderMessage(msg);
+                        messagesContainer.appendChild(bubble);
+                        if (msg.direction === 'inbound') {
+                            hasNewInbound = true;
+                        }
+                    }
+                    if (msg.id > lastMessageId) {
+                        lastMessageId = msg.id;
+                    }
+                });
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                if (hasNewInbound) {
+                    loadSubscriberDetails(currentSubId);
+                }
+            }
+        })
+        .catch(err => console.error('Error syncing new messages:', err));
+    }
+
+    function startChatWindowTimer() {
+        if (chatWindowTimerInterval) {
+            clearInterval(chatWindowTimerInterval);
+            chatWindowTimerInterval = null;
+        }
+
+        const timerPill = document.getElementById('chat-window-timer');
+        const timerText = document.getElementById('chat-window-timer-text');
+
+        function updateCountdown() {
+            if (!activeSubscriberId || !chatWindowExpiresAtTimestamp) {
+                if (timerPill) timerPill.style.display = 'none';
+                if (chatWindowTimerInterval) {
+                    clearInterval(chatWindowTimerInterval);
+                    chatWindowTimerInterval = null;
+                }
+                return;
+            }
+
+            const expiresTimeMs = chatWindowExpiresAtTimestamp * 1000;
+            const correctedNow = Date.now() + localToServerOffset;
+            const remaining = expiresTimeMs - correctedNow;
+
+            if (remaining <= 0) {
+                if (timerPill) timerPill.style.display = 'none';
+                chatWindowExpiresAtTimestamp = null;
+                if (chatWindowTimerInterval) {
+                    clearInterval(chatWindowTimerInterval);
+                    chatWindowTimerInterval = null;
+                }
+                
+                // Real-time visual and functional input lockdown
+                const warningBanner = document.getElementById('chat-window-warning');
+                const mediaUploadBtn = document.getElementById('media-upload-btn');
+                const messageInput = document.getElementById('message-input');
+                const sendBtn = document.getElementById('chat-send-btn');
+                
+                if (warningBanner) warningBanner.style.display = 'flex';
+                if (mediaUploadBtn) {
+                    mediaUploadBtn.disabled = true;
+                    mediaUploadBtn.style.opacity = '0.5';
+                    mediaUploadBtn.style.cursor = 'not-allowed';
+                }
+                if (messageInput) {
+                    messageInput.disabled = true;
+                    messageInput.placeholder = 'Window expired. Choose a template message...';
+                }
+                if (sendBtn) {
+                    sendBtn.disabled = true;
+                    sendBtn.style.opacity = '0.5';
+                    sendBtn.style.cursor = 'not-allowed';
+                    sendBtn.style.boxShadow = 'none';
+                }
+                return;
+            }
+
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+            const displayStr = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+            if (timerText) timerText.textContent = displayStr;
+            if (timerPill && timerPill.style.display === 'none') {
+                timerPill.style.display = 'flex';
+            }
+        }
+
+        updateCountdown();
+        chatWindowTimerInterval = setInterval(updateCountdown, 1000);
+    }
+
+    // Load subscriber details on initial load if active subscriber exists
+    if (activeSubscriberId) {
+        loadSubscriberDetails(activeSubscriberId);
+        startChatWindowTimer();
+    }
+
+    function loadSubscriberDetails(id) {
+        fetch(`/admin/inbox/api/subscriber/${id}/details`)
+        .then(res => res.json())
+        .then(sub => {
+            if (activeSubscriberId !== id) return;
+            
+            // Handle chat window status
+            const chatWindow = sub.chatWindow;
+            const warningBanner = document.getElementById('chat-window-warning');
+            const mediaUploadBtn = document.getElementById('media-upload-btn');
+            const messageInput = document.getElementById('message-input');
+            const sendBtn = document.getElementById('chat-send-btn');
+            
+            if (sub.serverTimestamp) {
+                localToServerOffset = sub.serverTimestamp * 1000 - Date.now();
+            }
+            
+            if (chatWindow && !chatWindow.isOpen) {
+                warningBanner.style.display = 'flex';
+                mediaUploadBtn.disabled = true;
+                mediaUploadBtn.style.opacity = '0.5';
+                mediaUploadBtn.style.cursor = 'not-allowed';
+                messageInput.disabled = true;
+                messageInput.placeholder = 'Window expired. Choose a template message...';
+                sendBtn.disabled = true;
+                sendBtn.style.opacity = '0.5';
+                sendBtn.style.cursor = 'not-allowed';
+                sendBtn.style.boxShadow = 'none';
+                chatWindowExpiresAtTimestamp = null;
+            } else {
+                warningBanner.style.display = 'none';
+                mediaUploadBtn.disabled = false;
+                mediaUploadBtn.style.opacity = '1';
+                mediaUploadBtn.style.cursor = 'pointer';
+                messageInput.disabled = false;
+                messageInput.placeholder = 'Type a message...';
+                sendBtn.disabled = false;
+                sendBtn.style.opacity = '1';
+                sendBtn.style.cursor = 'pointer';
+                sendBtn.style.boxShadow = '';
+                chatWindowExpiresAtTimestamp = chatWindow ? chatWindow.expiresAtTimestamp : null;
+            }
+            startChatWindowTimer();            
+            // Set operator
+            document.getElementById('operatorSelect').value = sub.assignedOperatorId || '';
+            
+            // Set flow
+            document.getElementById('flowSelect').value = sub.assignedFlowId || '';
+            
+            // Render tags
+            const tagContainer = document.getElementById('tagContainer');
+            tagContainer.innerHTML = '';
+            if (sub.tags && sub.tags.length > 0) {
+                sub.tags.forEach(tag => {
+                    const span = document.createElement('span');
+                    span.className = 'chat-tag';
+                    span.setAttribute('data-tag-value', tag);
+                    span.innerHTML = `${escapeHtml(tag)} <span class="remove-tag" onclick="removeTag('${escapeJs(tag)}')">&times;</span>`;
+                    tagContainer.appendChild(span);
+                });
+            }
+            
+            // Render custom attributes
+            const attrsContainer = document.getElementById('attributesContainer');
+            attrsContainer.innerHTML = '';
+            if (sub.customAttributes) {
+                Object.entries(sub.customAttributes).forEach(([key, val]) => {
+                    const div = document.createElement('div');
+                    div.className = 'attribute-item';
+                    div.setAttribute('data-attr-key', key);
+                    div.innerHTML = `
+                        <span class="attribute-key">${escapeHtml(key)}</span>
+                        <div style="display: flex; align-items: center;">
+                            <span class="attribute-value">${escapeHtml(val)}</span>
+                            <span class="attribute-remove" onclick="removeAttribute('${escapeJs(key)}')">&times;</span>
+                        </div>
+                    `;
+                    attrsContainer.appendChild(div);
+                });
+            }
+            
+            // Render notes
+            const notesContainer = document.getElementById('notesContainer');
+            notesContainer.innerHTML = '';
+            if (sub.notes && sub.notes.length > 0) {
+                sub.notes.forEach(note => {
+                    const div = document.createElement('div');
+                    div.className = 'note-item';
+                    div.innerHTML = `
+                        <div class="note-meta">
+                            <span>${escapeHtml(note.operatorName)}</span>
+                            <span>${escapeHtml(note.createdAt)}</span>
+                        </div>
+                        <div class="note-text">${escapeHtml(note.text)}</div>
+                    `;
+                    notesContainer.appendChild(div);
+                });
+                notesContainer.scrollTop = notesContainer.scrollHeight;
+            }
+        })
+        .catch(err => console.error('Error loading subscriber details:', err));
+    }
+
+    function updateAssignedOperator() {
+        if (!activeSubscriberId) return;
+        const select = document.getElementById('operatorSelect');
+        const operatorId = select.value;
+        
+        select.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('operator_id', operatorId);
+        
+        fetch(`/admin/inbox/api/subscriber/${activeSubscriberId}/assign-operator`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error updating operator: ' + data.error);
+            }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+            select.disabled = false;
+        });
+    }
+
+    function addTag() {
+        if (!activeSubscriberId) return;
+        const input = document.getElementById('newTagInput');
+        const val = input.value.trim();
+        if (!val) return;
+        
+        input.value = '';
+        
+        // Get current tags from local state
+        const tags = [];
+        document.querySelectorAll('#tagContainer .chat-tag').forEach(span => {
+            tags.push(span.getAttribute('data-tag-value'));
+        });
+        
+        if (tags.includes(val)) return;
+        tags.push(val);
+        
+        saveTags(tags);
+    }
+
+    function removeTag(tag) {
+        if (!activeSubscriberId) return;
+        
+        const tags = [];
+        document.querySelectorAll('#tagContainer .chat-tag').forEach(span => {
+            const t = span.getAttribute('data-tag-value');
+            if (t !== tag) {
+                tags.push(t);
+            }
+        });
+        
+        saveTags(tags);
+    }
+
+    function saveTags(tagsArray) {
+        const tagContainer = document.getElementById('tagContainer');
+        
+        // Update tags list UI immediately for instant feedback
+        tagContainer.innerHTML = '';
+        tagsArray.forEach(tag => {
+            const span = document.createElement('span');
+            span.className = 'chat-tag';
+            span.setAttribute('data-tag-value', tag);
+            span.innerHTML = `${escapeHtml(tag)} <span class="remove-tag" onclick="removeTag('${escapeJs(tag)}')">&times;</span>`;
+            tagContainer.appendChild(span);
+        });
+        
+        const formData = new FormData();
+        tagsArray.forEach(tag => {
+            formData.append('tags[]', tag);
+        });
+        
+        fetch(`/admin/inbox/api/subscriber/${activeSubscriberId}/tags`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error updating tags: ' + data.error);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function updateAssignedFlow() {
+        if (!activeSubscriberId) return;
+        const select = document.getElementById('flowSelect');
+        const flowId = select.value;
+        
+        select.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('flow_id', flowId);
+        
+        fetch(`/admin/inbox/api/subscriber/${activeSubscriberId}/assign-flow`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error updating flow: ' + data.error);
+            }
+        })
+        .catch(err => console.error(err))
+        .finally(() => {
+            select.disabled = false;
+        });
+    }
+
+    function addAttribute() {
+        if (!activeSubscriberId) return;
+        const keyInput = document.getElementById('newAttrKey');
+        const valInput = document.getElementById('newAttrVal');
+        const key = keyInput.value.trim();
+        const val = valInput.value.trim();
+        
+        if (!key || !val) return;
+        
+        keyInput.value = '';
+        valInput.value = '';
+        
+        // Optimistic UI update
+        const attrsContainer = document.getElementById('attributesContainer');
+        let existing = attrsContainer.querySelector(`[data-attr-key="${key}"]`);
+        if (existing) {
+            existing.remove();
+        }
+        
+        const div = document.createElement('div');
+        div.className = 'attribute-item';
+        div.setAttribute('data-attr-key', key);
+        div.innerHTML = `
+            <span class="attribute-key">${escapeHtml(key)}</span>
+            <div style="display: flex; align-items: center;">
+                <span class="attribute-value">${escapeHtml(val)}</span>
+                <span class="attribute-remove" onclick="removeAttribute('${escapeJs(key)}')">&times;</span>
+            </div>
+        `;
+        attrsContainer.appendChild(div);
+        
+        const formData = new FormData();
+        formData.append('key', key);
+        formData.append('value', val);
+        
+        fetch(`/admin/inbox/api/subscriber/${activeSubscriberId}/attribute`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error setting custom attribute: ' + data.error);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function removeAttribute(key) {
+        if (!activeSubscriberId) return;
+        
+        const attrsContainer = document.getElementById('attributesContainer');
+        const existing = attrsContainer.querySelector(`[data-attr-key="${key}"]`);
+        if (existing) {
+            existing.remove();
+        }
+        
+        const formData = new FormData();
+        formData.append('key', key);
+        formData.append('delete', '1');
+        
+        fetch(`/admin/inbox/api/subscriber/${activeSubscriberId}/attribute`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error removing attribute: ' + data.error);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function addNote() {
+        if (!activeSubscriberId) return;
+        const textarea = document.getElementById('newNoteText');
+        const text = textarea.value.trim();
+        if (!text) return;
+        
+        textarea.value = '';
+        
+        const formData = new FormData();
+        formData.append('text', text);
+        
+        fetch(`/admin/inbox/api/subscriber/${activeSubscriberId}/notes`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Rerender notes list
+                const notesContainer = document.getElementById('notesContainer');
+                notesContainer.innerHTML = '';
+                if (data.notes) {
+                    data.notes.forEach(note => {
+                        const div = document.createElement('div');
+                        div.className = 'note-item';
+                        div.innerHTML = `
+                            <div class="note-meta">
+                                <span>${escapeHtml(note.operatorName)}</span>
+                                <span>${escapeHtml(note.createdAt)}</span>
+                            </div>
+                            <div class="note-text">${escapeHtml(note.text)}</div>
+                        `;
+                        notesContainer.appendChild(div);
+                    });
+                    notesContainer.scrollTop = notesContainer.scrollHeight;
+                }
+            } else {
+                alert('Error adding note: ' + data.error);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function escapeJs(str) {
+        if (!str) return '';
+        return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    // High frequency synchronization
+    setInterval(function() {
+        refreshSidebar();
+        if (activeSubscriberId) {
+            syncNewMessages();
+        }
+    }, 2000);
 </script>
-{% endif %}
 {% endblock %}

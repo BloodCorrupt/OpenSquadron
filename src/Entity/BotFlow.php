@@ -5,8 +5,11 @@ namespace App\Entity;
 use App\Repository\BotFlowRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Entity\TenantAwareInterface;
+use App\Entity\Admin;
+
 #[ORM\Entity(repositoryClass: BotFlowRepository::class)]
-class BotFlow
+class BotFlow implements TenantAwareInterface
 {
     public const MATCH_EXACT = 'exact';
     public const MATCH_CONTAINS = 'contains';
@@ -16,6 +19,10 @@ class BotFlow
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Admin::class)]
+    #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?Admin $owner = null;
 
     #[ORM\Column(length: 120, nullable: true)]
     private ?string $name = null;
@@ -154,6 +161,17 @@ class BotFlow
     public function setWhatsAppConnection(?WhatsAppConnection $whatsAppConnection): static
     {
         $this->whatsAppConnection = $whatsAppConnection;
+        return $this;
+    }
+
+    public function getOwner(): ?Admin
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?Admin $owner): static
+    {
+        $this->owner = $owner;
         return $this;
     }
 }

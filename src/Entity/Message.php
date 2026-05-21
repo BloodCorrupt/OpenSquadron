@@ -41,7 +41,7 @@ class Message
 
     public function __construct()
     {
-        $this->timestamp = new \DateTime();
+        $this->timestamp = new \DateTime('now', new \DateTimeZone('UTC'));
     }
 
     public function getId(): ?int
@@ -135,12 +135,21 @@ class Message
 
     public function getTimestamp(): ?\DateTimeInterface
     {
-        return $this->timestamp;
+        if ($this->timestamp === null) {
+            return null;
+        }
+        return new \DateTime($this->timestamp->format('Y-m-d H:i:s'), new \DateTimeZone('UTC'));
     }
 
     public function setTimestamp(\DateTimeInterface $timestamp): static
     {
-        $this->timestamp = $timestamp;
+        if ($timestamp instanceof \DateTime) {
+            $utc = clone $timestamp;
+            $utc->setTimezone(new \DateTimeZone('UTC'));
+            $this->timestamp = $utc;
+        } else {
+            $this->timestamp = $timestamp;
+        }
 
         return $this;
     }

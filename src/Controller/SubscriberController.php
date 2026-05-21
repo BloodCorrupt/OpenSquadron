@@ -115,7 +115,7 @@ class SubscriberController extends AbstractController
         $subscriber->setPhoneNumber($cleanPhone);
         $subscriber->setName($name !== '' ? $name : null);
         $subscriber->setStatus($status);
-        $subscriber->setUpdatedAt(new \DateTime());
+        $subscriber->setUpdatedAt(new \DateTime('now', new \DateTimeZone('UTC')));
 
         $em->persist($subscriber);
         $em->flush();
@@ -139,7 +139,7 @@ class SubscriberController extends AbstractController
         }
 
         $subscriber->setStatus($isActive ? 'active' : 'unsubscribed');
-        $subscriber->setUpdatedAt(new \DateTime());
+        $subscriber->setUpdatedAt(new \DateTime('now', new \DateTimeZone('UTC')));
         $em->flush();
 
         return new JsonResponse(['success' => true]);

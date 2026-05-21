@@ -168,10 +168,14 @@ class WhatsAppConnectionService
         if (!$connection) {
             return false;
         }
+        
         $this->entityManager->remove($connection);
         $this->entityManager->flush();
         return true;
     }
+
+
+
 
     // ───────────────────────── Crypto ─────────────────────────
 

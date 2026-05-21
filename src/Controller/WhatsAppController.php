@@ -14,6 +14,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Subscriber;
 use App\Entity\Message;
+use App\Entity\WhatsAppConnection;
 
 class WhatsAppController extends AbstractController
 {
@@ -31,7 +32,9 @@ class WhatsAppController extends AbstractController
         WhatsAppConnectionService $whatsappService,
         private EntityManagerInterface $entityManager,
         private BotFlowExecutor $botFlowExecutor,
-        private \App\Service\AiAgentService $aiAgentService
+        private \App\Service\AiAgentService $aiAgentService,
+        private \App\Service\TenantDatabaseService $tenantDbService,
+        private \App\Service\TenantContext $tenantContext
     ) {
         $this->envVerifyToken = $verifyToken;
         $this->envAccessToken = $accessToken;
@@ -39,6 +42,7 @@ class WhatsAppController extends AbstractController
         $this->httpClient = $httpClient;
         $this->whatsappService = $whatsappService;
     }
+
 
     private function getVerifyToken(): string
     {
@@ -56,6 +60,17 @@ class WhatsAppController extends AbstractController
         $token = $request->query->get('hub_verify_token', $request->query->get('hub.verify_token'));
         $challenge = $request->query->get('hub_challenge', $request->query->get('hub.challenge'));
 
+        if ($token) {
+            $this->tenantContext->disableTenantFilter();
+            $connection = $this->entityManager->getRepository(WhatsAppConnection::class)->findOneBy(['verifyToken' => $token]);
+            if ($connection) {
+                $owner = $connection->getOwner();
+                if ($owner) {
+                    $this->tenantContext->setCurrentOwner($owner);
+                }
+            }
+        }
+
         $expectedToken = $this->getVerifyToken();
 
         if ($mode && $token) {
@@ -67,6 +82,7 @@ class WhatsAppController extends AbstractController
 
         return new Response('Bad Request', 400);
     }
+
 
     #[Route('/webhook/whatsapp', name: 'whatsapp_webhook_handle', methods: ['POST'])]
     public function handleWebhook(Request $request): JsonResponse
@@ -90,12 +106,22 @@ class WhatsAppController extends AbstractController
 
                     // Resolve the correct connection by the phone_number_id in the payload
                     $incomingPhoneNumberId = $changes['metadata']['phone_number_id'] ?? null;
+                    
+                    $this->tenantContext->disableTenantFilter();
+
                     $resolvedConnection = null;
                     if ($incomingPhoneNumberId) {
-                        $resolvedConnection = $this->whatsappService->getConnectionByPhoneNumberId($incomingPhoneNumberId);
+                        $resolvedConnection = $this->entityManager->getRepository(WhatsAppConnection::class)->findOneBy(['phoneNumberId' => $incomingPhoneNumberId]);
                     }
                     if (!$resolvedConnection) {
                         $resolvedConnection = $this->whatsappService->getDefaultConnection();
+                    }
+
+                    if ($resolvedConnection) {
+                        $owner = $resolvedConnection->getOwner();
+                        if ($owner) {
+                            $this->tenantContext->setCurrentOwner($owner);
+                        }
                     }
 
                     foreach ($messages as $message) {
@@ -203,7 +229,7 @@ class WhatsAppController extends AbstractController
                             }
 
                             // Update subscriber timestamp so it jumps to top of inbox
-                            $subscriber->setUpdatedAt(new \DateTime());
+                            $subscriber->setUpdatedAt(new \DateTime('now', new \DateTimeZone('UTC')));
                         }
                     }
                     $this->entityManager->flush();

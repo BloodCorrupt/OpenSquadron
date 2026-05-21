@@ -255,25 +255,204 @@
                 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
             }
             
-            .user-profile {
-                display: flex;
+            /* Header Action Tabs */
+            .header-btn {
+                display: inline-flex;
                 align-items: center;
-                gap: 15px;
-                font-size: 14px;
-                font-weight: 500;
-                background: var(--glass-bg);
-                padding: 8px 20px;
+                gap: 8px;
+                padding: 8px 16px;
                 border-radius: 20px;
+                font-size: 13px;
+                font-weight: 600;
+                text-decoration: none;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 border: 1px solid var(--glass-border);
             }
-            .user-profile a {
-                color: var(--primary-accent);
-                text-decoration: none;
-                transition: color 0.3s;
+            .header-btn-youtube {
+                background: rgba(239, 68, 68, 0.06);
+                color: #f87171;
+                border-color: rgba(239, 68, 68, 0.15);
             }
-            .user-profile a:hover {
+            .header-btn-youtube:hover {
+                background: rgba(239, 68, 68, 0.12);
+                border-color: rgba(239, 68, 68, 0.3);
+                box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+            }
+            .header-btn-discussion {
+                background: rgba(59, 130, 246, 0.06);
+                color: #60a5fa;
+                border-color: rgba(59, 130, 246, 0.15);
+            }
+            .header-btn-discussion:hover {
+                background: rgba(59, 130, 246, 0.12);
+                border-color: rgba(59, 130, 246, 0.3);
+                box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+            }
+            .bell-btn {
+                background: rgba(251, 191, 36, 0.06);
+                border: 1px solid rgba(251, 191, 36, 0.15);
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fbbf24;
+                cursor: pointer;
+                position: relative;
+                transition: all 0.3s ease;
+            }
+            .bell-btn:hover {
+                background: rgba(251, 191, 36, 0.12);
+                border-color: rgba(251, 191, 36, 0.3);
+                box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+            }
+            .bell-badge {
+                position: absolute;
+                bottom: -2px;
+                left: -2px;
+                background: #ef4444;
+                color: white;
+                font-size: 9px;
+                font-weight: 700;
+                border-radius: 50%;
+                width: 14px;
+                height: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #1e293b;
+            }
+
+            /* User Profile Dropdown Styles */
+            .profile-container {
+                position: relative;
+                display: inline-block;
+            }
+            .avatar-btn {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid var(--glass-border);
+                border-radius: 50%;
+                width: 42px;
+                height: 42px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                outline: none;
+                position: relative;
+            }
+            .avatar-btn:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: var(--primary-accent);
+                box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+            }
+            .avatar-inner {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2));
+                border: 1px solid rgba(6, 182, 212, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #67e8f9;
+                font-weight: 700;
+                font-size: 14px;
+            }
+            .avatar-preset-purple {
+                background: linear-gradient(135deg, #a855f7, #6366f1) !important;
+                color: #f3e8ff !important;
+                border: 1px solid rgba(168, 85, 247, 0.4) !important;
+            }
+            .avatar-preset-emerald {
+                background: linear-gradient(135deg, #10b981, #059669) !important;
+                color: #ecfdf5 !important;
+                border: 1px solid rgba(16, 185, 129, 0.4) !important;
+            }
+            .avatar-preset-cyan {
+                background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+                color: #ecfeff !important;
+                border: 1px solid rgba(6, 182, 212, 0.4) !important;
+            }
+            .avatar-preset-gold {
+                background: linear-gradient(135deg, #eab308, #ca8a04) !important;
+                color: #fef9c3 !important;
+                border: 1px solid rgba(234, 179, 8, 0.4) !important;
+            }
+            .avatar-preset-rose {
+                background: linear-gradient(135deg, #f43f5e, #e11d48) !important;
+                color: #fff1f2 !important;
+                border: 1px solid rgba(244, 63, 94, 0.4) !important;
+            }
+            .profile-dropdown-menu {
+                position: absolute;
+                top: calc(100% + 8px);
+                right: 0;
+                background: rgba(15, 23, 42, 0.98);
+                backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px);
+                border: 1px solid var(--glass-border);
+                border-radius: 14px;
+                width: 250px;
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                display: none;
+                opacity: 0;
+                padding: 4px 0;
+            }
+            .profile-container.is-open .profile-dropdown-menu {
+                display: block;
+                animation: slideDownProfile 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
+            @keyframes slideDownProfile {
+                from { transform: translateY(10px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            .profile-dropdown-item {
+                display: flex;
+                align-items: center;
+                padding: 12px 18px;
+                color: var(--text-muted);
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            }
+            .profile-dropdown-item:last-child {
+                border-bottom: none;
+            }
+            .profile-dropdown-item:hover {
+                background: rgba(255, 255, 255, 0.04);
                 color: #fff;
-                text-shadow: 0 0 8px var(--primary-accent);
+            }
+            .profile-dropdown-item .nav-icon {
+                margin-right: 12px;
+                width: 16px;
+                height: 16px;
+                opacity: 0.6;
+                transition: all 0.2s ease;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .profile-dropdown-item:hover .nav-icon {
+                opacity: 1;
+                color: var(--primary-accent);
+                transform: scale(1.05);
+            }
+            /* Logout Red option */
+            .profile-dropdown-item.logout-option {
+                color: var(--error-color);
+            }
+            .profile-dropdown-item.logout-option:hover {
+                background: rgba(239, 68, 68, 0.06);
+                color: #ff8787;
+            }
+            .profile-dropdown-item.logout-option:hover .nav-icon {
+                color: #ff8787;
             }
 
             /* Main Content Area */
@@ -480,7 +659,7 @@
                     </div>
                 </div>
                 <div class="nav-dropdown">
-                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
+                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </span> Settings <span class="dropdown-caret">▼</span>
@@ -496,20 +675,84 @@
                                 <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                             </span> AI Settings
                         </a>
+                        {% if app.user and app.user.parent is null and (app.user.accountType == 'admin' or (app.user.accountType == 'user' and app.user.teamEnabled)) %}
+                            <a href="{{ path('app_accounts_index') }}" class="dropdown-item {% if 'accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </span> {% if app.user.accountType == 'admin' %}Account Management{% else %}Team Management{% endif %}
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
 
-            <div class="topbar-right">
-                <div class="stat-badge">
-                    <div class="pulse-dot"></div>
-                    System Online
-                </div>
-                <div class="user-profile">
-                    {% if app.user %}
-                        {{ app.user.userIdentifier }} <span style="opacity: 0.3;">|</span> <a href="{{ path('app_logout') }}">Logout</a>
-                    {% endif %}
-                </div>
+            <div class="topbar-right" style="gap: 15px;">
+                {% if app.user %}
+                    <!-- Notification Bell -->
+                    <div class="bell-btn" onclick="alert('No new notifications.')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <div class="bell-badge">0</div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-container">
+                        <button class="avatar-btn" id="profileDropdownBtn">
+                            {% if app.user.avatar %}
+                                {% if 'preset:' in app.user.avatar %}
+                                    {% set presetName = app.user.avatar|replace({'preset:': ''}) %}
+                                    <div class="avatar-inner avatar-preset-{{ presetName }}">
+                                        {{ (app.user.name ?: app.user.email)|slice(0, 1)|upper }}
+                                    </div>
+                                {% else %}
+                                    <img src="{{ '/' ~ app.user.avatar }}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(6, 182, 212, 0.4);">
+                                {% endif %}
+                            {% else %}
+                                <div class="avatar-inner">
+                                    {{ (app.user.name ?: app.user.email)|slice(0, 1)|upper }}
+                                </div>
+                            {% endif %}
+                        </button>
+                        <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                            <!-- User Info Header -->
+                            <div style="padding: 14px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; gap: 3px;">
+                                <div style="font-weight: 600; color: #fff; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ app.user.name|default('Operator Identity') }}
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ app.user.email }}
+                                </div>
+                            </div>
+                            <!-- 1. Profile Settings -->
+                            <a href="{{ path('app_accounts_edit_self') }}" class="profile-dropdown-item">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                </span>
+                                Profile Settings
+                            </a>
+                            <!-- 2. Security & Access -->
+                            <a href="{{ path('app_profile_security') }}" class="profile-dropdown-item">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                </span>
+                                Security & Access
+                            </a>
+                            <!-- 3. API & Webhooks -->
+                            <a href="{{ path('app_profile_developer') }}" class="profile-dropdown-item">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                </span>
+                                API & Webhooks
+                            </a>
+                            <!-- 4. Sign Out -->
+                            <a href="{{ path('app_logout') }}" class="profile-dropdown-item logout-option">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                </span>
+                                Sign Out
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
         
@@ -551,6 +794,12 @@
                         d.classList.remove('is-open');
                     });
                     
+                    // Close profile dropdown
+                    var profileContainer = document.querySelector('.profile-container');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('is-open');
+                    }
+                    
                     // Toggle the current one
                     if (!isOpen) {
                         parent.classList.add('is-open');
@@ -558,12 +807,36 @@
                 });
             });
 
+            // Profile dropdown logic
+            var profileBtn = document.getElementById('profileDropdownBtn');
+            var profileContainer = profileBtn ? profileBtn.closest('.profile-container') : null;
+            if (profileBtn && profileContainer) {
+                profileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var isOpen = profileContainer.classList.contains('is-open');
+                    
+                    // Close normal navigation dropdowns
+                    document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+                        d.classList.remove('is-open');
+                    });
+                    
+                    if (isOpen) {
+                        profileContainer.classList.remove('is-open');
+                    } else {
+                        profileContainer.classList.add('is-open');
+                    }
+                });
+            }
+
             // Close dropdowns when clicking outside
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.nav-dropdown')) {
                     document.querySelectorAll('.nav-dropdown').forEach(function(d) {
                         d.classList.remove('is-open');
                     });
+                }
+                if (profileContainer && !e.target.closest('.profile-container')) {
+                    profileContainer.classList.remove('is-open');
                 }
             });
         </script>

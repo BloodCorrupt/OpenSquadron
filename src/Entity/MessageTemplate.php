@@ -5,13 +5,20 @@ namespace App\Entity;
 use App\Repository\MessageTemplateRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Entity\TenantAwareInterface;
+use App\Entity\Admin;
+
 #[ORM\Entity(repositoryClass: MessageTemplateRepository::class)]
-class MessageTemplate
+class MessageTemplate implements TenantAwareInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Admin::class)]
+    #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?Admin $owner = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -105,6 +112,17 @@ class MessageTemplate
     public function setWhatsAppConnection(?WhatsAppConnection $whatsAppConnection): static
     {
         $this->whatsAppConnection = $whatsAppConnection;
+        return $this;
+    }
+
+    public function getOwner(): ?Admin
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?Admin $owner): static
+    {
+        $this->owner = $owner;
         return $this;
     }
 }

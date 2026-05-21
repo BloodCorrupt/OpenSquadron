@@ -5,14 +5,21 @@ namespace App\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Entity\TenantAwareInterface;
+use App\Entity\Admin;
+
 #[ORM\Entity]
 #[ORM\Table(name: 'ai_context')]
-class AiContext
+class AiContext implements TenantAwareInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Admin::class)]
+    #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?Admin $owner = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -86,6 +93,17 @@ class AiContext
     public function setActive(bool $isActive): static
     {
         $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function getOwner(): ?Admin
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?Admin $owner): static
+    {
+        $this->owner = $owner;
         return $this;
     }
 }

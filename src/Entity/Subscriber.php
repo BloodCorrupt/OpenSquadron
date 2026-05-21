@@ -8,14 +8,22 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Entity\TenantAwareInterface;
+use App\Entity\Admin;
+use App\Entity\BotFlow;
+
 #[ORM\Entity(repositoryClass: SubscriberRepository::class)]
 #[ORM\UniqueConstraint(name: "uniq_subscriber_phone_connection", columns: ["phone_number", "whats_app_connection_id"])]
-class Subscriber
+class Subscriber implements TenantAwareInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Admin::class)]
+    #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?Admin $owner = null;
 
     #[ORM\Column(length: 50)]
     private ?string $phoneNumber = null;
@@ -39,11 +47,28 @@ class Subscriber
     #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'subscriber', orphanRemoval: true)]
     private Collection $messages;
 
+    #[ORM\ManyToOne(targetEntity: Admin::class)]
+    #[ORM\JoinColumn(name: "assigned_operator_id", referencedColumnName: "id", onDelete: "SET NULL")]
+    private ?Admin $assignedOperator = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $tags = [];
+
+    #[ORM\ManyToOne(targetEntity: BotFlow::class)]
+    #[ORM\JoinColumn(name: "assigned_flow_id", referencedColumnName: "id", onDelete: "SET NULL")]
+    private ?BotFlow $assignedFlow = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $customAttributes = [];
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $notes = [];
+
     public function __construct()
     {
         $this->messages = new ArrayCollection();
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
+        $this->createdAt = new \DateTime('now', new \DateTimeZone('UTC'));
+        $this->updatedAt = new \DateTime('now', new \DateTimeZone('UTC'));
     }
 
     public function getId(): ?int
@@ -86,23 +111,41 @@ class Subscriber
 
     public function getCreatedAt(): ?\DateTimeInterface
     {
-        return $this->createdAt;
+        if ($this->createdAt === null) {
+            return null;
+        }
+        return new \DateTime($this->createdAt->format('Y-m-d H:i:s'), new \DateTimeZone('UTC'));
     }
 
     public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
-        $this->createdAt = $createdAt;
+        if ($createdAt instanceof \DateTime) {
+            $utc = clone $createdAt;
+            $utc->setTimezone(new \DateTimeZone('UTC'));
+            $this->createdAt = $utc;
+        } else {
+            $this->createdAt = $createdAt;
+        }
         return $this;
     }
 
     public function getUpdatedAt(): ?\DateTimeInterface
     {
-        return $this->updatedAt;
+        if ($this->updatedAt === null) {
+            return null;
+        }
+        return new \DateTime($this->updatedAt->format('Y-m-d H:i:s'), new \DateTimeZone('UTC'));
     }
 
     public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
-        $this->updatedAt = $updatedAt;
+        if ($updatedAt instanceof \DateTime) {
+            $utc = clone $updatedAt;
+            $utc->setTimezone(new \DateTimeZone('UTC'));
+            $this->updatedAt = $utc;
+        } else {
+            $this->updatedAt = $updatedAt;
+        }
         return $this;
     }
 
@@ -144,6 +187,72 @@ class Subscriber
     public function setWhatsAppConnection(?WhatsAppConnection $whatsAppConnection): static
     {
         $this->whatsAppConnection = $whatsAppConnection;
+        return $this;
+    }
+
+    public function getOwner(): ?Admin
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?Admin $owner): static
+    {
+        $this->owner = $owner;
+        return $this;
+    }
+
+    public function getAssignedOperator(): ?Admin
+    {
+        return $this->assignedOperator;
+    }
+
+    public function setAssignedOperator(?Admin $assignedOperator): static
+    {
+        $this->assignedOperator = $assignedOperator;
+        return $this;
+    }
+
+    public function getTags(): array
+    {
+        return $this->tags ?? [];
+    }
+
+    public function setTags(?array $tags): static
+    {
+        $this->tags = $tags;
+        return $this;
+    }
+
+    public function getAssignedFlow(): ?BotFlow
+    {
+        return $this->assignedFlow;
+    }
+
+    public function setAssignedFlow(?BotFlow $assignedFlow): static
+    {
+        $this->assignedFlow = $assignedFlow;
+        return $this;
+    }
+
+    public function getCustomAttributes(): array
+    {
+        return $this->customAttributes ?? [];
+    }
+
+    public function setCustomAttributes(?array $customAttributes): static
+    {
+        $this->customAttributes = $customAttributes;
+        return $this;
+    }
+
+    public function getNotes(): array
+    {
+        return $this->notes ?? [];
+    }
+
+    public function setNotes(?array $notes): static
+    {
+        $this->notes = $notes;
         return $this;
     }
 }

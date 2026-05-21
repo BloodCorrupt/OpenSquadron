@@ -27,7 +27,9 @@ class WhatsAppConnectionServiceTest extends TestCase
             $entityManager,
             $httpClient,
             $router,
-            $appSecret
+            $appSecret,
+            'dummy_phone_id',
+            'dummy_access_token'
         );
     }
 
