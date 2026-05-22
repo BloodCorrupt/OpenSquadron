@@ -539,11 +539,19 @@
     }
 
     /* Dynamic curved intake SVG line graph */
+    .trend-chart-container {
+        width: 100%;
+        max-width: 720px;
+        margin: 10px auto 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
     .trend-svg-wrapper {
         position: relative;
         width: 100%;
-        height: 190px;
-        margin-top: 10px;
+        aspect-ratio: 500 / 180;
     }
 
     .trend-svg {
@@ -1019,41 +1027,43 @@
             </div>
 
             <!-- Sleek Scalable Custom Graph -->
-            <div class="trend-svg-wrapper">
-                <svg class="trend-svg" viewBox="0 0 500 180" preserveAspectRatio="none">
-                    <defs>
-                        <linearGradient id="g-trend-glow" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--primary-accent)" stop-opacity="0.3"/>
-                            <stop offset="100%" stop-color="var(--primary-accent)" stop-opacity="0.0"/>
-                        </linearGradient>
-                    </defs>
-                    
-                    <!-- Horizontal Background Grids -->
-                    <line x1="0" y1="45" x2="500" y2="45" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                    <line x1="0" y1="90" x2="500" y2="90" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                    <line x1="0" y1="135" x2="500" y2="135" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-                    
-                    <!-- Glow Fill Area under the curve -->
-                    <path d="M 0,180 L 0,160 Q 75,145 150,110 T 300,75 T 450,25 L 500,15 L 500,180 Z" fill="url(#g-trend-glow)" />
-                    
-                    <!-- Curved Line path -->
-                    <path d="M 0,160 Q 75,145 150,110 T 300,75 T 450,25 L 500,15" fill="none" stroke="var(--primary-accent)" stroke-width="3" stroke-linecap="round" style="filter: drop-shadow(0 4px 10px rgba(6,182,212,0.3));" />
-                    
-                    <!-- Breathtaking Neon Markers -->
-                    <circle cx="150" cy="110" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
-                    <circle cx="300" cy="75" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
-                    <circle cx="450" cy="25" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
-                    <circle cx="500" cy="15" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
-                </svg>
-            </div>
-            
-            <div class="trend-labels-x">
-                <span>22 Apr</span>
-                <span>29 Apr</span>
-                <span>06 May</span>
-                <span>13 May</span>
-                <span>20 May</span>
-                <span>22 May</span>
+            <div class="trend-chart-container">
+                <div class="trend-svg-wrapper">
+                    <svg class="trend-svg" viewBox="0 0 500 180">
+                        <defs>
+                            <linearGradient id="g-trend-glow" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="var(--primary-accent)" stop-opacity="0.3"/>
+                                <stop offset="100%" stop-color="var(--primary-accent)" stop-opacity="0.0"/>
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Horizontal Background Grids -->
+                        <line x1="0" y1="45" x2="500" y2="45" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                        <line x1="0" y1="90" x2="500" y2="90" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                        <line x1="0" y1="135" x2="500" y2="135" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+                        
+                        <!-- Glow Fill Area under the curve -->
+                        <path d="M 10,180 L 10,160 Q 82,145 154,110 T 298,75 T 442,25 L 490,15 L 490,180 Z" fill="url(#g-trend-glow)" />
+                        
+                        <!-- Curved Line path -->
+                        <path d="M 10,160 Q 82,145 154,110 T 298,75 T 442,25 L 490,15" fill="none" stroke="var(--primary-accent)" stroke-width="3" stroke-linecap="round" style="filter: drop-shadow(0 4px 10px rgba(6,182,212,0.3));" />
+                        
+                        <!-- Breathtaking Neon Markers -->
+                        <circle cx="154" cy="110" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                        <circle cx="298" cy="75" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                        <circle cx="442" cy="25" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                        <circle cx="490" cy="15" r="4.5" fill="#fff" stroke="var(--primary-accent)" stroke-width="2.5" />
+                    </svg>
+                </div>
+                
+                <div class="trend-labels-x">
+                    <span>22 Apr</span>
+                    <span>29 Apr</span>
+                    <span>06 May</span>
+                    <span>13 May</span>
+                    <span>20 May</span>
+                    <span>22 May</span>
+                </div>
             </div>
         </div>
     </div>

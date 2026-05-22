@@ -185,9 +185,22 @@
     /* Glass Console Grid Hub */
     .console-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
         margin-top: 10px;
+    }
+    @media (min-width: 1921px) {
+        .content-container {
+            max-width: 1800px !important;
+        }
+        .console-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    @media (max-width: 1200px) {
+        .console-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
     .console-card {
         background: rgba(30, 41, 59, 0.3);

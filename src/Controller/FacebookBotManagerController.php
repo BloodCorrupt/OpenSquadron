@@ -542,11 +542,14 @@ class FacebookBotManagerController extends AbstractController
         $file = $dir . "/conn_{$connectionId}.json";
         $posts = [];
 
-        if (file_exists($file)) {
+        $cacheExists = file_exists($file);
+        if ($cacheExists) {
             $posts = json_decode(file_get_contents($file), true) ?: [];
         }
 
-        if ($refresh) {
+        $needsRefresh = !$cacheExists || empty($posts) || (time() - filemtime($file) > 300);
+
+        if ($refresh || $needsRefresh) {
             $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
             if ($connection) {
                 try {

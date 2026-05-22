@@ -471,6 +471,8 @@
                 cursor: pointer;
                 position: relative;
                 transition: all 0.3s ease;
+                flex-shrink: 0;
+                aspect-ratio: 1 / 1;
             }
             .bell-btn:hover {
                 background: rgba(251, 191, 36, 0.12);
@@ -492,6 +494,10 @@
                 align-items: center;
                 justify-content: center;
                 border: 1px solid #1e293b;
+                flex-shrink: 0;
+                aspect-ratio: 1 / 1;
+                padding: 0;
+                line-height: 1;
             }
 
             /* User Profile Dropdown Styles */
@@ -512,6 +518,9 @@
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 outline: none;
                 position: relative;
+                flex-shrink: 0;
+                aspect-ratio: 1 / 1;
+                padding: 0 !important;
             }
             .avatar-btn:hover {
                 background: rgba(255, 255, 255, 0.08);
@@ -530,6 +539,10 @@
                 color: #67e8f9;
                 font-weight: 700;
                 font-size: 14px;
+                flex-shrink: 0;
+                aspect-ratio: 1 / 1;
+                padding: 0;
+                box-sizing: border-box;
             }
             .avatar-preset-purple {
                 background: linear-gradient(135deg, #a855f7, #6366f1) !important;

@@ -152,9 +152,22 @@
     /* Glass Console Grid Hub */
     .console-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
         margin-top: 10px;
+    }
+    @media (min-width: 1921px) {
+        .content-container {
+            max-width: 1800px !important;
+        }
+        .console-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    @media (max-width: 1200px) {
+        .console-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
     .console-card {
         background: rgba(30, 41, 59, 0.3);
@@ -1099,6 +1112,11 @@
     .mpc-page-item:hover {
         background: rgba(255,255,255,0.04);
     }
+    .mpc-page-item.is-active {
+        background: rgba(6, 182, 212, 0.12) !important;
+        color: var(--primary-accent) !important;
+        font-weight: 600;
+    }
     .mpc-page-item input[type="checkbox"] {
         accent-color: var(--primary-accent);
         width: 16px;
@@ -1588,6 +1606,30 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* ═══════════ Post Manager Layout Styles ═══════════ */
+    .post-manager-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 0;
+        min-height: 520px;
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.25);
+    }
+    @media (max-width: 1100px) {
+        .post-manager-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    .post-manager-main-col {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+    }
     
     .comment-middle-col {
         background: rgba(15, 23, 42, 0.15);
@@ -1913,6 +1955,7 @@
 
     /* Scoped box-sizing reset for Comment Automation and Modals */
     .comment-auto-layout *, 
+    .post-manager-layout *,
     .modal-overlay *, 
     .modal-card * {
         box-sizing: border-box !important;
@@ -1950,6 +1993,7 @@
     .comment-right-col,
     .mpc-sidebar,
     .comment-auto-layout,
+    .post-manager-layout,
     .modal-body,
     .modal-card,
     .modal-overlay {
@@ -3626,52 +3670,80 @@
 
         <!-- Post Manager Tab -->
         <div id="poster-content-manage" class="poster-tab-content">
-            <!-- Toolbar for search & refresh -->
-            <div class="toolbar-row" style="margin-bottom: 20px;">
-                <div class="toolbar-left">
-                    <div class="toolbar-search">
-                        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="post-manager-search" placeholder="Search posts by text..." oninput="filterManagerPosts()">
+            <div class="post-manager-layout">
+                {# Left Column: Page list sidebar #}
+                <div class="mpc-sidebar">
+                    <div style="font-weight: 700; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Pages</div>
+                    <input type="text" class="mpc-sidebar-search" placeholder="Search..." id="post-manager-page-search" oninput="filterPostManagerPages()">
+                    <div class="mpc-page-list" id="post-manager-page-list" style="margin-top: 8px;">
+                        {% if connections is not empty %}
+                            {% for conn in connections %}
+                            <div class="mpc-page-item {% if connection and connection.id == conn.id %}is-active{% endif %}" onclick="selectPostManagerConnection('{{ conn.id }}')" style="cursor: pointer; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; margin-bottom: 4px;" data-page-name="{{ conn.pageName|default('Page')|lower }}">
+                                <div class="mpc-page-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">
+                                    {{ conn.pageName|default('P')|slice(0,1)|upper }}
+                                </div>
+                                <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <span class="mpc-page-name" style="font-weight: 600; font-size: 13px; color: var(--text-main);">{{ conn.pageName ?: conn.label ?: 'Page #' ~ conn.id }}</span>
+                                    <span style="font-size: 10px; color: var(--text-muted);">{{ conn.pageId }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">No pages found</div>
+                        {% endif %}
                     </div>
                 </div>
-                <div>
-                    <button class="btn-action btn-secondary" id="btn-refresh-posts" onclick="loadRecentPosts(true)">
-                        <svg id="refresh-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:6px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-                        <span id="refresh-btn-text">Refresh Posts</span>
-                    </button>
-                </div>
-            </div>
 
-            <!-- Posts List Table -->
-            <div class="table-container">
-                <table class="custom-table" id="posts-manager-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 45%;">Post Content</th>
-                            <th style="width: 12%;">Type</th>
-                            <th style="width: 15%;">Engagement</th>
-                            <th style="width: 13%;">Created At</th>
-                            <th style="width: 10%;">Status</th>
-                            <th style="width: 5%;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="posts-manager-tbody">
-                        <tr>
-                            <td colspan="6" class="no-data-row">Loading posts...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                {# Right Column: Post manager content #}
+                <div class="post-manager-main-col">
+                    <!-- Toolbar for search & refresh -->
+                    <div class="toolbar-row" style="margin-bottom: 20px;">
+                        <div class="toolbar-left">
+                            <div class="toolbar-search">
+                                <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" id="post-manager-search" placeholder="Search posts by text..." oninput="filterManagerPosts()">
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn-action btn-secondary" id="btn-refresh-posts" onclick="loadRecentPosts(true)">
+                                <svg id="refresh-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:6px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                                <span id="refresh-btn-text">Refresh Posts</span>
+                            </button>
+                        </div>
+                    </div>
 
-            <!-- Pagination Row -->
-            <div class="pagination-row" id="posts-pagination-row" style="display:none;">
-                <div class="pagination-info" id="posts-pagination-info">
-                    Showing 0-0 of 0 posts
-                </div>
-                <div class="pagination-controls">
-                    <button class="pagination-btn" id="posts-btn-prev" onclick="changePostsPage(-1)" disabled>Previous</button>
-                    <span class="pagination-info" id="posts-page-num">Page 1 of 1</span>
-                    <button class="pagination-btn" id="posts-btn-next" onclick="changePostsPage(1)" disabled>Next</button>
+                    <!-- Posts List Table -->
+                    <div class="table-container">
+                        <table class="custom-table" id="posts-manager-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 45%;">Post Content</th>
+                                    <th style="width: 12%;">Type</th>
+                                    <th style="width: 15%;">Engagement</th>
+                                    <th style="width: 13%;">Created At</th>
+                                    <th style="width: 10%;">Status</th>
+                                    <th style="width: 5%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="posts-manager-tbody">
+                                <tr>
+                                    <td colspan="6" class="no-data-row">Loading posts...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Row -->
+                    <div class="pagination-row" id="posts-pagination-row" style="display:none; margin-top: auto; padding-top: 15px;">
+                        <div class="pagination-info" id="posts-pagination-info">
+                            Showing 0-0 of 0 posts
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="pagination-btn" id="posts-btn-prev" onclick="changePostsPage(-1)" disabled>Previous</button>
+                            <span class="pagination-info" id="posts-page-num">Page 1 of 1</span>
+                            <button class="pagination-btn" id="posts-btn-next" onclick="changePostsPage(1)" disabled>Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4123,13 +4195,21 @@
     let currentEditingPostId = null;
 
     function selectCommentAutomationConnection(connId) {
-        // Remove active class from all items, add to the clicked one
+        // Sync comment automation page list active class
         document.querySelectorAll('#comment-bot-list .mpc-page-item').forEach(el => {
             el.classList.remove('is-active');
         });
-        
-        // Find the element by checking its onclick attribute contains the connection ID
         document.querySelectorAll('#comment-bot-list .mpc-page-item').forEach(el => {
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(connId)) {
+                el.classList.add('is-active');
+            }
+        });
+
+        // Sync post manager page list active class
+        document.querySelectorAll('#post-manager-page-list .mpc-page-item').forEach(el => {
+            el.classList.remove('is-active');
+        });
+        document.querySelectorAll('#post-manager-page-list .mpc-page-item').forEach(el => {
             if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(connId)) {
                 el.classList.add('is-active');
             }
@@ -4137,6 +4217,24 @@
 
         // Set active connection ID
         activeConnectionId = connId;
+
+        // Update main page connection selector dropdown to match
+        const mainSelector = document.getElementById('facebook-conn-selector');
+        if (mainSelector) {
+            mainSelector.value = connId;
+        }
+
+        // Sync the checkboxes in Posting Panel sidebar: check the active one, uncheck others
+        const checkboxes = document.querySelectorAll('input[name="mpc_pages[]"]');
+        checkboxes.forEach(cb => {
+            cb.checked = (cb.value == connId);
+        });
+
+        // Clear cached posts so we don't display posts from the previous page
+        managerPosts = [];
+        filteredPosts = [];
+        commentPosts = [];
+        filteredCommentPosts = [];
 
         // Update the browser URL without reload
         const url = new URL(window.location);
@@ -5764,6 +5862,94 @@
         window.location.href = url.toString();
     }
 
+    function selectPostManagerConnection(connId) {
+        // Sync post manager page list active class
+        document.querySelectorAll('#post-manager-page-list .mpc-page-item').forEach(el => {
+            el.classList.remove('is-active');
+        });
+        document.querySelectorAll('#post-manager-page-list .mpc-page-item').forEach(el => {
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(connId)) {
+                el.classList.add('is-active');
+            }
+        });
+
+        // Sync comment automation page list active class
+        document.querySelectorAll('#comment-bot-list .mpc-page-item').forEach(el => {
+            el.classList.remove('is-active');
+        });
+        document.querySelectorAll('#comment-bot-list .mpc-page-item').forEach(el => {
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(connId)) {
+                el.classList.add('is-active');
+            }
+        });
+
+        // Set active connection ID
+        activeConnectionId = connId;
+
+        // Update main page connection selector dropdown to match
+        const mainSelector = document.getElementById('facebook-conn-selector');
+        if (mainSelector) {
+            mainSelector.value = connId;
+        }
+
+        // Sync the checkboxes in Posting Panel sidebar: check the active one, uncheck others
+        const checkboxes = document.querySelectorAll('input[name="mpc_pages[]"]');
+        checkboxes.forEach(cb => {
+            cb.checked = (cb.value == connId);
+        });
+
+        // Clear cached posts so we don't display posts from the previous page
+        managerPosts = [];
+        filteredPosts = [];
+        commentPosts = [];
+        filteredCommentPosts = [];
+
+        // Update the browser URL without reload
+        const url = new URL(window.location);
+        url.searchParams.set('connectionId', connId);
+        window.history.replaceState({}, '', url);
+
+        // Load recent posts
+        loadRecentPosts(false);
+
+        // Fetch connection details via AJAX in the background to keep state synchronized
+        fetch(`/facebook-bot-manager/get-connection-details?connectionId=${connId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update the connection title
+                const nameHeader = document.getElementById('comment-active-page-name');
+                if (nameHeader) {
+                    nameHeader.textContent = data.connection.pageName;
+                }
+
+                // Update flows dropdown options inside the modal
+                rebuildFlowDropdowns(data.flows);
+
+                // Update settings
+                pageCommentSettings = data.commentSettings;
+
+                // Update Full Page Campaign UI
+                updateFullPageCampaignUI();
+            }
+        })
+        .catch(err => {
+            console.error('Error switching page connection:', err);
+        });
+    }
+
+    function filterPostManagerPages() {
+        const query = document.getElementById('post-manager-page-search').value.toLowerCase().trim();
+        document.querySelectorAll('#post-manager-page-list .mpc-page-item').forEach(el => {
+            const name = el.getAttribute('data-page-name') || '';
+            if (name.includes(query)) {
+                el.style.display = 'flex';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+    }
+
     // ═══════════ Social Posting Post Manager Logic ═══════════
     let managerPosts = [];
     let filteredPosts = [];
@@ -5800,6 +5986,11 @@
             if (paneCommentAuto) paneCommentAuto.classList.add('is-active');
             loadCommentAutomationTab(true);
         }
+
+        // Save selected sub-tab state to URL
+        const url = new URL(window.location);
+        url.searchParams.set('subtab', subTabId);
+        window.history.replaceState({}, '', url);
     }
 
     function loadRecentPosts(refresh = false) {
@@ -6164,13 +6355,9 @@
             updateGreetingPreview();
         } else if (tabId === 'facebook-poster') {
             updateMpcPreview();
-            const isManageActive = document.getElementById('poster-tab-btn-manage') && document.getElementById('poster-tab-btn-manage').classList.contains('is-active');
-            const isCommentAutoActive = document.getElementById('poster-tab-btn-comment-automation') && document.getElementById('poster-tab-btn-comment-automation').classList.contains('is-active');
-            if (isManageActive) {
-                loadRecentPosts(true);
-            } else if (isCommentAutoActive) {
-                loadCommentAutomationTab(true);
-            }
+            const params = new URLSearchParams(window.location.search);
+            const subtab = params.get('subtab') || 'create';
+            switchPosterTab(subtab);
         }
 
         // Save selected tab state to URL

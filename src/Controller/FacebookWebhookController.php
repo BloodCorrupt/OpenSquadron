@@ -185,6 +185,12 @@ class FacebookWebhookController extends AbstractController
                                 $subscriber->setName($profileName);
                             }
                             $this->entityManager->persist($subscriber);
+                        } elseif (!$subscriber->getName() || $subscriber->getName() === $senderPsid) {
+                            // Subscriber exists but has no name — retry profile lookup
+                            $profileName = $this->fetchUserProfile($senderPsid, $resolvedConnection);
+                            if ($profileName) {
+                                $subscriber->setName($profileName);
+                            }
                         }
 
                         $msg = new Message();
@@ -312,6 +318,18 @@ class FacebookWebhookController extends AbstractController
 
         if (!$commentId || !$postId) {
             return;
+        }
+
+        // If the subscriber already exists but has no name or their name is their PSID, update it from this comment webhook
+        if ($senderId && !empty($senderName)) {
+            $existingSubscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
+                'psid' => $senderId,
+                'facebookConnection' => $connection,
+            ]);
+            if ($existingSubscriber && (!$existingSubscriber->getName() || $existingSubscriber->getName() === $senderId)) {
+                $existingSubscriber->setName($senderName);
+                $this->entityManager->flush();
+            }
         }
 
         // 1. Fetch settings (post-specific first, then page-specific, fallback to defaults)
@@ -608,6 +626,10 @@ class FacebookWebhookController extends AbstractController
 
             $this->entityManager->persist($subscriber);
             $this->entityManager->flush();
+        } elseif (!empty($senderName) && (!$subscriber->getName() || $subscriber->getName() === $psid)) {
+            // Update name on existing subscribers that are still unnamed
+            $subscriber->setName($senderName);
+            $this->entityManager->flush();
         }
 
         return $subscriber;
@@ -626,7 +648,7 @@ class FacebookWebhookController extends AbstractController
             $accessToken = $this->facebookService->decryptToken($connection->getEncryptedPageAccessToken());
             $response = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$psid}", [
                 'query' => [
-                    'fields' => 'first_name,last_name',
+                    'fields' => 'first_name,last_name,name',
                     'access_token' => $accessToken,
                 ],
             ]);
@@ -635,12 +657,12 @@ class FacebookWebhookController extends AbstractController
                 $data = $response->toArray();
                 $firstName = $data['first_name'] ?? '';
                 $lastName = $data['last_name'] ?? '';
-                return trim("{$firstName} {$lastName}") ?: null;
+                $fullName = trim("{$firstName} {$lastName}");
+                // Fallback to 'name' field if first/last are empty
+                return $fullName ?: ($data['name'] ?? null);
             }
         } catch (\Exception $e) {
-            // Log warning but keep going — name is optional
-            $projectDir = $this->getParameter('kernel.project_dir');
-            file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error fetching user profile for PSID " . $psid . ": " . $e->getMessage() . PHP_EOL, FILE_APPEND);
+            // Profile lookup can fail for some PSIDs — this is expected
         }
 
         return null;
