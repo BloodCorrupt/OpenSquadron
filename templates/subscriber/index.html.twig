@@ -403,6 +403,13 @@
 <div class="manager-shell">
     {# ───────── Left Sidebar ───────── #}
     <div class="manager-nav">
+        <div class="sidebar-mobile-toggle">
+            <span>
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke-width: 2.5;"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                Menu Options
+            </span>
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
         {# Channel Tab Selector #}
         <div style="display: flex; gap: 4px; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 10px; border: 1px solid var(--glass-border);">
             <button onclick="changeChannel('whatsapp')" class="btn-action" style="flex: 1; justify-content: center; padding: 6px 12px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; transition: all 0.2s; background: {% if channel == 'whatsapp' %}rgba(6, 182, 212, 0.15){% else %}transparent{% endif %}; color: {% if channel == 'whatsapp' %}#fff{% else %}var(--text-muted){% endif %}; font-weight: {% if channel == 'whatsapp' %}700{% else %}600{% endif %}; gap: 4px;">

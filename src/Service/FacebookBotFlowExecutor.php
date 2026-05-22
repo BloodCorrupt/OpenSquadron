@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\FacebookBotFlow;
 use App\Entity\Message;
 use App\Entity\Subscriber;
+use App\Service\HttpApiExecutorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -22,12 +23,13 @@ class FacebookBotFlowExecutor
     public function __construct(
         private FacebookService $facebook,
         private EntityManagerInterface $em,
+        private HttpApiExecutorService $apiExecutor,
         private ?LoggerInterface $logger = null
     ) {
         $this->logger ??= new NullLogger();
     }
 
-    public function execute(FacebookBotFlow $flow, Subscriber $subscriber): void
+    public function execute(FacebookBotFlow $flow, Subscriber $subscriber, ?string $startNodeId = null): void
     {
         $data = $flow->getFlowData();
         $connection = $flow->getFacebookConnection();
@@ -36,13 +38,13 @@ class FacebookBotFlowExecutor
             return;
         }
 
-        $this->runGraph($data, $subscriber, $connection);
+        $this->runGraph($flow, $data, $subscriber, $connection, $startNodeId);
     }
 
     /**
      * @param array{format:string, nodes?:array, edges?:array} $graph
      */
-    private function runGraph(array $graph, Subscriber $subscriber, ?\App\Entity\FacebookConnection $connection = null): void
+    private function runGraph(FacebookBotFlow $flow, array $graph, Subscriber $subscriber, ?\App\Entity\FacebookConnection $connection = null, ?string $startNodeId = null): void
     {
         $nodes = [];
         foreach (($graph['nodes'] ?? []) as $node) {
@@ -67,24 +69,27 @@ class FacebookBotFlowExecutor
             ];
         }
 
-        $startId = null;
-        foreach ($nodes as $id => $node) {
-            if (($node['type'] ?? '') === 'start') {
-                $startId = $id;
-                break;
-            }
-        }
+        // Find the start node. Prefer startNodeId if supplied, otherwise find 'start' type or root.
+        $startId = $startNodeId;
         if ($startId === null) {
-            $incoming = [];
-            foreach (($graph['edges'] ?? []) as $edge) {
-                if (isset($edge['target'])) {
-                    $incoming[$edge['target']] = true;
-                }
-            }
-            foreach ($nodes as $id => $_node) {
-                if (!isset($incoming[$id])) {
+            foreach ($nodes as $id => $node) {
+                if (($node['type'] ?? '') === 'start') {
                     $startId = $id;
                     break;
+                }
+            }
+            if ($startId === null) {
+                $incoming = [];
+                foreach (($graph['edges'] ?? []) as $edge) {
+                    if (isset($edge['target'])) {
+                        $incoming[$edge['target']] = true;
+                    }
+                }
+                foreach ($nodes as $id => $_node) {
+                    if (!isset($incoming[$id])) {
+                        $startId = $id;
+                        break;
+                    }
                 }
             }
         }
@@ -105,6 +110,28 @@ class FacebookBotFlowExecutor
 
             $node = $nodes[$current] ?? null;
             if (!$node) {
+                break;
+            }
+
+            // Handle user_input node differently to pause execution
+            if (($node['type'] ?? '') === 'user_input') {
+                $varName = trim((string)($node['data']['variable'] ?? ''));
+                $question = trim((string)($node['data']['question'] ?? $node['data']['text'] ?? ''));
+                $psid = (string)$subscriber->getPsid();
+                if ($varName !== '' && $question !== '' && !empty($psid)) {
+                    $response = $this->facebook->sendMessage($psid, $question, $connection);
+                    $this->logOutbound($subscriber, 'text', $question, null, $response);
+
+                    // Save waiting state
+                    $subscriber->setCustomAttributes(array_merge($subscriber->getCustomAttributes(), [
+                        '_waiting_for_input' => $varName,
+                        '_waiting_node_id' => $current,
+                        '_waiting_flow_id' => $flow->getId(),
+                        '_waiting_flow_type' => 'facebook'
+                    ]));
+                    $this->em->flush();
+                }
+                // Pause and halt execution
                 break;
             }
 
@@ -170,6 +197,18 @@ class FacebookBotFlowExecutor
                     $seconds = (int)($action['seconds'] ?? 0);
                     if ($seconds > 0) {
                         sleep(min($seconds, self::MAX_DELAY_SECONDS));
+                    }
+                    return;
+
+                case 'call_http_api':
+                case 'http_api':
+                    $apiId = (int)($action['apiId'] ?? ($action['api_id'] ?? 0));
+                    if ($apiId <= 0) {
+                        return;
+                    }
+                    $httpApi = $this->em->getRepository(\App\Entity\HttpApi::class)->find($apiId);
+                    if ($httpApi && $httpApi->getStatus() === 'active') {
+                        $this->apiExecutor->execute($httpApi, $subscriber);
                     }
                     return;
 

@@ -10,7 +10,7 @@
         padding: 0 !important;
         max-width: 100% !important;
         margin: 0 !important;
-        height: calc(100vh - 70px) !important;
+        height: 100% !important;
         overflow: hidden !important;
     }
     
@@ -163,6 +163,13 @@
         box-shadow: 0 0 12px rgba(6, 182, 212, 0.2) !important;
     }
     
+    .sidebar-input-wrapper .custom-glass-select-trigger {
+        padding-left: 38px !important;
+    }
+    .sidebar-input-wrapper .right-icon {
+        display: none !important;
+    }
+    
     .sidebar-input-wrapper:focus-within svg.left-icon {
         stroke: var(--primary-accent);
     }
@@ -238,13 +245,17 @@
     }
     
     .chat-input-area {
-        padding: 20px 24px;
+        padding: 16px 20px;
         background: rgba(15, 23, 42, 0.5) !important;
         border-top: 1px solid var(--glass-border);
         display: flex;
-        gap: 15px;
+        gap: 12px;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+        box-sizing: border-box;
+    }
+    .chat-input-area * {
+        box-sizing: border-box;
     }
     
     .chat-input {
@@ -267,8 +278,8 @@
         color: var(--text-muted);
         border: 1px solid var(--glass-border);
         border-radius: 50%;
-        width: 50px;
-        height: 50px;
+        width: 44px;
+        height: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -286,8 +297,8 @@
         color: white;
         border: none;
         border-radius: 50%;
-        width: 50px;
-        height: 50px;
+        width: 44px;
+        height: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -500,19 +511,128 @@
         white-space: pre-wrap;
         line-height: 1.4;
     }
-    @keyframes pulse-timer {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.85; transform: scale(0.97); }
-    }
-    @keyframes spin-timer {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+    
+    @media (max-width: 768px) {
+        .inbox-sidebar {
+            width: 100% !important;
+            border-right: none !important;
+        }
+        .inbox-main {
+            width: 100% !important;
+            display: none !important;
+            min-width: 0 !important;
+        }
+        .inbox-container.mobile-chat-active .inbox-sidebar {
+            display: none !important;
+        }
+        .inbox-container.mobile-chat-active .inbox-main {
+            display: flex !important;
+        }
+        
+        .mobile-back-btn {
+            display: flex !important;
+            margin-right: 2px !important;
+            padding: 2px !important;
+        }
+        .mobile-info-btn {
+            display: flex !important;
+            margin-left: 0 !important; /* Let it sit right next to the timer */
+            padding: 4px !important;
+            flex-shrink: 0 !important;
+        }
+        
+        .inbox-right-sidebar {
+            position: fixed !important;
+            top: 56px !important;
+            bottom: 0 !important;
+            right: -320px !important;
+            width: 300px !important;
+            height: auto !important;
+            z-index: 1050 !important;
+            transition: right 0.3s ease-in-out !important;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.5) !important;
+            border-left: 1px solid var(--glass-border) !important;
+            display: flex !important;
+        }
+        .inbox-right-sidebar.is-open {
+            right: 0 !important;
+        }
+        
+        .mobile-sidebar-close-row {
+            display: flex !important;
+        }
+
+        /* Responsive chat header adjustments */
+        .chat-header {
+            padding: 10px 12px !important;
+            gap: 8px !important;
+        }
+        .chat-header #chat-header-avatar {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 14px !important;
+        }
+        .chat-header #chat-header-name {
+            font-size: 14px !important;
+        }
+        .chat-header #chat-header-phone {
+            font-size: 11px !important;
+        }
+        .chat-header #chat-window-timer {
+            padding: 3px 6px !important;
+            gap: 4px !important;
+            font-size: 10px !important;
+            margin-left: auto !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+        .chat-header #chat-window-timer-text {
+            white-space: nowrap !important;
+        }
+        .chat-header #chat-window-timer svg {
+            width: 12px !important;
+            height: 12px !important;
+        }
+        .chat-header .badge-text {
+            display: none !important;
+        }
+        .chat-header .channel-badge-pill {
+            padding: 2px 4px !important;
+            gap: 0 !important;
+        }
+
+        /* Responsive chat input area and button adjustments to fix spacing & overflow */
+        .chat-input-area {
+            padding: 10px 10px !important;
+            gap: 6px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+        .chat-input-area .attachment-btn,
+        .chat-input-area .send-btn {
+            width: 36px !important;
+            height: 36px !important;
+            flex-shrink: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .chat-input-area .attachment-btn svg,
+        .chat-input-area .send-btn svg {
+            width: 18px !important;
+            height: 18px !important;
+        }
+        .chat-input-area .chat-input {
+            padding: 8px 14px !important;
+            font-size: 14px !important;
+            min-width: 0 !important; /* Allow the input to shrink below default browser sizes */
+        }
     }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="inbox-container">
+<div class="inbox-container {% if activeSubscriber %}mobile-chat-active{% endif %}">
     <!-- Sidebar -->
     <div class="inbox-sidebar">
         <div class="inbox-header" style="border-bottom: none;">
@@ -610,27 +730,31 @@
 
         <div id="chat-container" style="{% if activeSubscriber %}display: flex;{% else %}display: none;{% endif %} flex-direction: column; height: 100%; width: 100%;">
             <div class="chat-header">
-                <div id="chat-header-avatar" style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);">
+                <!-- Mobile Back Button -->
+                <button class="mobile-back-btn" onclick="goBackToList()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; padding: 4px; margin-right: 8px; align-items: center; justify-content: center; outline: none; -webkit-tap-highlight-color: transparent;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+                <div id="chat-header-avatar" style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3); flex-shrink: 0;">
                     {{ activeSubscriber ? (activeSubscriber.name ? activeSubscriber.name|slice(0, 1)|upper : '#') : '' }}
                 </div>
-                <div style="display: flex; flex-direction: column; justify-content: center; height: 44px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div id="chat-header-name" style="font-weight: 700; color: #fff; font-size: 16px; line-height: 1.2;">{{ activeSubscriber ? (activeSubscriber.name ?: (activeSubscriber.channel == 'facebook' ? 'PSID: ' ~ activeSubscriber.psid : activeSubscriber.phoneNumber)) : '' }}</div>
-                        <div id="chat-header-badge" style="display: {% if activeSubscriber %}inline-flex{% else %}none{% endif %};">
+                <div style="display: flex; flex-direction: column; justify-content: center; height: 44px; flex: 1; min-width: 0; margin-right: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                        <div id="chat-header-name" style="font-weight: 700; color: #fff; font-size: 16px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">{{ activeSubscriber ? (activeSubscriber.name ?: (activeSubscriber.channel == 'facebook' ? 'PSID: ' ~ activeSubscriber.psid : activeSubscriber.phoneNumber)) : '' }}</div>
+                        <div id="chat-header-badge" style="display: {% if activeSubscriber %}inline-flex{% else %}none{% endif %}; min-width: 0; flex-shrink: 0;">
                             {% if activeSubscriber and activeSubscriber.channel == 'facebook' %}
-                                <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); flex-shrink: 0;">
+                                <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); flex-shrink: 0;">
                                     <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                                    Facebook (Beta)
+                                    <span class="badge-text">Facebook (Beta)</span>
                                 </span>
                             {% elseif activeSubscriber %}
-                                <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0;">
+                                <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0;">
                                     <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                                    WhatsApp
+                                    <span class="badge-text">WhatsApp</span>
                                 </span>
                             {% endif %}
                         </div>
                     </div>
-                    <div id="chat-header-phone" style="font-size: 13px; color: var(--primary-accent); line-height: 1.2; margin-top: 2px;">{{ activeSubscriber ? (activeSubscriber.phoneNumber ?: activeSubscriber.psid) : '' }}</div>
+                    <div id="chat-header-phone" style="font-size: 13px; color: var(--primary-accent); line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ activeSubscriber ? (activeSubscriber.phoneNumber ?: activeSubscriber.psid) : '' }}</div>
                 </div>
                 
                 <!-- 24h Countdown Timer Pill -->
@@ -638,6 +762,11 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin-timer 10s infinite linear; flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     <span id="chat-window-timer-text">24h 00m 00s</span>
                 </div>
+                
+                <!-- Mobile Info Toggle Button -->
+                <button class="mobile-info-btn" onclick="toggleRightSidebar()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; padding: 4px; align-items: center; justify-content: center; outline: none; -webkit-tap-highlight-color: transparent;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-accent);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
             </div>
             
             <div class="chat-messages" id="chat-messages">
@@ -670,7 +799,7 @@
             </div>
 
             <div class="chat-input-area">
-                <button class="attachment-btn" onclick="openTemplateModal()" title="Send Template" style="margin-right: 10px;">
+                <button class="attachment-btn" onclick="openTemplateModal()" title="Send Template">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </button>
                 <input type="file" id="media-upload" accept="image/*,audio/*" style="display: none;" onchange="handleFileSelect(this)">
@@ -691,6 +820,12 @@
     
     <!-- Right Sidebar -->
     <div class="inbox-right-sidebar" id="inbox-right-sidebar" style="{% if activeSubscriber %}display: flex;{% else %}display: none;{% endif %}">
+        <!-- Mobile Sidebar Close Row -->
+        <div class="mobile-sidebar-close-row" style="display: none; justify-content: flex-end; width: 100%;">
+            <button onclick="toggleRightSidebar()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; outline: none;">
+                Close &times;
+            </button>
+        </div>
         <!-- Section 1: Contact Profile Header -->
         <div class="sidebar-section">
             <div class="sidebar-section-title">
@@ -923,6 +1058,12 @@
         document.getElementById('empty-state').style.display = 'none';
         document.getElementById('chat-container').style.display = 'flex';
         document.getElementById('inbox-right-sidebar').style.display = 'flex';
+        
+        // Add mobile active class to container
+        const container = document.querySelector('.inbox-container');
+        if (container) {
+            container.classList.add('mobile-chat-active');
+        }
         
         // Hide badge temporarily until loaded
         const badgeEl = document.getElementById('chat-header-badge');
@@ -1384,16 +1525,16 @@
                 headerBadgeContainer.style.display = 'inline-flex';
                 if (sub.channel === 'facebook') {
                     headerBadgeContainer.innerHTML = `
-                        <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); flex-shrink: 0;">
+                        <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); flex-shrink: 0;">
                             <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                            Facebook (Beta)
+                            <span class="badge-text">Facebook (Beta)</span>
                         </span>
                     `;
                 } else {
                     headerBadgeContainer.innerHTML = `
-                        <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0;">
+                        <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0;">
                             <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            WhatsApp
+                            <span class="badge-text">WhatsApp</span>
                         </span>
                     `;
                 }
@@ -1718,6 +1859,40 @@
         if (!str) return '';
         return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
     }
+
+    function goBackToList() {
+        const container = document.querySelector('.inbox-container');
+        if (container) {
+            container.classList.remove('mobile-chat-active');
+        }
+        activeSubscriberId = null;
+        window.history.pushState(null, '', '/inbox');
+        
+        const rightSidebar = document.getElementById('inbox-right-sidebar');
+        if (rightSidebar) {
+            rightSidebar.classList.remove('is-open');
+        }
+    }
+
+    function toggleRightSidebar() {
+        const rightSidebar = document.getElementById('inbox-right-sidebar');
+        if (rightSidebar) {
+            rightSidebar.classList.toggle('is-open');
+        }
+    }
+
+    // Close right sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            const rightSidebar = document.getElementById('inbox-right-sidebar');
+            const infoBtn = e.target.closest('.mobile-info-btn');
+            if (rightSidebar && rightSidebar.classList.contains('is-open')) {
+                if (!rightSidebar.contains(e.target) && !infoBtn) {
+                    rightSidebar.classList.remove('is-open');
+                }
+            }
+        }
+    });
 
     // High frequency synchronization
     setInterval(function() {

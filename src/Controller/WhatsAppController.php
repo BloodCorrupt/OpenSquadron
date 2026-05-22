@@ -177,9 +177,51 @@ class WhatsAppController extends AbstractController
                             
                             $this->entityManager->persist($msg);
                             
-                            // Check for Automations (Bot Flows). The first
-                            // active flow whose keyword/match-mode matches wins.
+                            // Check for Automations (Bot Flows) or waiting state interception.
+                            $isResumed = false;
+                            
                             if ($msgType === 'text' && $msgBody !== '') {
+                                $attrs = $subscriber->getCustomAttributes();
+                                $waitingForInput = $attrs['_waiting_for_input'] ?? null;
+                                $waitingNodeId = $attrs['_waiting_node_id'] ?? null;
+                                $waitingFlowId = $attrs['_waiting_flow_id'] ?? null;
+                                $waitingFlowType = $attrs['_waiting_flow_type'] ?? null;
+
+                                if (!empty($waitingForInput) && $waitingFlowType === 'whatsapp' && !empty($waitingFlowId)) {
+                                    // Save incoming response text in custom attributes under custom field key
+                                    $attrs[$waitingForInput] = $msgBody;
+                                    
+                                    // Clear waiting state keys
+                                    unset($attrs['_waiting_for_input'], $attrs['_waiting_node_id'], $attrs['_waiting_flow_id'], $attrs['_waiting_flow_type']);
+                                    $subscriber->setCustomAttributes($attrs);
+                                    $this->entityManager->flush();
+
+                                    // Find flow
+                                    $flow = $this->entityManager->getRepository(\App\Entity\WhatsappBotFlow::class)->find($waitingFlowId);
+                                    if ($flow && $flow->isActive()) {
+                                        $nextNodeId = null;
+                                        $flowData = $flow->getFlowData();
+                                        if (isset($flowData['format']) && $flowData['format'] === 'graph' && isset($flowData['edges'])) {
+                                            foreach ($flowData['edges'] as $edge) {
+                                                if (($edge['source'] ?? null) === $waitingNodeId && ($edge['sourceHandle'] ?? 'out') === 'out') {
+                                                    $nextNodeId = $edge['target'] ?? null;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if ($nextNodeId) {
+                                            // Resume flow execution starting from the next node
+                                            $this->WhatsappBotFlowExecutor->execute($flow, $subscriber, $nextNodeId);
+                                        }
+                                    }
+                                    $isResumed = true;
+                                }
+                            }
+
+                            if ($isResumed) {
+                                // Already resumed the flow, do not trigger keyword automations.
+                            } elseif ($msgType === 'text' && $msgBody !== '') {
                                 $flows = $this->entityManager
                                     ->getRepository(\App\Entity\WhatsappBotFlow::class)
                                     ->findBy([

@@ -1002,11 +1002,119 @@
         padding: 14px !important;
         font-family: 'Inter', sans-serif !important;
     }
+
+    /* ─── Responsive Overrides for Mobile Flow Builder ─── */
+    .fb-mobile-controls {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .fb-shell {
+            grid-template-columns: 1fr !important;
+            position: relative !important;
+            overflow: hidden !important;
+            height: 100vh !important;
+        }
+
+        .fb-sidebar {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 290px !important;
+            height: calc(100% - 80px) !important;
+            transform: translateX(-100%) !important;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            z-index: 999 !important;
+            border-right: 1px solid var(--fb-border) !important;
+            background: rgba(15, 23, 42, 0.95) !important;
+            backdrop-filter: blur(20px) !important;
+        }
+        .fb-sidebar.is-visible {
+            transform: translateX(0) !important;
+        }
+
+        .fb-inspector {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            width: 320px !important;
+            height: calc(100% - 80px) !important;
+            transform: translateX(100%) !important;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            z-index: 999 !important;
+            border-left: 1px solid var(--fb-border) !important;
+            background: rgba(15, 23, 42, 0.95) !important;
+            backdrop-filter: blur(20px) !important;
+        }
+        .fb-inspector.is-visible {
+            transform: translateX(0) !important;
+        }
+
+        .fb-mobile-controls {
+            display: flex !important;
+            position: absolute !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: rgba(15, 23, 42, 0.8) !important;
+            backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 100px !important;
+            padding: 6px 12px !important;
+            z-index: 1000 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+            gap: 8px !important;
+            align-items: center !important;
+        }
+        .fb-mobile-tab-btn {
+            background: transparent !important;
+            border: none !important;
+            color: var(--fb-text-muted) !important;
+            padding: 8px 16px !important;
+            border-radius: 100px !important;
+            cursor: pointer !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            outline: none !important;
+        }
+        .fb-mobile-tab-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
+        }
+        .fb-mobile-tab-btn.is-active {
+            background: var(--primary-accent) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3) !important;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="fb-shell" id="fb-app">
+
+    {# ───────── Mobile Responsive Panel Tabs floating pill ───────── #}
+    <div class="fb-mobile-controls">
+        <button type="button" class="fb-mobile-tab-btn is-active" data-mobile-tab="canvas">
+            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>Canvas</span>
+        </button>
+        <button type="button" class="fb-mobile-tab-btn" data-mobile-tab="palette">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Blocks</span>
+        </button>
+        <button type="button" class="fb-mobile-tab-btn" data-mobile-tab="inspector">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+            <span>Inspector</span>
+        </button>
+    </div>
 
     {# ───────── Left Sidebar Block Palette ───────── #}
     <div class="fb-sidebar">
@@ -1307,6 +1415,7 @@
     const state = {
         flows: JSON.parse(document.getElementById('fb-flows-data').textContent || '[]'),
         templates: JSON.parse(document.getElementById('fb-templates-data').textContent || '[]'),
+        customFields: [],
         currentId: null,
         meta: { name: 'Untitled flow', keywords: '', matchMode: 'exact', isActive: true },
         nodes: new Map(),   // id -> { id, type, x, y, data }
@@ -1558,11 +1667,173 @@
                 q.oninput = () => onChange({ question: q.value });
                 wrap.appendChild(wrapField('Question text', q));
 
-                const v = document.createElement('input');
-                v.type = 'text'; v.className = 'fb-input'; v.placeholder = 'e.g. subscriber_email';
-                v.value = d.variable || '';
-                v.oninput = () => onChange({ variable: v.value });
-                wrap.appendChild(wrapField('Save in Variable', v, 'Stores the user input into database custom fields.'));
+                // Container for selector & inline creator card
+                const varContainer = document.createElement('div');
+                varContainer.style.display = 'flex';
+                varContainer.style.flexDirection = 'column';
+                varContainer.style.gap = '8px';
+
+                // Select element
+                const sel = document.createElement('select');
+                sel.className = 'fb-select';
+                sel.style.width = '100%';
+
+                // Function to rebuild select options
+                function populateOptions() {
+                    sel.innerHTML = '<option value="">-- Select Variable --</option>';
+                    (state.customFields || []).forEach(cf => {
+                        const opt = document.createElement('option');
+                        opt.value = cf.name;
+                        opt.textContent = `${cf.name} (${cf.type})`;
+                        sel.appendChild(opt);
+                    });
+                    sel.value = d.variable || '';
+                }
+                populateOptions();
+
+                sel.onchange = () => {
+                    onChange({ variable: sel.value });
+                };
+
+                varContainer.appendChild(sel);
+
+                // "＋ Create Field On-the-Fly" button
+                const btnCreate = document.createElement('button');
+                btnCreate.type = 'button';
+                btnCreate.className = 'fb-node-set-btn';
+                btnCreate.style.marginTop = '4px';
+                btnCreate.style.display = 'flex';
+                btnCreate.style.alignItems = 'center';
+                btnCreate.style.justifyContent = 'center';
+                btnCreate.style.gap = '4px';
+                btnCreate.style.padding = '8px 12px';
+                btnCreate.style.background = 'rgba(6, 182, 212, 0.1)';
+                btnCreate.style.border = '1px solid rgba(6, 182, 212, 0.2)';
+                btnCreate.style.color = 'var(--primary-accent)';
+                btnCreate.style.borderRadius = '8px';
+                btnCreate.style.fontSize = '12px';
+                btnCreate.style.fontWeight = '600';
+                btnCreate.style.cursor = 'pointer';
+                btnCreate.innerHTML = `
+                    <svg viewBox="0 0 24 24" style="width:12px; height:12px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Create Field On-the-Fly</span>
+                `;
+
+                // Inline form card for creating field on-the-fly
+                const inlineCard = document.createElement('div');
+                inlineCard.style.display = 'none';
+                inlineCard.style.padding = '12px';
+                inlineCard.style.background = 'rgba(255, 255, 255, 0.02)';
+                inlineCard.style.border = '1px solid var(--glass-border)';
+                inlineCard.style.borderRadius = '8px';
+                inlineCard.style.marginTop = '8px';
+                inlineCard.style.flexDirection = 'column';
+                inlineCard.style.gap = '10px';
+
+                inlineCard.innerHTML = `
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;">New Custom Field</div>
+                    <div>
+                        <input type="text" placeholder="Field name (e.g. user_email)" class="fb-input" style="font-size:12px; height:34px;" id="inline-cf-name">
+                    </div>
+                    <div>
+                        <select class="fb-select" style="font-size:12px; height:34px;" id="inline-cf-type">
+                            <option value="TEXT">TEXT</option>
+                            <option value="NUMBER">NUMBER</option>
+                            <option value="EMAIL">EMAIL</option>
+                            <option value="PHONE">PHONE</option>
+                            <option value="BOOLEAN">BOOLEAN</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+                        <button type="button" id="inline-cf-cancel" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 6px; font-size: 11px; color:#fff; cursor:pointer;">Cancel</button>
+                        <button type="button" id="inline-cf-save" style="background: linear-gradient(135deg, var(--primary-accent) 0%, #0891b2 100%); border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; color:#fff; font-weight:600; cursor:pointer;">Save</button>
+                    </div>
+                `;
+
+                btnCreate.onclick = () => {
+                    const isVisible = inlineCard.style.display === 'flex';
+                    inlineCard.style.display = isVisible ? 'none' : 'flex';
+                };
+
+                varContainer.appendChild(btnCreate);
+                varContainer.appendChild(inlineCard);
+
+                // Form elements event listeners inside the inline card
+                const inputName = inlineCard.querySelector('#inline-cf-name');
+                const selectType = inlineCard.querySelector('#inline-cf-type');
+                const btnCancel = inlineCard.querySelector('#inline-cf-cancel');
+                const btnSave = inlineCard.querySelector('#inline-cf-save');
+
+                // Standardize input name on keyup/input
+                inputName.addEventListener('input', function(e) {
+                    let val = e.target.value;
+                    let cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_');
+                    if (cleaned !== val) {
+                        e.target.value = cleaned;
+                    }
+                });
+
+                btnCancel.onclick = () => {
+                    inlineCard.style.display = 'none';
+                    inputName.value = '';
+                    selectType.value = 'TEXT';
+                };
+
+                btnSave.onclick = () => {
+                    const cfName = inputName.value.trim();
+                    if (!cfName) {
+                        showToast('Field name is required.', 'error');
+                        return;
+                    }
+
+                    btnSave.disabled = true;
+                    btnSave.textContent = 'Saving...';
+
+                    const formData = new FormData();
+                    formData.append('name', cfName);
+                    formData.append('type', selectType.value);
+                    formData.append('description', 'Created on-the-fly from Visual Flow Builder');
+
+                    fetch('/settings/custom-fields/save', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast(data.message || 'Custom Field created!', 'success');
+                            // Add newly created field to the state
+                            const newField = {
+                                name: cfName,
+                                type: selectType.value,
+                                description: 'Created on-the-fly from Visual Flow Builder'
+                            };
+                            if (!state.customFields) state.customFields = [];
+                            state.customFields.push(newField);
+                            
+                            // Re-populate and select it
+                            populateOptions();
+                            sel.value = cfName;
+                            onChange({ variable: cfName });
+
+                            // Close inline card
+                            inlineCard.style.display = 'none';
+                            inputName.value = '';
+                            selectType.value = 'TEXT';
+                        } else {
+                            showToast(data.error || 'Failed to create Custom Field.', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        showToast('Error: ' + err.message, 'error');
+                    })
+                    .finally(() => {
+                        btnSave.disabled = false;
+                        btnSave.textContent = 'Save';
+                    });
+                };
+
+                wrap.appendChild(wrapField('Save in Variable', varContainer, 'Stores the user input into database custom fields.'));
                 return wrap;
             }
         },
@@ -2027,6 +2298,11 @@
     function renderInspector() {
         elInsp.innerHTML = '';
         const sel = state.selection;
+        if (sel.node || sel.edge) {
+            if (window.innerWidth <= 768 && window.fbSwitchMobileTab) {
+                window.fbSwitchMobileTab('inspector');
+            }
+        }
         if (sel.node) {
             const node = state.nodes.get(sel.node);
             if (!node) return;
@@ -2811,8 +3087,56 @@
         });
     }
 
+    // Mobile responsiveness handlers
+    function initMobileHandlers() {
+        const mobileControls = document.querySelector('.fb-mobile-controls');
+        if (!mobileControls) return;
+        
+        const tabs = document.querySelectorAll('.fb-mobile-tab-btn');
+        const sidebar = document.querySelector('.fb-sidebar');
+        const inspector = document.querySelector('.fb-inspector');
+        
+        function switchTab(targetTab) {
+            tabs.forEach(btn => {
+                const isActive = btn.dataset.mobileTab === targetTab;
+                btn.classList.toggle('is-active', isActive);
+            });
+            
+            if (targetTab === 'palette') {
+                sidebar.classList.add('is-visible');
+                inspector.classList.remove('is-visible');
+            } else if (targetTab === 'inspector') {
+                sidebar.classList.remove('is-visible');
+                inspector.classList.add('is-visible');
+            } else {
+                sidebar.classList.remove('is-visible');
+                inspector.classList.remove('is-visible');
+            }
+        }
+        
+        tabs.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                switchTab(btn.dataset.mobileTab);
+            });
+        });
+        
+        // Handle click outside sidebar or inspector on mobile to dismiss
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth > 768) return;
+            if (!sidebar.contains(e.target) && !inspector.contains(e.target) && !mobileControls.contains(e.target)) {
+                if (sidebar.classList.contains('is-visible') || inspector.classList.contains('is-visible')) {
+                    switchTab('canvas');
+                }
+            }
+        });
+        
+        window.fbSwitchMobileTab = switchTab;
+    }
+
     // Bootstrap init
     function init() {
+        initMobileHandlers();
         let maxNum = 0;
         state.flows.forEach(f => {
             (f.graph?.nodes || []).forEach(n => {
@@ -2821,6 +3145,14 @@
             });
         });
         state.nextId = maxNum + 1;
+
+        // Fetch custom fields from the backend JSON endpoint
+        fetch('/settings/custom-fields/json')
+            .then(res => res.json())
+            .then(data => {
+                state.customFields = data;
+            })
+            .catch(err => console.error('Error loading custom fields:', err));
 
         const params = new URLSearchParams(window.location.search);
         const flowIdParam = params.get('id');

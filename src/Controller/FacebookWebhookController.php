@@ -182,8 +182,55 @@ class FacebookWebhookController extends AbstractController
 
                         $this->entityManager->persist($msg);
 
-                        // Check for Automations (Facebook Bot Flows)
-                        if ($msgType === 'text' && $msgBody !== '' && $resolvedConnection) {
+                        // Check for Automations (Facebook Bot Flows) or waiting state interception.
+                        $isResumed = false;
+                        
+                        if ($msgType === 'text' && $msgBody !== '') {
+                            $attrs = $subscriber->getCustomAttributes();
+                            $waitingForInput = $attrs['_waiting_for_input'] ?? null;
+                            $waitingNodeId = $attrs['_waiting_node_id'] ?? null;
+                            $waitingFlowId = $attrs['_waiting_flow_id'] ?? null;
+                            $waitingFlowType = $attrs['_waiting_flow_type'] ?? null;
+
+                            if (!empty($waitingForInput) && $waitingFlowType === 'facebook' && !empty($waitingFlowId)) {
+                                // Save user response text in custom attributes under custom field key
+                                $attrs[$waitingForInput] = $msgBody;
+                                
+                                // Clear waiting state keys
+                                unset($attrs['_waiting_for_input'], $attrs['_waiting_node_id'], $attrs['_waiting_flow_id'], $attrs['_waiting_flow_type']);
+                                $subscriber->setCustomAttributes($attrs);
+                                $this->entityManager->flush();
+
+                                // Find flow
+                                $flow = $this->entityManager->getRepository(\App\Entity\FacebookBotFlow::class)->find($waitingFlowId);
+                                if ($flow && $flow->isActive()) {
+                                    $nextNodeId = null;
+                                    $flowData = $flow->getFlowData();
+                                    if (isset($flowData['format']) && $flowData['format'] === 'graph' && isset($flowData['edges'])) {
+                                        foreach ($flowData['edges'] as $edge) {
+                                            if (($edge['source'] ?? null) === $waitingNodeId && ($edge['sourceHandle'] ?? 'out') === 'out') {
+                                                $nextNodeId = $edge['target'] ?? null;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if ($nextNodeId) {
+                                        // Save the assigned flow
+                                        $subscriber->setAssignedFacebookFlow($flow);
+                                        $this->entityManager->persist($subscriber);
+
+                                        // Resume the flow
+                                        $this->WhatsappBotFlowExecutor->execute($flow, $subscriber, $nextNodeId);
+                                    }
+                                }
+                                $isResumed = true;
+                            }
+                        }
+
+                        if ($isResumed) {
+                            // Already resumed the flow, do not trigger keyword automations.
+                        } elseif ($msgType === 'text' && $msgBody !== '' && $resolvedConnection) {
                             $flows = $this->entityManager
                                 ->getRepository(\App\Entity\FacebookBotFlow::class)
                                 ->findBy([

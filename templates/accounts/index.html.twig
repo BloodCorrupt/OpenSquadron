@@ -167,6 +167,37 @@
         color: var(--error-color);
         border-color: var(--error-color);
     }
+    
+    @media (max-width: 768px) {
+        .stats-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .stat-card {
+            padding: 16px;
+        }
+        .accounts-card {
+            padding: 15px;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .card-header-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+        .card-header-row a.btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+        .account-table th, .account-table td {
+            padding: 12px 10px;
+            font-size: 13.5px;
+        }
+        .actions-cell {
+            justify-content: flex-start;
+        }
+    }
 </style>
 
 <div class="header">

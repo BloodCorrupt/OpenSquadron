@@ -1,0 +1,524 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Custom Fields - OpenSquadron{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Full-width layout */
+    .manager-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-top: 0;
+        min-height: calc(100vh - 180px);
+    }
+
+
+
+    /* Right Content Panel */
+    .manager-content-pane {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed var(--glass-border);
+        padding-bottom: 18px;
+    }
+    .content-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .content-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    /* Form Styles */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #e2e8f0;
+    }
+    .form-label span {
+        color: var(--primary-accent);
+    }
+    .form-control {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s;
+        height: 42px;
+        box-sizing: border-box;
+    }
+    textarea.form-control {
+        height: auto;
+        resize: vertical;
+        line-height: 1.5;
+    }
+    .form-control:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    select.form-control option {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+    }
+    .form-hint {
+        font-size: 12px;
+        color: #64748b;
+        margin: 4px 0 0 0;
+    }
+
+    /* Buttons */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        color: #fff;
+        text-decoration: none;
+        user-select: none;
+    }
+    .btn-create {
+        background: linear-gradient(135deg, var(--primary-accent) 0%, #0891b2 100%);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+    }
+    .btn-create:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+    }
+    .btn-secondary-action {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: #f8fafc;
+    }
+    .btn-secondary-action:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    .btn-danger-action {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+    .btn-danger-action:hover {
+        background: rgba(239, 68, 68, 0.2);
+    }
+
+    /* Custom Toast */
+    .cf-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastSlideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .cf-toast.toast-success {
+        background: rgba(16, 185, 129, 0.9);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .cf-toast.toast-error {
+        background: rgba(239, 68, 68, 0.9);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Badge styles */
+    .badge-type {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge-text { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .badge-number { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .badge-email { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .badge-phone { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2); }
+    .badge-boolean { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.2); }
+
+    /* Modal dialog */
+    .custom-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1050;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(10px);
+        align-items: center;
+        justify-content: center;
+    }
+    .custom-modal-content {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        width: 500px;
+        max-width: 90%;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        padding: 24px;
+        animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalFadeIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    .custom-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 12px;
+    }
+    .custom-modal-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .custom-modal-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+        line-height: 1;
+    }
+    .custom-modal-close:hover {
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="manager-shell">
+
+    {# ───────── Right Content Pane ───────── #}
+    <div class="manager-content-pane">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px; color: var(--primary-accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span>Global Custom Fields</span>
+                </h1>
+                <div class="content-subtitle">Create and manage custom variables to store subscriber information globally across all bot channels (WhatsApp & Facebook).</div>
+            </div>
+            
+            <button class="btn-action btn-create" onclick="openCreateModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Create Custom Field</span>
+            </button>
+        </div>
+
+        {# Quick Explanation Guide #}
+        <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.6;">
+            <strong style="color: var(--primary-accent);">💡 Usage in Bots:</strong> Use these variables inside flow builders using **Form Data Input** (User Input) blocks. Once collected, they are saved under the subscriber's custom attributes. You can dynamically insert them into your text reply blocks as: 
+            <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; color: #fff; font-family: monospace; font-size: 12px; margin-left: 4px;">&#123;&#123;subscriber.custom_attributes.your_field_name&#125;&#125;</code>
+        </div>
+
+        {# Table Card #}
+        <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; width: 100%;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.02);">
+                        <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted);">Variable Name</th>
+                        <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted);">Data Type</th>
+                        <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted);">Description</th>
+                        <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted);">Default Value</th>
+                        <th style="padding: 14px 20px; font-weight: 600; color: var(--text-muted); text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="custom-fields-table-body">
+                    {% if customFields is empty %}
+                        <tr>
+                            <td colspan="5" style="padding: 40px 20px; text-align: center; color: var(--text-muted);">
+                                No custom fields created yet. Click "Create Custom Field" to add one.
+                            </td>
+                        </tr>
+                    {% else %}
+                        {% for field in customFields %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);" id="field-row-{{ field.id }}">
+                                <td style="padding: 14px 20px; font-family: monospace; color: #fff; font-weight: 600;">
+                                    {{ field.name }}
+                                </td>
+                                <td style="padding: 14px 20px;">
+                                    <span class="badge-type badge-{{ field.type|lower }}">{{ field.type }}</span>
+                                </td>
+                                <td style="padding: 14px 20px; color: var(--text-muted);">
+                                    {{ field.description|default('-') }}
+                                </td>
+                                <td style="padding: 14px 20px; color: var(--text-muted); font-family: monospace;">
+                                    {{ field.defaultValue|default('-') }}
+                                </td>
+                                <td style="padding: 14px 20px; text-align: right;">
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button class="btn-action" 
+                                                onclick="openEditModal({{ field.id }}, '{{ field.name|e('js') }}', '{{ field.type|e('js') }}', '{{ field.description|default('')|e('js') }}', '{{ field.defaultValue|default('')|e('js') }}')"
+                                                style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: var(--primary-accent); display: flex; align-items: center; gap: 4px; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;">
+                                            <svg viewBox="0 0 24 24" style="width:12px; height:12px; stroke: currentColor; fill: none; stroke-width: 2;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            <span>Edit</span>
+                                        </button>
+                                        <button class="btn-action btn-danger-action" 
+                                                onclick="deleteCustomField({{ field.id }})" 
+                                                style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                            <svg viewBox="0 0 24 24" style="width:12px; height:12px; stroke: currentColor; fill: none; stroke-width: 2;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# Modals #}
+<div class="custom-modal" id="custom-field-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h3 class="custom-modal-title" id="modal-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; color: var(--primary-accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line></svg>
+                <span id="modal-title-text">Create Custom Field</span>
+            </h3>
+            <button class="custom-modal-close" onclick="closeModal()">&times;</button>
+        </div>
+
+        <form id="custom-field-form" onsubmit="saveCustomField(event)">
+            <input type="hidden" name="id" id="field-id">
+
+            <div class="form-group">
+                <label class="form-label" for="field-name">Variable Field Name <span>*</span></label>
+                <input type="text" id="field-name" name="name" class="form-control" placeholder="e.g. user_email or loyalty_points" required>
+                <p class="form-hint">Only lowercase letters, numbers, and underscores are allowed (e.g. user_zip_code).</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="field-type">Data Type <span>*</span></label>
+                <select id="field-type" name="type" class="form-control" required>
+                    <option value="TEXT">TEXT</option>
+                    <option value="NUMBER">NUMBER</option>
+                    <option value="EMAIL">EMAIL</option>
+                    <option value="PHONE">PHONE</option>
+                    <option value="BOOLEAN">BOOLEAN</option>
+                </select>
+                <p class="form-hint">Enforces format validation when collecting user responses.</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="field-description">Description <small style="opacity: 0.6;">(Optional)</small></label>
+                <textarea id="field-description" name="description" class="form-control" style="min-height: 80px;" placeholder="Describe what this field stores..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="field-defaultValue">Default Value <small style="opacity: 0.6;">(Optional)</small></label>
+                <input type="text" id="field-defaultValue" name="defaultValue" class="form-control" placeholder="Value used if not collected yet...">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                <button type="button" class="btn-action btn-secondary-action" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-action btn-create" id="btn-save-field">
+                    <span>Save Field</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="cf-toast" id="cf-toast"></div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('cf-toast');
+        toast.className = 'cf-toast ' + (type === 'success' ? 'toast-success' : 'toast-error');
+        toast.textContent = message;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+
+    function openCreateModal() {
+        document.getElementById('modal-title-text').textContent = 'Create Custom Field';
+        document.getElementById('field-id').value = '';
+        document.getElementById('field-name').value = '';
+        document.getElementById('field-name').disabled = false;
+        document.getElementById('field-type').value = 'TEXT';
+        document.getElementById('field-description').value = '';
+        document.getElementById('field-defaultValue').value = '';
+        
+        document.getElementById('custom-field-modal').style.display = 'flex';
+    }
+
+    function openEditModal(id, name, type, description, defaultValue) {
+        document.getElementById('modal-title-text').textContent = 'Edit Custom Field';
+        document.getElementById('field-id').value = id;
+        document.getElementById('field-name').value = name;
+        document.getElementById('field-name').disabled = true; // Cannot rename to protect flow integrity
+        document.getElementById('field-type').value = type;
+        document.getElementById('field-description').value = description;
+        document.getElementById('field-defaultValue').value = defaultValue;
+        
+        document.getElementById('custom-field-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('custom-field-modal').style.display = 'none';
+    }
+
+    // Standardize input name
+    document.getElementById('field-name').addEventListener('input', function(e) {
+        let val = e.target.value;
+        // Keep only alphanumeric and underscore, and lowercase it
+        let cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_');
+        if (cleaned !== val) {
+            e.target.value = cleaned;
+        }
+    });
+
+    function saveCustomField(event) {
+        event.preventDefault();
+        
+        const nameInput = document.getElementById('field-name');
+        const name = nameInput.value.trim();
+        if (!name) {
+            showToast('Variable Field Name is required.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-save-field');
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const form = document.getElementById('custom-field-form');
+        const formData = new FormData(form);
+        // If disabled, name value won't be sent automatically by browser, so append it manually
+        if (nameInput.disabled) {
+            formData.set('name', name);
+        }
+
+        fetch('{{ path('app_custom_field_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Custom Field saved successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast(data.error || 'Failed to save Custom Field.', 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<span>Save Field</span>';
+        });
+    }
+
+    function deleteCustomField(id) {
+        if (!confirm('Are you sure you want to delete this custom field? Any chatbot flows referencing this field will no longer be able to save data to it.')) {
+            return;
+        }
+
+        fetch(`/settings/custom-fields/delete/${id}`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Custom Field deleted successfully.', 'success');
+                document.getElementById(`field-row-${id}`).remove();
+                
+                // If table is now empty, refresh to show empty state
+                const rows = document.querySelectorAll('#custom-fields-table-body tr');
+                if (rows.length === 0) {
+                    window.location.reload();
+                }
+            } else {
+                showToast(data.error || 'Failed to delete Custom Field.', 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Error: ' + err.message, 'error');
+        });
+    }
+</script>
+{% endblock %}

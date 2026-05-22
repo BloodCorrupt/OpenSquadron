@@ -431,7 +431,7 @@ class WhatsAppConnectionService
         return $content;
     }
 
-    public function createTemplate(string $name, string $language, string $category, string $bodyText, ?string $headerText = null, ?string $footerText = null, ?WhatsAppConnection $connection = null): array
+    public function createTemplate(string $name, string $language, string $category, string $bodyText, ?string $headerText = null, ?string $footerText = null, ?WhatsAppConnection $connection = null, ?array $customComponents = null): array
     {
         $conn = $connection ?? $this->getDefaultConnection();
         if (!$conn) {
@@ -443,26 +443,28 @@ class WhatsAppConnectionService
         
         $url = "https://graph.facebook.com/v21.0/{$businessAccountId}/message_templates";
         
-        $components = [];
+        $components = $customComponents ?? [];
         
-        if ($headerText) {
+        if (empty($components)) {
+            if ($headerText) {
+                $components[] = [
+                    'type' => 'HEADER',
+                    'format' => 'TEXT',
+                    'text' => $headerText,
+                ];
+            }
+            
             $components[] = [
-                'type' => 'HEADER',
-                'format' => 'TEXT',
-                'text' => $headerText,
+                'type' => 'BODY',
+                'text' => $bodyText,
             ];
-        }
-        
-        $components[] = [
-            'type' => 'BODY',
-            'text' => $bodyText,
-        ];
-        
-        if ($footerText) {
-            $components[] = [
-                'type' => 'FOOTER',
-                'text' => $footerText,
-            ];
+            
+            if ($footerText) {
+                $components[] = [
+                    'type' => 'FOOTER',
+                    'text' => $footerText,
+                ];
+            }
         }
         
         $payload = [

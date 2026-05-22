@@ -237,13 +237,19 @@ class WhatsappBotManagerController extends AbstractController
         $body     = trim($request->request->get('body', ''));
         $header   = trim($request->request->get('header', '')) ?: null;
         $footer   = trim($request->request->get('footer', '')) ?: null;
+        
+        $customComponentsJson = $request->request->get('customComponents');
+        $customComponents = null;
+        if ($customComponentsJson) {
+            $customComponents = json_decode($customComponentsJson, true);
+        }
 
-        if (!$name || !$body) {
-            return new JsonResponse(['success' => false, 'error' => 'Name and Body are required.'], 400);
+        if (!$name || (!$body && empty($customComponents))) {
+            return new JsonResponse(['success' => false, 'error' => 'Name and Body/Components are required.'], 400);
         }
 
         try {
-            $result = $whatsappService->createTemplate($name, $language, $category, $body, $header, $footer, $connection);
+            $result = $whatsappService->createTemplate($name, $language, $category, $body, $header, $footer, $connection, $customComponents);
             try {
                 $whatsappService->syncTemplates($connection);
             } catch (\Exception $syncEx) {
