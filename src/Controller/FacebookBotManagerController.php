@@ -83,6 +83,17 @@ class FacebookBotManagerController extends AbstractController
                 'greetingText' => 'Welcome to OpenSquadron! Tap Get Started to explore our automated integrations.',
                 'getStartedPayload' => 'WELCOME_GET_STARTED_TRIGGER',
                 'showGreeting' => true
+            ],
+            'copilot-settings' => [
+                'enableIntentRouting' => false,
+                'intentCampaign' => '',
+                'routingProtocol' => 'omnipresent',
+                'deepContext' => false,
+                'suspendOffHours' => false,
+                'humanEscalation' => false,
+                'typingIndicator' => false,
+                'replyBuffer' => 0,
+                'reasoningDepth' => 'standard'
             ]
         ];
 

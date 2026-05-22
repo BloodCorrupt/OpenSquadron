@@ -265,6 +265,7 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+        min-width: 0;
     }
     .form-label {
         font-size: 15px;
@@ -277,6 +278,8 @@
         line-height: 1.4;
     }
     .glass-input, .glass-textarea {
+        box-sizing: border-box !important;
+        width: 100%;
         background: rgba(0, 0, 0, 0.25);
         border: 1px solid var(--glass-border);
         border-radius: 8px;
@@ -1309,42 +1312,186 @@
     {# 2. AI Agent Configuration Content Pane #}
     <div class="manager-content-pane" id="pane-ai-agent">
         {% if connections is not empty %}
+        {% set copilotSettings = settings['copilot-settings'] ?? {} %}
+        {% set enableIntentRouting = copilotSettings.enableIntentRouting ?? false %}
+        {% set intentCampaign = copilotSettings.intentCampaign ?? '' %}
+        {% set routingProtocol = copilotSettings.routingProtocol ?? 'omnipresent' %}
+        {% set deepContext = copilotSettings.deepContext ?? false %}
+        {% set suspendOffHours = copilotSettings.suspendOffHours ?? false %}
+        {% set humanEscalation = copilotSettings.humanEscalation ?? false %}
+        {% set typingIndicator = copilotSettings.typingIndicator ?? false %}
+        {% set replyBuffer = copilotSettings.replyBuffer ?? 0 %}
+        {% set reasoningDepth = copilotSettings.reasoningDepth ?? 'standard' %}
+
         <div class="content-header">
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                    <span>Intelligent AI Copilot</span>
+                    <span>Intelligent AI Copilot Console</span>
                 </h1>
-                <div class="content-subtitle">Deploy a context-grounded LLM agent responder to handle user conversations.</div>
+                <div class="content-subtitle">Deploy a context-grounded, multi-agent response coordinator with cognitive routing and transmission logic.</div>
             </div>
         </div>
 
-        <div class="glass-form-card" style="max-width: 680px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+        <div class="glass-form-card" style="max-width: 960px; gap: 28px;">
+            <!-- Row 1: Autonomous Response Activation Toggle -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px;">
                 <div>
-                    <div style="font-weight: 700; color: #fff; font-size: 14px;">Enable AI Copilot Active</div>
-                    <div class="form-helper">Toggle whether incoming messages are filtered and processed by the AI Agent.</div>
+                    <div style="font-weight: 700; color: #fff; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: var(--wa-primary); border-radius: 50%; box-shadow: 0 0 8px var(--wa-primary);"></span>
+                        <span>Activate Autonomous Response Engine</span>
+                    </div>
+                    <div class="form-helper" style="margin-top: 4px;">Directly handle incoming customer messages with context-grounded LLM completions.</div>
                 </div>
-                <label class="switch-toggle" style="margin: 0;">
+                <label class="switch-toggle" style="margin: 0; scale: 1.1;">
                     <input type="checkbox" id="ai-agent-active" {% if connection and connection.isAiActive() %}checked{% endif %}>
                     <span class="slider-round"></span>
                 </label>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="ai-agent-context-select">Active Context Profile</label>
-                <div class="form-helper" style="margin-bottom: 8px;">Select a profile to populate the agent's knowledge, background rules, and response parameters.</div>
-                <select id="ai-agent-context-select" class="glass-input" style="height: 42px;">
-                    <option value="">-- No Context Profile (Use Connection Default) --</option>
-                    {% for ctx in contexts %}
-                        <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
-                            {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %}
-                        </option>
-                    {% endfor %}
-                </select>
+            <!-- Row 2: Two columns - Context Selector & Intent Detection Toggle -->
+            <div class="form-row">
+                <!-- Column 2.1: Grounding Knowledge Context Selector -->
+                <div class="form-group">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <label class="form-label" for="ai-agent-context-select">Grounding Knowledge Context</label>
+                        <a href="{{ path('app_ai_settings') }}" style="font-size: 13px; text-decoration: none; color: var(--wa-accent); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                            <span>+ Configure Context Profiles</span>
+                        </a>
+                    </div>
+                    <div class="form-helper" style="margin-bottom: 4px;">Select the knowledge-base profile, system instructions, and boundaries constraint.</div>
+                    <select id="ai-agent-context-select" class="glass-input" style="width: 100%; height: 42px;">
+                        <option value="">-- No Context Profile (Use Connection Default) --</option>
+                        {% for ctx in contexts %}
+                            <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
+                                {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Column 2.2: Cognitive Intent Routing Toggle -->
+                <div class="form-group" style="justify-content: space-between; border-left: 1px dashed var(--glass-border); padding-left: 20px;">
+                    <div>
+                        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Cognitive Intent Routing</span>
+                            <label class="switch-toggle" style="margin: 0; scale: 0.95;">
+                                <input type="checkbox" id="ai-enable-intent-routing" {% if enableIntentRouting %}checked{% endif %}>
+                                <span class="slider-round"></span>
+                            </label>
+                        </label>
+                        <div class="form-helper" style="margin-top: 6px;">Evaluate incoming requests to identify explicit customer intents, routing queries dynamically.</div>
+                    </div>
+
+                    <!-- Hidden sub-field: Intent Campaign ID Input -->
+                    <div class="form-group" id="intent-campaign-group" style="display: none; margin-top: 10px;">
+                        <label class="form-label" for="ai-intent-campaign" style="font-size: 13px; color: #94a3b8;">Primary Intent Campaign Mapping</label>
+                        <input type="text" id="ai-intent-campaign" class="glass-input" placeholder="e.g. general_inquiries_v2" value="{{ intentCampaign }}" style="height: 38px; font-size: 13px;">
+                    </div>
+                </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+            <!-- Row 3: Engine Routing Protocol Select (Omnipresent vs Fallback) -->
+            <div class="form-group" style="border-top: 1px dashed var(--glass-border); padding-top: 20px;">
+                <label class="form-label">Engine Routing Protocol</label>
+                <div class="form-helper" style="margin-bottom: 12px;">Configure how the AI responder coordinates and intervenes with pre-defined automation flow triggers.</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Card 1: Omnipresent Mode -->
+                    <label class="console-card" style="cursor: pointer; padding: 15px; margin: 0; display: flex; flex-direction: row; gap: 12px; align-items: flex-start; transition: all 0.25s; border-color: {% if routingProtocol == 'omnipresent' %}var(--wa-primary){% else %}var(--glass-border){% endif %}; background: {% if routingProtocol == 'omnipresent' %}rgba(16, 185, 129, 0.08){% else %}rgba(30, 41, 59, 0.3){% endif %};" id="label-protocol-omni">
+                        <input type="radio" name="ai-routing-protocol" value="omnipresent" style="margin-top: 4px;" {% if routingProtocol == 'omnipresent' %}checked{% endif %} onclick="selectRoutingProtocol('omnipresent')">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-weight: 700; color: #fff; font-size: 14px;">Omnipresent Responder Mode</span>
+                            <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">AI engine intercepts and handles all inbound user queries, bypassing standard flows.</span>
+                        </div>
+                    </label>
+                    <!-- Card 2: Fallback Co-Pilot Mode -->
+                    <label class="console-card" style="cursor: pointer; padding: 15px; margin: 0; display: flex; flex-direction: row; gap: 12px; align-items: flex-start; transition: all 0.25s; border-color: {% if routingProtocol == 'fallback' %}var(--wa-primary){% else %}var(--glass-border){% endif %}; background: {% if routingProtocol == 'fallback' %}rgba(16, 185, 129, 0.08){% else %}rgba(30, 41, 59, 0.3){% endif %};" id="label-protocol-fallback">
+                        <input type="radio" name="ai-routing-protocol" value="fallback" style="margin-top: 4px;" {% if routingProtocol == 'fallback' %}checked{% endif %} onclick="selectRoutingProtocol('fallback')">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-weight: 700; color: #fff; font-size: 14px;">Fallback Co-Pilot Mode</span>
+                            <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">Only trigger the AI engine when no keyword or dynamic flow trigger-match is found.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Row 4: 2x2 Toggle Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; border-top: 1px dashed var(--glass-border); padding-top: 20px;">
+                <!-- Card 1: Enable Deep Conversational Context -->
+                <div class="glass-form-card" style="padding: 16px; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; margin: 0; background: rgba(30, 41, 59, 0.15);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: #fff; font-size: 14px;">Deep Conversational Context</div>
+                        <div class="form-helper" style="margin-top: 4px; font-size: 12px; line-height: 1.3;">Maintains cohesive multi-turn dialogue memory across long customer threads.</div>
+                    </div>
+                    <label class="switch-toggle" style="margin: 0; flex-shrink: 0; scale: 0.9;">
+                        <input type="checkbox" id="ai-deep-context" {% if deepContext %}checked{% endif %}>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+
+                <!-- Card 2: Suspend Responses Outside Operating Hours -->
+                <div class="glass-form-card" style="padding: 16px; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; margin: 0; background: rgba(30, 41, 59, 0.15);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: #fff; font-size: 14px;">Suspend Responses in Off-Hours</div>
+                        <div class="form-helper" style="margin-top: 4px; font-size: 12px; line-height: 1.3;">Silences autonomous replies outside set business operating hours.</div>
+                    </div>
+                    <label class="switch-toggle" style="margin: 0; flex-shrink: 0; scale: 0.9;">
+                        <input type="checkbox" id="ai-suspend-off-hours" {% if suspendOffHours %}checked{% endif %}>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+
+                <!-- Card 3: Automated Handoff & Human Escalation -->
+                <div class="glass-form-card" style="padding: 16px; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; margin: 0; background: rgba(30, 41, 59, 0.15);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: #fff; font-size: 14px;">Automated Handoff Escalation</div>
+                        <div class="form-helper" style="margin-top: 4px; font-size: 12px; line-height: 1.3;">Instantly assigns chats to standard departments/agents upon manual handoff flags.</div>
+                    </div>
+                    <label class="switch-toggle" style="margin: 0; flex-shrink: 0; scale: 0.9;">
+                        <input type="checkbox" id="ai-human-escalation" {% if humanEscalation %}checked{% endif %}>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+
+                <!-- Card 4: Simulate Typing Indicator State -->
+                <div class="glass-form-card" style="padding: 16px; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; margin: 0; background: rgba(30, 41, 59, 0.15);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: #fff; font-size: 14px;">Simulate Typing Indicator State</div>
+                        <div class="form-helper" style="margin-top: 4px; font-size: 12px; line-height: 1.3;">Shows native chat 'typing...' status to customer before transmitting responses.</div>
+                    </div>
+                    <label class="switch-toggle" style="margin: 0; flex-shrink: 0; scale: 0.9;">
+                        <input type="checkbox" id="ai-typing-indicator" {% if typingIndicator %}checked{% endif %}>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Row 5: Buffers & Depth dropdowns -->
+            <div class="form-row" style="border-top: 1px dashed var(--glass-border); padding-top: 20px;">
+                <!-- Delay/Buffer -->
+                <div class="form-group">
+                    <label class="form-label" for="ai-reply-buffer">Response Transmission Buffer (Seconds)</label>
+                    <div class="form-helper" style="margin-bottom: 4px;">Configures realistic typing intervals before response is dispatched. Max 60s.</div>
+                    <div style="position: relative; display: block; width: 100%; box-sizing: border-box;">
+                        <input type="number" id="ai-reply-buffer" class="glass-input" min="0" max="60" value="{{ replyBuffer }}" style="box-sizing: border-box !important; width: 100%; padding-right: 42px; height: 42px;">
+                        <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); font-weight: 600;">sec</span>
+                    </div>
+                </div>
+
+                <!-- Cognitive Level / Reasoning Engine Depth -->
+                <div class="form-group">
+                    <label class="form-label" for="ai-reasoning-depth">Cognitive Reasoning Engine Depth</label>
+                    <div class="form-helper" style="margin-bottom: 4px;">Sets conversational thinking complexity depth for response formulation.</div>
+                    <select id="ai-reasoning-depth" class="glass-input" style="width: 100%; height: 42px;">
+                        <option value="standard" {% if reasoningDepth == 'standard' %}selected{% endif %}>Standard (Lowest Latency)</option>
+                        <option value="enhanced" {% if reasoningDepth == 'enhanced' %}selected{% endif %}>Enhanced (Balanced Precision)</option>
+                        <option value="deep" {% if reasoningDepth == 'deep' %}selected{% endif %}>Deep Reasoning (Complex Workflows)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 6: Form actions -->
+            <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--glass-border); padding-top: 20px; margin-top: 5px;">
                 <button type="button" class="btn-action btn-create" id="btn-save-ai-agent-settings" onclick="saveAiAgentSettings()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                     <span>Save AI Agent Settings</span>
@@ -2421,43 +2568,113 @@
         .catch(err => showToast('Delete error: ' + err.message, 'error'));
     }
 
-    // Existing AI Agent Saver
+    // ───────── AI Agent Saver ─────────
     function saveAiAgentSettings() {
         const aiActive = document.getElementById('ai-agent-active').checked;
         const activeContextId = document.getElementById('ai-agent-context-select').value;
+        
+        // Advanced settings
+        const enableIntentRouting = document.getElementById('ai-enable-intent-routing').checked;
+        const intentCampaign = document.getElementById('ai-intent-campaign').value;
+        const checkedProtocol = document.querySelector('input[name="ai-routing-protocol"]:checked');
+        const routingProtocol = checkedProtocol ? checkedProtocol.value : 'omnipresent';
+        const deepContext = document.getElementById('ai-deep-context').checked;
+        const suspendOffHours = document.getElementById('ai-suspend-off-hours').checked;
+        const humanEscalation = document.getElementById('ai-human-escalation').checked;
+        const typingIndicator = document.getElementById('ai-typing-indicator').checked;
+        const replyBuffer = parseInt(document.getElementById('ai-reply-buffer').value) || 0;
+        const reasoningDepth = document.getElementById('ai-reasoning-depth').value;
+
         const btn = document.getElementById('btn-save-ai-agent-settings');
 
         btn.disabled = true;
         btn.innerHTML = '<span>Saving...</span>';
 
-        const formData = new FormData();
-        formData.append('connectionId', activeConnectionId);
-        formData.append('configType', 'agent');
-        formData.append('aiActive', aiActive ? '1' : '0');
-        formData.append('activeContextId', activeContextId);
+        // 1. Save Core Database settings (Active context and state)
+        const dbFormData = new FormData();
+        dbFormData.append('connectionId', activeConnectionId);
+        dbFormData.append('configType', 'agent');
+        dbFormData.append('aiActive', aiActive ? '1' : '0');
+        dbFormData.append('activeContextId', activeContextId);
 
-        fetch('{{ path('app_facebook_bot_ai_agent_save') }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                showToast('AI Agent Settings saved successfully!', 'success');
+        // 2. Save Advanced Copilot parameters to JSON
+        const jsonSettings = {
+            enableIntentRouting,
+            intentCampaign,
+            routingProtocol,
+            deepContext,
+            suspendOffHours,
+            humanEscalation,
+            typingIndicator,
+            replyBuffer,
+            reasoningDepth
+        };
+        const jsonFormData = new FormData();
+        jsonFormData.append('connectionId', activeConnectionId);
+        jsonFormData.append('type', 'copilot-settings');
+        jsonFormData.append('data', JSON.stringify(jsonSettings));
+
+        // Let's run both fetch requests concurrently
+        Promise.all([
+            fetch('{{ path('app_facebook_bot_ai_agent_save') }}', {
+                method: 'POST',
+                body: dbFormData
+            }).then(res => res.json()),
+            fetch('{{ path('app_facebook_bot_save_settings') }}', {
+                method: 'POST',
+                body: jsonFormData
+            }).then(res => res.json())
+        ])
+        .then(([dbRes, jsonRes]) => {
+            if (dbRes.success && jsonRes.success) {
+                showToast('Advanced AI Copilot settings synced successfully!', 'success');
                 const statusBadge = document.getElementById('ai-nav-status');
                 if (statusBadge) {
                     statusBadge.textContent = aiActive ? 'ON' : 'OFF';
                 }
             } else {
-                showToast('Failed to save AI settings: ' + (data.error || 'Unknown error'), 'error');
+                const errMsg = (!dbRes.success ? dbRes.error : '') || (!jsonRes.success ? jsonRes.error : '') || 'Unknown error';
+                showToast('Failed to save settings: ' + errMsg, 'error');
             }
         })
-        .catch(err => showToast('Save error: ' + err.message, 'error'))
+        .catch(err => {
+            showToast('Save error: ' + err.message, 'error');
+        })
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> <span>Save AI Agent Settings</span>';
         });
     }
+
+    function selectRoutingProtocol(protocol) {
+        const omniCard = document.getElementById('label-protocol-omni');
+        const fallbackCard = document.getElementById('label-protocol-fallback');
+        if (!omniCard || !fallbackCard) return;
+        if (protocol === 'omnipresent') {
+            omniCard.style.borderColor = 'var(--wa-primary)';
+            omniCard.style.background = 'rgba(16, 185, 129, 0.08)';
+            fallbackCard.style.borderColor = 'var(--glass-border)';
+            fallbackCard.style.background = 'rgba(30, 41, 59, 0.3)';
+        } else {
+            fallbackCard.style.borderColor = 'var(--wa-primary)';
+            fallbackCard.style.background = 'rgba(16, 185, 129, 0.08)';
+            omniCard.style.borderColor = 'var(--glass-border)';
+            omniCard.style.background = 'rgba(30, 41, 59, 0.3)';
+        }
+    }
+
+    // Toggle intent campaign visibility based on check state
+    document.addEventListener('DOMContentLoaded', () => {
+        const intentToggle = document.getElementById('ai-enable-intent-routing');
+        const intentCampaignGroup = document.getElementById('intent-campaign-group');
+        if (intentToggle && intentCampaignGroup) {
+            intentToggle.addEventListener('change', function() {
+                intentCampaignGroup.style.display = this.checked ? 'flex' : 'none';
+            });
+            // Initial state
+            intentCampaignGroup.style.display = intentToggle.checked ? 'flex' : 'none';
+        }
+    });
 
     // Flow list search
     const flowSearch = document.getElementById('flow-search');

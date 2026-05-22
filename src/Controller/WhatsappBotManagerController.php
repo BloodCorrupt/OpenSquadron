@@ -79,6 +79,17 @@ class WhatsappBotManagerController extends AbstractController
             'action-buttons' => [
                 ['label' => '💬 Chat with Specialist', 'type' => 'quick_reply', 'payload' => 'TALK_TO_SPECIALIST'],
                 ['label' => '📅 Book Appointment', 'type' => 'url', 'value' => 'https://opensquadron.io/book'],
+            ],
+            'copilot-settings' => [
+                'enableIntentRouting' => false,
+                'intentCampaign' => '',
+                'routingProtocol' => 'omnipresent',
+                'deepContext' => false,
+                'suspendOffHours' => false,
+                'humanEscalation' => false,
+                'typingIndicator' => false,
+                'replyBuffer' => 0,
+                'reasoningDepth' => 'standard'
             ]
         ];
 
