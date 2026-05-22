@@ -476,6 +476,7 @@
     .fb-node[data-type="send_image"] { border-top-color: #a3e635; }
     .fb-node[data-type="send_template"] { border-top-color: #fde047; }
     .fb-node[data-type="delay"] { border-top-color: #94a3b8; }
+    .fb-node[data-type="http_api"] { border-top-color: #fb923c; }
 
     /* Node custom layouts */
     .fb-node-meta-box {
@@ -1266,6 +1267,17 @@
                         <svg viewBox="0 0 24 24" class="fb-svg-icon"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
                     </div>
                     <span>Random Selector</span>
+                </div>
+            </div>
+
+            {# Category: Integrations #}
+            <div class="fb-palette-category">
+                <div class="fb-category-title">Integrations</div>
+                <div class="fb-palette-item" draggable="true" data-block="http_api">
+                    <div class="fb-pi-icon pi-control" style="background: rgba(251, 146, 60, 0.12); color: #fb923c;">
+                        <svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                    </div>
+                    <span>HTTP API Request</span>
                 </div>
             </div>
         </div>
@@ -2088,6 +2100,68 @@
                 wrap.appendChild(wrapField('Maximum', max));
                 return wrap;
             }
+        },
+        http_api: {
+            label: 'HTTP API Request',
+            icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>',
+            defaults: { method: 'POST', url: '', headers: '', body: '', responseVar: '' },
+            render: (d) => {
+                const method = d.method || 'POST';
+                const url = d.url ? truncate(d.url, 32) : 'No URL set';
+                const color = method === 'GET' ? '#34d399' : method === 'PUT' ? '#fbbf24' : method === 'DELETE' ? '#f87171' : '#fb923c';
+                return `<div class="fb-node-preview" style="font-size:11px;">
+                    <span style="background:${color};color:#000;border-radius:4px;padding:1px 6px;font-weight:700;font-size:10px;margin-right:6px;">${escapeHtml(method)}</span>
+                    <span style="font-family:monospace;opacity:0.85;">${escapeHtml(url)}</span>
+                </div>`;
+            },
+            inspector: (d, onChange) => {
+                const wrap = document.createDocumentFragment();
+
+                const method = document.createElement('select');
+                method.className = 'fb-select';
+                method.innerHTML = `
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                    <option value="DELETE">DELETE</option>
+                `;
+                method.value = d.method || 'POST';
+                method.onchange = () => onChange({ method: method.value });
+                wrap.appendChild(wrapField('HTTP Method', method));
+
+                const url = document.createElement('input');
+                url.type = 'text'; url.className = 'fb-input';
+                url.placeholder = 'https://api.example.com/endpoint';
+                url.value = d.url || '';
+                url.oninput = () => onChange({ url: url.value });
+                wrap.appendChild(wrapField('Endpoint URL', url, 'Full URL including protocol. Supports {{variable}} placeholders.'));
+
+                const headers = document.createElement('textarea');
+                headers.className = 'fb-textarea';
+                headers.rows = 3;
+                headers.placeholder = 'Content-Type: application/json\nAuthorization: Bearer {{token}}';
+                headers.value = d.headers || '';
+                headers.oninput = () => onChange({ headers: headers.value });
+                wrap.appendChild(wrapField('Request Headers', headers, 'One header per line. Key: Value format.'));
+
+                const body = document.createElement('textarea');
+                body.className = 'fb-textarea';
+                body.rows = 4;
+                body.placeholder = '{"name": "{{subscriber_name}}", "phone": "{{user_phone"}}';
+                body.value = d.body || '';
+                body.oninput = () => onChange({ body: body.value });
+                wrap.appendChild(wrapField('Request Body (JSON)', body, 'Sent as raw JSON body. Supports {{variable}} interpolation.'));
+
+                const respVar = document.createElement('input');
+                respVar.type = 'text'; respVar.className = 'fb-input';
+                respVar.placeholder = 'api_response';
+                respVar.value = d.responseVar || '';
+                respVar.oninput = () => onChange({ responseVar: respVar.value });
+                wrap.appendChild(wrapField('Save Response To', respVar, 'Store the full JSON response body into this custom field variable.'));
+
+                return wrap;
+            }
         }
     };
 
@@ -2178,7 +2252,7 @@
                         <div class="fb-port is-out" data-role="out" data-port-id="out" data-node-id="${node.id}"></div>
                     </div>
                 `;
-            } else if (node.type === 'send_text' || node.type === 'send_image' || node.type === 'send_audio' || node.type === 'send_video' || node.type === 'send_file' || node.type === 'send_location' || node.type === 'send_template' || node.type === 'cta_button' || node.type === 'ai_reply' || node.type === 'condition' || node.type === 'delay' || node.type === 'sequence' || node.type === 'random_num' || node.type === 'user_input' || node.type === 'whatsapp_flows' || node.type === 'appointment') {
+            } else if (node.type === 'send_text' || node.type === 'send_image' || node.type === 'send_audio' || node.type === 'send_video' || node.type === 'send_file' || node.type === 'send_location' || node.type === 'send_template' || node.type === 'cta_button' || node.type === 'ai_reply' || node.type === 'condition' || node.type === 'delay' || node.type === 'sequence' || node.type === 'random_num' || node.type === 'user_input' || node.type === 'whatsapp_flows' || node.type === 'appointment' || node.type === 'http_api') {
                 nodeHtml += `
                     <div class="fb-node-footer">
                         <span>Next</span>
@@ -2740,6 +2814,7 @@
             if (type === 'user_input' || type === 'whatsapp_flows' || type === 'appointment') catClass = 'pi-collection';
             else if (type === 'interactive' || type === 'send_template' || type === 'cta_button') catClass = 'pi-interactive';
             else if (type === 'condition' || type === 'delay' || type === 'sequence' || type === 'random_num') catClass = 'pi-control';
+            else if (type === 'http_api') catClass = 'pi-control';
 
             item.innerHTML = `
                 <div class="fb-ctx-icon ${catClass}">${block.icon}</div>
