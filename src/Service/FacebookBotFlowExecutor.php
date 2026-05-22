@@ -29,7 +29,7 @@ class FacebookBotFlowExecutor
         $this->logger ??= new NullLogger();
     }
 
-    public function execute(FacebookBotFlow $flow, Subscriber $subscriber, ?string $startNodeId = null): void
+    public function execute(FacebookBotFlow $flow, Subscriber $subscriber, ?string $startNodeId = null, ?string $commentId = null): void
     {
         $data = $flow->getFlowData();
         $connection = $flow->getFacebookConnection();
@@ -38,13 +38,13 @@ class FacebookBotFlowExecutor
             return;
         }
 
-        $this->runGraph($flow, $data, $subscriber, $connection, $startNodeId);
+        $this->runGraph($flow, $data, $subscriber, $connection, $startNodeId, $commentId);
     }
 
     /**
      * @param array{format:string, nodes?:array, edges?:array} $graph
      */
-    private function runGraph(FacebookBotFlow $flow, array $graph, Subscriber $subscriber, ?\App\Entity\FacebookConnection $connection = null, ?string $startNodeId = null): void
+    private function runGraph(FacebookBotFlow $flow, array $graph, Subscriber $subscriber, ?\App\Entity\FacebookConnection $connection = null, ?string $startNodeId = null, ?string $commentId = null): void
     {
         $nodes = [];
         foreach (($graph['nodes'] ?? []) as $node) {
@@ -138,7 +138,7 @@ class FacebookBotFlowExecutor
             $this->runAction([
                 'type' => $node['type'] ?? '',
                 ...($node['data'] ?? []),
-            ], $subscriber, $connection);
+            ], $subscriber, $connection, $commentId);
 
             $next = null;
             foreach (($outgoing[$current] ?? []) as $edge) {
@@ -154,7 +154,7 @@ class FacebookBotFlowExecutor
     /**
      * @param array<string, mixed> $action
      */
-    private function runAction(array $action, Subscriber $subscriber, ?\App\Entity\FacebookConnection $connection = null): void
+    private function runAction(array $action, Subscriber $subscriber, ?\App\Entity\FacebookConnection $connection = null, ?string &$commentId = null): void
     {
         $type = (string)($action['type'] ?? '');
         $psid = (string)$subscriber->getPsid();
@@ -174,7 +174,12 @@ class FacebookBotFlowExecutor
                     if ($text === '') {
                         return;
                     }
-                    $response = $this->facebook->sendMessage($psid, $text, $connection);
+                    if ($commentId !== null) {
+                        $response = $this->facebook->privateReplyToComment($commentId, $text, $connection);
+                        $commentId = null;
+                    } else {
+                        $response = $this->facebook->sendMessage($psid, $text, $connection);
+                    }
                     $this->logOutbound($subscriber, 'text', $text, null, $response);
                     return;
 

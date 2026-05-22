@@ -426,7 +426,7 @@ class FacebookService
                     'Authorization' => "Bearer {$pageAccessToken}",
                 ],
                 'query' => [
-                    'subscribed_fields' => 'messages,messaging_postbacks',
+                    'subscribed_fields' => 'messages,messaging_postbacks,feed',
                 ],
             ]);
 
@@ -675,6 +675,132 @@ class FacebookService
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
             throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish multi-photo feed post.');
+        }
+
+        return $content;
+    }
+
+    /**
+     * Fetch recent posts from the page's feed via the Facebook Graph API.
+     */
+    public function fetchPageFeed(FacebookConnection $connection, int $limit = 50): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $pageId = $connection->getPageId();
+        $url = "https://graph.facebook.com/v21.0/{$pageId}/feed";
+
+        $response = $this->httpClient->request('GET', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ],
+            'query' => [
+                'fields' => 'id,message,created_time,status_type,permalink_url,full_picture,shares,likes.summary(true),comments.summary(true)',
+                'limit' => $limit,
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to fetch page feed.');
+        }
+
+        return $content['data'] ?? [];
+    }
+
+    /**
+     * Hide a comment.
+     */
+    public function hideComment(string $commentId, ?FacebookConnection $connection = null): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/{$commentId}";
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'is_hidden' => true
+            ]
+        ]);
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to hide comment.');
+        }
+        return $content;
+    }
+
+    /**
+     * Delete a comment.
+     */
+    public function deleteComment(string $commentId, ?FacebookConnection $connection = null): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/{$commentId}";
+        $response = $this->httpClient->request('DELETE', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ]
+        ]);
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete comment.');
+        }
+        return $content;
+    }
+
+    /**
+     * Reply to a comment.
+     */
+    public function replyToComment(string $commentId, string $message, ?string $attachmentUrl = null, ?FacebookConnection $connection = null): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/{$commentId}/comments";
+
+        $payload = [
+            'message' => $message,
+        ];
+        if (!empty($attachmentUrl)) {
+            $payload['attachment_url'] = $attachmentUrl;
+        }
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to reply to comment.');
+        }
+
+        return $content;
+    }
+
+    /**
+     * Send a private reply to a comment.
+     */
+    public function privateReplyToComment(string $commentId, string $message, ?FacebookConnection $connection = null): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/{$commentId}/private_replies";
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'message' => $message
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to send private reply.');
         }
 
         return $content;

@@ -95,6 +95,23 @@ class FacebookBotManagerController extends AbstractController
                 'typingIndicator' => false,
                 'replyBuffer' => 0,
                 'reasoningDepth' => 'standard'
+            ],
+            'comment-automation' => [
+                'hideOrDelete' => 'hide',
+                'offensiveKeywords' => '',
+                'offensivePrivateReplyFlowId' => '',
+                'sendReplyMultipleTimes' => false,
+                'enableCommentReply' => true,
+                'hideCommentAfterReply' => false,
+                'automationMode' => 'generic',
+                'campaignName' => '',
+                'aiContextId' => '',
+                'privateReplyFlowId' => '',
+                'commentReplyText' => '',
+                'imageReplyUrl' => '',
+                'videoReplyUrl' => '',
+                'filterMatchType' => 'exact',
+                'filterWords' => ''
             ]
         ];
 
@@ -167,6 +184,64 @@ class FacebookBotManagerController extends AbstractController
             'success' => true,
             'message' => 'Settings saved successfully.',
             'data'    => $currentSettings[$type]
+        ]);
+    }
+
+    #[Route('/facebook-bot-manager/get-connection-details', name: 'app_facebook_bot_connection_details', methods: ['GET'])]
+    public function getConnectionDetails(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $connectionId = (int)$request->query->get('connectionId');
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+        
+        $flows = $em->getRepository(FacebookBotFlow::class)->findBy(['facebookConnection' => $connection], ['id' => 'DESC']);
+        $flowsArray = [];
+        foreach ($flows as $flow) {
+            $flowsArray[] = [
+                'id' => $flow->getId(),
+                'name' => $flow->getName()
+            ];
+        }
+
+        // Read saved settings
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        $file = $dir . "/conn_{$connection->getId()}.json";
+        $saved = [];
+        if (file_exists($file)) {
+            $saved = json_decode(file_get_contents($file), true) ?: [];
+        }
+        
+        $defaultCommentSettings = [
+            'hideOrDelete' => 'hide',
+            'offensiveKeywords' => '',
+            'offensivePrivateReplyFlowId' => '',
+            'sendReplyMultipleTimes' => false,
+            'enableCommentReply' => true,
+            'hideCommentAfterReply' => false,
+            'automationMode' => 'generic',
+            'campaignName' => '',
+            'aiContextId' => '',
+            'privateReplyFlowId' => '',
+            'commentReplyText' => '',
+            'imageReplyUrl' => '',
+            'videoReplyUrl' => '',
+            'filterMatchType' => 'exact',
+            'filterWords' => ''
+        ];
+        
+        $commentSettings = array_replace($defaultCommentSettings, $saved['comment-automation'] ?? []);
+
+        return new JsonResponse([
+            'success' => true,
+            'connection' => [
+                'id' => $connection->getId(),
+                'pageName' => $connection->getPageName(),
+                'pageId' => $connection->getPageId()
+            ],
+            'flows' => $flowsArray,
+            'commentSettings' => $commentSettings
         ]);
     }
 
@@ -451,19 +526,130 @@ class FacebookBotManagerController extends AbstractController
     // ───────────────────────── Social Posting Endpoints ─────────────────────────
 
     #[Route('/facebook-bot-manager/posts/list', name: 'app_facebook_bot_posts_list', methods: ['GET'])]
-    public function listPosts(Request $request): JsonResponse
+    public function listPosts(Request $request, EntityManagerInterface $em, FacebookService $facebookService): JsonResponse
     {
         $connectionId = (int)$request->query->get('connectionId');
         if (!$connectionId) {
             return new JsonResponse(['success' => false, 'error' => 'Connection ID is required.'], 400);
         }
 
+        $refresh = filter_var($request->query->get('refresh'), FILTER_VALIDATE_BOOLEAN);
+
         $dir = __DIR__ . '/../../var/facebook_posts';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
         $file = $dir . "/conn_{$connectionId}.json";
         $posts = [];
 
         if (file_exists($file)) {
             $posts = json_decode(file_get_contents($file), true) ?: [];
+        }
+
+        if ($refresh) {
+            $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+            if ($connection) {
+                try {
+                    $feed = $facebookService->fetchPageFeed($connection, 50);
+
+                    // We map local posts by fbPostId for fast lookups
+                    $localPostsByFbId = [];
+                    $otherLocalPosts = [];
+                    foreach ($posts as $p) {
+                        if (!empty($p['fbPostId'])) {
+                            $localPostsByFbId[$p['fbPostId']] = $p;
+                        } else {
+                            $otherLocalPosts[] = $p;
+                        }
+                    }
+
+                    $syncedPosts = [];
+                    // Process feed posts
+                    foreach ($feed as $fbPost) {
+                        $fbId = $fbPost['id'];
+                        $likesCount = $fbPost['likes']['summary']['total_count'] ?? 0;
+                        $commentsCount = $fbPost['comments']['summary']['total_count'] ?? 0;
+                        $sharesCount = $fbPost['shares']['count'] ?? 0;
+
+                        if (isset($localPostsByFbId[$fbId])) {
+                            // Update existing local post
+                            $localPost = $localPostsByFbId[$fbId];
+                            $localPost['status'] = 'published';
+                            $localPost['errorMessage'] = null;
+                            $localPost['likes'] = $likesCount;
+                            $localPost['comments'] = $commentsCount;
+                            $localPost['shares'] = $sharesCount;
+                            if (isset($fbPost['permalink_url'])) {
+                                $localPost['link'] = $fbPost['permalink_url'];
+                            }
+                            $syncedPosts[] = $localPost;
+                            unset($localPostsByFbId[$fbId]);
+                        } else {
+                            // Try matching by message for unpublished posts that were actually published
+                            $matchedIndex = -1;
+                            foreach ($otherLocalPosts as $idx => $olp) {
+                                if ($olp['status'] !== 'published' && !empty($olp['message']) && !empty($fbPost['message']) && levenshtein($olp['message'], $fbPost['message']) < 5) {
+                                    $matchedIndex = $idx;
+                                    break;
+                                }
+                            }
+
+                            if ($matchedIndex !== -1) {
+                                $localPost = $otherLocalPosts[$matchedIndex];
+                                $localPost['fbPostId'] = $fbId;
+                                $localPost['status'] = 'published';
+                                $localPost['errorMessage'] = null;
+                                $localPost['likes'] = $likesCount;
+                                $localPost['comments'] = $commentsCount;
+                                $localPost['shares'] = $sharesCount;
+                                if (isset($fbPost['permalink_url'])) {
+                                    $localPost['link'] = $fbPost['permalink_url'];
+                                }
+                                $syncedPosts[] = $localPost;
+                                array_splice($otherLocalPosts, $matchedIndex, 1);
+                            } else {
+                                // New post from Facebook directly
+                                $syncedPosts[] = [
+                                    'id' => uniqid('post_'),
+                                    'createdAt' => (new \DateTime($fbPost['created_time']))->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
+                                    'type' => 'multimedia',
+                                    'message' => $fbPost['message'] ?? '',
+                                    'link' => $fbPost['permalink_url'] ?? '',
+                                    'mediaType' => isset($fbPost['full_picture']) ? 'image' : 'none',
+                                    'mediaUrl' => $fbPost['full_picture'] ?? '',
+                                    'status' => 'published',
+                                    'fbPostId' => $fbId,
+                                    'likes' => $likesCount,
+                                    'comments' => $commentsCount,
+                                    'shares' => $sharesCount,
+                                ];
+                            }
+                        }
+                    }
+
+                    // Put back any remaining local posts (drafts, failed, or published but outside current feed limit)
+                    foreach ($localPostsByFbId as $lp) {
+                        $syncedPosts[] = $lp;
+                    }
+                    foreach ($otherLocalPosts as $olp) {
+                        $syncedPosts[] = $olp;
+                    }
+
+                    // Sort posts by createdAt DESC
+                    usort($syncedPosts, function ($a, $b) {
+                        return strcmp($b['createdAt'], $a['createdAt']);
+                    });
+
+                    $posts = $syncedPosts;
+                    file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+                } catch (\Exception $e) {
+                    return new JsonResponse([
+                        'success' => true,
+                        'posts' => $posts,
+                        'syncError' => $e->getMessage()
+                    ]);
+                }
+            }
         }
 
         return new JsonResponse(['success' => true, 'posts' => $posts]);
@@ -679,5 +865,105 @@ class FacebookBotManagerController extends AbstractController
         file_put_contents($file, json_encode($updatedPosts, JSON_PRETTY_PRINT));
 
         return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/facebook-bot-manager/posts/save-comment-settings', name: 'app_facebook_bot_posts_save_comment_settings', methods: ['POST'])]
+    public function savePostCommentSettings(Request $request): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        $postId = $request->request->get('postId');
+        $settingsRaw = $request->request->get('settings');
+
+        if (!$connectionId || !$postId) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection ID and Post ID are required.'], 400);
+        }
+
+        $dir = __DIR__ . '/../../var/facebook_posts';
+        $file = $dir . "/conn_{$connectionId}.json";
+
+        if (!file_exists($file)) {
+            return new JsonResponse(['success' => false, 'error' => 'Post log not found.'], 404);
+        }
+
+        $posts = json_decode(file_get_contents($file), true) ?: [];
+        $found = false;
+
+        $settings = null;
+        if (\is_string($settingsRaw)) {
+            $settings = json_decode($settingsRaw, true);
+        } elseif (\is_array($settingsRaw)) {
+            $settings = $settingsRaw;
+        }
+
+        foreach ($posts as $idx => $post) {
+            if ($post['id'] === $postId || ($post['fbPostId'] ?? '') === $postId) {
+                $posts[$idx]['commentAutomationSettings'] = $settings;
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            return new JsonResponse(['success' => false, 'error' => 'Post not found in log.'], 404);
+        }
+
+        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/facebook-bot-manager/posts/add-by-id', name: 'app_facebook_bot_posts_add_by_id', methods: ['POST'])]
+    public function addPostById(Request $request): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        $fbPostId = trim((string)$request->request->get('fbPostId'));
+
+        if (!$connectionId || empty($fbPostId)) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection ID and Facebook Post ID are required.'], 400);
+        }
+
+        $dir = __DIR__ . '/../../var/facebook_posts';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $file = $dir . "/conn_{$connectionId}.json";
+
+        $posts = [];
+        if (file_exists($file)) {
+            $posts = json_decode(file_get_contents($file), true) ?: [];
+        }
+
+        $existingPost = null;
+        foreach ($posts as $p) {
+            if (($p['fbPostId'] ?? '') === $fbPostId) {
+                $existingPost = $p;
+                break;
+            }
+        }
+
+        if ($existingPost) {
+            return new JsonResponse(['success' => true, 'post' => $existingPost]);
+        }
+
+        $newPost = [
+            'id' => uniqid('post_'),
+            'createdAt' => (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
+            'type' => 'multimedia',
+            'message' => 'Set Campaign by ID: ' . $fbPostId,
+            'link' => '',
+            'mediaType' => 'none',
+            'mediaUrl' => '',
+            'status' => 'published',
+            'fbPostId' => $fbPostId,
+            'likes' => 0,
+            'comments' => 0,
+            'shares' => 0,
+            'commentAutomationSettings' => null
+        ];
+
+        array_unshift($posts, $newPost);
+        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+
+        return new JsonResponse(['success' => true, 'post' => $newPost]);
     }
 }

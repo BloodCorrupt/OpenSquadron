@@ -106,6 +106,22 @@ class FacebookWebhookController extends AbstractController
                     }
                 }
 
+                // Process feed webhook changes (comment automation)
+                if (isset($entry['changes']) && is_array($entry['changes']) && $resolvedConnection) {
+                    foreach ($entry['changes'] as $change) {
+                        if (($change['field'] ?? '') === 'feed') {
+                            $value = $change['value'] ?? [];
+                            if (($value['item'] ?? '') === 'comment' && ($value['verb'] ?? '') === 'add') {
+                                try {
+                                    $this->handleCommentAddition($value, $resolvedConnection);
+                                } catch (\Exception $e) {
+                                    file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error handling comment: " . $e->getMessage() . PHP_EOL, FILE_APPEND);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if (!isset($entry['messaging'])) {
                     continue;
                 }
@@ -275,6 +291,320 @@ class FacebookWebhookController extends AbstractController
         }
 
         return new JsonResponse(['status' => 'not found'], 404);
+    }
+
+    private function handleCommentAddition(array $value, FacebookConnection $connection): void
+    {
+        $pageId = $connection->getPageId();
+        $senderId = $value['sender_id'] ?? null;
+        
+        // Skip comments made by the page itself
+        if (!$senderId || $senderId === $pageId) {
+            return;
+        }
+
+        $commentId = $value['comment_id'] ?? null;
+        $postId = $value['post_id'] ?? null;
+        $commentText = $value['message'] ?? '';
+        $senderName = $value['sender_name'] ?? '';
+
+        if (!$commentId || !$postId) {
+            return;
+        }
+
+        // 1. Fetch settings (post-specific first, then page-specific, fallback to defaults)
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $postsFile = $projectDir . "/var/facebook_posts/conn_" . $connection->getId() . ".json";
+        $postSettings = null;
+        if (file_exists($postsFile)) {
+            $posts = json_decode(file_get_contents($postsFile), true) ?: [];
+            foreach ($posts as $post) {
+                $fbPostId = $post['fbPostId'] ?? '';
+                if ($fbPostId !== '' && ($fbPostId === $postId || str_ends_with($postId, $fbPostId) || str_ends_with($fbPostId, $postId))) {
+                    $postSettings = $post['commentAutomationSettings'] ?? null;
+                    break;
+                }
+            }
+        }
+
+        $settingsFile = $projectDir . "/var/facebook_bot_settings/conn_" . $connection->getId() . ".json";
+        $pageSettings = null;
+        if (file_exists($settingsFile)) {
+            $saved = json_decode(file_get_contents($settingsFile), true) ?: [];
+            $pageSettings = $saved['comment-automation'] ?? null;
+        }
+
+        $defaultCommentSettings = [
+            'hideOrDelete' => 'hide',
+            'offensiveKeywords' => '',
+            'offensivePrivateReplyFlowId' => '',
+            'sendReplyMultipleTimes' => false,
+            'enableCommentReply' => true,
+            'hideCommentAfterReply' => false,
+            'automationMode' => 'generic',
+            'campaignName' => '',
+            'aiContextId' => '',
+            'privateReplyFlowId' => '',
+            'commentReplyText' => '',
+            'imageReplyUrl' => '',
+            'videoReplyUrl' => '',
+            'filterMatchType' => 'exact',
+            'filterWords' => ''
+        ];
+
+        $settings = array_merge($defaultCommentSettings, $postSettings ?? $pageSettings ?? []);
+
+        // 2. Offensive comment moderation
+        $isOffensive = false;
+        if (!empty($settings['offensiveKeywords'])) {
+            $keywords = array_filter(array_map('trim', explode(',', strtolower($settings['offensiveKeywords']))));
+            $commentTextLower = strtolower($commentText);
+            foreach ($keywords as $kw) {
+                if ($kw !== '' && str_contains($commentTextLower, $kw)) {
+                    $isOffensive = true;
+                    break;
+                }
+            }
+        }
+
+        if ($isOffensive) {
+            try {
+                if (($settings['hideOrDelete'] ?? 'hide') === 'delete') {
+                    $this->facebookService->deleteComment($commentId, $connection);
+                } else {
+                    $this->facebookService->hideComment($commentId, $connection);
+                }
+            } catch (\Exception $e) {
+                // Silently continue
+            }
+
+            if (!empty($settings['offensivePrivateReplyFlowId'])) {
+                $flow = $this->entityManager->getRepository(\App\Entity\FacebookBotFlow::class)->find($settings['offensivePrivateReplyFlowId']);
+                if ($flow && $flow->isActive()) {
+                    $subscriber = $this->getOrCreateSubscriber($senderId, $connection, $senderName);
+                    $this->WhatsappBotFlowExecutor->execute($flow, $subscriber, null, $commentId);
+                }
+            }
+            return;
+        }
+
+        // 3. Prevent multiple replies if sendReplyMultipleTimes is false
+        $repliedFile = $projectDir . "/var/facebook_bot_settings/replied_comments_" . $connection->getId() . ".json";
+        if (!is_dir(dirname($repliedFile))) {
+            mkdir(dirname($repliedFile), 0777, true);
+        }
+        $repliedComments = [];
+        if (file_exists($repliedFile)) {
+            $repliedComments = json_decode(file_get_contents($repliedFile), true) ?: [];
+        }
+
+        if (empty($settings['sendReplyMultipleTimes']) && in_array($commentId, $repliedComments)) {
+            return;
+        }
+
+        // 4. Handle comment reply if enabled
+        if (!empty($settings['enableCommentReply'])) {
+            $replied = false;
+            $replyText = '';
+            $attachmentUrl = null;
+            $privateReplyFlowId = null;
+
+            // Fetch user first & last name for token swapping
+            if (empty($senderName)) {
+                $senderName = $this->fetchUserProfile($senderId, $connection) ?: '';
+            }
+            $parts = explode(' ', $senderName, 2);
+            $firstName = $parts[0] ?? '';
+            $lastName = $parts[1] ?? '';
+
+            $mode = $settings['automationMode'] ?? 'generic';
+
+            if ($mode === 'ai') {
+                $aiSetting = $this->entityManager->getRepository(\App\Entity\AiSetting::class)->findOneBy([
+                    'owner' => $connection->getOwner(),
+                    'isActive' => true
+                ]);
+                if ($aiSetting) {
+                    $originalContext = $connection->getActiveContext();
+                    $aiContextId = $settings['aiContextId'] ?? null;
+                    if ($aiContextId) {
+                        $aiContext = $this->entityManager->getRepository(\App\Entity\AiContext::class)->find($aiContextId);
+                        if ($aiContext) {
+                            $connection->setActiveContext($aiContext);
+                        }
+                    }
+
+                    $replyText = $this->aiAgentService->generateResponse($commentText, $aiSetting, $connection);
+                    
+                    // Restore original context
+                    $connection->setActiveContext($originalContext);
+
+                    if (!empty($replyText)) {
+                        $replied = true;
+                        $privateReplyFlowId = $settings['privateReplyFlowId'] ?? null;
+                    }
+                }
+            } elseif ($mode === 'generic') {
+                $replyText = str_replace(
+                    ['{first_name}', '{last_name}'],
+                    [$firstName, $lastName],
+                    $settings['commentReplyText'] ?? ''
+                );
+                $attachmentUrl = !empty($settings['imageReplyUrl']) ? $settings['imageReplyUrl'] : (!empty($settings['videoReplyUrl']) ? $settings['videoReplyUrl'] : null);
+                $privateReplyFlowId = !empty($settings['privateReplyFlowId']) ? $settings['privateReplyFlowId'] : null;
+                if (!empty($replyText) || !empty($attachmentUrl) || !empty($privateReplyFlowId)) {
+                    $replied = true;
+                }
+            } elseif ($mode === 'filter') {
+                if (isset($settings['filterRules']) && is_array($settings['filterRules']) && !empty($settings['filterRules'])) {
+                    $commentTextLower = strtolower($commentText);
+                    foreach ($settings['filterRules'] as $rule) {
+                        $filterWords = array_filter(array_map('trim', explode(',', strtolower($rule['filterWords'] ?? ''))));
+                        $matchType = $rule['filterMatchType'] ?? 'exact';
+                        $matched = false;
+                        foreach ($filterWords as $word) {
+                            if ($word !== '') {
+                                if ($matchType === 'exact') {
+                                    if (trim($commentTextLower) === $word) {
+                                        $matched = true;
+                                        break;
+                                    }
+                                } else { // partial
+                                    if (str_contains($commentTextLower, $word)) {
+                                        $matched = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if ($matched) {
+                            $replyText = str_replace(
+                                ['{first_name}', '{last_name}'],
+                                [$firstName, $lastName],
+                                $rule['commentReplyText'] ?? ''
+                            );
+                            $attachmentUrl = !empty($rule['imageReplyUrl']) ? $rule['imageReplyUrl'] : (!empty($rule['videoReplyUrl']) ? $rule['videoReplyUrl'] : null);
+                            $privateReplyFlowId = !empty($rule['privateReplyFlowId']) ? $rule['privateReplyFlowId'] : null;
+                            if (!empty($replyText) || !empty($attachmentUrl) || !empty($privateReplyFlowId)) {
+                                $replied = true;
+                            }
+                            break;
+                        }
+                    }
+                    // If no rule matched, execute fallback if configured
+                    if (!$replied && !empty($settings['fallbackSettings'])) {
+                        $fallback = $settings['fallbackSettings'];
+                        $replyText = str_replace(
+                            ['{first_name}', '{last_name}'],
+                            [$firstName, $lastName],
+                            $fallback['commentReplyText'] ?? ''
+                        );
+                        $attachmentUrl = !empty($fallback['imageReplyUrl']) ? $fallback['imageReplyUrl'] : (!empty($fallback['videoReplyUrl']) ? $fallback['videoReplyUrl'] : null);
+                        $privateReplyFlowId = !empty($fallback['privateReplyFlowId']) ? $fallback['privateReplyFlowId'] : null;
+                        if (!empty($replyText) || !empty($attachmentUrl) || !empty($privateReplyFlowId)) {
+                            $replied = true;
+                        }
+                    }
+                } else {
+                    // Backwards compatibility for single filter settings
+                    $filterWords = array_filter(array_map('trim', explode(',', strtolower($settings['filterWords'] ?? ''))));
+                    $commentTextLower = strtolower($commentText);
+                    $matchType = $settings['filterMatchType'] ?? 'exact';
+                    
+                    $matched = false;
+                    foreach ($filterWords as $word) {
+                        if ($word !== '') {
+                            if ($matchType === 'exact') {
+                                if (trim($commentTextLower) === $word) {
+                                    $matched = true;
+                                    break;
+                                }
+                            } else { // partial
+                                if (str_contains($commentTextLower, $word)) {
+                                    $matched = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if ($matched) {
+                        $replyText = str_replace(
+                            ['{first_name}', '{last_name}'],
+                            [$firstName, $lastName],
+                            $settings['commentReplyText'] ?? ''
+                        );
+                        $attachmentUrl = !empty($settings['imageReplyUrl']) ? $settings['imageReplyUrl'] : (!empty($settings['videoReplyUrl']) ? $settings['videoReplyUrl'] : null);
+                        $privateReplyFlowId = !empty($settings['privateReplyFlowId']) ? $settings['privateReplyFlowId'] : null;
+                        if (!empty($replyText) || !empty($attachmentUrl) || !empty($privateReplyFlowId)) {
+                            $replied = true;
+                        }
+                    }
+                }
+            }
+
+            if ($replied) {
+                if (!empty($replyText) || !empty($attachmentUrl)) {
+                    try {
+                        $this->facebookService->replyToComment($commentId, $replyText, $attachmentUrl, $connection);
+                    } catch (\Exception $e) {
+                        // Silently continue
+                    }
+                }
+
+                $repliedComments[] = $commentId;
+                file_put_contents($repliedFile, json_encode($repliedComments));
+
+                // Send Private Reply message flow if configured
+                $flowId = $privateReplyFlowId;
+                if ($flowId) {
+                    $flow = $this->entityManager->getRepository(\App\Entity\FacebookBotFlow::class)->find($flowId);
+                    if ($flow && $flow->isActive()) {
+                        $subscriber = $this->getOrCreateSubscriber($senderId, $connection, $senderName);
+                        $this->WhatsappBotFlowExecutor->execute($flow, $subscriber, null, $commentId);
+                    }
+                }
+
+                // Hide comment after reply if configured
+                if (!empty($settings['hideCommentAfterReply'])) {
+                    try {
+                        $this->facebookService->hideComment($commentId, $connection);
+                    } catch (\Exception $e) {
+                        // Silently continue
+                    }
+                }
+            }
+        }
+    }
+
+    private function getOrCreateSubscriber(string $psid, FacebookConnection $connection, string $senderName = ''): Subscriber
+    {
+        $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
+            'psid' => $psid,
+            'facebookConnection' => $connection,
+        ]);
+
+        if (!$subscriber) {
+            $subscriber = new Subscriber();
+            $subscriber->setChannel('facebook');
+            $subscriber->setPsid($psid);
+            $subscriber->setFacebookConnection($connection);
+            
+            if (empty($senderName)) {
+                $senderName = $this->fetchUserProfile($psid, $connection) ?: '';
+            }
+            if ($senderName !== '') {
+                $subscriber->setName($senderName);
+            }
+            
+            // Set update time
+            $subscriber->setUpdatedAt(new \DateTime('now', new \DateTimeZone('UTC')));
+
+            $this->entityManager->persist($subscriber);
+            $this->entityManager->flush();
+        }
+
+        return $subscriber;
     }
 
     /**

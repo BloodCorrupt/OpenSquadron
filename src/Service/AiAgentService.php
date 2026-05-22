@@ -130,7 +130,7 @@ class AiAgentService
         }
     }
 
-    public function generateResponse(string $userMessage, AiSetting $setting, ?WhatsAppConnection $connection = null): ?string
+    public function generateResponse(string $userMessage, AiSetting $setting, object|null $connection = null): ?string
     {
         $provider = strtolower($setting->getProvider() ?? 'openai');
         $apiKey = $setting->getApiKey();

@@ -240,8 +240,11 @@ class WhatsAppController extends AbstractController
 
                                 if (!$matched) {
                                     if ($resolvedConnection && $resolvedConnection->isAiActive()) {
-                                        $aiSetting = $this->entityManager->getRepository(\App\Entity\AiSetting::class)->findOneBy([]);
-                                        if ($aiSetting && $aiSetting->isActive()) {
+                                        $aiSetting = $this->entityManager->getRepository(\App\Entity\AiSetting::class)->findOneBy([
+                                            'owner' => $resolvedConnection->getOwner(),
+                                            'isActive' => true
+                                        ]);
+                                        if ($aiSetting) {
                                             $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection);
                                             if ($aiResponse) {
                                                 try {

@@ -842,6 +842,552 @@
         }
     }
 
+    /* ═══════════ Social Posting Poster Tab Switcher & Post Manager ═══════════ */
+    .poster-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 10px;
+    }
+    .poster-tab-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 15px;
+        font-weight: 600;
+        padding: 8px 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    .poster-tab-btn:hover {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .poster-tab-btn.is-active {
+        color: var(--primary-accent);
+        background: rgba(6, 182, 212, 0.1);
+        box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.25);
+    }
+    .poster-tab-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    .poster-tab-content {
+        display: none;
+        width: 100%;
+        animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .poster-tab-content.is-active {
+        display: block;
+    }
+    
+    /* Post Manager Badges & Columns */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .status-badge.status-published {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .status-badge.status-draft {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+        border: 1px solid var(--glass-border);
+    }
+    .status-badge.status-failed {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        cursor: help;
+    }
+    .platform-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .platform-badge.platform-facebook {
+        background: rgba(24, 119, 242, 0.15);
+        color: #1877f2;
+        border: 1px solid rgba(24, 119, 242, 0.3);
+    }
+    .platform-badge.platform-instagram {
+        background: rgba(225, 48, 108, 0.15);
+        color: #e1306c;
+        border: 1px solid rgba(225, 48, 108, 0.3);
+    }
+    .engagement-metrics {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+    .metric-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .metric-item svg {
+        width: 14px;
+        height: 14px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+    }
+    .post-media-thumb {
+        width: 44px;
+        height: 44px;
+        border-radius: 6px;
+        object-fit: cover;
+        border: 1px solid var(--glass-border);
+        flex-shrink: 0;
+    }
+    .post-content-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 380px;
+    }
+    .post-text-wrap {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+    .post-link-indicator {
+        font-size: 12px;
+        color: var(--primary-accent);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+    }
+    .post-link-indicator svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    /* Pagination and Table Empty State */
+    .pagination-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid var(--glass-border);
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .pagination-info {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+    .pagination-btn {
+        padding: 6px 14px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .pagination-btn:hover:not(:disabled) {
+        background: rgba(255,255,255,0.08);
+        color: var(--primary-accent);
+        border-color: rgba(6, 182, 212, 0.4);
+    }
+    .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    
+    /* Spinner rotate keyframes */
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .spin-icon {
+        animation: spin 1s linear infinite;
+    }
+
+    /* ═══════════ Multimedia Post Create Panel ═══════════ */
+    .mpc-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr 320px;
+        gap: 0;
+        min-height: 520px;
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.25);
+    }
+    @media (max-width: 1100px) {
+        .mpc-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    /* Left page selector column */
+    .mpc-sidebar {
+        border-right: 1px solid var(--glass-border);
+        padding: 16px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: rgba(15, 23, 42, 0.3);
+    }
+    .mpc-sidebar-search {
+        width: 100%;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--glass-border);
+        background: rgba(0,0,0,0.2);
+        color: #fff;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .mpc-sidebar-search:focus {
+        border-color: var(--primary-accent);
+    }
+    .mpc-sidebar-search::placeholder {
+        color: var(--text-muted);
+    }
+    .mpc-page-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        overflow-y: auto;
+    }
+    .mpc-page-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+        font-size: 13px;
+        color: var(--text-main);
+    }
+    .mpc-page-item:hover {
+        background: rgba(255,255,255,0.04);
+    }
+    .mpc-page-item input[type="checkbox"] {
+        accent-color: var(--primary-accent);
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+    .mpc-page-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #3b82f6;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    .mpc-page-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .mpc-sidebar-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .mpc-sidebar-label input[type="checkbox"] {
+        accent-color: var(--primary-accent);
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Center form column */
+    .mpc-form-col {
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+    .mpc-tab-bar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .mpc-tab-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--glass-border);
+        background: rgba(255,255,255,0.03);
+        color: var(--text-muted);
+        transition: all 0.2s;
+        user-select: none;
+    }
+    .mpc-tab-btn:hover {
+        background: rgba(255,255,255,0.06);
+        color: var(--text-main);
+    }
+    .mpc-tab-btn.is-active {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.4);
+        color: #60a5fa;
+    }
+    .mpc-tab-btn svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+    }
+    .mpc-tab-panel {
+        display: none;
+        flex-direction: column;
+        gap: 16px;
+        flex: 1;
+    }
+    .mpc-tab-panel.is-active {
+        display: flex;
+    }
+    .mpc-field-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .mpc-field-label .info-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #3b82f6;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: 800;
+        cursor: help;
+    }
+    .mpc-textarea {
+        width: 100%;
+        min-height: 100px;
+        background: rgba(0,0,0,0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        color: #fff;
+        font-size: 14px;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    .mpc-textarea:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.12);
+    }
+    .mpc-textarea-wrap {
+        position: relative;
+    }
+    .mpc-emoji-btn {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 18px;
+        transition: color 0.15s;
+        padding: 2px;
+    }
+    .mpc-emoji-btn:hover {
+        color: var(--primary-accent);
+    }
+    .mpc-input {
+        width: 100%;
+        background: rgba(0,0,0,0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    .mpc-input:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.12);
+    }
+    .mpc-posting-time {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .mpc-posting-time .mpc-field-label {
+        margin: 0;
+    }
+    .mpc-submit-row {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        margin-top: auto;
+        padding-top: 10px;
+    }
+    .mpc-submit-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 22px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        background: #3b82f6;
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+        transition: all 0.2s;
+    }
+    .mpc-submit-btn:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+    }
+    .mpc-submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .mpc-submit-btn svg {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+        stroke: none;
+    }
+    /* Upload area styles */
+    .mpc-upload-bar {
+        display: flex;
+        gap: 6px;
+    }
+    .mpc-upload-bar .mpc-tab-btn {
+        font-size: 12px;
+        padding: 6px 14px;
+    }
+    .mpc-upload-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        background: #10b981;
+        color: #fff;
+        transition: all 0.15s;
+    }
+    .mpc-upload-btn:hover {
+        background: #059669;
+    }
+    .mpc-upload-btn svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.5;
+    }
+    .mpc-info-banner {
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 12px;
+        color: #fbbf24;
+        line-height: 1.5;
+    }
+    .mpc-info-banner a {
+        color: #60a5fa;
+        text-decoration: underline;
+    }
+    .mpc-reels-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    /* Right preview column */
+    .mpc-preview-col {
+        border-left: 1px solid var(--glass-border);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        background: rgba(15, 23, 42, 0.3);
+    }
+    .mpc-ig-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
     /* Facebook Desktop News Feed Preview Styling */
     .fb-post-shell {
         width: 100%;
@@ -903,6 +1449,104 @@
         overflow: hidden;
         background: #242526;
     }
+    .fb-post-placeholder-img {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: 2px dashed rgba(59, 130, 246, 0.3);
+    }
+    .fb-post-placeholder-img svg {
+        width: 48px;
+        height: 48px;
+        color: rgba(59, 130, 246, 0.5);
+    }
+    .fb-post-placeholder-img span {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: rgba(59, 130, 246, 0.5);
+        letter-spacing: 1px;
+    }
+    .fb-post-link-card {
+        margin: 0 16px 8px 16px;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 8px;
+        overflow: hidden;
+        background: rgba(0,0,0,0.2);
+    }
+    .fb-post-link-domain {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding: 10px 12px 2px 12px;
+    }
+    .fb-post-link-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        padding: 2px 12px 4px 12px;
+    }
+    .fb-post-link-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        padding: 0 12px 10px 12px;
+    }
+    .fb-post-video-wrap {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .fb-post-video-wrap .play-overlay {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .fb-post-video-wrap .play-overlay svg {
+        width: 24px;
+        height: 24px;
+        fill: #fff;
+    }
+    .fb-post-video-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 32px;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        gap: 10px;
+    }
+    .fb-post-video-bar svg {
+        width: 14px;
+        height: 14px;
+        fill: #fff;
+        cursor: pointer;
+    }
+    .fb-post-video-bar span {
+        font-size: 11px;
+        color: #ccc;
+    }
+    .fb-post-video-bar .progress-bar {
+        flex: 1;
+        height: 3px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 2px;
+    }
     .fb-post-footer {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
@@ -926,6 +1570,413 @@
     .fb-post-action-btn:hover {
         background: rgba(255, 255, 255, 0.05);
         color: #e4e6eb;
+    }
+
+    /* ═══════════ Comment Automation Tab Styles ═══════════ */
+    .comment-auto-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr 320px;
+        gap: 0;
+        min-height: 520px;
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.25);
+    }
+    @media (max-width: 1100px) {
+        .comment-auto-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .comment-middle-col {
+        background: rgba(15, 23, 42, 0.15);
+    }
+    .comment-right-col {
+        background: rgba(15, 23, 42, 0.3);
+        border-left: 1px solid var(--glass-border);
+    }
+    
+    /* Post card feed on the right */
+    .comment-post-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        padding: 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transition: all 0.2s ease;
+    }
+    .comment-post-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .comment-post-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .comment-post-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .comment-post-message {
+        font-size: 12px;
+        color: var(--text-main);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 6px;
+    }
+    .comment-post-meta {
+        font-size: 10px;
+        color: var(--text-muted);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .comment-post-gear-btn {
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: var(--primary-accent);
+        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        align-self: center;
+        flex-shrink: 0;
+    }
+    .comment-post-gear-btn:hover {
+        background: var(--primary-accent);
+        color: #fff;
+    }
+    
+    /* Modal styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 20px;
+    }
+    .modal-overlay.is-active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .modal-card {
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+    .modal-overlay.is-active .modal-card {
+        transform: scale(1);
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .modal-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+    }
+    .modal-close-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+    }
+    .modal-close-btn:hover {
+        color: #fff;
+    }
+    .modal-close-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(15, 23, 42, 0.2);
+    }
+    
+    /* Toggle switch styles */
+    .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }
+    .switch-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    .switch-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 22px;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .3s;
+        border-radius: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #a0aec0;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: rgba(16, 185, 129, 0.2);
+        border-color: rgba(16, 185, 129, 0.4);
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+        background-color: #10b981;
+    }
+    
+    .toggle-switch-blue input:checked + .toggle-slider {
+        background-color: rgba(6, 182, 212, 0.2);
+        border-color: rgba(6, 182, 212, 0.4);
+    }
+    .toggle-switch-blue input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+        background-color: var(--primary-accent);
+    }
+
+    .form-group-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .form-group-card {
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 14px;
+        background: rgba(15, 23, 42, 0.15);
+    }
+    
+    /* Text inputs in modal */
+    .modal-input {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        width: 100%;
+    }
+    .modal-input:focus {
+        border-color: var(--primary-accent);
+        outline: none;
+    }
+    .modal-textarea {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        width: 100%;
+        min-height: 60px;
+        resize: vertical;
+    }
+    .modal-textarea:focus {
+        border-color: var(--primary-accent);
+        outline: none;
+    }
+    
+    /* Mode toggles (large options) */
+    .mode-options-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .mode-option-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .mode-option-btn:hover {
+        background: rgba(255,255,255,0.05);
+    }
+    .mode-option-btn.is-active {
+        background: rgba(6, 182, 212, 0.1);
+        border-color: rgba(6, 182, 212, 0.3);
+    }
+    .mode-option-radio {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid #a0aec0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .mode-option-btn.is-active .mode-option-radio {
+        border-color: var(--primary-accent);
+    }
+    .mode-option-btn.is-active .mode-option-radio::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary-accent);
+    }
+    .mode-option-text {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-main);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Scoped box-sizing reset for Comment Automation and Modals */
+    .comment-auto-layout *, 
+    .modal-overlay *, 
+    .modal-card * {
+        box-sizing: border-box !important;
+    }
+
+    /* Custom WebKit glass scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 6px !important;
+        height: 6px !important;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent !important;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 4px !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+    }
+    ::-webkit-scrollbar-thumb:active {
+        background: var(--primary-accent) !important;
+    }
+    
+    /* Firefox fallback styling */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    }
+
+    /* Ensure no horizontal scrollbars occur in layout containers and modal components */
+    .comment-middle-col,
+    .comment-right-col,
+    .mpc-sidebar,
+    .comment-auto-layout,
+    .modal-body,
+    .modal-card,
+    .modal-overlay {
+        overflow-x: hidden !important;
+    }
+    
+    /* Fix switch row wrapping & alignment within grid columns */
+    .switch-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .switch-label {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: var(--text-main) !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        line-height: 1.4 !important;
+        word-wrap: break-word !important;
+        white-space: normal !important;
+    }
+    .toggle-switch {
+        flex-shrink: 0 !important;
     }
 </style>
 {% endblock %}
@@ -997,6 +2048,8 @@
             </span>
             <span>Facebook Social Posting</span>
         </div>
+
+
 
         <div class="nav-item is-disabled" data-tab-target="sequences">
             <span class="nav-item-icon">
@@ -2289,63 +3342,267 @@
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
-                    <span>Social Posting (Facebook Page Feed)</span>
+                    <span>Facebook Social Posting</span>
                 </h1>
-                <div class="content-subtitle">Draft and publish visually rich text and media posts directly to your connected Facebook page.</div>
+                <div class="content-subtitle">Automatically post text, links, images and videos to Facebook and Instagram.</div>
             </div>
         </div>
 
-        <div class="preview-container">
-            <div class="form-side glass-form-card">
-                <div class="form-group">
-                    <label class="form-label" for="post-message">Post Content</label>
-                    <textarea id="post-message" class="glass-textarea" placeholder="What would you like to share today?" style="min-height: 120px;" oninput="updatePostPreview()"></textarea>
-                    <div class="form-helper">Write engaging copy for your audience. Markdown is supported.</div>
+        <!-- Poster Sub-Tabs -->
+        <div class="poster-tabs">
+            <button class="poster-tab-btn is-active" id="poster-tab-btn-create" onclick="switchPosterTab('create')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Posting Panel
+            </button>
+            <button class="poster-tab-btn" id="poster-tab-btn-manage" onclick="switchPosterTab('manage')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+                Post Manager
+            </button>
+            <button class="poster-tab-btn" id="poster-tab-btn-comment-automation" onclick="switchPosterTab('comment-automation')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                Comment Automation
+            </button>
+        </div>
+
+        <!-- Posting Panel Tab -->
+        <div id="poster-content-create" class="poster-tab-content is-active">
+            <div class="mpc-layout">
+            {# ── Left: Page Selector ── #}
+            <div class="mpc-sidebar">
+                <input type="text" class="mpc-sidebar-search" placeholder="Search..." id="mpc-page-search" oninput="filterMpcPages()">
+                <div class="mpc-sidebar-label">
+                    <input type="checkbox" id="mpc-select-all-pages" onchange="toggleAllMpcPages(this.checked)">
+                    <span>Pages</span>
                 </div>
 
-                <div class="form-group" style="margin-top: 15px;">
-                    <label class="form-label" for="post-media-url">Media/Image URL (Optional)</label>
-                    <input type="url" id="post-media-url" class="glass-input" placeholder="https://example.com/image.jpg" oninput="updatePostPreview()">
-                    <div class="form-helper">Provide a URL of an image to embed in your Facebook post.</div>
-                </div>
-
-                <div class="form-group" style="margin-top: 15px;">
-                    <label class="form-label" for="post-link-url">Link URL (Optional)</label>
-                    <input type="url" id="post-link-url" class="glass-input" placeholder="https://example.com/article" oninput="updatePostPreview()">
-                    <div class="form-helper">Include an external link with the post content.</div>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; margin-top: 20px; gap: 10px;">
-                    <button class="btn-action btn-create" id="btn-publish-post" onclick="publishFacebookPost()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        <span>Publish Post Now</span>
-                    </button>
+                <div class="mpc-page-list" id="mpc-page-list">
+                    {% if connections is not empty %}
+                        {% for conn in connections %}
+                        <label class="mpc-page-item" data-page-name="{{ conn.pageName|default('Page')|lower }}">
+                            <input type="checkbox" name="mpc_pages[]" value="{{ conn.id }}" {% if connection and connection.id == conn.id %}checked{% endif %}>
+                            <div class="mpc-page-avatar">{{ conn.pageName|default('P')|slice(0,2)|upper }}</div>
+                            <span class="mpc-page-name">{{ conn.pageName ?: conn.label ?: 'Page #' ~ conn.id }}</span>
+                        </label>
+                        {% endfor %}
+                    {% else %}
+                        <div style="padding: 20px 10px; text-align: center; color: var(--text-muted); font-size: 13px; font-style: italic;">No pages connected</div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Facebook Post Live Feed Preview -->
-            <div class="preview-side">
-                <div class="form-label">Facebook Desktop News Feed Preview</div>
-                <div class="fb-post-shell">
+            {# ── Center: Tabbed Form ── #}
+            <div class="mpc-form-col">
+                <div class="mpc-tab-bar">
+                    <button class="mpc-tab-btn is-active" data-mpc-tab="text" onclick="switchMpcTab('text')">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        Text
+                    </button>
+                    <button class="mpc-tab-btn" data-mpc-tab="link" onclick="switchMpcTab('link')">
+                        <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        Link
+                    </button>
+                    <button class="mpc-tab-btn" data-mpc-tab="image" onclick="switchMpcTab('image')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        Image/Carousel
+                    </button>
+                    <button class="mpc-tab-btn" data-mpc-tab="video" onclick="switchMpcTab('video')">
+                        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line><line x1="17" y1="17" x2="22" y2="17"></line></svg>
+                        Video
+                    </button>
+                </div>
+
+                {# ── Text Tab ── #}
+                <div class="mpc-tab-panel is-active" id="mpc-panel-text">
+                    <div>
+                        <div class="mpc-field-label">CAMPAIGN NAME</div>
+                        <input type="text" class="mpc-input" id="mpc-campaign-text" placeholder="Enter campaign name..." style="margin-top:6px;">
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">TEXT</div>
+                        <div class="mpc-textarea-wrap" style="margin-top:6px;">
+                            <textarea class="mpc-textarea" id="mpc-text-message" placeholder="Type your message here..." oninput="updateMpcPreview()"></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
+                        <div class="mpc-posting-time" style="margin-top:8px;">
+                            <label class="switch-toggle">
+                                <input type="checkbox" id="mpc-post-now-text" checked>
+                                <span class="slider-round"></span>
+                            </label>
+                            <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
+                        </div>
+                    </div>
+                    <div class="mpc-submit-row">
+                        <button class="mpc-submit-btn" id="mpc-btn-submit-text" onclick="publishMpcPost('text')">
+                            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                            Submit
+                        </button>
+                    </div>
+                </div>
+
+                {# ── Link Tab ── #}
+                <div class="mpc-tab-panel" id="mpc-panel-link">
+                    <div>
+                        <div class="mpc-field-label">CAMPAIGN NAME</div>
+                        <input type="text" class="mpc-input" id="mpc-campaign-link" placeholder="Enter campaign name..." style="margin-top:6px;">
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">TEXT</div>
+                        <div class="mpc-textarea-wrap" style="margin-top:6px;">
+                            <textarea class="mpc-textarea" id="mpc-link-message" placeholder="Type your message here..." oninput="updateMpcPreview()"></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">PASTE LINK</div>
+                        <input type="url" class="mpc-input" id="mpc-link-url" placeholder="https://example.com/your-article" oninput="updateMpcPreview()" style="margin-top:6px;">
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
+                        <div class="mpc-posting-time" style="margin-top:8px;">
+                            <label class="switch-toggle">
+                                <input type="checkbox" id="mpc-post-now-link" checked>
+                                <span class="slider-round"></span>
+                            </label>
+                            <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
+                        </div>
+                    </div>
+                    <div class="mpc-submit-row">
+                        <button class="mpc-submit-btn" id="mpc-btn-submit-link" onclick="publishMpcPost('link')">
+                            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                            Submit
+                        </button>
+                    </div>
+                </div>
+
+                {# ── Image/Carousel Tab ── #}
+                <div class="mpc-tab-panel" id="mpc-panel-image">
+                    <div id="mpc-img-url-input" style="margin-top: 10px;">
+                        <input type="url" class="mpc-input" id="mpc-image-url" placeholder="https://example.com/image.jpg" oninput="updateMpcPreview()">
+                    </div>
+                    <button class="mpc-upload-btn" onclick="addCarouselImage()" style="margin-top: 10px;">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Upload
+                    </button>
+                    <div class="mpc-info-banner" style="margin-top: 10px;">
+                        Multi image Post Limit: 10 images. In Facebook it will be posted as multi images post. For Facebook multi image post, videos will be ignored. For Facebook carousel post, <a href="#">see more...</a>
+                    </div>
+                    <div id="mpc-carousel-list" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+                    <div>
+                        <div class="mpc-field-label">CAMPAIGN NAME</div>
+                        <input type="text" class="mpc-input" id="mpc-campaign-image" placeholder="Enter campaign name..." style="margin-top:6px;">
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">TEXT</div>
+                        <div class="mpc-textarea-wrap" style="margin-top:6px;">
+                            <textarea class="mpc-textarea" id="mpc-image-message" placeholder="Type your message here..." oninput="updateMpcPreview()"></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
+                        <div class="mpc-posting-time" style="margin-top:8px;">
+                            <label class="switch-toggle">
+                                <input type="checkbox" id="mpc-post-now-image" checked>
+                                <span class="slider-round"></span>
+                            </label>
+                            <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
+                        </div>
+                    </div>
+                    <div class="mpc-submit-row">
+                        <button class="mpc-submit-btn" id="mpc-btn-submit-image" onclick="publishMpcPost('image')">
+                            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                            Submit
+                        </button>
+                    </div>
+                </div>
+
+                {# ── Video Tab ── #}
+                <div class="mpc-tab-panel" id="mpc-panel-video">
+                    <div>
+                        <input type="url" class="mpc-input" id="mpc-video-url" placeholder="Paste URL" oninput="updateMpcPreview()">
+                    </div>
+                    <button class="mpc-upload-btn" id="mpc-video-upload-btn">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Upload
+                    </button>
+                    <div>
+                        <div class="mpc-field-label">CAMPAIGN NAME</div>
+                        <input type="text" class="mpc-input" id="mpc-campaign-video" placeholder="Enter campaign name..." style="margin-top:6px;">
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">TEXT</div>
+                        <div class="mpc-textarea-wrap" style="margin-top:6px;">
+                            <textarea class="mpc-textarea" id="mpc-video-message" placeholder="Type your message here..." oninput="updateMpcPreview()"></textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
+                        <div class="mpc-posting-time" style="margin-top:8px;">
+                            <label class="switch-toggle">
+                                <input type="checkbox" id="mpc-post-now-video" checked>
+                                <span class="slider-round"></span>
+                            </label>
+                            <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
+                        </div>
+                    </div>
+                    <div class="mpc-submit-row">
+                        <button class="mpc-submit-btn" id="mpc-btn-submit-video" onclick="publishMpcPost('video')">
+                            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Right: Live Preview ── #}
+            <div class="mpc-preview-col">
+
+                <div class="fb-post-shell" id="mpc-preview-shell">
                     <div class="fb-post-header">
-                        <div class="fb-post-avatar">
+                        <div class="fb-post-avatar" id="mpc-preview-avatar">
                             {{ connection ? connection.pageName|default('F')|slice(0,1)|upper : 'F' }}
                         </div>
                         <div class="fb-post-meta">
-                            <div class="fb-post-author">{{ connection ? connection.pageName ?: 'Facebook Page' : 'Facebook Page' }}</div>
-                            <div class="fb-post-time">Just now · <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px; display:inline; vertical-align:middle; fill:none;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
+                            <div class="fb-post-author" id="mpc-preview-author">{{ connection ? connection.pageName ?: 'Facebook Page' : 'Facebook Page' }}</div>
+                            <div class="fb-post-time">1m · <svg viewBox="0 0 16 16" fill="currentColor" style="width:12px; height:12px;"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 9H8a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 1 0v5h3a.5.5 0 0 1 0 1z"></path></svg></div>
                         </div>
                     </div>
                     <div class="fb-post-body">
-                        <div class="fb-post-text" id="preview-post-text">What would you like to share today?</div>
-                        
-                        <div class="fb-post-media-container" id="preview-post-media-container" style="display:none;">
-                            <img id="preview-post-image" src="" alt="Facebook Post Media" style="width:100%; display:block; border-top:1px solid var(--glass-border); border-bottom:1px solid var(--glass-border);">
+                        <div class="fb-post-text" id="mpc-preview-text">Text goes here</div>
+
+                        {# Image placeholder (for Image tab) #}
+                        <div class="fb-post-media-container" id="mpc-preview-media" style="display:none;">
+                            <div class="fb-post-placeholder-img" id="mpc-preview-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                <span>Placeholder Image</span>
+                            </div>
+                            <img id="mpc-preview-img" src="" alt="" style="width:100%; display:none;">
                         </div>
 
-                        <div class="fb-post-link-card" id="preview-post-link-card" style="display:none; margin:10px 16px 0 16px; border:1px solid var(--glass-border); border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2);">
-                            <div class="fb-post-link-preview-url" id="preview-post-link-url-text" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); padding:10px 12px 2px 12px;">EXAMPLE.COM</div>
-                            <div class="fb-post-link-preview-title" id="preview-post-link-title" style="font-size:14px; font-weight:600; color:#fff; padding:2px 12px 10px 12px;">Visit Website</div>
+                        {# Link card (for Link tab) #}
+                        <div class="fb-post-link-card" id="mpc-preview-link-card" style="display:none;">
+                            <div class="fb-post-placeholder-img" id="mpc-preview-link-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                <span>Placeholder Image</span>
+                            </div>
+                            <div class="fb-post-link-title" id="mpc-preview-link-title">Title goes here...</div>
+                            <div class="fb-post-link-desc" id="mpc-preview-link-desc">Description goes here..</div>
+                        </div>
+
+                        {# Video player (for Video tab) #}
+                        <div class="fb-post-media-container" id="mpc-preview-video" style="display:none;">
+                            <div class="fb-post-video-wrap">
+                                <div class="play-overlay">
+                                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                </div>
+                                <div class="fb-post-video-bar">
+                                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    <span>0:00</span>
+                                    <div class="progress-bar"></div>
+                                    <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="#fff" stroke-width="2"></path></svg>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="fb-post-footer">
@@ -2358,9 +3615,192 @@
                             <span>Comment</span>
                         </div>
                         <div class="fb-post-action-btn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M20.39 12a5 5 0 0 0-5-5H9M15 4l-4 4 4 4"></path></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                             <span>Share</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- Closes .mpc-layout -->
+        </div> <!-- Closes #poster-content-create -->
+
+        <!-- Post Manager Tab -->
+        <div id="poster-content-manage" class="poster-tab-content">
+            <!-- Toolbar for search & refresh -->
+            <div class="toolbar-row" style="margin-bottom: 20px;">
+                <div class="toolbar-left">
+                    <div class="toolbar-search">
+                        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="post-manager-search" placeholder="Search posts by text..." oninput="filterManagerPosts()">
+                    </div>
+                </div>
+                <div>
+                    <button class="btn-action btn-secondary" id="btn-refresh-posts" onclick="loadRecentPosts(true)">
+                        <svg id="refresh-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:6px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                        <span id="refresh-btn-text">Refresh Posts</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Posts List Table -->
+            <div class="table-container">
+                <table class="custom-table" id="posts-manager-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 45%;">Post Content</th>
+                            <th style="width: 12%;">Type</th>
+                            <th style="width: 15%;">Engagement</th>
+                            <th style="width: 13%;">Created At</th>
+                            <th style="width: 10%;">Status</th>
+                            <th style="width: 5%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="posts-manager-tbody">
+                        <tr>
+                            <td colspan="6" class="no-data-row">Loading posts...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Row -->
+            <div class="pagination-row" id="posts-pagination-row" style="display:none;">
+                <div class="pagination-info" id="posts-pagination-info">
+                    Showing 0-0 of 0 posts
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="posts-btn-prev" onclick="changePostsPage(-1)" disabled>Previous</button>
+                    <span class="pagination-info" id="posts-page-num">Page 1 of 1</span>
+                    <button class="pagination-btn" id="posts-btn-next" onclick="changePostsPage(1)" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comment Automation Tab -->
+        <div id="poster-content-comment-automation" class="poster-tab-content">
+            <div class="comment-auto-layout">
+                {# Left Column: Page Bots list #}
+                <div class="mpc-sidebar">
+                    <div style="font-weight: 700; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Bots</div>
+                    <input type="text" class="mpc-sidebar-search" placeholder="Search..." id="comment-bot-search" oninput="filterCommentBots()">
+                    <div class="mpc-page-list" id="comment-bot-list" style="margin-top: 8px;">
+                        {% if connections is not empty %}
+                            {% for conn in connections %}
+                            <div class="mpc-page-item {% if connection and connection.id == conn.id %}is-active{% endif %}" onclick="selectCommentAutomationConnection('{{ conn.id }}')" style="cursor: pointer; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; margin-bottom: 4px;" data-page-name="{{ conn.pageName|default('Page')|lower }}">
+                                <div class="mpc-page-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">
+                                    {{ conn.pageName|default('P')|slice(0,1)|upper }}
+                                </div>
+                                <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <span class="mpc-page-name" style="font-weight: 600; font-size: 13px; color: var(--text-main);">{{ conn.pageName ?: conn.label ?: 'Page #' ~ conn.id }}</span>
+                                    <span style="font-size: 10px; color: var(--text-muted);">{{ conn.pageId }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">No pages found</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# Middle Column: Full Page Settings & Metrics #}
+                <div class="comment-middle-col" style="padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+                    {% if connection %}
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: var(--primary-accent);"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        <h2 id="comment-active-page-name" style="font-size: 18px; font-weight: 700; color: var(--text-main); margin: 0;">{{ connection.pageName }}</h2>
+                    </div>
+
+                    <!-- Metrics Counters -->
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                        <div class="glass-card" style="padding: 16px; display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px;">
+                            <div style="background: rgba(6,182,212,0.1); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary-accent);">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Auto Reply Enabled Posts</div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 4px;">
+                                    Active Campaigns: <span id="metric-reply-enabled-count" style="color:var(--primary-accent);">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card" style="padding: 16px; display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px;">
+                            <div style="background: rgba(59,130,246,0.1); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Auto Comment Enabled Posts</div>
+                                <div style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 4px;">
+                                    Configured: <span id="metric-comment-enabled-count" style="color:#3b82f6;">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full Page Campaign Card -->
+                    <div class="glass-card" style="padding: 24px; text-align: center; border: 1px solid var(--glass-border); border-radius: 14px; background: rgba(15,23,42,0.4); display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--text-main);">
+                            <span>Full Page Campaigns</span>
+                            <span id="full-page-status-badge" class="status-badge status-draft">Inactive</span>
+                        </div>
+                        
+                        <div style="background: rgba(6,182,212,0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary-accent); margin: 10px 0;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width: 40px; height: 40px;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        </div>
+
+                        <!-- Switch Container -->
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Enable Full Page Reply</span>
+                            <label class="toggle-switch toggle-switch-blue">
+                                <input type="checkbox" id="full-page-reply-switch" onchange="toggleFullPageReply(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <button class="btn-action" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #fff; padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;" onclick="openFullPageSettingsModal()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            <span>Configure Reply</span>
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: auto; display: flex; justify-content: center;">
+                        <div style="position: relative; display: inline-block;">
+                            <button class="btn-action btn-secondary" style="font-size: 12px; padding: 8px 16px; display: flex; align-items: center; gap: 6px;" onclick="toggleCampaignReportDropdown(event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                <span>See Campaign Reports</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            <div id="comment-reports-dropdown" class="glass-card" style="display: none; position: absolute; bottom: 42px; left: 0; min-width: 180px; z-index: 100; padding: 8px; border: 1px solid var(--glass-border); background: rgba(30, 41, 59, 0.95); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);">
+                                <div style="padding: 6px 10px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 4px;">Reports</div>
+                                <a href="#" onclick="alert('Auto reply reports functionality is active and tracked in system webhooks.')" style="display: block; padding: 6px 10px; font-size: 12px; color: var(--text-main); text-decoration: none; border-radius: 4px; transition: background 0.2s;">Auto Reply Report</a>
+                                <a href="#" onclick="alert('Auto comment reports functionality is active and tracked in system webhooks.')" style="display: block; padding: 6px 10px; font-size: 12px; color: var(--text-main); text-decoration: none; border-radius: 4px; transition: background 0.2s;">Auto Comment Report</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 40px 0;">Please connect a page to get started.</div>
+                    {% endif %}
+                </div>
+
+                {# Right Column: Latest Posts #}
+                <div class="comment-right-col" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
+                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--text-main);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: var(--primary-accent);"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+                            <span>Latest Posts</span>
+                        </div>
+                        <button class="btn-action" style="font-size: 12px; padding: 6px 12px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(6,182,212,0.3); background: rgba(6,182,212,0.05); color: var(--primary-accent); border-radius: 6px;" onclick="openCampaignByIdModal()">
+                            Set Campaign by ID
+                        </button>
+                    </div>
+
+                    <!-- Post Search -->
+                    <input type="text" class="modal-input" placeholder="Search..." id="comment-post-search" oninput="filterCommentPosts()" style="margin-bottom: 4px; font-size: 12px; height: 34px;">
+
+                    <!-- Posts List Container -->
+                    <div id="comment-posts-container" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Dynamically rendered -->
+                        <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 30px 0;">Loading posts...</div>
                     </div>
                 </div>
             </div>
@@ -2369,10 +3809,1141 @@
 
 </div>
 
+{# ═══════════ Dialog Modals for Comment Automation ═══════════ #}
+
+<!-- 1. Configuration Modal -->
+<div id="comment-automation-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-title" id="comment-modal-title">Please give the following information for page response</div>
+            <button class="modal-close-btn" onclick="closeCommentAutomationModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            
+            <!-- Offensive Comments Controls -->
+            <div class="form-group-card">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: #ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                    <span>Offensive Comments Moderation</span>
+                </div>
+                
+                <div class="form-group-grid" style="margin-bottom: 14px;">
+                    <div class="switch-row">
+                        <span class="switch-label">HIDE offensive comments</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="modal-offensive-hide" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-row">
+                        <span class="switch-label">DELETE offensive comments</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="modal-offensive-delete">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">
+                        Write down the offensive keywords in comma separated
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; color:var(--primary-accent); cursor:help;" title="e.g. spam, scam, fake"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </label>
+                    <textarea id="modal-offensive-keywords" class="modal-textarea" placeholder="Type keywords here in comma separated (keyword1,keyword2)...Keep it blank for no actions"></textarea>
+                </div>
+
+                <div>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply after deleting/hiding offensive comment</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select id="modal-offensive-private-reply-flow-id" class="modal-input" style="flex: 1;">
+                            <option value="">Please select a message template</option>
+                            {% for flow in flows %}
+                                <option value="{{ flow.id }}">{{ flow.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <a href="{{ path('app_facebook_bot_flows') }}" target="_blank" style="font-size:11px; color:var(--primary-accent); text-decoration:none; font-weight:700;">+ Add Template</a>
+                        <span style="font-size:11px; color:var(--text-muted); cursor:pointer; font-weight:700;" onclick="refreshFlowsList()">🔄 Refresh List</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- General Settings Toggles -->
+            <div class="form-group-card">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: var(--primary-accent);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>General Settings</span>
+                </div>
+                <div class="form-group-grid">
+                    <div class="switch-row">
+                        <span class="switch-label">Do you want to send reply message to a user multiple times?</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="modal-send-multiple-times">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-row">
+                        <span class="switch-label">Do you want to enable comment reply?</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="modal-enable-comment-reply" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="switch-row" style="margin-top: 14px;">
+                    <span class="switch-label">Do you want to hide comments after comment reply?</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="modal-hide-comment-after-reply">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Automation Modes Selector -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <span class="switch-label" style="font-weight: 700;">Select Comment Automation Mode</span>
+                
+                <div class="mode-options-bar">
+                    <div class="mode-option-btn" id="mode-btn-ai" onclick="switchAutomationMode('ai')">
+                        <div class="mode-option-radio"></div>
+                        <span class="mode-option-text">Automated Reply by AI</span>
+                    </div>
+                    <div class="mode-option-btn" id="mode-btn-generic" onclick="switchAutomationMode('generic')">
+                        <div class="mode-option-radio"></div>
+                        <span class="mode-option-text">Generic Message for All</span>
+                    </div>
+                    <div class="mode-option-btn" id="mode-btn-filter" onclick="switchAutomationMode('filter')">
+                        <div class="mode-option-radio"></div>
+                        <span class="mode-option-text">Send Message by Filtering Word/Sentence</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Input Panels based on Mode -->
+            
+            <!-- Panel 1: AI reply -->
+            <div id="panel-mode-ai" class="form-group-card" style="display: none;">
+                <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">AI Assistant Settings</div>
+                
+                <div style="margin-bottom: 14px;">
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">AI Context / Training Data *</label>
+                    <select id="modal-ai-context-id" class="modal-input">
+                        <option value="">Select Saved AI Context</option>
+                        {% for ctx in contexts %}
+                            <option value="{{ ctx.id }}">{{ ctx.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">The AI will generate smart, context-aware comments and responses based on this context.</div>
+                </div>
+
+                <div>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply [Maximum two reply message is supported.]</label>
+                    <select id="modal-ai-private-reply-flow-id" class="modal-input">
+                        <option value="">Please select a message template</option>
+                        {% for flow in flows %}
+                            <option value="{{ flow.id }}">{{ flow.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Panel 2: Generic reply -->
+            <div id="panel-mode-generic" class="form-group-card" style="display: none;">
+                <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">Generic Comment Reply settings</div>
+                
+                <div style="margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="switch-label">Message for comment reply *</label>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-comment-reply-text', '{first_name}')">First name</button>
+                            <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-comment-reply-text', '{last_name}')">Last name</button>
+                        </div>
+                    </div>
+                    <textarea id="modal-comment-reply-text" class="modal-textarea" placeholder="Type your message here..."></textarea>
+                </div>
+
+                <div class="form-group-grid" style="margin-bottom: 14px;">
+                    <div>
+                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Image for comment reply</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="modal-image-reply-url" class="modal-input" placeholder="Put your image URL here">
+                            <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Video for comment reply [MP4 preferred]</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="modal-video-reply-url" class="modal-input" placeholder="Put your video URL here">
+                            <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply [Maximum two reply message is supported.]</label>
+                    <select id="modal-generic-private-reply-flow-id" class="modal-input">
+                        <option value="">Please select a message template</option>
+                        {% for flow in flows %}
+                            <option value="{{ flow.id }}">{{ flow.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Panel 3: Filter reply -->
+            <div id="panel-mode-filter" class="form-group-card" style="display: none; gap: 16px;">
+                <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 4px;">Word/Sentence Filter Settings</div>
+                
+                <div id="filter-rules-container" style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Filter rule blocks will be appended here -->
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                    <button type="button" class="btn-action" style="font-size: 13px; padding: 8px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="addFilterRuleRow()">
+                        + Add more filtering
+                    </button>
+                </div>
+
+                <div class="form-group-card" style="border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.01); padding: 18px; border-radius: 10px;">
+                    <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--primary-accent);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>Comment reply if no matching found</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label class="switch-label">Message for comment reply if no matching found</label>
+                            <div style="display: flex; gap: 6px;">
+                                <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-fallback-comment-reply-text', '{first_name}')">First name</button>
+                                <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-fallback-comment-reply-text', '{last_name}')">Last name</button>
+                            </div>
+                        </div>
+                        <textarea id="modal-fallback-comment-reply-text" class="modal-textarea" placeholder="Type your message here..."></textarea>
+                    </div>
+
+                    <div class="form-group-grid" style="margin-bottom: 14px;">
+                        <div>
+                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Image for comment reply</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="modal-fallback-image-reply-url" class="modal-input" placeholder="Put your image URL here">
+                                <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Video for comment reply [MP4 preferred]</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="modal-fallback-video-reply-url" class="modal-input" placeholder="Put your video URL here">
+                                <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply if no matching found [Maximum two reply message is supported.]</label>
+                        <select id="modal-fallback-private-reply-flow-id" class="modal-input">
+                            <option value="">Please select a message template</option>
+                            {% for flow in flows %}
+                                <option value="{{ flow.id }}">{{ flow.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <a href="{{ path('app_facebook_bot_flows') }}" target="_blank" style="font-size:11px; color:var(--primary-accent); text-decoration:none; font-weight:700;">+ Add Message Template</a>
+                            <span style="font-size:11px; color:var(--text-muted); cursor:pointer; font-weight:700;" onclick="refreshFlowsList()">🔄 Refresh List</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <select id="flow-dropdown-options-template" style="display: none;">
+                <option value="">Please select a message template</option>
+                {% for flow in flows %}
+                    <option value="{{ flow.id }}">{{ flow.name }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Campaign Name -->
+            <div>
+                <label class="switch-label" style="display: block; margin-bottom: 6px;">Auto Reply Campaign Name *</label>
+                <input type="text" id="modal-campaign-name" class="modal-input" placeholder="Write your auto reply campaign name here">
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff;" id="btn-save-comment-automation" onclick="saveCommentAutomationSettings()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>Save</span>
+            </button>
+            <button class="btn-action btn-secondary" onclick="closeCommentAutomationModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>Cancel</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Set Campaign by ID Modal -->
+<div id="campaign-by-id-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <div class="modal-title">Set Campaign by ID</div>
+            <button class="modal-close-btn" onclick="closeCampaignByIdModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div>
+                <label class="switch-label" style="display: block; margin-bottom: 6px;">Facebook Post ID *</label>
+                <input type="text" id="campaign-fb-post-id" class="modal-input" placeholder="Enter Facebook Post ID (e.g. 477103455494246_122132357010607004)">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+                    Input an arbitrary Facebook Post ID to enable post-specific comment automation campaign even if it is not shown in the feed list.
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #fff;" onclick="saveCampaignById()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>Submit</span>
+            </button>
+            <button class="btn-action btn-secondary" onclick="closeCampaignByIdModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>Cancel</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="toast" class="fb-toast">Message</div>
 
 <script>
-    const activeConnectionId = '{{ connection ? connection.id : "" }}';
+    let activeConnectionId = '{{ connection ? connection.id : "" }}';
+    let pageCommentSettings = {{ settings['comment-automation']|default(null)|json_encode|raw }};
+    let commentPosts = [];
+    let filteredCommentPosts = [];
+    let currentEditingPostId = null;
+
+    function selectCommentAutomationConnection(connId) {
+        // Remove active class from all items, add to the clicked one
+        document.querySelectorAll('#comment-bot-list .mpc-page-item').forEach(el => {
+            el.classList.remove('is-active');
+        });
+        
+        // Find the element by checking its onclick attribute contains the connection ID
+        document.querySelectorAll('#comment-bot-list .mpc-page-item').forEach(el => {
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(connId)) {
+                el.classList.add('is-active');
+            }
+        });
+
+        // Set active connection ID
+        activeConnectionId = connId;
+
+        // Update the browser URL without reload
+        const url = new URL(window.location);
+        url.searchParams.set('connectionId', connId);
+        window.history.replaceState({}, '', url);
+
+        // Fetch connection details via AJAX
+        fetch(`/facebook-bot-manager/get-connection-details?connectionId=${connId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update the connection title
+                const nameHeader = document.getElementById('comment-active-page-name');
+                if (nameHeader) {
+                    nameHeader.textContent = data.connection.pageName;
+                }
+
+                // Update flows dropdown options inside the modal
+                rebuildFlowDropdowns(data.flows);
+
+                // Update settings
+                pageCommentSettings = data.commentSettings;
+
+                // Update Full Page Campaign UI
+                updateFullPageCampaignUI();
+
+                // Load posts and metrics
+                loadCommentAutomationTab(true);
+            } else {
+                showToast(data.error || 'Failed to switch page.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error switching page connection:', err);
+            showToast('Error switching page connection: ' + err.message, 'error');
+        });
+    }
+
+    function rebuildFlowDropdowns(flows) {
+        const dropdownIds = [
+            'modal-offensive-private-reply-flow-id',
+            'modal-ai-private-reply-flow-id',
+            'modal-generic-private-reply-flow-id',
+            'modal-fallback-private-reply-flow-id',
+            'flow-dropdown-options-template'
+        ];
+        dropdownIds.forEach(id => {
+            const select = document.getElementById(id);
+            if (!select) return;
+            const defaultVal = select.value;
+            // Keep the default / first option
+            const firstOpt = select.options[0];
+            select.innerHTML = '';
+            if (firstOpt) select.appendChild(firstOpt);
+            flows.forEach(flow => {
+                const opt = document.createElement('option');
+                opt.value = flow.id;
+                opt.textContent = flow.name;
+                select.appendChild(opt);
+            });
+            // Re-select original value if it exists in the new list, otherwise select empty
+            select.value = [...select.options].some(o => o.value === defaultVal) ? defaultVal : "";
+        });
+    }
+
+    function timeAgo(dateString) {
+        if (!dateString) return '';
+        try {
+            const parts = dateString.split(/[- :]/);
+            let utcDate;
+            if (parts.length >= 5) {
+                utcDate = new Date(Date.UTC(parts[0], parts[1]-1, parts[2], parts[3], parts[4], parts[5] || 0));
+            } else {
+                utcDate = new Date(dateString);
+            }
+            const diffMs = new Date() - utcDate;
+            const diffSec = Math.floor(diffMs / 1000);
+            if (diffSec < 60) return 'Just now';
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin} min${diffMin > 1 ? 's' : ''} ago`;
+            const diffHr = Math.floor(diffMin / 60);
+            if (diffHr < 24) return `${diffHr} hour${diffHr > 1 ? 's' : ''} ago`;
+            const diffDays = Math.floor(diffHr / 24);
+            if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            const diffMonths = Math.floor(diffDays / 30);
+            if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+            const diffYears = Math.floor(diffMonths / 12);
+            return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function loadCommentAutomationTab(forceRefresh = false) {
+        if (!activeConnectionId) return;
+        const container = document.getElementById('comment-posts-container');
+        if (container) {
+            container.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 30px 0;">
+                <svg class="spin-icon" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                Loading posts...
+            </div>`;
+        }
+        fetch(`/facebook-bot-manager/posts/list?connectionId=${activeConnectionId}&refresh=${forceRefresh}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                commentPosts = data.posts || [];
+                filterCommentPosts();
+                updateCommentMetrics();
+            } else {
+                if (container) {
+                    container.innerHTML = `<div style="color: #ef4444; font-size: 13px; text-align: center; padding: 30px 0;">Failed to load posts: ${data.error || 'Unknown error'}</div>`;
+                }
+            }
+        })
+        .catch(err => {
+            if (container) {
+                container.innerHTML = `<div style="color: #ef4444; font-size: 13px; text-align: center; padding: 30px 0;">Error loading posts: ${err.message}</div>`;
+            }
+        });
+    }
+
+    function updateCommentMetrics() {
+        let activeCampaigns = 0;
+        let configuredPosts = 0;
+        commentPosts.forEach(post => {
+            if (post.commentAutomationSettings) {
+                configuredPosts++;
+                if (post.commentAutomationSettings.enableCommentReply) {
+                    activeCampaigns++;
+                }
+            }
+        });
+        const replyEl = document.getElementById('metric-reply-enabled-count');
+        const commentEl = document.getElementById('metric-comment-enabled-count');
+        if (replyEl) replyEl.textContent = activeCampaigns;
+        if (commentEl) commentEl.textContent = configuredPosts;
+    }
+
+    function filterCommentBots() {
+        const query = document.getElementById('comment-bot-search').value.toLowerCase().trim();
+        document.querySelectorAll('#comment-bot-list .mpc-page-item').forEach(el => {
+            const name = el.getAttribute('data-page-name') || '';
+            if (name.includes(query)) {
+                el.style.display = 'flex';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    // Filter posts inside comment automation tab
+    function filterCommentPosts() {
+        const query = document.getElementById('comment-post-search').value.toLowerCase().trim();
+        filteredCommentPosts = commentPosts.filter(post => {
+            const msg = (post.message || '').toLowerCase();
+            const id = (post.fbPostId || '').toLowerCase();
+            return msg.includes(query) || id.includes(query);
+        });
+        renderCommentPostsList();
+    }
+
+    function renderCommentPostsList() {
+        const container = document.getElementById('comment-posts-container');
+        if (!container) return;
+        if (filteredCommentPosts.length === 0) {
+            container.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 30px 0;">No posts found.</div>`;
+            return;
+        }
+        let html = '';
+        filteredCommentPosts.forEach(post => {
+            const hasSettingsClass = post.commentAutomationSettings ? 'style="border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.02);"' : '';
+            const settingsIndicator = post.commentAutomationSettings ? `<span style="font-size: 9px; color: var(--primary-accent); margin-top:2px;">Campaign: ${post.commentAutomationSettings.campaignName || 'Unnamed'}</span>` : '';
+            let text = post.message || '';
+            if (text.length > 80) text = text.substring(0, 77) + '...';
+            let avatarHtml = '';
+            if (post.mediaUrl) {
+                avatarHtml = `<img class="comment-post-avatar" src="${post.mediaUrl}" onerror="this.src='https://placehold.co/100x100?text=Post';">`;
+            } else {
+                avatarHtml = `<div class="comment-post-avatar" style="display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px; font-weight:bold;">POST</div>`;
+            }
+            html += `
+                <div class="comment-post-card" ${hasSettingsClass} data-post-id="${post.id}">
+                    ${avatarHtml}
+                    <div class="comment-post-info">
+                        <div class="comment-post-message" title="${post.message ? post.message.replace(/"/g, '&quot;') : ''}">${text || '<span style="font-style:italic; color:var(--text-muted);">No text message</span>'}</div>
+                        <div class="comment-post-meta">
+                            <span>${timeAgo(post.createdAt)}</span>
+                            <span style="font-family: monospace; font-size: 9px; color: var(--text-muted);">${post.fbPostId || ''}</span>
+                            ${settingsIndicator}
+                        </div>
+                    </div>
+                    <button class="comment-post-gear-btn" onclick="openCommentAutomationModal('${post.id}')" title="Configure comment automation">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function openFullPageSettingsModal() {
+        currentEditingPostId = null;
+        document.getElementById('comment-modal-title').textContent = "Please give the following information for page response";
+        populateModalSettings(pageCommentSettings);
+        document.getElementById('comment-automation-modal').classList.add('is-active');
+    }
+
+    function openCommentAutomationModal(postId) {
+        currentEditingPostId = postId;
+        document.getElementById('comment-modal-title').textContent = "Please give the following information for post response";
+        const post = commentPosts.find(p => p.id === postId);
+        if (!post) {
+            showToast('Post not found.', 'error');
+            return;
+        }
+        const settings = post.commentAutomationSettings || pageCommentSettings;
+        populateModalSettings(settings);
+        document.getElementById('comment-automation-modal').classList.add('is-active');
+    }
+
+    let filterRuleCounter = 0;
+
+    function addFilterRuleRow(data = {}) {
+        const container = document.getElementById('filter-rules-container');
+        if (!container) return;
+
+        filterRuleCounter++;
+        const ruleId = filterRuleCounter;
+
+        const row = document.createElement('div');
+        row.className = 'filter-rule-card';
+        row.style.cssText = 'border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 8px; position: relative; margin-bottom: 16px;';
+        
+        const flowTemplateSelect = document.getElementById('flow-dropdown-options-template');
+        let optionsHtml = flowTemplateSelect ? flowTemplateSelect.innerHTML : '<option value="">Please select a message template</option>';
+
+        row.innerHTML = `
+            <button type="button" class="modal-close-btn" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text-muted); cursor: pointer;" onclick="removeFilterRule(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <div style="font-weight: 700; font-size: 12px; color: var(--primary-accent); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Filter Rule</div>
+
+            <div class="form-group-grid" style="margin-bottom: 12px;">
+                <div>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Filter Word / Sentence (comma separated) *</label>
+                    <input type="text" class="modal-input rule-filter-words" placeholder="e.g. price, info, cost" value="${data.filterWords || ''}">
+                </div>
+                <div>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Match Type</label>
+                    <div style="display: flex; gap: 12px; align-items: center; height: 38px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-main); font-size: 13px;">
+                            <input type="radio" name="match-type-${ruleId}" value="exact" ${(!data.filterMatchType || data.filterMatchType === 'exact') ? 'checked' : ''} class="rule-match-exact">
+                            <span>Exact Match</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-main); font-size: 13px;">
+                            <input type="radio" name="match-type-${ruleId}" value="partial" ${(data.filterMatchType === 'partial') ? 'checked' : ''} class="rule-match-partial">
+                            <span>Partial Match</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label class="switch-label">Message for comment reply *</label>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertRulePlaceholder(this, '{first_name}')">First name</button>
+                        <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertRulePlaceholder(this, '{last_name}')">Last name</button>
+                    </div>
+                </div>
+                <textarea class="modal-textarea rule-comment-reply-text" placeholder="Type your message here..." style="min-height: 80px;">${data.commentReplyText || ''}</textarea>
+            </div>
+
+            <div class="form-group-grid" style="margin-bottom: 12px;">
+                <div>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Image for comment reply</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="modal-input rule-image-reply-url" placeholder="Put your image URL here" value="${data.imageReplyUrl || ''}">
+                        <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Video for comment reply [MP4 preferred]</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="modal-input rule-video-reply-url" placeholder="Put your video URL here" value="${data.videoReplyUrl || ''}">
+                        <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply [Maximum two reply message is supported.]</label>
+                <select class="modal-input rule-private-reply-flow-id">
+                    ${optionsHtml}
+                </select>
+            </div>
+        `;
+        
+        container.appendChild(row);
+
+        if (data.privateReplyFlowId) {
+            row.querySelector('.rule-private-reply-flow-id').value = data.privateReplyFlowId;
+        }
+    }
+
+    function removeFilterRule(btn) {
+        const card = btn.closest('.filter-rule-card');
+        if (card) {
+            card.remove();
+        }
+    }
+
+    function insertRulePlaceholder(btn, token) {
+        const card = btn.closest('.filter-rule-card');
+        if (!card) return;
+        const textarea = card.querySelector('.rule-comment-reply-text');
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        textarea.value = text.substring(0, start) + token + text.substring(end);
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + token.length;
+    }
+
+    function populateModalSettings(s) {
+        if (!s) s = {};
+        document.getElementById('modal-offensive-hide').checked = s.hideOrDelete === 'hide';
+        document.getElementById('modal-offensive-delete').checked = s.hideOrDelete === 'delete';
+        document.getElementById('modal-offensive-keywords').value = s.offensiveKeywords || '';
+        document.getElementById('modal-offensive-private-reply-flow-id').value = s.offensivePrivateReplyFlowId || '';
+        document.getElementById('modal-send-multiple-times').checked = !!s.sendReplyMultipleTimes;
+        document.getElementById('modal-enable-comment-reply').checked = s.enableCommentReply !== false;
+        document.getElementById('modal-hide-comment-after-reply').checked = !!s.hideCommentAfterReply;
+        document.getElementById('modal-campaign-name').value = s.campaignName || '';
+
+        const mode = s.automationMode || 'generic';
+        switchAutomationMode(mode);
+
+        document.getElementById('modal-ai-context-id').value = s.aiContextId || '';
+        document.getElementById('modal-ai-private-reply-flow-id').value = s.privateReplyFlowId || '';
+        document.getElementById('modal-comment-reply-text').value = s.commentReplyText || '';
+        document.getElementById('modal-image-reply-url').value = s.imageReplyUrl || '';
+        document.getElementById('modal-video-reply-url').value = s.videoReplyUrl || '';
+        document.getElementById('modal-generic-private-reply-flow-id').value = s.privateReplyFlowId || '';
+
+        // Clear and rebuild filter rules
+        const rulesContainer = document.getElementById('filter-rules-container');
+        if (rulesContainer) {
+            rulesContainer.innerHTML = '';
+        }
+        filterRuleCounter = 0;
+
+        if (s.filterRules && Array.isArray(s.filterRules) && s.filterRules.length > 0) {
+            s.filterRules.forEach(rule => {
+                addFilterRuleRow(rule);
+            });
+        } else {
+            // Check for legacy single-rule filter configuration
+            if (s.filterWords) {
+                addFilterRuleRow({
+                    filterWords: s.filterWords,
+                    filterMatchType: s.filterMatchType || 'exact',
+                    commentReplyText: s.commentReplyText || '',
+                    imageReplyUrl: s.imageReplyUrl || '',
+                    videoReplyUrl: s.videoReplyUrl || '',
+                    privateReplyFlowId: s.privateReplyFlowId || ''
+                });
+            } else {
+                // If completely empty, add one row by default
+                addFilterRuleRow();
+            }
+        }
+
+        // Populate fallback settings
+        const fallback = s.fallbackSettings || {};
+        document.getElementById('modal-fallback-comment-reply-text').value = fallback.commentReplyText || '';
+        document.getElementById('modal-fallback-image-reply-url').value = fallback.imageReplyUrl || '';
+        document.getElementById('modal-fallback-video-reply-url').value = fallback.videoReplyUrl || '';
+        document.getElementById('modal-fallback-private-reply-flow-id').value = fallback.privateReplyFlowId || '';
+    }
+
+    function switchAutomationMode(mode) {
+        ['ai', 'generic', 'filter'].forEach(m => {
+            const btn = document.getElementById('mode-btn-' + m);
+            const panel = document.getElementById('panel-mode-' + m);
+            if (btn) {
+                if (m === mode) {
+                    btn.classList.add('is-active');
+                } else {
+                    btn.classList.remove('is-active');
+                }
+            }
+            if (panel) {
+                panel.style.display = m === mode ? 'block' : 'none';
+            }
+        });
+    }
+
+    function insertPlaceholder(elemId, token) {
+        const el = document.getElementById(elemId);
+        if (!el) return;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const text = el.value;
+        el.value = text.substring(0, start) + token + text.substring(end);
+        el.focus();
+        el.selectionStart = el.selectionEnd = start + token.length;
+    }
+
+    function closeCommentAutomationModal() {
+        document.getElementById('comment-automation-modal').classList.remove('is-active');
+    }
+
+    function openCampaignByIdModal() {
+        document.getElementById('campaign-fb-post-id').value = '';
+        document.getElementById('campaign-by-id-modal').classList.add('is-active');
+    }
+
+    function closeCampaignByIdModal() {
+        document.getElementById('campaign-by-id-modal').classList.remove('is-active');
+    }
+
+    function saveCampaignById() {
+        if (!activeConnectionId) {
+            showToast('Please connect a Facebook page first.', 'error');
+            return;
+        }
+        const fbPostId = document.getElementById('campaign-fb-post-id').value.trim();
+        if (!fbPostId) {
+            showToast('Please enter a Facebook Post ID.', 'error');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+        formData.append('fbPostId', fbPostId);
+
+        fetch('/facebook-bot-manager/posts/add-by-id', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Campaign Post added successfully!', 'success');
+                closeCampaignByIdModal();
+                loadCommentAutomationTab(false);
+            } else {
+                showToast('Failed to add campaign post: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Error: ' + err.message, 'error'));
+    }
+
+    function refreshFlowsList() {
+        fetch(window.location.href)
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newSelect = doc.getElementById('modal-offensive-private-reply-flow-id');
+            if (newSelect && newSelect.options.length > 0) {
+                const dropdowns = [
+                    'modal-offensive-private-reply-flow-id',
+                    'modal-ai-private-reply-flow-id',
+                    'modal-generic-private-reply-flow-id',
+                    'modal-fallback-private-reply-flow-id',
+                    'flow-dropdown-options-template'
+                ];
+                dropdowns.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const currentVal = el.value;
+                        el.innerHTML = newSelect.innerHTML;
+                        el.value = currentVal;
+                    }
+                });
+                
+                // Refresh all dynamic select lists inside rule cards
+                document.querySelectorAll('#filter-rules-container .rule-private-reply-flow-id').forEach(select => {
+                    const currentVal = select.value;
+                    select.innerHTML = newSelect.innerHTML;
+                    select.value = currentVal;
+                });
+                
+                showToast('Flow templates list refreshed successfully!', 'success');
+            } else {
+                showToast('Failed to refresh flows: list empty.', 'error');
+            }
+        })
+        .catch(err => showToast('Refresh error: ' + err.message, 'error'));
+    }
+
+    function toggleCampaignReportDropdown(event) {
+        event.stopPropagation();
+        const el = document.getElementById('comment-reports-dropdown');
+        if (el) {
+            const isHidden = el.style.display === 'none';
+            el.style.display = isHidden ? 'block' : 'none';
+        }
+    }
+
+    function saveCommentAutomationSettings() {
+        if (!activeConnectionId) {
+            showToast('Please connect a Facebook page first.', 'error');
+            return;
+        }
+        
+        const hideOrDelete = document.getElementById('modal-offensive-delete').checked ? 'delete' : 'hide';
+        const offensiveKeywords = document.getElementById('modal-offensive-keywords').value.trim();
+        const offensivePrivateReplyFlowId = document.getElementById('modal-offensive-private-reply-flow-id').value;
+        
+        const sendReplyMultipleTimes = document.getElementById('modal-send-multiple-times').checked;
+        const enableCommentReply = document.getElementById('modal-enable-comment-reply').checked;
+        const hideCommentAfterReply = document.getElementById('modal-hide-comment-after-reply').checked;
+        
+        const campaignName = document.getElementById('modal-campaign-name').value.trim();
+        
+        let automationMode = 'generic';
+        if (document.getElementById('mode-btn-ai').classList.contains('is-active')) {
+            automationMode = 'ai';
+        } else if (document.getElementById('mode-btn-filter').classList.contains('is-active')) {
+            automationMode = 'filter';
+        }
+        
+        let aiContextId = '';
+        let privateReplyFlowId = '';
+        let commentReplyText = '';
+        let imageReplyUrl = '';
+        let videoReplyUrl = '';
+        let filterMatchType = 'exact';
+        let filterWords = '';
+        let filterRules = [];
+        let fallbackSettings = {};
+        
+        if (automationMode === 'ai') {
+            aiContextId = document.getElementById('modal-ai-context-id').value;
+            privateReplyFlowId = document.getElementById('modal-ai-private-reply-flow-id').value;
+        } else if (automationMode === 'generic') {
+            commentReplyText = document.getElementById('modal-comment-reply-text').value;
+            imageReplyUrl = document.getElementById('modal-image-reply-url').value.trim();
+            videoReplyUrl = document.getElementById('modal-video-reply-url').value.trim();
+            privateReplyFlowId = document.getElementById('modal-generic-private-reply-flow-id').value;
+        } else if (automationMode === 'filter') {
+            const ruleCards = document.querySelectorAll('#filter-rules-container .filter-rule-card');
+            
+            if (enableCommentReply && ruleCards.length === 0) {
+                showToast('Please add at least one filter rule.', 'error');
+                return;
+            }
+
+            for (let i = 0; i < ruleCards.length; i++) {
+                const card = ruleCards[i];
+                const words = card.querySelector('.rule-filter-words').value.trim();
+                const matchType = card.querySelector('.rule-match-exact').checked ? 'exact' : 'partial';
+                const commentText = card.querySelector('.rule-comment-reply-text').value;
+                const imageReply = card.querySelector('.rule-image-reply-url').value.trim();
+                const videoReply = card.querySelector('.rule-video-reply-url').value.trim();
+                const privateReplyFlow = card.querySelector('.rule-private-reply-flow-id').value;
+
+                if (enableCommentReply) {
+                    if (!words) {
+                        showToast(`Please enter filter words for Rule #${i + 1}.`, 'error');
+                        return;
+                    }
+                    if (!commentText && !imageReply && !videoReply && !privateReplyFlow) {
+                        showToast(`Please enter a comment reply, media URL, or select a message template for Rule #${i + 1}.`, 'error');
+                        return;
+                    }
+                }
+
+                filterRules.push({
+                    filterWords: words,
+                    filterMatchType: matchType,
+                    commentReplyText: commentText,
+                    imageReplyUrl: imageReply,
+                    videoReplyUrl: videoReply,
+                    privateReplyFlowId: privateReplyFlow
+                });
+            }
+
+            // Gather fallback settings
+            const fallbackCommentText = document.getElementById('modal-fallback-comment-reply-text').value;
+            const fallbackImageReply = document.getElementById('modal-fallback-image-reply-url').value.trim();
+            const fallbackVideoReply = document.getElementById('modal-fallback-video-reply-url').value.trim();
+            const fallbackPrivateReplyFlow = document.getElementById('modal-fallback-private-reply-flow-id').value;
+
+            fallbackSettings = {
+                commentReplyText: fallbackCommentText,
+                imageReplyUrl: fallbackImageReply,
+                videoReplyUrl: fallbackVideoReply,
+                privateReplyFlowId: fallbackPrivateReplyFlow
+            };
+
+            // Backwards compatibility: populate legacy fields with the first rule values
+            if (filterRules.length > 0) {
+                filterWords = filterRules[0].filterWords;
+                filterMatchType = filterRules[0].filterMatchType;
+                commentReplyText = filterRules[0].commentReplyText;
+                imageReplyUrl = filterRules[0].imageReplyUrl;
+                videoReplyUrl = filterRules[0].videoReplyUrl;
+                privateReplyFlowId = filterRules[0].privateReplyFlowId;
+            }
+        }
+        
+        if (enableCommentReply) {
+            if (automationMode === 'ai' && !aiContextId) {
+                showToast('Please select an AI Context.', 'error');
+                return;
+            }
+            if (automationMode === 'generic' && !commentReplyText) {
+                showToast('Please enter a comment reply message.', 'error');
+                return;
+            }
+        }
+        
+        if (!campaignName) {
+            showToast('Please enter a campaign name.', 'error');
+            return;
+        }
+        
+        const settingsStructure = {
+            hideOrDelete,
+            offensiveKeywords,
+            offensivePrivateReplyFlowId,
+            sendReplyMultipleTimes,
+            enableCommentReply,
+            hideCommentAfterReply,
+            automationMode,
+            campaignName,
+            aiContextId,
+            privateReplyFlowId,
+            commentReplyText,
+            imageReplyUrl,
+            videoReplyUrl,
+            filterMatchType,
+            filterWords,
+            filterRules,
+            fallbackSettings
+        };
+        
+        const saveBtn = document.getElementById('btn-save-comment-automation');
+        const origBtnText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<svg class="spin-icon" style="width:14px;height:14px;margin-right:6px;vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg> Saving...`;
+        
+        if (currentEditingPostId === null) {
+            const formData = new FormData();
+            formData.append('connectionId', activeConnectionId);
+            formData.append('type', 'comment-automation');
+            formData.append('data', JSON.stringify(settingsStructure));
+            
+            fetch('{{ path('app_facebook_bot_save_settings') }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = origBtnText;
+                if (data.success) {
+                    pageCommentSettings = settingsStructure;
+                    showToast('Full Page Comment Automation settings saved!', 'success');
+                    closeCommentAutomationModal();
+                    updateCommentMetrics();
+                    updateFullPageCampaignUI();
+                } else {
+                    showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(err => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = origBtnText;
+                showToast('Save error: ' + err.message, 'error');
+            });
+        } else {
+            const formData = new FormData();
+            formData.append('connectionId', activeConnectionId);
+            formData.append('postId', currentEditingPostId);
+            formData.append('settings', JSON.stringify(settingsStructure));
+            
+            fetch('/facebook-bot-manager/posts/save-comment-settings', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = origBtnText;
+                if (data.success) {
+                    showToast('Post comment automation settings saved!', 'success');
+                    closeCommentAutomationModal();
+                    loadCommentAutomationTab(false);
+                } else {
+                    showToast('Failed to save: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(err => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = origBtnText;
+                showToast('Save error: ' + err.message, 'error');
+            });
+        }
+    }
+
+    // Add exclusive switches listeners in modal DOM and report click handling
+    document.addEventListener('DOMContentLoaded', () => {
+        const hideSw = document.getElementById('modal-offensive-hide');
+        const delSw = document.getElementById('modal-offensive-delete');
+        if (hideSw && delSw) {
+            hideSw.addEventListener('change', function() {
+                if (this.checked) delSw.checked = false;
+            });
+            delSw.addEventListener('change', function() {
+                if (this.checked) hideSw.checked = false;
+            });
+        }
+        
+        document.addEventListener('click', () => {
+            const el = document.getElementById('comment-reports-dropdown');
+            if (el) el.style.display = 'none';
+        });
+
+        // Initialize Full Page Campaign UI
+        updateFullPageCampaignUI();
+    });
+
+    function updateFullPageCampaignUI() {
+        const isEnabled = pageCommentSettings && pageCommentSettings.enableCommentReply !== false;
+        
+        const badge = document.getElementById('full-page-status-badge');
+        if (badge) {
+            if (isEnabled) {
+                badge.textContent = 'Active';
+                badge.className = 'status-badge status-published';
+            } else {
+                badge.textContent = 'Inactive';
+                badge.className = 'status-badge status-draft';
+            }
+        }
+
+        const sw = document.getElementById('full-page-reply-switch');
+        if (sw) {
+            sw.checked = isEnabled;
+        }
+    }
+
+    function toggleFullPageReply(isChecked) {
+        if (!activeConnectionId) {
+            showToast('Please connect a Facebook page first.', 'error');
+            const sw = document.getElementById('full-page-reply-switch');
+            if (sw) sw.checked = !isChecked;
+            return;
+        }
+
+        if (!pageCommentSettings) {
+            pageCommentSettings = {
+                hideOrDelete: 'hide',
+                offensiveKeywords: '',
+                offensivePrivateReplyFlowId: '',
+                sendReplyMultipleTimes: false,
+                enableCommentReply: true,
+                hideCommentAfterReply: false,
+                automationMode: 'generic',
+                campaignName: 'Full Page Campaign',
+                aiContextId: '',
+                privateReplyFlowId: '',
+                commentReplyText: '',
+                imageReplyUrl: '',
+                videoReplyUrl: '',
+                filterMatchType: 'exact',
+                filterWords: '',
+                filterRules: [],
+                fallbackSettings: {}
+            };
+        }
+
+        pageCommentSettings.enableCommentReply = isChecked;
+        updateFullPageCampaignUI();
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+        formData.append('type', 'comment-automation');
+        formData.append('data', JSON.stringify(pageCommentSettings));
+
+        fetch('{{ path('app_facebook_bot_save_settings') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Full Page Reply ${isChecked ? 'enabled' : 'disabled'}!`, 'success');
+            } else {
+                pageCommentSettings.enableCommentReply = !isChecked;
+                updateFullPageCampaignUI();
+                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            pageCommentSettings.enableCommentReply = !isChecked;
+            updateFullPageCampaignUI();
+            showToast('Save error: ' + err.message, 'error');
+        });
+    }
 
     function showToast(msg, type = 'success') {
         const el = document.getElementById('toast');
@@ -2736,108 +5307,271 @@
         postSettingsSave('welcome-screen', { showGreeting, greetingText, getStartedPayload });
     }
 
-    function updatePostPreview() {
-        const text = document.getElementById('post-message').value;
-        const mediaUrl = document.getElementById('post-media-url').value.trim();
-        const linkUrl = document.getElementById('post-link-url').value.trim();
+    // ═══════════ Multimedia Post Create (MPC) Logic ═══════════
+    let mpcActiveTab = 'text';
+    const mpcCarouselImages = [];
 
-        // Update Text
-        const previewText = document.getElementById('preview-post-text');
-        if (previewText) {
-            previewText.textContent = text ? text : 'What would you like to share today?';
+    function switchMpcTab(tab) {
+        mpcActiveTab = tab;
+        document.querySelectorAll('.mpc-tab-btn[data-mpc-tab]').forEach(btn => {
+            btn.classList.toggle('is-active', btn.getAttribute('data-mpc-tab') === tab);
+        });
+        document.querySelectorAll('.mpc-tab-panel').forEach(panel => {
+            panel.classList.toggle('is-active', panel.id === 'mpc-panel-' + tab);
+        });
+        updateMpcPreview();
+    }
+
+    function switchImgSource(src, btn) {
+        document.querySelectorAll('.mpc-upload-bar .mpc-tab-btn').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+    }
+
+    function filterMpcPages() {
+        const q = document.getElementById('mpc-page-search').value.toLowerCase().trim();
+        document.querySelectorAll('.mpc-page-item').forEach(item => {
+            const name = item.getAttribute('data-page-name') || '';
+            item.style.display = name.includes(q) ? '' : 'none';
+        });
+    }
+
+    function toggleAllMpcPages(checked) {
+        document.querySelectorAll('#mpc-page-list input[type="checkbox"]').forEach(cb => {
+            cb.checked = checked;
+        });
+    }
+
+    function addCarouselImage() {
+        const input = document.getElementById('mpc-image-url');
+        const url = input.value.trim();
+        if (!url) {
+            showToast('Please enter an image URL first.', 'error');
+            return;
         }
-
-        // Update Media/Image
-        const mediaContainer = document.getElementById('preview-post-media-container');
-        const previewImg = document.getElementById('preview-post-image');
-        if (mediaContainer && previewImg) {
-            if (mediaUrl) {
-                previewImg.src = mediaUrl;
-                mediaContainer.style.display = 'block';
-            } else {
-                mediaContainer.style.display = 'none';
-                previewImg.src = '';
-            }
+        if (mpcCarouselImages.length >= 10) {
+            showToast('Maximum 10 images allowed.', 'error');
+            return;
         }
+        mpcCarouselImages.push(url);
+        input.value = '';
+        renderCarouselList();
+        updateMpcPreview();
+    }
 
-        // Update Link card
-        const linkCard = document.getElementById('preview-post-link-card');
-        const linkUrlText = document.getElementById('preview-post-link-url-text');
-        const linkTitleText = document.getElementById('preview-post-link-title');
-        if (linkCard) {
-            if (linkUrl) {
-                linkCard.style.display = 'block';
-                try {
-                    const parsedUrl = new URL(linkUrl);
-                    if (linkUrlText) linkUrlText.textContent = parsedUrl.hostname.toUpperCase();
-                } catch(e) {
-                    if (linkUrlText) linkUrlText.textContent = 'LINK';
-                }
-            } else {
-                linkCard.style.display = 'none';
-            }
+    function removeCarouselImage(index) {
+        mpcCarouselImages.splice(index, 1);
+        renderCarouselList();
+        updateMpcPreview();
+    }
+
+    function renderCarouselList() {
+        const container = document.getElementById('mpc-carousel-list');
+        container.innerHTML = '';
+        mpcCarouselImages.forEach((url, i) => {
+            const thumb = document.createElement('div');
+            thumb.style.cssText = 'position:relative; width:64px; height:64px; border-radius:8px; overflow:hidden; border:1px solid var(--glass-border);';
+            thumb.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+                <button onclick="removeCarouselImage(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.7);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;">✕</button>`;
+            container.appendChild(thumb);
+        });
+    }
+
+    function insertEmoji() {
+        // Simple emoji insertion - inserts a smiley at cursor position of the active textarea
+        const textareaIds = {
+            text: 'mpc-text-message',
+            link: 'mpc-link-message',
+            image: 'mpc-image-message',
+            video: 'mpc-video-message'
+        };
+        const textarea = document.getElementById(textareaIds[mpcActiveTab]);
+        if (textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const val = textarea.value;
+            textarea.value = val.substring(0, start) + '😊' + val.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + 2;
+            textarea.focus();
+            updateMpcPreview();
         }
     }
 
-    function publishFacebookPost() {
-        if (!activeConnectionId) {
-            showToast('Please connect a Facebook page first.', 'error');
+    function updateMpcPreview() {
+        const previewText = document.getElementById('mpc-preview-text');
+        const previewMedia = document.getElementById('mpc-preview-media');
+        const previewImg = document.getElementById('mpc-preview-img');
+        const previewPlaceholder = document.getElementById('mpc-preview-placeholder');
+        const previewLinkCard = document.getElementById('mpc-preview-link-card');
+        const previewVideo = document.getElementById('mpc-preview-video');
+
+        // Reset all preview sections
+        if (previewMedia) previewMedia.style.display = 'none';
+        if (previewLinkCard) previewLinkCard.style.display = 'none';
+        if (previewVideo) previewVideo.style.display = 'none';
+
+        if (mpcActiveTab === 'text') {
+            const msg = document.getElementById('mpc-text-message')?.value || '';
+            if (previewText) previewText.textContent = msg || 'Text goes here';
+        } else if (mpcActiveTab === 'link') {
+            const msg = document.getElementById('mpc-link-message')?.value || '';
+            const linkUrl = document.getElementById('mpc-link-url')?.value?.trim() || '';
+            if (previewText) previewText.textContent = msg || 'Text goes here';
+            if (previewLinkCard) {
+                previewLinkCard.style.display = 'block';
+                const titleEl = document.getElementById('mpc-preview-link-title');
+                const descEl = document.getElementById('mpc-preview-link-desc');
+                if (linkUrl) {
+                    try {
+                        const parsed = new URL(linkUrl);
+                        if (titleEl) titleEl.textContent = parsed.hostname;
+                    } catch(e) {
+                        if (titleEl) titleEl.textContent = 'Title goes here...';
+                    }
+                } else {
+                    if (titleEl) titleEl.textContent = 'Title goes here...';
+                }
+                if (descEl) descEl.textContent = 'Description goes here..';
+            }
+        } else if (mpcActiveTab === 'image') {
+            const msg = document.getElementById('mpc-image-message')?.value || '';
+            const imgUrl = document.getElementById('mpc-image-url')?.value?.trim() || '';
+            if (previewText) previewText.textContent = msg || 'Text goes here';
+            if (previewMedia) {
+                previewMedia.style.display = 'block';
+                if (mpcCarouselImages.length > 0 || imgUrl) {
+                    const showUrl = mpcCarouselImages[0] || imgUrl;
+                    if (previewImg) { previewImg.src = showUrl; previewImg.style.display = 'block'; }
+                    if (previewPlaceholder) previewPlaceholder.style.display = 'none';
+                } else {
+                    if (previewImg) previewImg.style.display = 'none';
+                    if (previewPlaceholder) previewPlaceholder.style.display = 'flex';
+                }
+            }
+        } else if (mpcActiveTab === 'video') {
+            const msg = document.getElementById('mpc-video-message')?.value || '';
+            if (previewText) previewText.textContent = msg || 'Text goes here';
+            if (previewVideo) previewVideo.style.display = 'block';
+        }
+    }
+
+    // Alias for legacy switchTab call
+    function updatePostPreview() {
+        updateMpcPreview();
+    }
+
+    function getSelectedPageIds() {
+        const checked = document.querySelectorAll('#mpc-page-list input[type="checkbox"]:checked');
+        return Array.from(checked).map(cb => cb.value);
+    }
+
+    function publishMpcPost(tab) {
+        const pageIds = getSelectedPageIds();
+        if (pageIds.length === 0) {
+            showToast('Please select at least one Facebook Page.', 'error');
             return;
         }
 
-        const message = document.getElementById('post-message').value.trim();
-        const mediaUrl = document.getElementById('post-media-url').value.trim();
-        const linkUrl = document.getElementById('post-link-url').value.trim();
-
-        if (message === '' && mediaUrl === '' && linkUrl === '') {
-            showToast('Please enter some text, a media URL, or a link to post.', 'error');
-            return;
-        }
-
-        const btn = document.getElementById('btn-publish-post');
+        const btn = document.getElementById('mpc-btn-submit-' + tab);
         const origHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span>Publishing...</span>';
 
-        const formData = new FormData();
-        formData.append('connectionId', activeConnectionId);
-        formData.append('type', 'multimedia');
-        formData.append('message', message);
-        formData.append('link', linkUrl);
-        formData.append('mediaType', mediaUrl ? 'image' : 'none');
-        formData.append('mediaUrl', mediaUrl);
-        formData.append('publishNow', 'true');
+        // Gather fields based on tab
+        let message = '';
+        let link = '';
+        let mediaType = 'none';
+        let mediaUrl = '';
+        let type = 'multimedia';
+        let slides = '[]';
+        let postNow = true;
 
-        fetch('{{ path('app_facebook_bot_posts_save') }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                if (data.post && data.post.status === 'published') {
-                    showToast('Post published successfully to Facebook Page Feed!', 'success');
-                    // Reset the form inputs
-                    document.getElementById('post-message').value = '';
-                    document.getElementById('post-media-url').value = '';
-                    document.getElementById('post-link-url').value = '';
-                    updatePostPreview();
-                } else if (data.post && data.post.status === 'failed') {
-                    showToast('Failed to publish: ' + (data.post.errorMessage || 'Unknown API Error'), 'error');
-                } else {
-                    showToast('Post saved as draft or pending.', 'success');
-                }
-            } else {
-                showToast('Failed to publish post: ' + (data.error || 'Unknown error'), 'error');
+        if (tab === 'text') {
+            message = document.getElementById('mpc-text-message')?.value?.trim() || '';
+            postNow = document.getElementById('mpc-post-now-text')?.checked ?? true;
+        } else if (tab === 'link') {
+            message = document.getElementById('mpc-link-message')?.value?.trim() || '';
+            link = document.getElementById('mpc-link-url')?.value?.trim() || '';
+            postNow = document.getElementById('mpc-post-now-link')?.checked ?? true;
+        } else if (tab === 'image') {
+            message = document.getElementById('mpc-image-message')?.value?.trim() || '';
+            const singleUrl = document.getElementById('mpc-image-url')?.value?.trim() || '';
+            postNow = document.getElementById('mpc-post-now-image')?.checked ?? true;
+            if (mpcCarouselImages.length > 1) {
+                type = 'carousel';
+                slides = JSON.stringify(mpcCarouselImages.map(url => ({ imageUrl: url, title: '' })));
+            } else if (mpcCarouselImages.length === 1) {
+                mediaType = 'image';
+                mediaUrl = mpcCarouselImages[0];
+            } else if (singleUrl) {
+                mediaType = 'image';
+                mediaUrl = singleUrl;
             }
-        })
-        .catch(err => {
-            showToast('Publish error: ' + err.message, 'error');
-        })
-        .finally(() => {
+        } else if (tab === 'video') {
+            message = document.getElementById('mpc-video-message')?.value?.trim() || '';
+            mediaUrl = document.getElementById('mpc-video-url')?.value?.trim() || '';
+            mediaType = mediaUrl ? 'video' : 'none';
+            postNow = document.getElementById('mpc-post-now-video')?.checked ?? true;
+        }
+
+        if (message === '' && mediaUrl === '' && link === '' && mpcCarouselImages.length === 0) {
+            showToast('Please provide content for your post.', 'error');
             btn.disabled = false;
             btn.innerHTML = origHtml;
+            return;
+        }
+
+        // Publish to each selected page
+        const promises = pageIds.map(connId => {
+            const formData = new FormData();
+            formData.append('connectionId', connId);
+            formData.append('type', type);
+            formData.append('message', message);
+            formData.append('link', link);
+            formData.append('mediaType', mediaType);
+            formData.append('mediaUrl', mediaUrl);
+            formData.append('slides', slides);
+            formData.append('publishNow', postNow ? 'true' : 'false');
+
+            return fetch('{{ path('app_facebook_bot_posts_save') }}', {
+                method: 'POST',
+                body: formData
+            }).then(res => res.json());
         });
+
+        Promise.all(promises)
+            .then(results => {
+                const allSuccess = results.every(r => r.success);
+                const anyFailed = results.some(r => r.post && r.post.status === 'failed');
+                if (allSuccess && !anyFailed) {
+                    showToast(`Post published to ${pageIds.length} page(s) successfully!`, 'success');
+                    // Reset form
+                    const textareaIds = ['mpc-text-message', 'mpc-link-message', 'mpc-image-message', 'mpc-video-message'];
+                    textareaIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                    const inputIds = ['mpc-link-url', 'mpc-image-url', 'mpc-video-url'];
+                    inputIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                    mpcCarouselImages.length = 0;
+                    renderCarouselList();
+                    updateMpcPreview();
+                    loadRecentPosts(false);
+                } else if (anyFailed) {
+                    const failedMsg = results.filter(r => r.post?.status === 'failed').map(r => r.post.errorMessage).join('; ');
+                    showToast('Some posts failed: ' + (failedMsg || 'Unknown API error'), 'error');
+                    loadRecentPosts(false);
+                } else {
+                    showToast('Post saved.', 'success');
+                    loadRecentPosts(false);
+                }
+            })
+            .catch(err => showToast('Publish error: ' + err.message, 'error'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            });
+    }
+
+    // Legacy alias
+    function publishFacebookPost() {
+        publishMpcPost(mpcActiveTab);
     }
 
     // Existing Trigger Autoreply toggles and actions
@@ -3030,8 +5764,379 @@
         window.location.href = url.toString();
     }
 
+    // ═══════════ Social Posting Post Manager Logic ═══════════
+    let managerPosts = [];
+    let filteredPosts = [];
+    let postsCurrentPage = 1;
+    const postsPerPage = 10;
+    let isRefreshingPosts = false;
+
+    function switchPosterTab(subTabId) {
+        const btnCreate = document.getElementById('poster-tab-btn-create');
+        const btnManage = document.getElementById('poster-tab-btn-manage');
+        const btnCommentAuto = document.getElementById('poster-tab-btn-comment-automation');
+        
+        if (btnCreate) btnCreate.classList.remove('is-active');
+        if (btnManage) btnManage.classList.remove('is-active');
+        if (btnCommentAuto) btnCommentAuto.classList.remove('is-active');
+        
+        const paneCreate = document.getElementById('poster-content-create');
+        const paneManage = document.getElementById('poster-content-manage');
+        const paneCommentAuto = document.getElementById('poster-content-comment-automation');
+        
+        if (paneCreate) paneCreate.classList.remove('is-active');
+        if (paneManage) paneManage.classList.remove('is-active');
+        if (paneCommentAuto) paneCommentAuto.classList.remove('is-active');
+        
+        if (subTabId === 'create') {
+            if (btnCreate) btnCreate.classList.add('is-active');
+            if (paneCreate) paneCreate.classList.add('is-active');
+        } else if (subTabId === 'manage') {
+            if (btnManage) btnManage.classList.add('is-active');
+            if (paneManage) paneManage.classList.add('is-active');
+            loadRecentPosts(false);
+        } else if (subTabId === 'comment-automation') {
+            if (btnCommentAuto) btnCommentAuto.classList.add('is-active');
+            if (paneCommentAuto) paneCommentAuto.classList.add('is-active');
+            loadCommentAutomationTab(true);
+        }
+    }
+
+    function loadRecentPosts(refresh = false) {
+        if (!activeConnectionId) return;
+
+        const tbody = document.getElementById('posts-manager-tbody');
+        if (managerPosts.length === 0 && tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="no-data-row"><div style="display:flex;align-items:center;justify-content:center;gap:10px;"><svg class="spin-icon" style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg> Loading posts...</div></td></tr>`;
+        }
+
+        const refreshBtn = document.getElementById('btn-refresh-posts');
+        const refreshText = document.getElementById('refresh-btn-text');
+        const refreshIcon = document.getElementById('refresh-icon-svg');
+        
+        if (refresh && !isRefreshingPosts) {
+            isRefreshingPosts = true;
+            if (refreshBtn) refreshBtn.disabled = true;
+            if (refreshText) refreshText.textContent = 'Syncing...';
+            if (refreshIcon) refreshIcon.classList.add('spin-icon');
+        }
+
+        const url = '{{ path('app_facebook_bot_posts_list') }}?connectionId=' + activeConnectionId + '&refresh=false';
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    managerPosts = data.posts || [];
+                    filterManagerPosts();
+                }
+
+                if (refresh) {
+                    const syncUrl = '{{ path('app_facebook_bot_posts_list') }}?connectionId=' + activeConnectionId + '&refresh=true';
+                    return fetch(syncUrl)
+                        .then(res => res.json())
+                        .then(syncData => {
+                            if (syncData.success) {
+                                managerPosts = syncData.posts || [];
+                                filterManagerPosts();
+                                if (syncData.syncError) {
+                                    showToast('Sync warning: ' + syncData.syncError, 'error');
+                                } else {
+                                    showToast('Posts synchronized with Facebook!', 'success');
+                                }
+                            } else {
+                                showToast('Failed to sync with Facebook: ' + (syncData.error || 'Unknown error'), 'error');
+                            }
+                        });
+                }
+            })
+            .catch(err => {
+                console.error('Error loading posts:', err);
+                showToast('Error loading posts: ' + err.message, 'error');
+                if (tbody && managerPosts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="no-data-row" style="color:#ef4444;">Error loading posts list.</td></tr>`;
+                }
+            })
+            .finally(() => {
+                if (refresh) {
+                    isRefreshingPosts = false;
+                    if (refreshBtn) refreshBtn.disabled = false;
+                    if (refreshText) refreshText.textContent = 'Refresh Posts';
+                    if (refreshIcon) refreshIcon.classList.remove('spin-icon');
+                }
+            });
+    }
+
+    function filterManagerPosts() {
+        const q = (document.getElementById('post-manager-search')?.value || '').toLowerCase().trim();
+        if (!q) {
+            filteredPosts = [...managerPosts];
+        } else {
+            filteredPosts = managerPosts.filter(p => {
+                const msg = (p.message || '').toLowerCase();
+                const id = (p.fbPostId || p.id || '').toLowerCase();
+                return msg.includes(q) || id.includes(q);
+            });
+        }
+        
+        postsCurrentPage = 1;
+        renderPostsTable();
+    }
+
+    function renderPostsTable() {
+        const tbody = document.getElementById('posts-manager-tbody');
+        if (!tbody) return;
+
+        if (filteredPosts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="no-data-row">No posts found.</td></tr>`;
+            const paginationRow = document.getElementById('posts-pagination-row');
+            if (paginationRow) paginationRow.style.display = 'none';
+            return;
+        }
+
+        const totalPosts = filteredPosts.length;
+        const totalPages = Math.ceil(totalPosts / postsPerPage);
+        
+        if (postsCurrentPage < 1) postsCurrentPage = 1;
+        if (postsCurrentPage > totalPages) postsCurrentPage = totalPages;
+
+        const startIdx = (postsCurrentPage - 1) * postsPerPage;
+        const endIdx = Math.min(startIdx + postsPerPage, totalPosts);
+        const pagePosts = filteredPosts.slice(startIdx, endIdx);
+
+        let html = '';
+        pagePosts.forEach(post => {
+            let contentHtml = '<div class="post-content-cell">';
+            if (post.mediaUrl) {
+                contentHtml += `<img class="post-media-thumb" src="${post.mediaUrl}" onerror="this.style.display='none';">`;
+            }
+            contentHtml += '<div style="display:flex; flex-direction:column; min-width:0; flex:1;">';
+            
+            let textContent = post.message || '';
+            if (textContent.length > 120) {
+                textContent = textContent.substring(0, 117) + '...';
+            }
+            contentHtml += `<div class="post-text-wrap" title="${post.message ? post.message.replace(/"/g, '&quot;') : ''}">${textContent || '<span style="font-style:italic; color:var(--text-muted);">No text message</span>'}</div>`;
+            
+            if (post.link && !post.link.includes('facebook.com') && !post.link.includes('graph.facebook.com')) {
+                contentHtml += `<a href="${post.link}" target="_blank" class="post-link-indicator">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span>${post.link.length > 35 ? post.link.substring(0, 32) + '...' : post.link}</span>
+                </a>`;
+            }
+            contentHtml += '</div></div>';
+
+            let typeText = 'Text';
+            if (post.type === 'carousel') {
+                typeText = 'Carousel';
+            } else if (post.mediaType === 'image') {
+                typeText = 'Image';
+            } else if (post.mediaType === 'video') {
+                typeText = 'Video';
+            } else if (post.link && !post.link.includes('facebook.com') && !post.link.includes('graph.facebook.com')) {
+                typeText = 'Link';
+            }
+            let typeHtml = `<span class="platform-badge platform-facebook">${typeText}</span>`;
+
+            let engagementHtml = '';
+            if (post.status === 'published') {
+                const likes = post.likes || 0;
+                const comments = post.comments || 0;
+                const shares = post.shares || 0;
+                
+                engagementHtml = `
+                    <div class="engagement-metrics">
+                        <div class="metric-item" title="${likes} Likes">
+                            <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                            <span>${likes}</span>
+                        </div>
+                        <div class="metric-item" title="${comments} Comments">
+                            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span>${comments}</span>
+                        </div>
+                        <div class="metric-item" title="${shares} Shares">
+                            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            <span>${shares}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                engagementHtml = '<span style="color:var(--text-muted); font-size: 13px;">—</span>';
+            }
+
+            let dateStr = post.createdAt || '';
+            if (dateStr) {
+                try {
+                    const parts = dateStr.split(/[- :]/);
+                    if (parts.length >= 5) {
+                        const utcDate = new Date(Date.UTC(parts[0], parts[1]-1, parts[2], parts[3], parts[4], parts[5] || 0));
+                        dateStr = utcDate.toLocaleString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+                    }
+                } catch(e) {}
+            }
+
+            let statusClass = 'status-draft';
+            let statusText = 'Draft';
+            let statusTitle = 'Draft Post';
+            if (post.status === 'published') {
+                statusClass = 'status-published';
+                statusText = 'Published';
+                statusTitle = 'Published to Facebook';
+            } else if (post.status === 'failed') {
+                statusClass = 'status-failed';
+                statusText = 'Failed';
+                statusTitle = post.errorMessage || 'Publishing failed';
+            }
+            let statusHtml = `<span class="status-badge ${statusClass}" title="${statusTitle.replace(/"/g, '&quot;')}">${statusText}</span>`;
+
+            let actionsHtml = '<div style="display:flex; gap:6px; align-items:center;">';
+            if (post.status === 'draft' || post.status === 'failed') {
+                actionsHtml += `
+                    <button class="btn-row-action" title="Publish Now" onclick="publishDraftPost('${post.id}', this)" style="color:var(--primary-accent); background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.2);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                    </button>
+                `;
+            } else if (post.status === 'published' && (post.fbPostId || post.link)) {
+                let fbLink = post.link || '';
+                if (post.fbPostId && (!fbLink || !fbLink.includes('facebook.com'))) {
+                    fbLink = `https://facebook.com/${post.fbPostId}`;
+                }
+                if (fbLink) {
+                    actionsHtml += `
+                        <a href="${fbLink}" target="_blank" class="btn-row-action" title="View on Facebook" style="color:#60a5fa; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); display:flex; align-items:center; justify-content:center; text-decoration:none; width:28px; height:28px; border-radius:6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"></path></svg>
+                        </a>
+                    `;
+                }
+            }
+            actionsHtml += `
+                <button class="btn-row-action delete-action" title="Delete Log Entry" onclick="deleteManagerPost('${post.id}', this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            `;
+            actionsHtml += '</div>';
+
+            html += `
+                <tr>
+                    <td>${contentHtml}</td>
+                    <td>${typeHtml}</td>
+                    <td>${engagementHtml}</td>
+                    <td style="font-size:13px; font-weight:600; color:var(--text-muted);">${dateStr}</td>
+                    <td>${statusHtml}</td>
+                    <td>${actionsHtml}</td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+
+        const paginationRow = document.getElementById('posts-pagination-row');
+        if (paginationRow) {
+            paginationRow.style.display = totalPosts > 0 ? 'flex' : 'none';
+            
+            const infoEl = document.getElementById('posts-pagination-info');
+            if (infoEl) {
+                infoEl.textContent = `Showing ${startIdx + 1}-${endIdx} of ${totalPosts} posts`;
+            }
+
+            const pageNumEl = document.getElementById('posts-page-num');
+            if (pageNumEl) {
+                pageNumEl.textContent = `Page ${postsCurrentPage} of ${totalPages}`;
+            }
+
+            const prevBtn = document.getElementById('posts-btn-prev');
+            if (prevBtn) {
+                prevBtn.disabled = postsCurrentPage === 1;
+            }
+
+            const nextBtn = document.getElementById('posts-btn-next');
+            if (nextBtn) {
+                nextBtn.disabled = postsCurrentPage === totalPages;
+            }
+        }
+    }
+
+    function changePostsPage(dir) {
+        postsCurrentPage += dir;
+        renderPostsTable();
+    }
+
+    function publishDraftPost(postId, btn) {
+        if (!activeConnectionId) return;
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="spin-icon" style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>`;
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+
+        const publishUrl = '{{ path('app_facebook_bot_posts_publish', {id: 'PLACEHOLDER'}) }}'.replace('PLACEHOLDER', postId);
+
+        fetch(publishUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Post published to Facebook successfully!', 'success');
+                loadRecentPosts(false);
+            } else {
+                showToast('Failed to publish: ' + (data.error || 'Unknown error'), 'error');
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                loadRecentPosts(false);
+            }
+        })
+        .catch(err => {
+            showToast('Publish error: ' + err.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        });
+    }
+
+    function deleteManagerPost(postId, btn) {
+        if (!confirm('Are you sure you want to delete this post record? This only removes it from this local manager panel log, it does not delete it from Facebook.')) return;
+        if (!activeConnectionId) return;
+
+        const row = btn.closest('tr');
+        const origOpacity = row.style.opacity;
+        row.style.opacity = '0.5';
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+
+        const deleteUrl = '{{ path('app_facebook_bot_posts_delete', {id: 'PLACEHOLDER'}) }}'.replace('PLACEHOLDER', postId);
+
+        fetch(deleteUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Post record deleted.', 'success');
+                managerPosts = managerPosts.filter(p => p.id !== postId);
+                filterManagerPosts();
+            } else {
+                showToast('Failed to delete: ' + (data.error || 'Unknown error'), 'error');
+                row.style.opacity = origOpacity;
+            }
+        })
+        .catch(err => {
+            showToast('Delete error: ' + err.message, 'error');
+            row.style.opacity = origOpacity;
+        });
+    }
+
     // Dynamic Tab Switcher Logic
     function switchTab(tabId) {
+        if (tabId === 'comment-automation') {
+            switchTab('facebook-poster');
+            switchPosterTab('comment-automation');
+            return;
+        }
+
         // Toggle Nav item states
         document.querySelectorAll('.manager-nav .nav-item[data-tab-target]').forEach(el => {
             if (el.getAttribute('data-tab-target') === tabId) {
@@ -3058,7 +6163,14 @@
         } else if (tabId === 'welcome-screen') {
             updateGreetingPreview();
         } else if (tabId === 'facebook-poster') {
-            updatePostPreview();
+            updateMpcPreview();
+            const isManageActive = document.getElementById('poster-tab-btn-manage') && document.getElementById('poster-tab-btn-manage').classList.contains('is-active');
+            const isCommentAutoActive = document.getElementById('poster-tab-btn-comment-automation') && document.getElementById('poster-tab-btn-comment-automation').classList.contains('is-active');
+            if (isManageActive) {
+                loadRecentPosts(true);
+            } else if (isCommentAutoActive) {
+                loadCommentAutomationTab(true);
+            }
         }
 
         // Save selected tab state to URL
