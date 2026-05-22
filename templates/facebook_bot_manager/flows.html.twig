@@ -1417,6 +1417,13 @@
 {% endfor %}
 ]
 </script>
+<script id="fb-http-apis-data" type="application/json">
+[
+{% for api in httpApis %}
+    {"id": {{ api.id|json_encode|raw }}, "name": {{ api.name|json_encode|raw }}, "method": {{ api.method|json_encode|raw }}, "endpointUrl": {{ api.endpointUrl|json_encode|raw }}}{% if not loop.last %},{% endif %}
+{% endfor %}
+]
+</script>
 
 {# ───────── Flow Canvas Javascript Application ───────── #}
 <script>
@@ -1427,6 +1434,7 @@
     const state = {
         flows: JSON.parse(document.getElementById('fb-flows-data').textContent || '[]'),
         templates: JSON.parse(document.getElementById('fb-templates-data').textContent || '[]'),
+        httpApis: JSON.parse(document.getElementById('fb-http-apis-data').textContent || '[]'),
         customFields: [],
         currentId: null,
         meta: { name: 'Untitled flow', keywords: '', matchMode: 'exact', isActive: true },
@@ -2104,60 +2112,52 @@
         http_api: {
             label: 'HTTP API Request',
             icon: '<svg viewBox="0 0 24 24" class="fb-svg-icon"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>',
-            defaults: { method: 'POST', url: '', headers: '', body: '', responseVar: '' },
+            defaults: { apiId: '', responseVar: '' },
             render: (d) => {
-                const method = d.method || 'POST';
-                const url = d.url ? truncate(d.url, 32) : 'No URL set';
-                const color = method === 'GET' ? '#34d399' : method === 'PUT' ? '#fbbf24' : method === 'DELETE' ? '#f87171' : '#fb923c';
-                return `<div class="fb-node-preview" style="font-size:11px;">
-                    <span style="background:${color};color:#000;border-radius:4px;padding:1px 6px;font-weight:700;font-size:10px;margin-right:6px;">${escapeHtml(method)}</span>
-                    <span style="font-family:monospace;opacity:0.85;">${escapeHtml(url)}</span>
-                </div>`;
+                const apiId = parseInt(d.apiId || d.api_id, 10) || 0;
+                const api = state.httpApis.find(a => parseInt(a.id, 10) === apiId);
+                if (api) {
+                    const method = api.method || 'GET';
+                    const name = api.name ? truncate(api.name, 22) : 'API Connection';
+                    const color = method === 'GET' ? '#34d399' : method === 'PUT' ? '#fbbf24' : method === 'DELETE' ? '#f87171' : '#fb923c';
+                    return `<div class="fb-node-preview" style="font-size:11px;">
+                        <span style="background:${color};color:#000;border-radius:4px;padding:1px 6px;font-weight:700;font-size:10px;margin-right:6px;">${escapeHtml(method)}</span>
+                        <span style="font-weight:600;opacity:0.9;">${escapeHtml(name)}</span>
+                    </div>`;
+                }
+                return `<div class="fb-node-preview fb-empty" style="font-size:11px;opacity:0.6;">No API selected</div>`;
             },
             inspector: (d, onChange) => {
                 const wrap = document.createDocumentFragment();
 
-                // Method
-                const method = document.createElement('select');
-                method.className = 'fb-select';
-                method.innerHTML = `
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="PATCH">PATCH</option>
-                    <option value="DELETE">DELETE</option>
-                `;
-                method.value = d.method || 'POST';
-                method.onchange = () => onChange({ method: method.value });
-                wrap.appendChild(wrapField('HTTP Method', method));
+                if (state.httpApis.length === 0) {
+                    const warning = document.createElement('div');
+                    warning.style.padding = '12px';
+                    warning.style.background = 'rgba(239, 68, 68, 0.1)';
+                    warning.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+                    warning.style.borderRadius = '8px';
+                    warning.style.marginBottom = '16px';
+                    warning.style.fontSize = '12px';
+                    warning.style.color = '#fca5a5';
+                    warning.innerHTML = `<strong>No HTTP APIs configured!</strong><br>Please configure your HTTP API connections globally first in <a href="/settings/http-api" target="_blank" style="color:var(--fb-active-border);text-decoration:underline;">Global Settings</a>.`;
+                    wrap.appendChild(warning);
+                } else {
+                    const apiSelect = document.createElement('select');
+                    apiSelect.className = 'fb-select';
+                    
+                    let optionsHtml = '<option value="">-- Select Global HTTP API --</option>';
+                    state.httpApis.forEach(api => {
+                        optionsHtml += `<option value="${api.id}">${escapeHtml(api.name)} (${escapeHtml(api.method)}: ${escapeHtml(truncate(api.endpointUrl, 26))})</option>`;
+                    });
+                    apiSelect.innerHTML = optionsHtml;
+                    apiSelect.value = d.apiId || d.api_id || '';
+                    apiSelect.onchange = () => {
+                        const val = apiSelect.value ? parseInt(apiSelect.value, 10) : '';
+                        onChange({ apiId: val });
+                    };
+                    wrap.appendChild(wrapField('HTTP API Connection', apiSelect, 'Select from pre-configured HTTP API connections in your global settings.'));
+                }
 
-                // URL
-                const url = document.createElement('input');
-                url.type = 'text'; url.className = 'fb-input';
-                url.placeholder = 'https://api.example.com/endpoint';
-                url.value = d.url || '';
-                url.oninput = () => onChange({ url: url.value });
-                wrap.appendChild(wrapField('Endpoint URL', url, 'Full URL including protocol. Supports {{variable}} placeholders.'));
-
-                // Headers
-                const headers = document.createElement('textarea');
-                headers.className = 'fb-textarea';
-                headers.rows = 3;
-                headers.placeholder = 'Content-Type: application/json\nAuthorization: Bearer {{token}}';
-                headers.value = d.headers || '';
-                headers.oninput = () => onChange({ headers: headers.value });
-                wrap.appendChild(wrapField('Request Headers', headers, 'One header per line. Key: Value format.'));
-
-                // Body
-                const body = document.createElement('textarea');
-                body.className = 'fb-textarea';
-                body.rows = 4;
-                body.placeholder = '{"name": "{{subscriber_name}}", "email": "{{user_email}}"}' ;
-                body.value = d.body || '';
-                body.oninput = () => onChange({ body: body.value });
-                wrap.appendChild(wrapField('Request Body (JSON)', body, 'Sent as raw JSON body. Supports {{variable}} interpolation.'));
-
-                // Response variable
                 const respVar = document.createElement('input');
                 respVar.type = 'text'; respVar.className = 'fb-input';
                 respVar.placeholder = 'api_response';

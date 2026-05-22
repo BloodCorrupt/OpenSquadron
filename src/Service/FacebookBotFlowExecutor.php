@@ -208,7 +208,14 @@ class FacebookBotFlowExecutor
                     }
                     $httpApi = $this->em->getRepository(\App\Entity\HttpApi::class)->find($apiId);
                     if ($httpApi && $httpApi->getStatus() === 'active') {
-                        $this->apiExecutor->execute($httpApi, $subscriber);
+                        $result = $this->apiExecutor->execute($httpApi, $subscriber);
+                        $responseVar = trim((string)($action['responseVar'] ?? ''));
+                        if ($responseVar !== '' && !empty($result['success']) && isset($result['responseBody'])) {
+                            $subscriber->setCustomAttributes(array_merge($subscriber->getCustomAttributes(), [
+                                $responseVar => $result['responseBody']
+                            ]));
+                            $this->em->flush();
+                        }
                     }
                     return;
 

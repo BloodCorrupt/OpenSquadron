@@ -205,12 +205,15 @@ class FacebookBotManagerController extends AbstractController
 
         $payload = array_map(static fn (FacebookBotFlow $f) => self::flowToArray($f), $flows);
 
+        $httpApis = $em->getRepository(\App\Entity\HttpApi::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
+
         return $this->render('facebook_bot_manager/flows.html.twig', [
             'flows'       => $flows,
             'flowsJson'   => $payload,
             'connection'  => $selectedConnection,
             'connections' => $connections,
             'templates'   => $templates,
+            'httpApis'    => $httpApis,
         ]);
     }
 
