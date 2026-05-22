@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 use App\Entity\AiContext;
+use App\Service\FacebookService;
 
 class FacebookBotManagerController extends AbstractController
 {
@@ -445,5 +446,238 @@ class FacebookBotManagerController extends AbstractController
                 : null,
             'legacyActions' => $isGraph ? null : $data,
         ];
+    }
+
+    // ───────────────────────── Social Posting Endpoints ─────────────────────────
+
+    #[Route('/facebook-bot-manager/posts/list', name: 'app_facebook_bot_posts_list', methods: ['GET'])]
+    public function listPosts(Request $request): JsonResponse
+    {
+        $connectionId = (int)$request->query->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection ID is required.'], 400);
+        }
+
+        $dir = __DIR__ . '/../../var/facebook_posts';
+        $file = $dir . "/conn_{$connectionId}.json";
+        $posts = [];
+
+        if (file_exists($file)) {
+            $posts = json_decode(file_get_contents($file), true) ?: [];
+        }
+
+        return new JsonResponse(['success' => true, 'posts' => $posts]);
+    }
+
+    #[Route('/facebook-bot-manager/posts/save', name: 'app_facebook_bot_posts_save', methods: ['POST'])]
+    public function savePost(Request $request, EntityManagerInterface $em, FacebookService $facebookService): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection ID is required.'], 400);
+        }
+
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
+        $id = $request->request->get('id');
+        $type = $request->request->get('type', 'multimedia');
+        $message = trim((string)$request->request->get('message', ''));
+        $link = trim((string)$request->request->get('link', ''));
+        $mediaType = $request->request->get('mediaType', 'none');
+        $mediaUrl = trim((string)$request->request->get('mediaUrl', ''));
+        $ctaType = trim((string)$request->request->get('ctaType', ''));
+        $slidesJson = $request->request->get('slides', '[]');
+        $slides = json_decode($slidesJson, true) ?: [];
+        $publishNow = filter_var($request->request->get('publishNow'), FILTER_VALIDATE_BOOLEAN);
+
+        $dir = __DIR__ . '/../../var/facebook_posts';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $file = $dir . "/conn_{$connectionId}.json";
+
+        $posts = [];
+        if (file_exists($file)) {
+            $posts = json_decode(file_get_contents($file), true) ?: [];
+        }
+
+        $postIndex = -1;
+        if ($id) {
+            foreach ($posts as $idx => $p) {
+                if ($p['id'] == $id) {
+                    $postIndex = $idx;
+                    break;
+                }
+            }
+        }
+
+        $post = $postIndex >= 0 ? $posts[$postIndex] : [
+            'id' => uniqid('post_'),
+            'createdAt' => (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
+        ];
+
+        $post['type'] = $type;
+        $post['message'] = $message;
+        $post['link'] = $link;
+        $post['mediaType'] = $mediaType;
+        $post['mediaUrl'] = $mediaUrl;
+        $post['ctaType'] = $ctaType;
+        $post['slides'] = $slides;
+        $post['status'] = $publishNow ? 'published' : 'draft';
+        $post['fbPostId'] = null;
+        $post['errorMessage'] = null;
+
+        if ($publishNow) {
+            try {
+                $result = null;
+                if ($type === 'multimedia') {
+                    if ($mediaType === 'image' && $mediaUrl !== '') {
+                        $result = $facebookService->publishPhotoPost($connection, $mediaUrl, $message);
+                    } elseif ($mediaType === 'video' && $mediaUrl !== '') {
+                        $result = $facebookService->publishVideoPost($connection, $mediaUrl, $message);
+                    } else {
+                        $result = $facebookService->publishFeedPost($connection, $message, $link);
+                    }
+                } elseif ($type === 'cta') {
+                    $result = $facebookService->publishCtaPost($connection, $message, $link, $ctaType);
+                } elseif ($type === 'carousel') {
+                    $result = $facebookService->publishCarouselPost($connection, $message, $slides);
+                }
+
+                if ($result && isset($result['id'])) {
+                    $post['fbPostId'] = $result['id'];
+                } elseif ($result && isset($result['post_id'])) {
+                    $post['fbPostId'] = $result['post_id'];
+                }
+            } catch (\Exception $e) {
+                $post['status'] = 'failed';
+                $post['errorMessage'] = $e->getMessage();
+            }
+        }
+
+        if ($postIndex >= 0) {
+            $posts[$postIndex] = $post;
+        } else {
+            $posts[] = $post;
+        }
+
+        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+
+        return new JsonResponse(['success' => true, 'post' => $post]);
+    }
+
+    #[Route('/facebook-bot-manager/posts/publish/{id}', name: 'app_facebook_bot_posts_publish', methods: ['POST'])]
+    public function publishPost(string $id, Request $request, EntityManagerInterface $em, FacebookService $facebookService): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection ID is required.'], 400);
+        }
+
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
+        $dir = __DIR__ . '/../../var/facebook_posts';
+        $file = $dir . "/conn_{$connectionId}.json";
+
+        if (!file_exists($file)) {
+            return new JsonResponse(['success' => false, 'error' => 'Post log not found.'], 404);
+        }
+
+        $posts = json_decode(file_get_contents($file), true) ?: [];
+        $postIndex = -1;
+        foreach ($posts as $idx => $p) {
+            if ($p['id'] === $id) {
+                $postIndex = $idx;
+                break;
+            }
+        }
+
+        if ($postIndex === -1) {
+            return new JsonResponse(['success' => false, 'error' => 'Post not found in log.'], 404);
+        }
+
+        $post = $posts[$postIndex];
+        $type = $post['type'] ?? 'multimedia';
+        $message = $post['message'] ?? '';
+        $link = $post['link'] ?? '';
+        $mediaType = $post['mediaType'] ?? 'none';
+        $mediaUrl = $post['mediaUrl'] ?? '';
+        $ctaType = $post['ctaType'] ?? '';
+        $slides = $post['slides'] ?? [];
+
+        try {
+            $result = null;
+            if ($type === 'multimedia') {
+                if ($mediaType === 'image' && $mediaUrl !== '') {
+                    $result = $facebookService->publishPhotoPost($connection, $mediaUrl, $message);
+                } elseif ($mediaType === 'video' && $mediaUrl !== '') {
+                    $result = $facebookService->publishVideoPost($connection, $mediaUrl, $message);
+                } else {
+                    $result = $facebookService->publishFeedPost($connection, $message, $link);
+                }
+            } elseif ($type === 'cta') {
+                $result = $facebookService->publishCtaPost($connection, $message, $link, $ctaType);
+            } elseif ($type === 'carousel') {
+                $result = $facebookService->publishCarouselPost($connection, $message, $slides);
+            }
+
+            $post['status'] = 'published';
+            $post['errorMessage'] = null;
+            if ($result && isset($result['id'])) {
+                $post['fbPostId'] = $result['id'];
+            } elseif ($result && isset($result['post_id'])) {
+                $post['fbPostId'] = $result['post_id'];
+            }
+        } catch (\Exception $e) {
+            $post['status'] = 'failed';
+            $post['errorMessage'] = $e->getMessage();
+        }
+
+        $posts[$postIndex] = $post;
+        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+
+        return new JsonResponse(['success' => true, 'post' => $post]);
+    }
+
+    #[Route('/facebook-bot-manager/posts/delete/{id}', name: 'app_facebook_bot_posts_delete', methods: ['POST'])]
+    public function deletePost(string $id, Request $request): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection ID is required.'], 400);
+        }
+
+        $dir = __DIR__ . '/../../var/facebook_posts';
+        $file = $dir . "/conn_{$connectionId}.json";
+
+        if (!file_exists($file)) {
+            return new JsonResponse(['success' => false, 'error' => 'Post log not found.'], 404);
+        }
+
+        $posts = json_decode(file_get_contents($file), true) ?: [];
+        $updatedPosts = [];
+        $found = false;
+
+        foreach ($posts as $p) {
+            if ($p['id'] === $id) {
+                $found = true;
+                continue;
+            }
+            $updatedPosts[] = $p;
+        }
+
+        if (!$found) {
+            return new JsonResponse(['success' => false, 'error' => 'Post not found in log.'], 404);
+        }
+
+        file_put_contents($file, json_encode($updatedPosts, JSON_PRETTY_PRINT));
+
+        return new JsonResponse(['success' => true]);
     }
 }

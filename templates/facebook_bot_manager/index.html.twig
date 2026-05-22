@@ -841,6 +841,92 @@
             gap: 15px;
         }
     }
+
+    /* Facebook Desktop News Feed Preview Styling */
+    .fb-post-shell {
+        width: 100%;
+        max-width: 500px;
+        background: #18191a;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 12px 0 0 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .fb-post-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px 12px 16px;
+    }
+    .fb-post-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #3b82f6;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 18px;
+    }
+    .fb-post-meta {
+        display: flex;
+        flex-direction: column;
+    }
+    .fb-post-author {
+        font-size: 15px;
+        font-weight: 600;
+        color: #e4e6eb;
+    }
+    .fb-post-time {
+        font-size: 12px;
+        color: #b0b3b8;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .fb-post-body {
+        padding: 0 0 8px 0;
+    }
+    .fb-post-text {
+        font-size: 15px;
+        color: #e4e6eb;
+        line-height: 1.4;
+        padding: 0 16px 12px 16px;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    .fb-post-media-container {
+        width: 100%;
+        overflow: hidden;
+        background: #242526;
+    }
+    .fb-post-footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        margin-top: 8px;
+        padding: 4px 6px;
+    }
+    .fb-post-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 0;
+        color: #b0b3b8;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .fb-post-action-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #e4e6eb;
+    }
 </style>
 {% endblock %}
 
@@ -903,6 +989,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
             </span>
             <span>Meta Template Campaigns</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="facebook-poster">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+            </span>
+            <span>Facebook Social Posting</span>
         </div>
 
         <div class="nav-item is-disabled" data-tab-target="sequences">
@@ -1233,6 +1326,22 @@
                     <p class="console-card-desc">Draft welcome greetings and payloads that present to users before they send their first message.</p>
                     <div class="console-card-action">
                         <span>Edit Welcome Message</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 15. Facebook Social Posting -->
+                <div class="console-card" onclick="switchTab('facebook-poster')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                        </div>
+                        <span class="console-card-title">Social Posting</span>
+                        <span class="console-card-status is-active">Active</span>
+                    </div>
+                    <p class="console-card-desc">Instantly draft and publish visual media, rich text, and link posts directly to your connected page feed.</p>
+                    <div class="console-card-action">
+                        <span>Create & Post Now</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </div>
                 </div>
@@ -2174,6 +2283,90 @@
         {% endif %}
     </div>
 
+    {# 15. Facebook Social Posting Content Pane #}
+    <div class="manager-content-pane" id="pane-facebook-poster">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                    <span>Social Posting (Facebook Page Feed)</span>
+                </h1>
+                <div class="content-subtitle">Draft and publish visually rich text and media posts directly to your connected Facebook page.</div>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <div class="form-side glass-form-card">
+                <div class="form-group">
+                    <label class="form-label" for="post-message">Post Content</label>
+                    <textarea id="post-message" class="glass-textarea" placeholder="What would you like to share today?" style="min-height: 120px;" oninput="updatePostPreview()"></textarea>
+                    <div class="form-helper">Write engaging copy for your audience. Markdown is supported.</div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label class="form-label" for="post-media-url">Media/Image URL (Optional)</label>
+                    <input type="url" id="post-media-url" class="glass-input" placeholder="https://example.com/image.jpg" oninput="updatePostPreview()">
+                    <div class="form-helper">Provide a URL of an image to embed in your Facebook post.</div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label class="form-label" for="post-link-url">Link URL (Optional)</label>
+                    <input type="url" id="post-link-url" class="glass-input" placeholder="https://example.com/article" oninput="updatePostPreview()">
+                    <div class="form-helper">Include an external link with the post content.</div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; margin-top: 20px; gap: 10px;">
+                    <button class="btn-action btn-create" id="btn-publish-post" onclick="publishFacebookPost()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        <span>Publish Post Now</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Facebook Post Live Feed Preview -->
+            <div class="preview-side">
+                <div class="form-label">Facebook Desktop News Feed Preview</div>
+                <div class="fb-post-shell">
+                    <div class="fb-post-header">
+                        <div class="fb-post-avatar">
+                            {{ connection ? connection.pageName|default('F')|slice(0,1)|upper : 'F' }}
+                        </div>
+                        <div class="fb-post-meta">
+                            <div class="fb-post-author">{{ connection ? connection.pageName ?: 'Facebook Page' : 'Facebook Page' }}</div>
+                            <div class="fb-post-time">Just now · <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px; display:inline; vertical-align:middle; fill:none;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
+                        </div>
+                    </div>
+                    <div class="fb-post-body">
+                        <div class="fb-post-text" id="preview-post-text">What would you like to share today?</div>
+                        
+                        <div class="fb-post-media-container" id="preview-post-media-container" style="display:none;">
+                            <img id="preview-post-image" src="" alt="Facebook Post Media" style="width:100%; display:block; border-top:1px solid var(--glass-border); border-bottom:1px solid var(--glass-border);">
+                        </div>
+
+                        <div class="fb-post-link-card" id="preview-post-link-card" style="display:none; margin:10px 16px 0 16px; border:1px solid var(--glass-border); border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2);">
+                            <div class="fb-post-link-preview-url" id="preview-post-link-url-text" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); padding:10px 12px 2px 12px;">EXAMPLE.COM</div>
+                            <div class="fb-post-link-preview-title" id="preview-post-link-title" style="font-size:14px; font-weight:600; color:#fff; padding:2px 12px 10px 12px;">Visit Website</div>
+                        </div>
+                    </div>
+                    <div class="fb-post-footer">
+                        <div class="fb-post-action-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                            <span>Like</span>
+                        </div>
+                        <div class="fb-post-action-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span>Comment</span>
+                        </div>
+                        <div class="fb-post-action-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M20.39 12a5 5 0 0 0-5-5H9M15 4l-4 4 4 4"></path></svg>
+                            <span>Share</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <div id="toast" class="fb-toast">Message</div>
@@ -2543,6 +2736,110 @@
         postSettingsSave('welcome-screen', { showGreeting, greetingText, getStartedPayload });
     }
 
+    function updatePostPreview() {
+        const text = document.getElementById('post-message').value;
+        const mediaUrl = document.getElementById('post-media-url').value.trim();
+        const linkUrl = document.getElementById('post-link-url').value.trim();
+
+        // Update Text
+        const previewText = document.getElementById('preview-post-text');
+        if (previewText) {
+            previewText.textContent = text ? text : 'What would you like to share today?';
+        }
+
+        // Update Media/Image
+        const mediaContainer = document.getElementById('preview-post-media-container');
+        const previewImg = document.getElementById('preview-post-image');
+        if (mediaContainer && previewImg) {
+            if (mediaUrl) {
+                previewImg.src = mediaUrl;
+                mediaContainer.style.display = 'block';
+            } else {
+                mediaContainer.style.display = 'none';
+                previewImg.src = '';
+            }
+        }
+
+        // Update Link card
+        const linkCard = document.getElementById('preview-post-link-card');
+        const linkUrlText = document.getElementById('preview-post-link-url-text');
+        const linkTitleText = document.getElementById('preview-post-link-title');
+        if (linkCard) {
+            if (linkUrl) {
+                linkCard.style.display = 'block';
+                try {
+                    const parsedUrl = new URL(linkUrl);
+                    if (linkUrlText) linkUrlText.textContent = parsedUrl.hostname.toUpperCase();
+                } catch(e) {
+                    if (linkUrlText) linkUrlText.textContent = 'LINK';
+                }
+            } else {
+                linkCard.style.display = 'none';
+            }
+        }
+    }
+
+    function publishFacebookPost() {
+        if (!activeConnectionId) {
+            showToast('Please connect a Facebook page first.', 'error');
+            return;
+        }
+
+        const message = document.getElementById('post-message').value.trim();
+        const mediaUrl = document.getElementById('post-media-url').value.trim();
+        const linkUrl = document.getElementById('post-link-url').value.trim();
+
+        if (message === '' && mediaUrl === '' && linkUrl === '') {
+            showToast('Please enter some text, a media URL, or a link to post.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-publish-post');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span>Publishing...</span>';
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+        formData.append('type', 'multimedia');
+        formData.append('message', message);
+        formData.append('link', linkUrl);
+        formData.append('mediaType', mediaUrl ? 'image' : 'none');
+        formData.append('mediaUrl', mediaUrl);
+        formData.append('publishNow', 'true');
+
+        fetch('{{ path('app_facebook_bot_posts_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (data.post && data.post.status === 'published') {
+                    showToast('Post published successfully to Facebook Page Feed!', 'success');
+                    // Reset the form inputs
+                    document.getElementById('post-message').value = '';
+                    document.getElementById('post-media-url').value = '';
+                    document.getElementById('post-link-url').value = '';
+                    updatePostPreview();
+                } else if (data.post && data.post.status === 'failed') {
+                    showToast('Failed to publish: ' + (data.post.errorMessage || 'Unknown API Error'), 'error');
+                } else {
+                    showToast('Post saved as draft or pending.', 'success');
+                }
+            } else {
+                showToast('Failed to publish post: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Publish error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        });
+    }
+
     // Existing Trigger Autoreply toggles and actions
     function toggleFlow(id, isActive) {
         fetch('{{ path('app_facebook_bot_flows_toggle', {id: 0}) }}'.replace('0', id), {
@@ -2760,6 +3057,8 @@
             updateWidgetPreview();
         } else if (tabId === 'welcome-screen') {
             updateGreetingPreview();
+        } else if (tabId === 'facebook-poster') {
+            updatePostPreview();
         }
 
         // Save selected tab state to URL

@@ -488,6 +488,198 @@ class FacebookService
         return $data;
     }
 
+    // ───────────────────────── Social Posting API ─────────────────────────
+
+    /**
+     * Publish a text or link post to the page's feed.
+     */
+    public function publishFeedPost(FacebookConnection $connection, string $message, ?string $link = null): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $pageId = $connection->getPageId();
+        $url = "https://graph.facebook.com/v21.0/{$pageId}/feed";
+
+        $json = ['message' => $message];
+        if ($link !== null && $link !== '') {
+            $json['link'] = $link;
+        }
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $json
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish feed post.');
+        }
+
+        return $content;
+    }
+
+    /**
+     * Publish a photo post to the page's photos.
+     */
+    public function publishPhotoPost(FacebookConnection $connection, string $imageUrl, string $message): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $pageId = $connection->getPageId();
+        $url = "https://graph.facebook.com/v21.0/{$pageId}/photos";
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'url' => $imageUrl,
+                'caption' => $message,
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish photo post.');
+        }
+
+        return $content;
+    }
+
+    /**
+     * Publish a video post to the page's videos.
+     */
+    public function publishVideoPost(FacebookConnection $connection, string $videoUrl, string $message): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $pageId = $connection->getPageId();
+        $url = "https://graph.facebook.com/v21.0/{$pageId}/videos";
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'file_url' => $videoUrl,
+                'description' => $message,
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish video post.');
+        }
+
+        return $content;
+    }
+
+    /**
+     * Publish a post with a Call-To-Action (CTA) link.
+     */
+    public function publishCtaPost(FacebookConnection $connection, string $message, string $link, string $ctaType): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $pageId = $connection->getPageId();
+        $url = "https://graph.facebook.com/v21.0/{$pageId}/feed";
+
+        $payload = [
+            'message' => $message,
+            'link' => $link,
+        ];
+
+        // Some App Verification scopes restrict organic CTA feed posts, so we handle call_to_action payload
+        if ($ctaType !== '' && $ctaType !== 'NONE') {
+            $payload['call_to_action'] = [
+                'type' => $ctaType,
+                'value' => [
+                    'link' => $link
+                ]
+            ];
+        }
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            // Fallback to standard feed post if CTA restrictions apply
+            return $this->publishFeedPost($connection, $message, $link);
+        }
+
+        return $content;
+    }
+
+    /**
+     * Publish a carousel-style slide post using multi-photo attachments.
+     */
+    public function publishCarouselPost(FacebookConnection $connection, string $message, array $slides): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $pageId = $connection->getPageId();
+
+        $mediaIds = [];
+        foreach ($slides as $index => $slide) {
+            $imageUrl = trim($slide['imageUrl'] ?? '');
+            if ($imageUrl === '') {
+                continue;
+            }
+
+            // Upload photo as unpublished
+            $url = "https://graph.facebook.com/v21.0/{$pageId}/photos";
+            $response = $this->httpClient->request('POST', $url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'url' => $imageUrl,
+                    'published' => false,
+                    'caption' => $slide['title'] ?? '',
+                ]
+            ]);
+
+            $data = $response->toArray(false);
+            if ($response->getStatusCode() >= 400 || !isset($data['id'])) {
+                continue;
+            }
+
+            $mediaIds[] = ['media_fbid' => $data['id']];
+        }
+
+        if (empty($mediaIds)) {
+            // Fallback to simple feed post if no images could be uploaded
+            return $this->publishFeedPost($connection, $message);
+        }
+
+        // Publish all uploaded unpublished photos as a single feed post
+        $feedUrl = "https://graph.facebook.com/v21.0/{$pageId}/feed";
+        $response = $this->httpClient->request('POST', $feedUrl, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'message' => $message,
+                'attached_media' => $mediaIds,
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish multi-photo feed post.');
+        }
+
+        return $content;
+    }
+
     private function base64UrlDecode(string $input): string
     {
         $remainder = strlen($input) % 4;
