@@ -89,10 +89,17 @@ class FacebookService
             throw new \InvalidArgumentException('Page ID, Page Access Token, App ID, and App Secret are required.');
         }
 
-        $connection = $existingId
-            ? $this->getConnectionById($existingId)
-            : new FacebookConnection();
-
+        // If an existing ID was provided, load it; otherwise look for an existing connection
+        // with the same Page ID to avoid creating duplicates when re-connecting.
+        $connection = null;
+        if ($existingId) {
+            $connection = $this->getConnectionById($existingId);
+        }
+        if (!$connection) {
+            $connection = $this->entityManager
+                ->getRepository(FacebookConnection::class)
+                ->findOneBy(['pageId' => $pageId]);
+        }
         if (!$connection) {
             $connection = new FacebookConnection();
         }

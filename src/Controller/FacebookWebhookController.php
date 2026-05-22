@@ -296,7 +296,9 @@ class FacebookWebhookController extends AbstractController
     private function handleCommentAddition(array $value, FacebookConnection $connection): void
     {
         $pageId = $connection->getPageId();
-        $senderId = $value['sender_id'] ?? null;
+        // Facebook sends sender info as from.id/from.name in real webhooks,
+        // but some documentation shows sender_id/sender_name — handle both.
+        $senderId = $value['sender_id'] ?? $value['from']['id'] ?? null;
         
         // Skip comments made by the page itself
         if (!$senderId || $senderId === $pageId) {
@@ -306,7 +308,7 @@ class FacebookWebhookController extends AbstractController
         $commentId = $value['comment_id'] ?? null;
         $postId = $value['post_id'] ?? null;
         $commentText = $value['message'] ?? '';
-        $senderName = $value['sender_name'] ?? '';
+        $senderName = $value['sender_name'] ?? $value['from']['name'] ?? '';
 
         if (!$commentId || !$postId) {
             return;
@@ -375,7 +377,7 @@ class FacebookWebhookController extends AbstractController
                     $this->facebookService->hideComment($commentId, $connection);
                 }
             } catch (\Exception $e) {
-                // Silently continue
+                file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error moderating offensive comment " . $commentId . ": " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
             }
 
             if (!empty($settings['offensivePrivateReplyFlowId'])) {
@@ -544,16 +546,20 @@ class FacebookWebhookController extends AbstractController
             }
 
             if ($replied) {
+                $replySuccess = true;
                 if (!empty($replyText) || !empty($attachmentUrl)) {
                     try {
                         $this->facebookService->replyToComment($commentId, $replyText, $attachmentUrl, $connection);
                     } catch (\Exception $e) {
-                        // Silently continue
+                        $replySuccess = false;
+                        file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error replying to comment " . $commentId . ": " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
                     }
                 }
 
-                $repliedComments[] = $commentId;
-                file_put_contents($repliedFile, json_encode($repliedComments));
+                if ($replySuccess) {
+                    $repliedComments[] = $commentId;
+                    file_put_contents($repliedFile, json_encode($repliedComments));
+                }
 
                 // Send Private Reply message flow if configured
                 $flowId = $privateReplyFlowId;
@@ -570,7 +576,7 @@ class FacebookWebhookController extends AbstractController
                     try {
                         $this->facebookService->hideComment($commentId, $connection);
                     } catch (\Exception $e) {
-                        // Silently continue
+                        file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error hiding comment " . $commentId . " after reply: " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
                     }
                 }
             }
@@ -632,7 +638,9 @@ class FacebookWebhookController extends AbstractController
                 return trim("{$firstName} {$lastName}") ?: null;
             }
         } catch (\Exception $e) {
-            // Silently fail — name is optional
+            // Log warning but keep going — name is optional
+            $projectDir = $this->getParameter('kernel.project_dir');
+            file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error fetching user profile for PSID " . $psid . ": " . $e->getMessage() . PHP_EOL, FILE_APPEND);
         }
 
         return null;

@@ -104,6 +104,7 @@ class FacebookConnectionController extends AbstractController
         $scopes = [
             'pages_show_list',
             'pages_read_engagement',
+            'pages_manage_engagement',
             'pages_manage_metadata',
             'pages_messaging',
             'pages_manage_posts',
