@@ -294,6 +294,30 @@
         transform: translateY(-1px);
         box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
     }
+
+    @media (max-width: 768px) {
+        .manager-shell {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+        .manager-content-pane {
+            padding: 16px 12px !important;
+            gap: 16px !important;
+        }
+        #fb-api-config-form > div {
+            padding: 14px !important;
+        }
+        .endpoint-item {
+            padding: 12px 14px !important;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .copy-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 </style>
 {% endblock %}
 

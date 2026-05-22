@@ -255,6 +255,26 @@
     .custom-modal-close:hover {
         color: #fff;
     }
+
+    @media (max-width: 768px) {
+        .manager-content-pane {
+            padding: 16px 12px !important;
+            gap: 16px !important;
+        }
+        .content-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+        .content-header .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+        .table-container-wrapper {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -285,7 +305,7 @@
         </div>
 
         {# Table Card #}
-        <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; width: 100%;">
+        <div class="table-container-wrapper" style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; width: 100%;">
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
                 <thead>
                     <tr style="border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.02);">

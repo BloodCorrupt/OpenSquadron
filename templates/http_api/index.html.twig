@@ -93,6 +93,7 @@
         font-weight: 600;
     }
     .glass-input {
+        box-sizing: border-box;
         background: rgba(15, 23, 42, 0.6);
         border: 1px solid var(--glass-border);
         color: #fff;
@@ -474,7 +475,7 @@
             </div>
             <div class="filter-group" style="flex-grow: 1;">
                 <label>Search</label>
-                <div style="position: relative;">
+                <div style="position: relative; width: 100%; box-sizing: border-box;">
                     <input type="text" name="search" class="glass-input" placeholder="Search & Enter..." value="{{ search }}" style="width: 100%;">
                     {% if search %}
                         <a href="{{ path('app_http_api_index', {status: status, verified: verified}) }}" style="position: absolute; right: 12px; top: 10px; color: var(--text-muted); font-size: 14px; text-decoration: none;">×</a>

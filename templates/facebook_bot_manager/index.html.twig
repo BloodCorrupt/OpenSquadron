@@ -503,6 +503,7 @@
     }
 
     .btn-action {
+        box-sizing: border-box;
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -719,7 +720,7 @@
         }
         
         .manager-content-pane {
-            padding: 20px 15px;
+            padding: 12px 10px !important;
             min-width: 0;
             overflow: hidden;
             gap: 16px;
@@ -805,7 +806,7 @@
         }
         
         .glass-form-card {
-            padding: 15px;
+            padding: 12px !important;
             gap: 15px;
         }
     }
@@ -1319,7 +1320,7 @@
         </div>
 
         <div class="glass-form-card" style="max-width: 680px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
                 <div>
                     <div style="font-weight: 700; color: #fff; font-size: 14px;">Enable AI Copilot Active</div>
                     <div class="form-helper">Toggle whether incoming messages are filtered and processed by the AI Agent.</div>
