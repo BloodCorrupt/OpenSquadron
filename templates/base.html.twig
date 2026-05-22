@@ -335,6 +335,7 @@
                 justify-content: center;
                 width: 18px;
                 height: 18px;
+                flex-shrink: 0;
                 transition: color 0.3s, transform 0.2s;
                 opacity: 0.6;
             }
@@ -1061,7 +1062,7 @@
                         </a>
                         <a href="{{ path('facebook_connect_show') }}" class="dropdown-item {% if app.request.attributes.get('_route')|default('') == 'facebook_connect_show' %}active{% endif %}">
                             <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2h-2a3 3 0 0 0-3 3v17"></path><path d="M8 10h8"></path></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                             </span> Connect Facebook <span style="font-size: 9px; background: #ef4444; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 8px; font-weight: 700;">BETA</span>
                         </a>
                     </div>
@@ -1080,7 +1081,7 @@
                         </a>
                         <a href="{{ path('app_facebook_bot_manager') }}" class="dropdown-item {% if app.request.attributes.get('_route')|default('') starts with 'app_facebook_bot_' %}active{% endif %}">
                             <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2h-2a3 3 0 0 0-3 3v17"></path><path d="M8 10h8"></path></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                             </span> Facebook Bots <span style="font-size: 9px; background: #ef4444; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 8px; font-weight: 700;">BETA</span>
                         </a>
                     </div>
