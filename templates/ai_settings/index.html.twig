@@ -330,7 +330,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M6 11V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"></path></svg>
             </span>
             <span>Context Manager</span>
-            <span class="nav-item-status" id="ai-nav-status">{% if connection and connection.isAiActive() %}Active{% else %}Inactive{% endif %}</span>
+            <span class="nav-item-status" id="ai-nav-status">{% if connection is defined and connection and connection.isAiActive() %}Active{% else %}Inactive{% endif %}</span>
         </div>
     </div>
 
@@ -385,6 +385,9 @@
                                     <option value="kimi" {% if aiSetting.provider == 'kimi' %}selected{% endif %}>Moonshot (Kimi)</option>
                                     <option value="deepseek" {% if aiSetting.provider == 'deepseek' %}selected{% endif %}>DeepSeek</option>
                                     <option value="openrouter" {% if aiSetting.provider == 'openrouter' %}selected{% endif %}>OpenRouter</option>
+                                    <option value="ollama" {% if aiSetting.provider == 'ollama' %}selected{% endif %}>Ollama (Local)</option>
+                                    <option value="lmstudio" {% if aiSetting.provider == 'lmstudio' %}selected{% endif %}>LM Studio (Local)</option>
+                                    <option value="ollamacloud" {% if aiSetting.provider == 'ollamacloud' %}selected{% endif %}>Ollama (Cloud)</option>
                                     <option value="custom" {% if aiSetting.provider == 'custom' %}selected{% endif %}>OpenAI Compatible (Custom)</option>
                                 </select>
                             </div>
@@ -412,15 +415,15 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="ai-apiKey">API Key <span>*</span></label>
+                        <div class="form-group" id="ai-apiKey-group">
+                            <label class="form-label" for="ai-apiKey" id="ai-apiKey-label">API Key <span>*</span></label>
                             <input type="text" id="ai-apiKey" name="apiKey" class="form-control" value="{{ aiSetting.apiKey }}" placeholder="Enter API Key/Token" autocomplete="off" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc;">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="ai-apiEndpoint">Custom API Endpoint <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
+                            <label class="form-label" for="ai-apiEndpoint" id="ai-apiEndpoint-label">Custom API Endpoint <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
                             <input type="text" id="ai-apiEndpoint" name="apiEndpoint" class="form-control" value="{{ aiSetting.apiEndpoint }}" placeholder="Override default API endpoint if needed" autocomplete="off">
-                            <p class="form-hint">Required for custom proxies. Leave empty to use provider's official API endpoint.</p>
+                            <p class="form-hint" id="ai-apiEndpoint-hint">Required for custom proxies. Leave empty to use provider's official API endpoint.</p>
                         </div>
                     </div>
 
@@ -641,6 +644,46 @@
 
     function saveAiApiConfig(event) {
         event.preventDefault();
+
+        const provider = document.getElementById('ai-provider').value;
+        const apiKeyInput = document.getElementById('ai-apiKey');
+        const apiKey = apiKeyInput.value.trim();
+        const endpointInput = document.getElementById('ai-apiEndpoint');
+        const endpointValue = endpointInput.value.trim();
+
+        // Robust client-side validation
+        if (!apiKey && provider !== 'ollama' && provider !== 'lmstudio') {
+            showToast('API Key/Token is required!', 'error');
+            apiKeyInput.focus();
+            apiKeyInput.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+            apiKeyInput.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+            
+            const resetApiKeyError = () => {
+                apiKeyInput.style.borderColor = '';
+                apiKeyInput.style.boxShadow = '';
+                apiKeyInput.removeEventListener('input', resetApiKeyError);
+            };
+            apiKeyInput.addEventListener('input', resetApiKeyError);
+            return;
+        }
+
+        if ((provider === 'custom' || provider === 'ollama') && !endpointValue) {
+            showToast(provider === 'ollama' 
+                ? 'Custom API Endpoint is required for Ollama (Local) provider!'
+                : 'Custom API Endpoint is required for OpenAI Compatible (Custom) provider!', 'error');
+            endpointInput.focus();
+            endpointInput.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+            endpointInput.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+            
+            const resetEndpointError = () => {
+                endpointInput.style.borderColor = '';
+                endpointInput.style.boxShadow = '';
+                endpointInput.removeEventListener('input', resetEndpointError);
+            };
+            endpointInput.addEventListener('input', resetEndpointError);
+            return;
+        }
+
         const btn = document.getElementById('btn-save-ai-api');
         btn.disabled = true;
         btn.innerHTML = '<span>Saving...</span>';
@@ -904,9 +947,27 @@
             hint: 'e.g. google/gemini-2.0-flash-exp:free, deepseek/deepseek-chat. Click "Fetch Models" to pull live models.',
             models: ['google/gemini-2.0-flash-exp:free', 'openai/gpt-4o-mini', 'deepseek/deepseek-chat', 'meta-llama/llama-3-8b-instruct:free']
         },
+        ollama: {
+            placeholder: 'llama3',
+            endpoint: 'http://localhost:11434/v1',
+            hint: 'e.g. llama3, mistral, phi3. Custom API Endpoint is mandatory. Does not ask for API Key. Click "Fetch Models" to pull local models.',
+            models: ['llama3', 'mistral', 'phi3']
+        },
+        lmstudio: {
+            placeholder: 'meta-llama-3-8b-instruct',
+            endpoint: 'http://localhost:1234/v1',
+            hint: 'e.g. meta-llama-3-8b-instruct. Uses generic API key. Click "Fetch Models" to pull local models.',
+            models: ['meta-llama-3-8b-instruct']
+        },
+        ollamacloud: {
+            placeholder: 'llama3',
+            endpoint: 'https://ollama.com/v1',
+            hint: 'Official Ollama Cloud service. API Key is mandatory. Custom Endpoint is optional.',
+            models: ['llama3', 'mistral']
+        },
         custom: {
             placeholder: 'custom-model',
-            endpoint: '',
+            endpoint: 'http://localhost:11434/v1',
             hint: 'Enter your custom models manually or click "Fetch Models" if endpoint supports GET /v1/models.',
             models: []
         }
@@ -917,8 +978,13 @@
     function onAiProviderChange() {
         const provider = document.getElementById('ai-provider').value;
         const modelInput = document.getElementById('ai-model');
+        const apiKeyGroup = document.getElementById('ai-apiKey-group');
+        const apiKeyInput = document.getElementById('ai-apiKey');
+        const apiKeyLabel = document.getElementById('ai-apiKey-label');
         const endpointInput = document.getElementById('ai-apiEndpoint');
         const modelHint = document.getElementById('ai-model-hint');
+        const endpointLabel = document.getElementById('ai-apiEndpoint-label');
+        const endpointHint = document.getElementById('ai-apiEndpoint-hint');
 
         const defaults = PROVIDER_DEFAULTS[provider] || PROVIDER_DEFAULTS.custom;
         const defaultModel = defaults.placeholder;
@@ -930,7 +996,63 @@
         }
 
         modelInput.placeholder = defaultModel;
-        endpointInput.placeholder = defaultEndpoint || 'Leave empty for official API';
+
+        // Dynamic API Key field visibility and requirements
+        if (provider === 'ollama') {
+            if (apiKeyGroup) apiKeyGroup.style.display = 'none';
+            if (apiKeyInput) apiKeyInput.required = false;
+        } else {
+            if (apiKeyGroup) apiKeyGroup.style.display = 'flex';
+            if (provider === 'lmstudio') {
+                if (apiKeyInput) {
+                    apiKeyInput.required = false;
+                    apiKeyInput.placeholder = 'lm-studio (automatically defaulted if empty)';
+                }
+                if (apiKeyLabel) {
+                    apiKeyLabel.innerHTML = 'API Key <small style="font-weight:400; opacity: 0.6;">(Optional)</small>';
+                }
+            } else {
+                if (apiKeyInput) {
+                    apiKeyInput.required = true;
+                    apiKeyInput.placeholder = 'Enter API Key/Token';
+                }
+                if (apiKeyLabel) {
+                    apiKeyLabel.innerHTML = 'API Key <span>*</span>';
+                }
+            }
+        }
+
+        // Dynamic Endpoint field requirements
+        if (provider === 'custom' || provider === 'ollama') {
+            endpointInput.placeholder = 'e.g. http://localhost:11434/v1';
+            endpointInput.required = true;
+            if (endpointLabel) {
+                endpointLabel.innerHTML = 'Custom API Endpoint <span>*</span>';
+            }
+            if (endpointHint) {
+                if (provider === 'ollama') {
+                    endpointHint.innerHTML = 'Required for Ollama (Local) provider. Enter your local endpoint base URL (e.g. <code>http://localhost:11434/v1</code>).';
+                } else {
+                    endpointHint.innerHTML = 'Required for compatible custom providers. Enter your local or custom proxy endpoint base URL.';
+                }
+                endpointHint.style.color = '#38bdf8'; // Highlight for guidance
+            }
+        } else {
+            endpointInput.placeholder = defaultEndpoint || 'Leave empty for official API';
+            endpointInput.required = false;
+            if (endpointLabel) {
+                endpointLabel.innerHTML = 'Custom API Endpoint <small style="font-weight:400; opacity: 0.6;">(Optional)</small>';
+            }
+            if (endpointHint) {
+                if (provider === 'ollamacloud') {
+                    endpointHint.innerHTML = 'Official Ollama Cloud endpoint. Leave empty to use official API (defaults to <code>https://ollama.com/v1</code>).';
+                } else {
+                    endpointHint.innerHTML = 'Required for custom proxies or local endpoints. Leave empty to use provider\'s official API endpoint.';
+                }
+                endpointHint.style.color = ''; // Reset color
+            }
+        }
+
         if (modelHint) {
             modelHint.textContent = hintText;
         }
@@ -948,7 +1070,7 @@
         const endpoint = document.getElementById('ai-apiEndpoint').value.trim();
         const btn = document.getElementById('btn-fetch-models');
 
-        if (!apiKey) {
+        if (!apiKey && provider !== 'ollama' && provider !== 'lmstudio') {
             showToast('Please enter an API Key first to fetch models!', 'error');
             return;
         }

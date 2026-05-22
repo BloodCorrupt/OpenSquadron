@@ -18,7 +18,10 @@ class AiAgentService
     public function fetchAvailableModels(string $provider, string $apiKey, ?string $apiEndpoint = null): array
     {
         $provider = strtolower($provider);
-        if (empty($apiKey)) {
+        if (empty($apiKey) && $provider === 'lmstudio') {
+            $apiKey = 'lm-studio';
+        }
+        if (empty($apiKey) && $provider !== 'ollama') {
             throw new \InvalidArgumentException('API Key cannot be empty.');
         }
 
@@ -62,9 +65,11 @@ class AiAgentService
         // For OpenAI-compatible providers
         $url = '';
         $headers = [
-            'Authorization' => 'Bearer ' . $apiKey,
             'Content-Type' => 'application/json'
         ];
+        if (!empty($apiKey)) {
+            $headers['Authorization'] = 'Bearer ' . $apiKey;
+        }
 
         if ($provider === 'openrouter') {
             $url = 'https://openrouter.ai/api/v1/models';
@@ -74,9 +79,20 @@ class AiAgentService
             $url = 'https://api.openai.com/v1/models';
         } elseif ($provider === 'deepseek') {
             $url = 'https://api.deepseek.com/models';
+        } elseif ($provider === 'ollama') {
+            if (empty($apiEndpoint)) {
+                throw new \InvalidArgumentException('Custom API Endpoint is required for Ollama Local.');
+            }
+            $url = rtrim($apiEndpoint, '/') . '/models';
+        } elseif ($provider === 'lmstudio') {
+            $endpoint = $apiEndpoint ?: 'http://localhost:1234/v1';
+            $url = rtrim($endpoint, '/') . '/models';
+        } elseif ($provider === 'ollamacloud') {
+            $endpoint = $apiEndpoint ?: 'https://ollama.com/v1';
+            $url = rtrim($endpoint, '/') . '/models';
         } elseif ($provider === 'custom') {
             if (empty($apiEndpoint)) {
-                throw new \InvalidArgumentException('Custom endpoint URL is required for custom provider.');
+                throw new \InvalidArgumentException('Custom API Endpoint is required for this provider.');
             }
             $url = $apiEndpoint;
             if (str_contains($url, '/chat/completions')) {
@@ -119,7 +135,11 @@ class AiAgentService
         $provider = strtolower($setting->getProvider() ?? 'openai');
         $apiKey = $setting->getApiKey();
         
-        if (empty($apiKey)) {
+        if (empty($apiKey) && $provider === 'lmstudio') {
+            $apiKey = 'lm-studio';
+        }
+        
+        if (empty($apiKey) && $provider !== 'ollama') {
             $this->logger->warning('AI Agent requested but API Key is empty.');
             return null;
         }
@@ -181,7 +201,11 @@ class AiAgentService
         $provider = strtolower($setting->getProvider() ?? 'openai');
         $apiKey = $setting->getApiKey();
         
-        if (empty($apiKey)) {
+        if (empty($apiKey) && $provider === 'lmstudio') {
+            $apiKey = 'lm-studio';
+        }
+        
+        if (empty($apiKey) && $provider !== 'ollama') {
             $this->logger->warning('FAQ Generation requested but API Key is empty.');
             return null;
         }
@@ -267,12 +291,38 @@ class AiAgentService
                     $endpoint = 'https://api.deepseek.com/chat/completions';
                     $defaultModel = 'deepseek-chat';
                     break;
+                case 'ollama':
+                    $endpoint = 'http://localhost:11434/v1/chat/completions';
+                    $defaultModel = 'llama3';
+                    break;
+                case 'lmstudio':
+                    $endpoint = 'http://localhost:1234/v1/chat/completions';
+                    $defaultModel = 'meta-llama-3-8b-instruct';
+                    break;
+                case 'ollamacloud':
+                    $endpoint = 'https://ollama.com/v1/chat/completions';
+                    $defaultModel = 'llama3';
+                    break;
                 case 'openai':
                 default:
                     $endpoint = 'https://api.openai.com/v1/chat/completions';
                     $defaultModel = 'gpt-4o-mini';
                     break;
             }
+        }
+
+        if (!empty($customEndpoint) && ($provider === 'ollamacloud' || $provider === 'custom')) {
+            $endpoint = $customEndpoint;
+        }
+
+        if (!empty($endpoint)) {
+            if (!str_contains($endpoint, '/chat/completions') && !str_contains($endpoint, '/completions')) {
+                $endpoint = rtrim($endpoint, '/') . '/chat/completions';
+            }
+        }
+
+        if (empty($apiKey) && $provider === 'lmstudio') {
+            $apiKey = 'lm-studio';
         }
 
         $activeModel = $model ?: $defaultModel;
@@ -290,12 +340,16 @@ class AiAgentService
                 'max_tokens' => 1024
             ];
 
+            $headers = [
+                'Content-Type' => 'application/json'
+            ];
+            if (!empty($apiKey)) {
+                $headers['Authorization'] = 'Bearer ' . $apiKey;
+            }
+
             $response = $this->httpClient->request('POST', $endpoint, [
                 'json' => $payload,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json'
-                ]
+                'headers' => $headers
             ]);
 
             if ($response->getStatusCode() !== 200) {

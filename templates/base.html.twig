@@ -538,6 +538,190 @@
                 color: var(--text-muted);
                 cursor: not-allowed;
             }
+            
+            /* ─── Premium Glassmorphic Dropdowns ─── */
+            select:not(.hidden-native-select), 
+            .glass-input:is(select):not(.hidden-native-select), 
+            .glass-select:not(.hidden-native-select), 
+            .form-control:is(select):not(.hidden-native-select), 
+            .sidebar-filter-select:not(.hidden-native-select), 
+            .sidebar-select:not(.hidden-native-select), 
+            .toolbar-select:not(.hidden-native-select) {
+                appearance: none !important;
+                -webkit-appearance: none !important;
+                -moz-appearance: none !important;
+                background-color: rgba(15, 23, 42, 0.6) !important;
+                backdrop-filter: blur(16px) !important;
+                -webkit-backdrop-filter: blur(16px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                color: #ffffff !important;
+                padding: 10px 36px 10px 14px !important;
+                border-radius: 10px !important;
+                font-size: 14px !important;
+                cursor: pointer !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+                background-repeat: no-repeat !important;
+                background-position: right 14px center !important;
+                background-size: 16px !important;
+                outline: none !important;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+                box-sizing: border-box !important;
+            }
+            select:hover:not(.hidden-native-select) {
+                background-color: rgba(15, 23, 42, 0.8) !important;
+                border-color: rgba(56, 189, 248, 0.4) !important;
+                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            /* ─── Visually Hidden Native Select ─── */
+            .hidden-native-select {
+                position: absolute !important;
+                width: 1px !important;
+                height: 1px !important;
+                padding: 0 !important;
+                margin: -1px !important;
+                overflow: hidden !important;
+                clip: rect(0, 0, 0, 0) !important;
+                white-space: nowrap !important;
+                border: 0 !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+
+            /* ─── Custom Glass Select Replacement ─── */
+            .custom-glass-select-wrapper {
+                position: relative;
+                display: inline-block;
+                width: 100%;
+                font-family: 'Inter', sans-serif;
+                box-sizing: border-box;
+                vertical-align: middle;
+            }
+            .custom-glass-select-trigger {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                min-height: 42px;
+                padding: 10px 14px;
+                border-radius: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                background-color: rgba(15, 23, 42, 0.6);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                color: #ffffff;
+                font-size: 14px;
+                cursor: pointer;
+                box-sizing: border-box;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+                user-select: none;
+            }
+            .custom-glass-select-trigger:hover {
+                background-color: rgba(15, 23, 42, 0.8);
+                border-color: rgba(56, 189, 248, 0.4);
+                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+            .custom-glass-select-trigger:focus,
+            .custom-glass-select-wrapper.is-active .custom-glass-select-trigger {
+                border-color: #38bdf8;
+                box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+                outline: none;
+            }
+            .custom-glass-select-label {
+                flex: 1 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                text-align: left !important;
+            }
+            .custom-glass-select-chevron {
+                flex-shrink: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: transform 0.25s ease;
+                color: #38bdf8;
+                margin-left: 10px;
+            }
+            .custom-glass-select-wrapper.is-active .custom-glass-select-chevron {
+                transform: rotate(180deg);
+            }
+            .custom-glass-select-options {
+                position: absolute;
+                top: calc(100% + 6px);
+                left: 0;
+                width: 100%;
+                max-height: 260px;
+                overflow-y: auto;
+                background: rgba(11, 19, 41, 0.95) !important;
+                backdrop-filter: blur(24px) !important;
+                -webkit-backdrop-filter: blur(24px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.12) !important;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.15) !important;
+                z-index: 999999 !important;
+                box-sizing: border-box;
+                opacity: 0;
+                transform: translateY(-10px);
+                pointer-events: none;
+                transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .custom-glass-select-wrapper.is-active .custom-glass-select-options {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+            .custom-glass-select-option {
+                padding: 11px 16px;
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.8);
+                cursor: pointer;
+                transition: all 0.15s ease;
+                border-left: 3px solid transparent;
+                user-select: none;
+                text-align: left;
+            }
+            .custom-glass-select-option:hover {
+                background: rgba(56, 189, 248, 0.12) !important;
+                color: #ffffff !important;
+                border-left-color: #38bdf8 !important;
+                padding-left: 19px;
+            }
+            .custom-glass-select-option.is-selected {
+                background: rgba(56, 189, 248, 0.2) !important;
+                color: #38bdf8 !important;
+                font-weight: 600;
+                border-left-color: #38bdf8 !important;
+            }
+            .custom-glass-select-group-label {
+                padding: 8px 12px 4px 12px;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: rgba(56, 189, 248, 0.6);
+                font-weight: 700;
+                user-select: none;
+                pointer-events: none;
+                text-align: left;
+            }
+            .custom-glass-select-options::-webkit-scrollbar {
+                width: 6px;
+            }
+            .custom-glass-select-options::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.1);
+                border-radius: 10px;
+            }
+            .custom-glass-select-options::-webkit-scrollbar-thumb {
+                background: rgba(56, 189, 248, 0.3);
+                border-radius: 10px;
+            }
+            .custom-glass-select-options::-webkit-scrollbar-thumb:hover {
+                background: rgba(56, 189, 248, 0.5);
+            }
+            
+            /* ─── Premium Glassmorphic Buttons ─── */
             .btn {
                 padding: 14px 24px;
                 border: none;
@@ -545,19 +729,68 @@
                 font-size: 16px;
                 font-weight: 600;
                 cursor: pointer;
-                transition: all 0.3s;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                outline: none;
+                user-select: none;
+                box-sizing: border-box;
             }
-            .btn-primary {
-                background: linear-gradient(135deg, var(--primary-accent), #0284c7);
-                color: white;
-                box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+            .btn-primary, .btn-create {
+                background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+                border: 1px solid rgba(6, 182, 212, 0.4) !important;
+                color: #ffffff !important;
+                box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3) !important;
+                backdrop-filter: blur(8px) !important;
+                -webkit-backdrop-filter: blur(8px) !important;
             }
-            .btn-primary:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
-                background: linear-gradient(135deg, #08c8ea, #0395e0);
+            .btn-primary:hover, .btn-create:hover {
+                background: linear-gradient(135deg, #0891b2, #0e7490) !important;
+                border-color: rgba(6, 182, 212, 0.6) !important;
+                box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5) !important;
+                transform: translateY(-1.5px) !important;
+            }
+            .btn-primary:active, .btn-create:active {
+                transform: translateY(0) !important;
+            }
+            .btn-secondary, .btn-secondary-action {
+                background: rgba(255, 255, 255, 0.05) !important;
+                backdrop-filter: blur(12px) !important;
+                -webkit-backdrop-filter: blur(12px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                color: var(--text-main) !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            }
+            .btn-secondary:hover, .btn-secondary-action:hover {
+                background: rgba(255, 255, 255, 0.1) !important;
+                border-color: rgba(255, 255, 255, 0.25) !important;
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
+                transform: translateY(-1.5px) !important;
+            }
+            .btn-secondary:active, .btn-secondary-action:active {
+                transform: translateY(0) !important;
+            }
+            .btn-danger, .btn-danger-action {
+                background: rgba(239, 68, 68, 0.15) !important;
+                backdrop-filter: blur(12px) !important;
+                -webkit-backdrop-filter: blur(12px) !important;
+                border: 1px solid rgba(239, 68, 68, 0.35) !important;
+                color: #f87171 !important;
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08) !important;
+            }
+            .btn-danger:hover, .btn-danger-action:hover {
+                background: rgba(239, 68, 68, 0.25) !important;
+                border-color: rgba(239, 68, 68, 0.6) !important;
+                color: #ffffff !important;
+                box-shadow: 0 6px 18px rgba(239, 68, 68, 0.25) !important;
+                transform: translateY(-1.5px) !important;
+            }
+            .btn-danger:active, .btn-danger-action:active {
+                transform: translateY(0) !important;
             }
             
             .header {
@@ -853,7 +1086,217 @@
                 if (profileContainer && !e.target.closest('.profile-container')) {
                     profileContainer.classList.remove('is-open');
                 }
+                // Custom select outside click handler
+                if (!e.target.closest('.custom-glass-select-wrapper')) {
+                    document.querySelectorAll('.custom-glass-select-wrapper').forEach(w => {
+                        w.classList.remove('is-active');
+                    });
+                }
             });
+
+            // ─── Custom Glass Select Replacement Script ───
+            function initCustomSelect(select) {
+                if (select.getAttribute('data-custom-select') === 'true') return;
+                select.setAttribute('data-custom-select', 'true');
+
+                // Keep reference to selected option
+                let selectedOption = select.options[select.selectedIndex] || select.options[0];
+                let triggerText = selectedOption ? selectedOption.textContent : '';
+
+                // Create wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-glass-select-wrapper';
+                
+                // Copy safe layout classes
+                const originalClasses = select.className.split(' ');
+                originalClasses.forEach(cls => {
+                    if (cls && 
+                        cls !== 'form-control' && 
+                        cls !== 'hidden-native-select' && 
+                        cls !== 'glass-input' && 
+                        cls !== 'glass-select' &&
+                        cls !== 'sidebar-select' &&
+                        cls !== 'toolbar-select' &&
+                        cls !== 'sidebar-filter-select') {
+                        wrapper.classList.add(cls);
+                    }
+                });
+
+                // Create trigger
+                const trigger = document.createElement('div');
+                trigger.className = 'custom-glass-select-trigger';
+                trigger.setAttribute('tabindex', '0');
+                
+                const triggerLabel = document.createElement('span');
+                triggerLabel.className = 'custom-glass-select-label';
+                triggerLabel.textContent = triggerText;
+                
+                const triggerChevron = document.createElement('span');
+                triggerChevron.className = 'custom-glass-select-chevron';
+                triggerChevron.innerHTML = `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>`;
+                
+                trigger.appendChild(triggerLabel);
+                trigger.appendChild(triggerChevron);
+                wrapper.appendChild(trigger);
+
+                // Create options container
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = 'custom-glass-select-options';
+                wrapper.appendChild(optionsContainer);
+
+                // Re-build custom option list
+                function buildOptions() {
+                    optionsContainer.innerHTML = '';
+                    const children = select.children;
+
+                    for (let i = 0; i < children.length; i++) {
+                        const child = children[i];
+                        if (child.tagName === 'OPTGROUP') {
+                            const groupLabel = document.createElement('div');
+                            groupLabel.className = 'custom-glass-select-group-label';
+                            groupLabel.textContent = child.label;
+                            optionsContainer.appendChild(groupLabel);
+
+                            const groupOptions = child.querySelectorAll('option');
+                            groupOptions.forEach(opt => {
+                                createOptionItem(opt);
+                            });
+                        } else if (child.tagName === 'OPTION') {
+                            createOptionItem(child);
+                        }
+                    }
+                }
+
+                function createOptionItem(opt) {
+                    const optItem = document.createElement('div');
+                    optItem.className = 'custom-glass-select-option';
+                    optItem.textContent = opt.textContent;
+                    optItem.setAttribute('data-value', opt.value);
+                    
+                    if (opt.selected) {
+                        optItem.classList.add('is-selected');
+                    }
+
+                    optItem.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        
+                        select.value = opt.value;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                        
+                        triggerLabel.textContent = opt.textContent;
+                        optionsContainer.querySelectorAll('.custom-glass-select-option').forEach(item => {
+                            item.classList.remove('is-selected');
+                        });
+                        optItem.classList.add('is-selected');
+                        wrapper.classList.remove('is-active');
+                    });
+
+                    optionsContainer.appendChild(optItem);
+                }
+
+                buildOptions();
+
+                // Open dropdown
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isActive = wrapper.classList.contains('is-active');
+                    
+                    document.querySelectorAll('.custom-glass-select-wrapper').forEach(w => {
+                        w.classList.remove('is-active');
+                    });
+
+                    if (!isActive) {
+                        buildOptions();
+                        wrapper.classList.add('is-active');
+                        
+                        // Smart position layout helper (up or down depending on viewport)
+                        setTimeout(() => {
+                            const rect = optionsContainer.getBoundingClientRect();
+                            if (rect.bottom > window.innerHeight && rect.top > rect.height) {
+                                optionsContainer.style.top = 'auto';
+                                optionsContainer.style.bottom = 'calc(100% + 6px)';
+                            } else {
+                                optionsContainer.style.top = 'calc(100% + 6px)';
+                                optionsContainer.style.bottom = 'auto';
+                            }
+                        }, 0);
+                    }
+                });
+
+                // Focus & keys helper
+                trigger.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        trigger.click();
+                    } else if (e.key === 'Escape') {
+                        wrapper.classList.remove('is-active');
+                    }
+                });
+
+                // Dynamic selector updates
+                select.addEventListener('change', () => {
+                    const activeOpt = select.options[select.selectedIndex];
+                    if (activeOpt) {
+                        triggerLabel.textContent = activeOpt.textContent;
+                        optionsContainer.querySelectorAll('.custom-glass-select-option').forEach(item => {
+                            if (item.getAttribute('data-value') === activeOpt.value) {
+                                item.classList.add('is-selected');
+                            } else {
+                                item.classList.remove('is-selected');
+                            }
+                        });
+                    }
+                });
+
+                // Wrap and hide native select
+                select.parentNode.insertBefore(wrapper, select);
+                select.classList.add('hidden-native-select');
+                wrapper.appendChild(select);
+            }
+
+            function initAllCustomSelects() {
+                document.querySelectorAll('select:not(.hidden-native-select)').forEach(select => {
+                    initCustomSelect(select);
+                });
+            }
+
+            function setupCustomSelectMutationObserver() {
+                const observer = new MutationObserver((mutations) => {
+                    let shouldInit = false;
+                    mutations.forEach(mutation => {
+                        if (mutation.addedNodes.length) {
+                            mutation.addedNodes.forEach(node => {
+                                if (node.nodeType === Node.ELEMENT_NODE) {
+                                    if (node.tagName === 'SELECT' && !node.classList.contains('hidden-native-select')) {
+                                        shouldInit = true;
+                                    } else if (node.querySelectorAll) {
+                                        const found = node.querySelectorAll('select:not(.hidden-native-select)');
+                                        if (found.length) {
+                                            shouldInit = true;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                    if (shouldInit) {
+                        initAllCustomSelects();
+                    }
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+
+            // Bind events
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    initAllCustomSelects();
+                    setupCustomSelectMutationObserver();
+                });
+            } else {
+                initAllCustomSelects();
+                setupCustomSelectMutationObserver();
+            }
         </script>
         {% block javascripts %}{% endblock %}
     </body>

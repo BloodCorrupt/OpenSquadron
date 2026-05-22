@@ -44,6 +44,13 @@ class AiSettingsController extends AbstractController
             $model = trim($request->request->get('model', ''));
             $isActive = (bool)$request->request->get('isActive', false);
 
+            if (($provider === 'custom' || $provider === 'ollama') && empty($apiEndpoint)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => 'Custom API Endpoint is required for ' . ($provider === 'ollama' ? 'Ollama (Local)' : 'OpenAI Compatible (Custom)') . ' provider.'
+                ], 400);
+            }
+
             $aiSetting->setProvider($provider);
             $aiSetting->setApiKey($apiKey ?: null);
             $aiSetting->setApiEndpoint($apiEndpoint ?: null);
@@ -66,7 +73,8 @@ class AiSettingsController extends AbstractController
         $apiKey = trim($request->request->get('apiKey', ''));
         $apiEndpoint = trim($request->request->get('apiEndpoint', ''));
 
-        if (empty($provider) || empty($apiKey)) {
+        $provider = strtolower($provider);
+        if (empty($provider) || (empty($apiKey) && $provider !== 'ollama' && $provider !== 'lmstudio')) {
             return new JsonResponse([
                 'success' => false,
                 'error' => 'AI Provider and API Key are required to fetch models.'
@@ -96,7 +104,11 @@ class AiSettingsController extends AbstractController
         }
 
         $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]);
-        if (!$aiSetting || empty($aiSetting->getApiKey())) {
+        if (!$aiSetting) {
+            return new JsonResponse(['success' => false, 'error' => 'Global AI Configuration is not set up.'], 400);
+        }
+        $dbProvider = strtolower($aiSetting->getProvider() ?? 'openai');
+        if (empty($aiSetting->getApiKey()) && $dbProvider !== 'ollama' && $dbProvider !== 'lmstudio') {
             return new JsonResponse(['success' => false, 'error' => 'Global AI Configuration is not set up. Please save your API Key first.'], 400);
         }
 
