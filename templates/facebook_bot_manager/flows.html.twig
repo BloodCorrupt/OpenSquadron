@@ -2264,12 +2264,12 @@
                         <div class="fb-port is-out" data-role="out" data-port-id="out" data-node-id="${node.id}"></div>
                     </div>
                     <div class="fb-port is-in" data-role="in" data-port-id="in" data-node-id="${node.id}"></div>
-                    <div class="port-in-label">In</div>
+
                 `;
             } else if (node.type === 'interactive') {
                 nodeHtml += `
                     <div class="fb-port is-in" data-role="in" data-port-id="in" data-node-id="${node.id}"></div>
-                    <div class="port-in-label">Reply</div>
+
                 `;
             } else if (node.type === 'quick_reply') {
                 nodeHtml += `
@@ -2278,7 +2278,7 @@
                         <div class="fb-port is-out" data-role="out" data-port-id="sections" data-node-id="${node.id}"></div>
                     </div>
                     <div class="fb-port is-in" data-role="in" data-port-id="in" data-node-id="${node.id}"></div>
-                    <div class="port-in-label">Message</div>
+
                 `;
             } else if (node.type === 'section') {
                 nodeHtml += `
@@ -2287,7 +2287,7 @@
                         <div class="fb-port is-out" data-role="out" data-port-id="rows" data-node-id="${node.id}"></div>
                     </div>
                     <div class="fb-port is-in" data-role="in" data-port-id="in" data-node-id="${node.id}"></div>
-                    <div class="port-in-label">Reply</div>
+
                 `;
             } else if (node.type === 'row') {
                 nodeHtml += `
@@ -2296,7 +2296,7 @@
                         <div class="fb-port is-out" data-role="out" data-port-id="next" data-node-id="${node.id}"></div>
                     </div>
                     <div class="fb-port is-in" data-role="in" data-port-id="in" data-node-id="${node.id}"></div>
-                    <div class="port-in-label">Reply</div>
+
                 `;
             }
 
