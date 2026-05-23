@@ -8,6 +8,7 @@ use App\Entity\WhatsappActionButton;
 use App\Entity\MessageTemplate;
 use App\Entity\AiSetting;
 use App\Entity\AiContext;
+use App\Entity\BroadcastCampaign;
 use App\Service\WhatsAppConnectionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -152,6 +153,11 @@ class WhatsappBotManagerController extends AbstractController
             }
         }
 
+        $broadcasts = [];
+        if ($selectedConnection) {
+            $broadcasts = $em->getRepository(BroadcastCampaign::class)->findBy(['connection' => $selectedConnection], ['id' => 'DESC']);
+        }
+
         return $this->render('whatsapp_bot_manager/index.html.twig', [
             'flows' => $flows,
             'templates' => $templates,
@@ -162,6 +168,7 @@ class WhatsappBotManagerController extends AbstractController
             'settings' => $settings,
             'sequences' => $sequences,
             'actionButtons' => $actionButtons,
+            'broadcasts' => $broadcasts,
         ]);
     }
 
@@ -727,6 +734,69 @@ class WhatsappBotManagerController extends AbstractController
             'success' => true,
             'message' => 'WhatsApp AI Agent Settings saved successfully.',
         ]);
+    }
+
+    #[Route('/whatsapp-bot-manager/broadcasts/save', name: 'app_whatsapp_broadcasts_save', methods: ['POST'])]
+    public function saveBroadcast(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        $connectionId = (int)($payload['connectionId'] ?? 0);
+        $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
+        $campaignName = trim((string)($payload['campaignName'] ?? ''));
+        if ($campaignName === '') {
+            return new JsonResponse(['success' => false, 'error' => 'Campaign Name is required.'], 400);
+        }
+
+        $broadcastType = trim((string)($payload['broadcastType'] ?? '24_hours'));
+        $templateName = $payload['templateName'] ?? null;
+        if ($broadcastType === 'anytime' && !$templateName) {
+            return new JsonResponse(['success' => false, 'error' => 'Template is required for Anytime broadcasts.'], 400);
+        }
+
+        $broadcast = new BroadcastCampaign();
+        $broadcast->setOwner($this->getUser());
+        $broadcast->setConnection($connection);
+        $broadcast->setCampaignName($campaignName);
+        $broadcast->setBroadcastType($broadcastType);
+        $broadcast->setTemplateName($broadcastType === 'anytime' ? $templateName : null);
+        $broadcast->setStatus('SCHEDULED');
+        $broadcast->setProcessedCount(0);
+        $broadcast->setDeliveredCount(0);
+        $broadcast->setOpenedCount(0);
+        $broadcast->setUnreachedCount(0);
+
+        $em->persist($broadcast);
+        $em->flush();
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/whatsapp-bot-manager/broadcasts/delete', name: 'app_whatsapp_broadcasts_delete', methods: ['POST'])]
+    public function deleteBroadcast(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        $id = (int)($payload['id'] ?? 0);
+        $broadcast = $em->getRepository(BroadcastCampaign::class)->find($id);
+        if (!$broadcast) {
+            return new JsonResponse(['success' => false, 'error' => 'Broadcast campaign not found.'], 404);
+        }
+
+        $em->remove($broadcast);
+        $em->flush();
+
+        return new JsonResponse(['success' => true]);
     }
 
 
