@@ -2151,7 +2151,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             </span>
             <span>Drip Sequences & Delays</span>
-            <span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">Active</span>
         </div>
 
         <div class="nav-item" data-tab-target="marketing-messages">
@@ -2159,7 +2158,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </span>
             <span>Marketing Messages (MM)</span>
-            <span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">Active</span>
         </div>
 
         <div class="nav-item" data-tab-target="rcn-notifications">
@@ -6155,7 +6153,7 @@
                 <div class="mm-card-actions">
                     <button class="btn-action btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="copyToClipboard('${item.id}', this)">Copy ID</button>
                     <button class="btn-action btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="openMMModal(${index})">Edit</button>
-                    <button class="btn-action delete-action" style="padding:4px 8px; font-size:12px;" onclick="deleteMMEntry(${index})">Delete</button>
+                    <button class="btn-action" style="padding:4px 8px; font-size:12px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);" onclick="deleteMMEntry(${index})">Delete</button>
                 </div>
             `;
             container.appendChild(card);
