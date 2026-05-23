@@ -127,8 +127,8 @@ class FacebookWebhookController extends AbstractController
                 }
 
                 foreach ($entry['messaging'] as $messagingEvent) {
-                    // Only process message or postback events (not deliveries, reads, etc.)
-                    if (!isset($messagingEvent['message']) && !isset($messagingEvent['postback'])) {
+                    // Only process message, postback, or optin events (not deliveries, reads, etc.)
+                    if (!isset($messagingEvent['message']) && !isset($messagingEvent['postback']) && !isset($messagingEvent['optin'])) {
                         continue;
                     }
 
@@ -151,6 +151,14 @@ class FacebookWebhookController extends AbstractController
                         $msgBody = $messagingEvent['message']['text'];
                     } elseif (isset($messagingEvent['postback']['payload'])) {
                         $msgBody = $messagingEvent['postback']['payload'];
+                    } elseif (isset($messagingEvent['optin']['payload'])) {
+                        $msgBody = $messagingEvent['optin']['payload'];
+                        $optinToken = $messagingEvent['optin']['notification_messages_token'] ?? null;
+                        if ($optinToken) {
+                            // Log the token capture for Marketing Messages
+                            file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Captured Marketing Message Token: " . $optinToken . " for payload " . $msgBody . PHP_EOL, FILE_APPEND);
+                            // TODO: Persist the token to the database or settings for future broadcasting.
+                        }
                     }
 
                     // Handle attachments (images, audio, files)
@@ -263,10 +271,21 @@ class FacebookWebhookController extends AbstractController
                                 ]);
 
                             $matchedFlow = null;
-                            foreach ($flows as $flow) {
-                                if ($flow->matches($msgBody)) {
-                                    $matchedFlow = $flow;
-                                    break;
+                            if (str_starts_with($msgBody, 'FLOW_ID_')) {
+                                $flowId = (int)substr($msgBody, 8);
+                                $matchedFlow = $this->entityManager
+                                    ->getRepository(\App\Entity\FacebookBotFlow::class)
+                                    ->findOneBy([
+                                        'id' => $flowId,
+                                        'isActive' => true,
+                                        'facebookConnection' => $resolvedConnection,
+                                    ]);
+                            } else {
+                                foreach ($flows as $flow) {
+                                    if ($flow->matches($msgBody)) {
+                                        $matchedFlow = $flow;
+                                        break;
+                                    }
                                 }
                             }
 

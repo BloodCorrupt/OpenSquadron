@@ -83,11 +83,11 @@ class FacebookBotManagerControllerTest extends WebTestCase
         // 2. Submit saved settings via POST
         $client->request('POST', '/facebook-bot-manager/save-settings', [
             'connectionId' => $connection->getId(),
-            'type' => 'welcome-screen',
+            'type' => 'copilot-settings',
             'data' => json_encode([
-                'greetingText' => 'Testing interactive hello screen greeting!',
-                'getStartedPayload' => 'HELLO_GREETING_PAYLOAD',
-                'showGreeting' => true
+                'enableIntentRouting' => true,
+                'intentCampaign' => 'test_campaign',
+                'routingProtocol' => 'omnipresent'
             ])
         ]);
 
@@ -103,8 +103,8 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $this->assertFileExists($file);
         
         $savedContent = json_decode(file_get_contents($file), true);
-        $this->assertSame('Testing interactive hello screen greeting!', $savedContent['welcome-screen']['greetingText']);
-        $this->assertSame('HELLO_GREETING_PAYLOAD', $savedContent['welcome-screen']['getStartedPayload']);
+        $this->assertTrue($savedContent['copilot-settings']['enableIntentRouting']);
+        $this->assertSame('test_campaign', $savedContent['copilot-settings']['intentCampaign']);
     }
 
     public function testFlowsEndpoints(): void
@@ -307,5 +307,191 @@ class FacebookBotManagerControllerTest extends WebTestCase
         
         $savedContent = json_decode(file_get_contents($file), true);
         $this->assertSame('🏠 Synced Home', $savedContent['persistent-menu'][0]['title']);
+    }
+
+    public function testSaveWelcomeScreenSyncsToFacebook(): void
+    {
+        $client = static::createClient();
+
+        // Mock HttpClient to intercept Graph API calls
+        $mockPostResponse = $this->createMock(\Symfony\Contracts\HttpClient\ResponseInterface::class);
+        $mockPostResponse->method('getStatusCode')->willReturn(200);
+        $mockPostResponse->method('toArray')->willReturn(['success' => true]);
+
+        $mockHttpClient = $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class);
+        
+        // It should call POST to messenger_profile to update greeting & get_started
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->with('POST', 'https://graph.facebook.com/v21.0/me/messenger_profile')
+            ->willReturn($mockPostResponse);
+
+        self::getContainer()->set(\Symfony\Contracts\HttpClient\HttpClientInterface::class, $mockHttpClient);
+
+        $connection = $this->createAndLoginAdmin($client);
+
+        $client->request('POST', '/facebook-bot-manager/save-settings', [
+            'connectionId' => $connection->getId(),
+            'type' => 'welcome-screen',
+            'data' => json_encode([
+                'greetingText' => 'Testing interactive hello screen greeting!',
+                'getStartedStatus' => 'enabled',
+                'getStartedPayload' => 'HELLO_GREETING_PAYLOAD',
+                'showGreeting' => true,
+                'iceBreakersStatus' => 'enabled',
+                'iceBreakers' => [
+                    ['question' => 'How can I contact support?', 'payload' => 'SUPPORT_FLOW_PAYLOAD'],
+                    ['question' => 'What are your products?', 'payload' => 'FLOW_ID_12']
+                ]
+            ])
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($data['success']);
+
+        // Verify JSON file is stored and contains saved values
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        $file = $dir . "/conn_{$connection->getId()}.json";
+        $this->assertFileExists($file);
+        
+        $savedContent = json_decode(file_get_contents($file), true);
+        $this->assertSame('Testing interactive hello screen greeting!', $savedContent['welcome-screen']['greetingText']);
+        $this->assertSame('HELLO_GREETING_PAYLOAD', $savedContent['welcome-screen']['getStartedPayload']);
+        $this->assertSame('enabled', $savedContent['welcome-screen']['getStartedStatus']);
+        $this->assertSame('enabled', $savedContent['welcome-screen']['iceBreakersStatus']);
+        $this->assertCount(2, $savedContent['welcome-screen']['iceBreakers']);
+        $this->assertSame('How can I contact support?', $savedContent['welcome-screen']['iceBreakers'][0]['question']);
+    }
+
+    public function testSyncWelcomeScreenFromFacebook(): void
+    {
+        $client = static::createClient();
+
+        // Mock HttpClient for GET request to messenger_profile
+        $mockResponse = $this->createMock(\Symfony\Contracts\HttpClient\ResponseInterface::class);
+        $mockResponse->method('getStatusCode')->willReturn(200);
+        $mockResponse->method('toArray')->willReturn([
+            'data' => [
+                [
+                    'greeting' => [
+                        [
+                            'locale' => 'default',
+                            'text' => 'Welcome Synced greeting text!'
+                        ]
+                    ],
+                    'get_started' => [
+                        'payload' => 'WELCOME_GET_STARTED_SYNCED'
+                    ],
+                    'ice_breakers' => [
+                        [
+                            'locale' => 'default',
+                            'call_to_actions' => [
+                                ['question' => 'Synced FAQ 1', 'payload' => 'SYNCED_FAQ_1_PAYLOAD'],
+                                ['question' => 'Synced FAQ 2', 'payload' => 'FLOW_ID_100']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $mockHttpClient = $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class);
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', 'https://graph.facebook.com/v21.0/me/messenger_profile')
+            ->willReturn($mockResponse);
+
+        self::getContainer()->set(\Symfony\Contracts\HttpClient\HttpClientInterface::class, $mockHttpClient);
+
+        $connection = $this->createAndLoginAdmin($client);
+
+        $client->request('POST', '/facebook-bot-manager/sync-welcome-screen', [
+            'connectionId' => $connection->getId()
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($data['success']);
+        $this->assertSame('Welcome Synced greeting text!', $data['data']['greetingText']);
+        $this->assertSame('WELCOME_GET_STARTED_SYNCED', $data['data']['getStartedPayload']);
+        $this->assertTrue($data['data']['showGreeting']);
+        $this->assertSame('enabled', $data['data']['iceBreakersStatus']);
+        $this->assertCount(2, $data['data']['iceBreakers']);
+        $this->assertSame('Synced FAQ 1', $data['data']['iceBreakers'][0]['question']);
+
+        // Verify it was saved to the JSON file
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        $file = $dir . "/conn_{$connection->getId()}.json";
+        $this->assertFileExists($file);
+        
+        $savedContent = json_decode(file_get_contents($file), true);
+        $this->assertSame('Welcome Synced greeting text!', $savedContent['welcome-screen']['greetingText']);
+    }
+
+    public function testSyncWelcomeScreenFromFacebookPreservesLocalDraftSettings(): void
+    {
+        $client = static::createClient();
+
+        // 1. Mock HttpClient for GET request returning no settings (e.g. empty data)
+        $mockResponse = $this->createMock(\Symfony\Contracts\HttpClient\ResponseInterface::class);
+        $mockResponse->method('getStatusCode')->willReturn(200);
+        $mockResponse->method('toArray')->willReturn([
+            'data' => []
+        ]);
+
+        $mockHttpClient = $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class);
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', 'https://graph.facebook.com/v21.0/me/messenger_profile')
+            ->willReturn($mockResponse);
+
+        self::getContainer()->set(\Symfony\Contracts\HttpClient\HttpClientInterface::class, $mockHttpClient);
+
+        $connection = $this->createAndLoginAdmin($client);
+
+        // 2. Pre-populate local settings with some draft values
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $file = $dir . "/conn_{$connection->getId()}.json";
+        $localSettings = [
+            'welcome-screen' => [
+                'showGreeting' => true,
+                'greetingText' => 'Custom Local Draft Text',
+                'getStartedStatus' => 'disabled',
+                'getStartedPayload' => 'FLOW_ID_999',
+                'iceBreakersStatus' => 'enabled',
+                'iceBreakers' => [
+                    ['question' => 'My Draft FAQ', 'payload' => 'FAQ_PAYLOAD']
+                ]
+            ]
+        ];
+        file_put_contents($file, json_encode($localSettings, JSON_PRETTY_PRINT));
+
+        // 3. Trigger sync
+        $client->request('POST', '/facebook-bot-manager/sync-welcome-screen', [
+            'connectionId' => $connection->getId()
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($data['success']);
+
+        // 4. Assert local draft settings were preserved
+        $this->assertFalse($data['data']['showGreeting']);
+        $this->assertSame('Custom Local Draft Text', $data['data']['greetingText']);
+        $this->assertSame('disabled', $data['data']['getStartedStatus']);
+        $this->assertSame('FLOW_ID_999', $data['data']['getStartedPayload']);
+        // Since Facebook returned no ice_breakers, status becomes disabled but draft questions remain preserved
+        $this->assertSame('disabled', $data['data']['iceBreakersStatus']);
+        $this->assertCount(1, $data['data']['iceBreakers']);
+        $this->assertSame('My Draft FAQ', $data['data']['iceBreakers'][0]['question']);
+
+        // Verify the file content
+        $savedContent = json_decode(file_get_contents($file), true);
+        $this->assertSame('Custom Local Draft Text', $savedContent['welcome-screen']['greetingText']);
+        $this->assertSame('FLOW_ID_999', $savedContent['welcome-screen']['getStartedPayload']);
     }
 }

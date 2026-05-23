@@ -36,12 +36,12 @@ class FacebookBotManagerController extends AbstractController
         // Default realistic settings to populate a fully featured state instantly on first load
         $defaultSettings = [
             'broadcast-template' => [
-                ['name' => 'welcome_offer_rcn', 'category' => 'UTILITY', 'language' => 'en_US', 'status' => 'APPROVED'],
+                ['name' => 'welcome_offer_mm', 'category' => 'UTILITY', 'language' => 'en_US', 'status' => 'APPROVED'],
                 ['name' => 'abandoned_cart_reminder', 'category' => 'MARKETING', 'language' => 'en_US', 'status' => 'PENDING'],
             ],
             'postbacks' => [
-                ['name' => 'MainMenu', 'payload' => 'MAIN_MENU_TRIGGER', 'action' => 'Open Main Menu'],
-                ['name' => 'TalkToHuman', 'payload' => 'ESCALATE_HUMAN_TRIGGER', 'action' => 'Notify Agent'],
+                ['id' => 'pb_main_menu_trg', 'name' => 'MainMenu', 'payload' => 'MAIN_MENU_TRIGGER', 'action' => 'Open Main Menu', 'linkedFlowId' => null, 'updatedAt' => '2026-01-01 00:00:00'],
+                ['id' => 'pb_escalate_hmn', 'name' => 'TalkToHuman', 'payload' => 'ESCALATE_HUMAN_TRIGGER', 'action' => 'Notify Agent', 'linkedFlowId' => null, 'updatedAt' => '2026-01-01 00:00:00'],
             ],
             'growth-widgets' => [
                 'widgetType' => 'checkbox',
@@ -62,9 +62,9 @@ class FacebookBotManagerController extends AbstractController
                 ['title' => '🛍️ View Products', 'type' => 'web_url', 'url' => 'https://opensquadron.io/shop'],
                 ['title' => '💬 Contact Support', 'type' => 'postback', 'payload' => 'ESCALATE_HUMAN_TRIGGER'],
             ],
-            'rcn-notifications' => [
-                ['title' => 'Weekly Product Updates', 'frequency' => 'WEEKLY', 'payload' => 'WEEKLY_UPDATE_RCN'],
-                ['title' => 'Monthly Exclusive Offers', 'frequency' => 'MONTHLY', 'payload' => 'MONTHLY_DEALS_RCN'],
+            'marketing-messages' => [
+                ['id' => 'mm_weekly_updates', 'title' => 'Weekly Product Updates', 'frequency' => 'WEEKLY', 'payload' => 'WEEKLY_UPDATE_MM', 'linkedPostbackId' => '', 'imageUrl' => '', 'typingIndicator' => false, 'delaySeconds' => 0, 'delayMinutes' => 0, 'budgetCents' => 5000, 'status' => 'draft', 'stats' => ['subscribers' => 0, 'sent' => 0, 'delivered' => 0, 'errors' => 0], 'updatedAt' => '2026-01-01 00:00:00'],
+                ['id' => 'mm_monthly_deals', 'title' => 'Monthly Exclusive Offers', 'frequency' => 'MONTHLY', 'payload' => 'MONTHLY_DEALS_MM', 'linkedPostbackId' => '', 'imageUrl' => '', 'typingIndicator' => false, 'delaySeconds' => 0, 'delayMinutes' => 0, 'budgetCents' => 10000, 'status' => 'draft', 'stats' => ['subscribers' => 0, 'sent' => 0, 'delivered' => 0, 'errors' => 0], 'updatedAt' => '2026-01-01 00:00:00'],
             ],
             'whitelisted-domains' => [
                 'domains' => "https://opensquadron.io\nhttps://messenger.opensquadron.io"
@@ -83,7 +83,10 @@ class FacebookBotManagerController extends AbstractController
             'welcome-screen' => [
                 'greetingText' => 'Welcome to OpenSquadron! Tap Get Started to explore our automated integrations.',
                 'getStartedPayload' => 'WELCOME_GET_STARTED_TRIGGER',
-                'showGreeting' => true
+                'showGreeting' => true,
+                'getStartedStatus' => 'enabled',
+                'iceBreakersStatus' => 'disabled',
+                'iceBreakers' => []
             ],
             'copilot-settings' => [
                 'enableIntentRouting' => false,
@@ -216,6 +219,21 @@ class FacebookBotManagerController extends AbstractController
             }
         }
 
+        if ($type === 'welcome-screen') {
+            $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+            if ($connection) {
+                try {
+                    $welcomeSettings = $currentSettings['welcome-screen'] ?? [];
+                    $facebookService->setWelcomeScreenSettings($connection, $welcomeSettings);
+                } catch (\Exception $e) {
+                    return new JsonResponse([
+                        'success' => false,
+                        'error' => 'Saved locally but failed to update Facebook: ' . $e->getMessage()
+                    ], 500);
+                }
+            }
+        }
+
         file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
 
         return new JsonResponse([
@@ -247,6 +265,37 @@ class FacebookBotManagerController extends AbstractController
                 'success' => true,
                 'message' => 'Persistent menu synced from Facebook successfully.',
                 'data' => $menuItems
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Failed to sync from Facebook: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/facebook-bot-manager/sync-welcome-screen', name: 'app_facebook_bot_sync_welcome_screen', methods: ['POST'])]
+    public function syncWelcomeScreen(
+        Request $request,
+        EntityManagerInterface $em,
+        FacebookService $facebookService
+    ): JsonResponse {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid Facebook Connection ID.'], 400);
+        }
+
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Facebook connection not found.'], 404);
+        }
+
+        try {
+            $welcomeSettings = $facebookService->syncWelcomeScreenFromFacebook($connection);
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Welcome screen settings synced from Facebook successfully.',
+                'data' => $welcomeSettings
             ]);
         } catch (\Exception $e) {
             return new JsonResponse([
@@ -330,7 +379,7 @@ class FacebookBotManagerController extends AbstractController
 
         $flows = [];
         $defaultTemplates = [
-            ['name' => 'welcome_offer_rcn', 'language' => 'en_US'],
+            ['name' => 'welcome_offer_mm', 'language' => 'en_US'],
             ['name' => 'abandoned_cart_reminder', 'language' => 'en_US'],
         ];
         $templates = $defaultTemplates;

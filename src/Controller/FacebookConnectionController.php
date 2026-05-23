@@ -211,6 +211,13 @@ class FacebookConnectionController extends AbstractController
                 // Fail silently so it doesn't block page connection setup
             }
 
+            // Sync welcome screen if it exists on Facebook
+            try {
+                $this->facebookService->syncWelcomeScreenFromFacebook($connection);
+            } catch (\Exception $e) {
+                // Fail silently so it doesn't block page connection setup
+            }
+
             // Clear connection session data
             $session->remove('fb_pages_list');
             $session->remove('fb_connect_app_id');

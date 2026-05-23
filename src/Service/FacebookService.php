@@ -832,7 +832,7 @@ class FacebookService
 
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
-            return null;
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to retrieve persistent menu from Facebook.');
         }
 
         if (isset($content['data'][0]['persistent_menu'][0]['call_to_actions'])) {
@@ -940,6 +940,208 @@ class FacebookService
         file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
 
         return $menuItems;
+    }
+
+    /**
+     * Retrieve the welcome screen (greeting and get started button) settings from Facebook.
+     */
+    public function getWelcomeScreenSettings(FacebookConnection $connection): ?array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
+
+        $response = $this->httpClient->request('GET', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ],
+            'query' => [
+                'fields' => 'greeting,get_started,ice_breakers'
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to retrieve welcome screen settings from Facebook.');
+        }
+
+        return $content['data'][0] ?? [];
+    }
+
+    /**
+     * Update the welcome screen settings on Facebook.
+     */
+    public function setWelcomeScreenSettings(FacebookConnection $connection, array $settings): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
+
+        $payload = [];
+        $deleteFields = [];
+
+        $showGreeting = !empty($settings['showGreeting']);
+        $greetingText = trim($settings['greetingText'] ?? '');
+        $getStartedStatus = $settings['getStartedStatus'] ?? 'enabled';
+        $getStartedPayload = trim($settings['getStartedPayload'] ?? '');
+        $iceBreakersStatus = $settings['iceBreakersStatus'] ?? 'disabled';
+        $iceBreakers = $settings['iceBreakers'] ?? [];
+
+        if ($showGreeting && $greetingText !== '') {
+            $payload['greeting'] = [
+                [
+                    'locale' => 'default',
+                    'text' => $greetingText
+                ]
+            ];
+        } else {
+            $deleteFields[] = 'greeting';
+        }
+
+        if ($getStartedStatus === 'enabled' && $getStartedPayload !== '') {
+            $payload['get_started'] = [
+                'payload' => $getStartedPayload
+            ];
+        } else {
+            $deleteFields[] = 'get_started';
+        }
+
+        if ($iceBreakersStatus === 'enabled' && !empty($iceBreakers)) {
+            $ctas = [];
+            foreach ($iceBreakers as $faq) {
+                $question = trim($faq['question'] ?? '');
+                $faqPayload = trim($faq['payload'] ?? '');
+                if ($question !== '' && $faqPayload !== '') {
+                    $ctas[] = [
+                        'question' => substr($question, 0, 80), // Facebook limit is 80 chars
+                        'payload' => $faqPayload
+                    ];
+                }
+            }
+            if (!empty($ctas)) {
+                $payload['ice_breakers'] = [
+                    [
+                        'locale' => 'default',
+                        'call_to_actions' => $ctas
+                    ]
+                ];
+            } else {
+                $deleteFields[] = 'ice_breakers';
+            }
+        } else {
+            $deleteFields[] = 'ice_breakers';
+        }
+
+        $results = [];
+
+        if (!empty($deleteFields)) {
+            $response = $this->httpClient->request('DELETE', $url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'fields' => $deleteFields
+                ]
+            ]);
+            $content = $response->toArray(false);
+            if ($response->getStatusCode() >= 400) {
+                throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete welcome settings on Facebook.');
+            }
+            $results['delete'] = $content;
+        }
+
+        if (!empty($payload)) {
+            $response = $this->httpClient->request('POST', $url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload
+            ]);
+            $content = $response->toArray(false);
+            if ($response->getStatusCode() >= 400) {
+                throw new \RuntimeException($content['error']['message'] ?? 'Failed to update welcome settings on Facebook.');
+            }
+            $results['post'] = $content;
+        }
+
+        return $results;
+    }
+
+    /**
+     * Sync the welcome screen settings from Facebook page messenger profile back to OpenSquadron connection settings.
+     */
+    public function syncWelcomeScreenFromFacebook(FacebookConnection $connection): array
+    {
+        $fbData = $this->getWelcomeScreenSettings($connection);
+
+        // Load existing settings first to preserve custom/draft fields (e.g. disabled greeting text)
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $file = $dir . "/conn_{$connection->getId()}.json";
+
+        $currentSettings = [];
+        if (file_exists($file)) {
+            $currentSettings = json_decode(file_get_contents($file), true) ?: [];
+        }
+        $localWelcome = $currentSettings['welcome-screen'] ?? [];
+
+        $showGreeting = $localWelcome['showGreeting'] ?? false;
+        $greetingText = $localWelcome['greetingText'] ?? '';
+        $getStartedStatus = 'disabled';
+        $getStartedPayload = $localWelcome['getStartedPayload'] ?? '';
+        $iceBreakersStatus = 'disabled';
+        $iceBreakers = $localWelcome['iceBreakers'] ?? [];
+
+        if ($fbData !== null && !empty($fbData)) {
+            if (isset($fbData['greeting'][0]['text'])) {
+                $greetingText = $fbData['greeting'][0]['text'];
+                $showGreeting = true;
+            } else {
+                $showGreeting = false; // Facebook explicitly doesn't have it
+            }
+            
+            if (isset($fbData['get_started']['payload'])) {
+                $getStartedPayload = $fbData['get_started']['payload'];
+                $getStartedStatus = 'enabled';
+            } else {
+                $getStartedStatus = 'disabled';
+            }
+            
+            if (isset($fbData['ice_breakers'][0]['call_to_actions'])) {
+                $iceBreakersStatus = 'enabled';
+                $iceBreakers = [];
+                foreach ($fbData['ice_breakers'][0]['call_to_actions'] as $cta) {
+                    $iceBreakers[] = [
+                        'question' => $cta['question'] ?? '',
+                        'payload' => $cta['payload'] ?? ''
+                    ];
+                }
+            } else {
+                $iceBreakersStatus = 'disabled';
+            }
+        } else {
+            // Facebook returned totally empty profile, meaning nothing is active.
+            // Disable all toggles but keep the draft text/payload variables intact.
+            $showGreeting = false;
+            $getStartedStatus = 'disabled';
+            $iceBreakersStatus = 'disabled';
+        }
+
+        $welcomeSettings = [
+            'showGreeting' => $showGreeting,
+            'greetingText' => $greetingText,
+            'getStartedStatus' => $getStartedStatus,
+            'getStartedPayload' => $getStartedPayload,
+            'iceBreakersStatus' => $iceBreakersStatus,
+            'iceBreakers' => $iceBreakers
+        ];
+
+        $currentSettings['welcome-screen'] = $welcomeSettings;
+        file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
+
+        return $welcomeSettings;
     }
 
     private function base64UrlDecode(string $input): string

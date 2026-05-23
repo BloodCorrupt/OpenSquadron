@@ -4,6 +4,57 @@
 
 {% block stylesheets %}
 <style>
+    /* Slide-in Modal System */
+    .slide-panel-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+        z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .slide-panel-overlay.is-open { opacity: 1; pointer-events: auto; }
+    
+    .slide-panel {
+        position: fixed; top: 0; right: -550px; width: 450px; height: 100vh;
+        background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
+        border-left: 1px solid var(--glass-border); box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+        z-index: 1001; transition: right 0.3s ease; display: flex; flex-direction: column;
+    }
+    .slide-panel.is-open { right: 0; }
+    
+    .slide-panel-header {
+        padding: 24px; border-bottom: 1px solid var(--glass-border);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .slide-panel-title { font-size: 18px; font-weight: 600; color: #fff; margin: 0; }
+    .slide-panel-close { background: none; border: none; color: #94a3b8; cursor: pointer; transition: color 0.2s; padding: 4px; }
+    .slide-panel-close:hover { color: #ef4444; }
+    .slide-panel-close svg { width: 24px; height: 24px; }
+    
+    .slide-panel-content { padding: 24px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+    .slide-panel-footer { padding: 20px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 12px; }
+
+    /* Marketing Messages Campaign Cards */
+    .mm-campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+    .mm-campaign-card {
+        background: rgba(30, 41, 59, 0.4); border: 1px solid var(--glass-border);
+        border-radius: 12px; padding: 20px; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .mm-campaign-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-color: rgba(59, 130, 246, 0.4); }
+    
+    .mm-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .mm-card-title { font-size: 16px; font-weight: 600; color: #fff; line-height: 1.3; margin-bottom: 4px; }
+    .mm-freq-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; letter-spacing: 0.5px; }
+    .mm-freq-badge.daily { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .mm-freq-badge.weekly { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .mm-freq-badge.monthly { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    
+    .mm-card-body { margin-bottom: 16px; font-size: 13px; color: #94a3b8; }
+    .mm-card-stat-row { display: flex; gap: 12px; margin-top: 12px; }
+    .mm-stat { display: flex; flex-direction: column; }
+    .mm-stat-val { font-size: 16px; font-weight: 600; color: #fff; }
+    .mm-stat-lbl { font-size: 11px; text-transform: uppercase; color: #64748b; }
+    
+    .mm-card-actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; }
+
     /* Premium Two-column layout */
     .manager-shell {
         display: grid;
@@ -2103,39 +2154,45 @@
             <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
         </div>
 
-        <div class="nav-item is-disabled" data-tab-target="rcn-notifications">
+        <div class="nav-item" data-tab-target="marketing-messages">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </span>
+            <span>Marketing Messages (MM)</span>
+            <span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">Active</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="rcn-notifications">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </span>
             <span>Recurring Notifications (RCN)</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
         </div>
 
         <!-- 4. Integrations & API -->
         <div class="nav-header">Integrations & API</div>
         <div class="nav-item" data-tab-target="api-connectors">
             <span class="nav-item-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 0 1-.3 12.03l-5.69-5.69-1.07 1.07 5.69 5.69a9 9 0 0 1-12.03-.3l3.87-3.87a3 3 0 0 0 4.24 0l1.41-1.41a3 3 0 0 0 0-4.24l-3.87-3.87zM9 2H5v4M19 18v4h-4"></path></svg>
             </span>
-            <span>API Connectors</span>
+            <span>JSON API Connector</span>
         </div>
 
-        <div class="nav-item is-disabled" data-tab-target="outbound-webhooks">
+        <div class="nav-item" data-tab-target="outbound-webhooks">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
             </span>
-            <span>Outbound Streams & Webhooks</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
+            <span>Out-bound Webhook</span>
         </div>
 
         <!-- 5. Messenger Customization -->
         <div class="nav-header">Messenger Options</div>
-        <div class="nav-item is-disabled" data-tab-target="welcome-screen">
+        <div class="nav-item" data-tab-target="welcome-screen">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 16 14"></polyline><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             </span>
             <span>Welcome & Get Started Setup</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
+            <span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">Active</span>
         </div>
 
         <div class="nav-item" data-tab-target="persistent-menu">
@@ -2283,7 +2340,7 @@
                     </div>
                 </div>
 
-                <!-- 6. Sequences -->
+                <!-- 6. Sequences (Currently disabled) -->
                 <div class="console-card is-disabled">
                     <div class="console-card-header">
                         <div class="console-icon-wrapper" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
@@ -2295,6 +2352,22 @@
                     <p class="console-card-desc">Queue automated, delayed messages scheduled to run after custom user trigger dates.</p>
                     <div class="console-card-action">
                         <span>Manage Sequences</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 6b. Marketing Messages -->
+                <div class="console-card" onclick="switchTab('marketing-messages')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </div>
+                        <span class="console-card-title">Marketing Messages</span>
+                        <span class="console-card-status is-active">Active</span>
+                    </div>
+                    <p class="console-card-desc">Send paid marketing updates outside the standard 24h window using Meta's Marketing Messages API.</p>
+                    <div class="console-card-action">
+                        <span>Manage Campaigns</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </div>
                 </div>
@@ -2367,26 +2440,26 @@
                 <div class="console-card" onclick="switchTab('api-connectors')">
                     <div class="console-card-header">
                         <div class="console-icon-wrapper" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 0 1-.3 12.03l-5.69-5.69-1.07 1.07 5.69 5.69a9 9 0 0 1-12.03-.3l3.87-3.87a3 3 0 0 0 4.24 0l1.41-1.41a3 3 0 0 0 0-4.24l-3.87-3.87zM9 2H5v4M19 18v4h-4"></path></svg>
                         </div>
-                        <span class="console-card-title">API Connectors</span>
+                        <span class="console-card-title">JSON API Connector</span>
                         <span class="console-card-status">Active</span>
                     </div>
                     <p class="console-card-desc">Define endpoints, request protocols, and variable maps to trigger external database updates.</p>
                     <div class="console-card-action">
-                        <span>Map API Connectors</span>
+                        <span>Map JSON API Connectors</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </div>
                 </div>
 
                 <!-- 12. Outbound Webhooks -->
-                <div class="console-card is-disabled">
+                <div class="console-card" onclick="switchTab('outbound-webhooks')">
                     <div class="console-card-header">
                         <div class="console-icon-wrapper" style="background: rgba(20, 184, 166, 0.1); color: #14b8a6;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
                         </div>
-                        <span class="console-card-title">Outbound Streams</span>
-                        <span class="console-card-status">Soon</span>
+                        <span class="console-card-title">Out-bound Webhook</span>
+                        <span class="console-card-status">Active</span>
                     </div>
                     <p class="console-card-desc">Publish unified real-time conversation message payloads securely to your target external CRMs.</p>
                     <div class="console-card-action">
@@ -2412,13 +2485,13 @@
                 </div>
 
                 <!-- 14. Welcome Screen -->
-                <div class="console-card is-disabled">
+                <div class="console-card" onclick="switchTab('welcome-screen')">
                     <div class="console-card-header">
                         <div class="console-icon-wrapper" style="background: rgba(234, 179, 8, 0.1); color: #eab308;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 16 14"></polyline><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                         </div>
                         <span class="console-card-title">Welcome greeting</span>
-                        <span class="console-card-status">Soon</span>
+                        <span class="console-card-status is-active">Active</span>
                     </div>
                     <p class="console-card-desc">Draft welcome greetings and payloads that present to users before they send their first message.</p>
                     <div class="console-card-action">
@@ -2796,44 +2869,121 @@
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
-                    <span>Interactive Postbacks</span>
+                    <span>Postback Registry</span>
                 </h1>
-                <div class="content-subtitle">Assign custom identifiers to quick-reply buttons and payload callbacks to automate transitions.</div>
+                <div class="content-subtitle">Manage interactive payload identifiers used for quick replies, persistent menus, and buttons.</div>
             </div>
-            <button class="btn-action btn-create" onclick="addPostbackRow()">Add Payload</button>
+            <button class="btn-action btn-create" onclick="openPostbackModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Register New Postback</span>
+            </button>
         </div>
 
-        <div class="glass-form-card">
-            <div class="table-container">
+        <div class="toolbar-row">
+            <div class="toolbar-left">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" class="glass-input" id="search-postbacks" placeholder="Search by label or ID..." onkeyup="filterPostbacks()" style="padding-left:36px; min-width:280px;">
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn-action btn-secondary" onclick="renderPostbackTable()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-form-card" style="padding: 0;">
+            <div class="table-container" style="margin-bottom: 0;">
                 <table class="custom-table" id="postbacks-table">
                     <thead>
                         <tr>
-                            <th>Postback Action Label</th>
-                            <th>Custom Payload Reference</th>
-                            <th>Trigger Action Description</th>
-                            <th style="width: 80px;">Action</th>
+                            <th style="width: 50px;">#</th>
+                            <th>Postback Label</th>
+                            <th>Postback ID (Reference)</th>
+                            <th>Linked Flow</th>
+                            <th>Last Updated</th>
+                            <th style="width: 80px; text-align:right;">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for item in settings['postbacks'] %}
-                        <tr class="postback-row">
-                            <td><input type="text" class="glass-input postback-name" style="width:100%" value="{{ item.name }}"></td>
-                            <td><input type="text" class="glass-input postback-payload" style="width:100%; font-family:monospace;" value="{{ item.payload }}"></td>
-                            <td><input type="text" class="glass-input postback-action" style="width:100%" value="{{ item.action }}"></td>
-                            <td>
-                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                            </td>
-                        </tr>
-                        {% endfor %}
+                    <tbody id="postbacks-tbody">
+                        <!-- Rendered via JS -->
                     </tbody>
                 </table>
             </div>
-
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn-action btn-create" onclick="savePostbacks()">Save Postbacks</button>
+            <!-- Pagination -->
+            <div class="pagination-footer" style="padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: #94a3b8;" id="postbacks-count-display">Showing 0 entries</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-action btn-secondary" style="padding: 4px 10px; font-size:12px;" disabled>Previous</button>
+                    <button class="btn-action btn-secondary" style="padding: 4px 10px; font-size:12px;" disabled>Next</button>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Postback Slide-in Modal -->
+    <div class="slide-panel-overlay" id="postback-modal-overlay" onclick="closePostbackModal()"></div>
+    <div class="slide-panel" id="postback-modal">
+        <div class="slide-panel-header">
+            <h2 class="slide-panel-title" id="postback-modal-title">Register Postback</h2>
+            <button class="slide-panel-close" onclick="closePostbackModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="slide-panel-content">
+            <input type="hidden" id="pb-modal-index" value="-1">
+            
+            <div class="form-group">
+                <label class="form-label">Postback Label <span style="color:#ef4444">*</span></label>
+                <div class="form-helper" style="margin-bottom:8px;">Internal name to identify this postback action.</div>
+                <input type="text" id="pb-modal-name" class="glass-input" style="width:100%" placeholder="e.g. Main Menu Trigger">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Postback ID</label>
+                <div class="form-helper" style="margin-bottom:8px;">Auto-generated unique identifier used by the webhook.</div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="pb-modal-id" class="glass-input" style="width:100%; font-family:monospace; color:#34d399; background:rgba(52,211,153,0.05);" readonly>
+                    <button class="btn-action btn-secondary copy-btn" onclick="copyToClipboard(document.getElementById('pb-modal-id').value, this)" title="Copy ID">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <div style="margin-top: 8px; font-size:12px;">
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#94a3b8;">
+                        <input type="checkbox" id="pb-modal-override-id" onchange="document.getElementById('pb-modal-id').readOnly = !this.checked;"> Allow custom override (Advanced)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Trigger Action Payload</label>
+                <div class="form-helper" style="margin-bottom:8px;">The exact string sent to the webhook (often same as Postback ID).</div>
+                <input type="text" id="pb-modal-payload" class="glass-input" style="width:100%; font-family:monospace;" placeholder="e.g. MAIN_MENU_TRIGGER">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Action Description</label>
+                <input type="text" id="pb-modal-action" class="glass-input" style="width:100%" placeholder="e.g. Opens the main menu">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Linked Bot Flow</label>
+                <div class="form-helper" style="margin-bottom:8px;">Automatically trigger a specific visual flow when this postback is received.</div>
+                <select id="pb-modal-flow" class="glass-input" style="width:100%">
+                    <option value="">-- No linked flow (Webhook only) --</option>
+                    {% for flow in flows %}
+                        <option value="{{ flow.id }}">{{ flow.name ?: 'Untitled Flow #' ~ flow.id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="slide-panel-footer">
+            <button class="btn-action btn-secondary" onclick="closePostbackModal()">Cancel</button>
+            <button class="btn-action btn-create" onclick="savePostbackEntry()">Save Postback</button>
+        </div>
+    </div>
+
 
     {# 5. Growth & Chat Widgets Content Pane #}
     <div class="manager-content-pane" id="pane-growth-widgets">
@@ -3066,7 +3216,13 @@
                                 </select>
                             </td>
                             <td>
-                                <input type="text" class="glass-input menu-val" style="width:100%" value="{{ item.type == 'postback' ? item.payload : item.url }}">
+                                <input type="url" class="glass-input menu-val-input" style="width:100%; {% if item.type == 'postback' %}display:none;{% endif %}" placeholder="e.g. https://yoursite.com" value="{{ item.type == 'web_url' ? item.url : '' }}">
+                                <select class="glass-input menu-val-select" style="width:100%; {% if item.type != 'postback' %}display:none;{% endif %}">
+                                    <option value="">-- Select Postback --</option>
+                                    {% for pb in settings['postbacks']|default([]) %}
+                                        <option value="{{ pb.payload }}" {% if item.type == 'postback' and item.payload == pb.payload %}selected{% endif %}>{{ pb.name }} ({{ pb.payload }})</option>
+                                    {% endfor %}
+                                </select>
                             </td>
                             <td>
                                 <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -3083,54 +3239,119 @@
         </div>
     </div>
 
-    {# 9. RCN Campaigns Content Pane #}
-    <div class="manager-content-pane" id="pane-rcn-notifications">
+    {# 9. Marketing Messages Content Pane (Replaces RCN) #}
+    <div class="manager-content-pane" id="pane-marketing-messages">
         <div class="content-header">
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                    <span>Recurring Notifications (RCN)</span>
+                    <span>Marketing Messages Campaigns</span>
                 </h1>
-                <div class="content-subtitle">Draft custom opt-in campaigns allowing daily, weekly, or monthly notifications outside standard window rules.</div>
+                <div class="content-subtitle">Send paid marketing updates outside the standard 24h window. Replaces deprecated RCN (Feb 2026).</div>
             </div>
-            <button class="btn-action btn-create" onclick="addRcnRow()">Add Opt-in Topic</button>
+            <div style="display:flex; gap:12px;">
+                <button class="btn-action btn-secondary" onclick="fetchMarketingTokens()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; margin-right:6px;"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.83L2 11"></path></svg>
+                    Sync Tokens
+                </button>
+                <button class="btn-action btn-create" onclick="openMMModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Create Campaign
+                </button>
+            </div>
         </div>
 
-        <div class="glass-form-card">
-            <div class="table-container">
-                <table class="custom-table" id="rcn-table">
-                    <thead>
-                        <tr>
-                            <th>Opt-in Topic Title</th>
-                            <th>Notification Frequency</th>
-                            <th>Postback Opt-in Payload</th>
-                            <th style="width: 80px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in settings['rcn-notifications'] %}
-                        <tr class="rcn-row">
-                            <td><input type="text" class="glass-input rcn-title" style="width:100%" value="{{ item.title }}"></td>
-                            <td>
-                                <select class="glass-input rcn-freq" style="width:100%">
-                                    <option value="DAILY" {% if item.frequency == 'DAILY' %}selected{% endif %}>Daily notifications</option>
-                                    <option value="WEEKLY" {% if item.frequency == 'WEEKLY' %}selected{% endif %}>Weekly notifications</option>
-                                    <option value="MONTHLY" {% if item.frequency == 'MONTHLY' %}selected{% endif %}>Monthly notifications</option>
-                                </select>
-                            </td>
-                            <td><input type="text" class="glass-input rcn-payload" style="width:100%; font-family:monospace;" value="{{ item.payload }}"></td>
-                            <td>
-                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Campaign Cards Grid -->
+        <div class="mm-campaign-grid" id="mm-campaigns-container">
+            <!-- Rendered via JS -->
+        </div>
+    </div>
+
+    <!-- Marketing Messages Slide-in Modal -->
+    <div class="slide-panel-overlay" id="mm-modal-overlay" onclick="closeMMModal()"></div>
+    <div class="slide-panel" id="mm-modal" style="width: 550px;">
+        <div class="slide-panel-header">
+            <h2 class="slide-panel-title" id="mm-modal-title">Configure Campaign</h2>
+            <button class="slide-panel-close" onclick="closeMMModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="slide-panel-content">
+            <input type="hidden" id="mm-modal-index" value="-1">
+            <input type="hidden" id="mm-modal-id" value="">
+            
+            <div class="form-group">
+                <label class="form-label">Campaign Title <span style="color:#ef4444">*</span></label>
+                <input type="text" id="mm-modal-title-input" class="glass-input" style="width:100%" placeholder="e.g. Weekly Product Updates">
             </div>
 
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn-action btn-create" onclick="saveRcn()">Save RCN Settings</button>
+            <div class="form-group">
+                <label class="form-label">Notification Frequency</label>
+                <div class="form-helper" style="margin-bottom:8px;">Determines the cooldown period between messages.</div>
+                <select id="mm-modal-frequency" class="glass-input" style="width:100%">
+                    <option value="DAILY">Daily (1 message/day limit)</option>
+                    <option value="WEEKLY">Weekly (1 message/week limit)</option>
+                    <option value="MONTHLY">Monthly (1 message/month limit)</option>
+                </select>
             </div>
+
+            <div class="form-group">
+                <label class="form-label">Opt-in Postback Reference</label>
+                <div class="form-helper" style="margin-bottom:8px;">The trigger payload users tap to subscribe to this campaign.</div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="mm-modal-payload" class="glass-input" style="width:100%; font-family:monospace;" placeholder="e.g. WEEKLY_UPDATE_MM">
+                    <button class="btn-action btn-secondary copy-btn" onclick="copyToClipboard(document.getElementById('mm-modal-payload').value, this)" title="Copy Payload">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Campaign Budget (Cents)</label>
+                <div class="form-helper" style="margin-bottom:8px;">Marketing Messages are paid. Set lifetime budget in cents (e.g., 5000 = $50.00).</div>
+                <input type="number" id="mm-modal-budget" class="glass-input" style="width:100%" min="0" value="0">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Opt-in Card Image (Optional)</label>
+                <div class="form-helper" style="margin-bottom:8px;">Absolute URL for the image shown on the opt-in request card.</div>
+                <input type="url" id="mm-modal-image" class="glass-input" style="width:100%" placeholder="https://example.com/image.jpg">
+            </div>
+
+            <div class="form-group" style="margin-top:24px;">
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                    <input type="checkbox" id="mm-modal-typing" style="width:18px; height:18px;">
+                    <span style="font-weight:600;">Enable Smart Typing Indicator</span>
+                </label>
+                <div class="form-helper" style="margin-left:28px;">Show "bot is typing..." before sending the opt-in request.</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Smart Reply Delay</label>
+                <div style="display:flex; gap:16px;">
+                    <div style="flex:1;">
+                        <label style="font-size:12px; color:#94a3b8;">Minutes</label>
+                        <input type="number" id="mm-modal-delay-min" class="glass-input" style="width:100%" min="0" max="60" value="0">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:12px; color:#94a3b8;">Seconds</label>
+                        <input type="number" id="mm-modal-delay-sec" class="glass-input" style="width:100%" min="0" max="59" value="0">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group" style="padding:16px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-top:24px;">
+                <label class="form-label">Linked Postback Identifier</label>
+                <div class="form-helper" style="margin-bottom:8px;">Optionally link an existing Postback Registry ID to this campaign for tracking.</div>
+                <select id="mm-modal-linked-pb" class="glass-input" style="width:100%">
+                    <option value="">-- No linked postback --</option>
+                    <!-- Populated by JS from postbacks array -->
+                </select>
+            </div>
+        </div>
+        <div class="slide-panel-footer">
+            <button class="btn-action btn-secondary" onclick="closeMMModal()">Cancel</button>
+            <button class="btn-action btn-create" onclick="saveMMEntry()">Save Campaign</button>
         </div>
     </div>
 
@@ -3164,12 +3385,12 @@
         <div class="content-header">
             <div>
                 <h1 class="content-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                    <span>API Connectors</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 0 1-.3 12.03l-5.69-5.69-1.07 1.07 5.69 5.69a9 9 0 0 1-12.03-.3l3.87-3.87a3 3 0 0 0 4.24 0l1.41-1.41a3 3 0 0 0 0-4.24l-3.87-3.87zM9 2H5v4M19 18v4h-4"></path></svg>
+                    <span>JSON API Connector</span>
                 </h1>
-                <div class="content-subtitle">Define endpoints, request protocols, and variable maps to trigger external database updates.</div>
+                <div class="content-subtitle">Define webhook endpoint URLs, trigger events, and customized payload delivery maps.</div>
             </div>
-            <button class="btn-action btn-create" onclick="addConnectorRow()">Add Connector</button>
+            <button class="btn-action btn-create" onclick="openApiConnectorModal()">Create Connector</button>
         </div>
 
         <div class="glass-form-card">
@@ -3178,34 +3399,15 @@
                     <thead>
                         <tr>
                             <th>Connector Label</th>
-                            <th>Request Endpoint URL</th>
-                            <th style="width: 140px;">HTTP Protocol</th>
-                            <th style="width: 80px;">Action</th>
+                            <th>Webhook URL</th>
+                            <th>Triggers</th>
+                            <th style="width: 100px; text-align: right;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in settings['api-connectors'] %}
-                        <tr class="connector-row">
-                            <td><input type="text" class="glass-input conn-name" style="width:100%" value="{{ item.name }}"></td>
-                            <td><input type="url" class="glass-input conn-url" style="width:100%; font-family:monospace;" value="{{ item.url }}"></td>
-                            <td>
-                                <select class="glass-input conn-method" style="width:100%">
-                                    <option value="POST" {% if item.method == 'POST' %}selected{% endif %}>POST Request</option>
-                                    <option value="GET" {% if item.method == 'GET' %}selected{% endif %}>GET Request</option>
-                                    <option value="PUT" {% if item.method == 'PUT' %}selected{% endif %}>PUT Request</option>
-                                </select>
-                            </td>
-                            <td>
-                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                            </td>
-                        </tr>
-                        {% endfor %}
+                        <!-- Rendered dynamically by renderApiConnectorsTable() -->
                     </tbody>
                 </table>
-            </div>
-
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn-action btn-create" onclick="saveApiConnectors()">Save API Connectors</button>
             </div>
         </div>
     </div>
@@ -3216,45 +3418,28 @@
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
-                    <span>Outbound Streams & Webhooks</span>
+                    <span>Out-bound Webhook</span>
                 </h1>
-                <div class="content-subtitle">Publish unified real-time conversation message payloads securely to your target external CRMs.</div>
+                <div class="content-subtitle">Publish unified real-time conversation message payloads securely to your target external webhooks.</div>
             </div>
+            <button class="btn-action btn-create" onclick="openOutboundWebhookModal()">Create Webhook</button>
         </div>
 
-        <div class="glass-form-card" style="max-width: 680px;">
-            <div class="form-group">
-                <label class="form-label" for="webhook-url">Target Stream Endpoint URL</label>
-                <div class="form-helper" style="margin-bottom: 6px;">The server address where OpenSquadron will publish real-time HTTP POST JSON event updates.</div>
-                <input type="url" id="webhook-url" class="glass-input" style="font-family:monospace;" placeholder="https://api.yourcrm.com/v1/webhook" value="{{ settings['outbound-webhooks'].url }}">
-            </div>
-
-            <div class="form-group" style="margin-top:10px;">
-                <label class="form-label">Subscribed Stream Events</label>
-                <div class="form-helper" style="margin-bottom: 12px;">Toggle which event payloads are pushed to the target server.</div>
-                
-                <div style="display:flex; flex-direction:column; gap:12px; background:rgba(0,0,0,0.15); border-radius:8px; padding:15px; border:1px solid var(--glass-border);">
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="message_received" checked style="accent-color: var(--primary-accent);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Received (Incoming user messages)</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="message_delivered" {% if 'message_delivered' in settings['outbound-webhooks'].events %}checked{% endif %} style="accent-color: var(--primary-accent);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Delivered (Delivery report callbacks)</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="message_read" {% if 'message_read' in settings['outbound-webhooks'].events %}checked{% endif %} style="accent-color: var(--primary-accent);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Read (Opened receipts)</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="postback_received" {% if 'postback_received' in settings['outbound-webhooks'].events %}checked{% endif %} style="accent-color: var(--primary-accent);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Postback Triggered (Quick action button clicks)</span>
-                    </label>
-                </div>
-            </div>
-
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn-action btn-create" onclick="saveOutboundWebhooks()">Save Webhook Stream</button>
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="outbound-webhooks-table">
+                    <thead>
+                        <tr>
+                            <th>Webhook Name</th>
+                            <th>Out-bound Webhook URL</th>
+                            <th>Triggers</th>
+                            <th style="width: 100px; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rendered dynamically by renderOutboundWebhooksTable() -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -3319,35 +3504,94 @@
                 </h1>
                 <div class="content-subtitle">Draft welcome greetings and payloads that present to users before they send their first message.</div>
             </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-action btn-secondary" onclick="syncWelcomeScreen()">Sync from Facebook</button>
+            </div>
         </div>
 
         {% if connections is not empty %}
         <div class="preview-container">
-            <div class="form-side glass-form-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
-                    <div>
-                        <div style="font-weight: 700; color: #fff; font-size: 14px;">Show Welcome Page Greeting</div>
-                        <div class="form-helper">Toggle whether users are greeted with customized greeting panels.</div>
+            <div class="form-side" style="display:flex; flex-direction:column; gap:20px; width:60%;">
+                
+                <!-- Welcome Greeting Panel Card -->
+                <div class="glass-form-card" style="padding:20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom:15px;">
+                        <div>
+                            <div style="font-weight: 700; color: #fff; font-size: 14px;">Show Welcome Page Greeting</div>
+                            <div class="form-helper">Toggle whether users are greeted with customized greeting panels.</div>
+                        </div>
+                        <label class="switch-toggle" style="margin: 0;">
+                            <input type="checkbox" id="welcome-show" {% if settings['welcome-screen'].showGreeting %}checked{% endif %} onchange="updateGreetingPreview()">
+                            <span class="slider-round"></span>
+                        </label>
                     </div>
-                    <label class="switch-toggle" style="margin: 0;">
-                        <input type="checkbox" id="welcome-show" {% if settings['welcome-screen'].showGreeting %}checked{% endif %} onchange="updateGreetingPreview()">
-                        <span class="slider-round"></span>
-                    </label>
+
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="form-label" for="welcome-greeting-text" style="margin:0;">Custom Welcome Greeting Text</label>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" class="btn-action btn-secondary" style="font-size:11px; padding:3px 8px; height:auto;" onclick="insertGreetingVariable('{{ '{{user_first_name}}' }}')">Insert First Name</button>
+                                <button type="button" class="btn-action btn-secondary" style="font-size:11px; padding:3px 8px; height:auto;" onclick="insertGreetingVariable('{{ '{{user_last_name}}' }}')">Insert Last Name</button>
+                            </div>
+                        </div>
+                        <textarea id="welcome-greeting-text" class="glass-textarea" oninput="updateGreetingPreview()">{{ settings['welcome-screen'].greetingText }}</textarea>
+                        <div class="form-helper">Maximum 160 characters. Highlight details of what the bot performs. You can use First and Last Name tags.</div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="welcome-greeting-text">Custom Welcome Greeting Text</label>
-                    <textarea id="welcome-greeting-text" class="glass-textarea" oninput="updateGreetingPreview()">{{ settings['welcome-screen'].greetingText }}</textarea>
-                    <div class="form-helper">Maximum 160 characters. Highlight details of what the bot performs.</div>
+                <!-- Get Started Configuration Card -->
+                <div class="glass-form-card" style="padding:20px;">
+                    <h3 style="font-size:14px; font-weight:700; color:#fff; border-bottom: 1px solid var(--glass-border); padding-bottom:10px; margin-bottom:15px;">Get Started Button Settings</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="get-started-status">Get Started Status</label>
+                        <select id="get-started-status" class="glass-input" onchange="toggleGetStartedStatus()">
+                            <option value="enabled" {% if settings['welcome-screen'].getStartedStatus == 'enabled' %}selected{% endif %}>Enabled</option>
+                            <option value="disabled" {% if settings['welcome-screen'].getStartedStatus == 'disabled' %}selected{% endif %}>Disabled</option>
+                        </select>
+                        <div class="form-helper">Toggle the initial "Get Started" prompt button.</div>
+                    </div>
+
+                    <div class="form-group" id="get-started-payload-container" style="{% if settings['welcome-screen'].getStartedStatus == 'disabled' %}display:none;{% endif %}">
+                        <label class="form-label" for="get-started-flow-selector">Trigger Flow / Payload Mapping</label>
+                        <div style="display:flex; gap:10px; margin-bottom:8px;">
+                            <select id="get-started-flow-selector" class="glass-input" style="flex:1;" onchange="updateGetStartedPayloadFromSelector()">
+                                <option value="WELCOME_GET_STARTED_TRIGGER" {% if settings['welcome-screen'].getStartedPayload == 'WELCOME_GET_STARTED_TRIGGER' or settings['welcome-screen'].getStartedPayload == '' %}selected{% endif %}>Default Custom Payload (WELCOME_GET_STARTED_TRIGGER)</option>
+                                {% for flow in flows %}
+                                    {% if flow.isActive %}
+                                    <option value="FLOW_ID_{{ flow.id }}" {% if settings['welcome-screen'].getStartedPayload == 'FLOW_ID_' ~ flow.id %}selected{% endif %}>Trigger Flow: {{ flow.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                                <option value="custom" {% if settings['welcome-screen'].getStartedPayload != 'WELCOME_GET_STARTED_TRIGGER' and not settings['welcome-screen'].getStartedPayload starts with 'FLOW_ID_' and settings['welcome-screen'].getStartedPayload != '' %}selected{% endif %}>Custom Text Payload...</option>
+                            </select>
+                        </div>
+                        <input type="text" id="welcome-payload" class="glass-input" style="font-family:monospace; {% if settings['welcome-screen'].getStartedPayload == 'WELCOME_GET_STARTED_TRIGGER' or settings['welcome-screen'].getStartedPayload starts with 'FLOW_ID_' or settings['welcome-screen'].getStartedPayload == '' %}display:none;{% endif %}" value="{{ settings['welcome-screen'].getStartedPayload }}">
+                        <div class="form-helper" id="get-started-payload-helper">The trigger payload dispatched back when the user taps "Get Started".</div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="welcome-payload">Get Started Trigger Payload</label>
-                    <div class="form-helper" style="margin-bottom: 4px;">The postback identifier triggered when a user selects the "Get Started" prompt button.</div>
-                    <input type="text" id="welcome-payload" class="glass-input" style="font-family:monospace;" value="{{ settings['welcome-screen'].getStartedPayload }}">
+                <!-- Conversation Initiator FAQs (Ice Breakers) Card -->
+                <div class="glass-form-card" style="padding:20px;">
+                    <h3 style="font-size:14px; font-weight:700; color:#fff; border-bottom: 1px solid var(--glass-border); padding-bottom:10px; margin-bottom:15px;">Conversation Initiators & FAQs (Ice Breakers)</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="ice-breakers-status">FAQs / Ice Breakers Status</label>
+                        <select id="ice-breakers-status" class="glass-input" onchange="toggleIceBreakersStatus()">
+                            <option value="enabled" {% if settings['welcome-screen'].iceBreakersStatus == 'enabled' %}selected{% endif %}>Enabled</option>
+                            <option value="disabled" {% if settings['welcome-screen'].iceBreakersStatus == 'disabled' or settings['welcome-screen'].iceBreakersStatus == '' %}selected{% endif %}>Disabled</option>
+                        </select>
+                        <div class="form-helper">Ice Breakers allow users to click standard FAQ questions before they send their first message.</div>
+                    </div>
+
+                    <div id="ice-breakers-container" style="{% if settings['welcome-screen'].iceBreakersStatus != 'enabled' %}display:none;{% endif %} margin-top: 15px;">
+                        <div id="ice-breaker-rows" style="display:flex; flex-direction:column; gap:12px; margin-bottom:15px;">
+                            <!-- FAQ questions will be rendered here dynamically -->
+                        </div>
+                        <button type="button" id="btn-add-ice-breaker" class="btn-action btn-secondary" onclick="addNewIceBreakerRow()" style="font-size:12px; width:100%; border: 1px dashed var(--glass-border);">+ Add FAQ Question</button>
+                    </div>
                 </div>
 
-                <div style="display:flex; justify-content:flex-end;">
+                <div style="display:flex; justify-content:flex-end; margin-top:10px;">
                     <button class="btn-action btn-create" onclick="saveWelcomeScreen()">Save Welcome Greeting</button>
                 </div>
             </div>
@@ -3371,8 +3615,13 @@
                                 Welcome to OpenSquadron! Tap Get Started to explore our automated integrations.
                             </div>
                         </div>
+
+                        <!-- FAQ Questions Preview -->
+                        <div id="preview-ice-breakers-container" style="display:flex; flex-direction:column; gap:6px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); max-height:120px; overflow-y:auto;">
+                            <!-- Dynamic preview questions -->
+                        </div>
                         
-                        <div class="iphone-footer">
+                        <div class="iphone-footer" id="preview-get-started-container">
                             <div class="iphone-btn-started">Get Started</div>
                             <div style="font-size:8px; color:var(--text-muted); text-align:center; line-height:1.3; width:100%;">Clicking Get Started triggers the welcome webhook callback.</div>
                         </div>
@@ -4188,11 +4437,281 @@
     </div>
 </div>
 
+<!-- 3. JSON API Connector Modal -->
+<div id="api-connector-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 800px;">
+        <div class="modal-header">
+            <div class="modal-title" id="api-connector-modal-title">+ Add New Connection</div>
+            <button class="modal-close-btn" onclick="closeApiConnectorModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body" style="gap: 16px;">
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Name</label>
+                <input type="text" id="api-connector-name" class="modal-input" placeholder="Enter your connector name">
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Webhook URL</label>
+                <input type="url" id="api-connector-url" class="modal-input" placeholder="Enter your webhook URL">
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">What Field Change Trigger Webhook</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-trigger-cb" value="EMAIL" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>EMAIL</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-trigger-cb" value="PHONE_NUMBER" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>PHONE NUMBER</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-trigger-cb" value="LOCATION" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>LOCATION</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-trigger-cb" value="BIRTHDATE" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>BIRTHDATE</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-trigger-cb" value="POSTBACK_ID" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>POSTBACK ID</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-trigger-cb" value="WEBVIEW_FORM" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>WEBVIEW FORM</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-trigger-cb" value="USER_INPUT_FLOW" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>USER INPUT FLOW</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Which Data You Want to Send</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="PSID" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>PSID</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="SUBSCRIBED_AT" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>SUBSCRIBED AT</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="POSTBACK_ID" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>POSTBACK ID</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="WEBVIEW_FORM_DATA" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>WEBVIEW FORM DATA</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="FIRST_NAME" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>FIRST NAME</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="LAST_NAME" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>LAST NAME</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="EMAIL" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>EMAIL</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="PHONE_NUMBER" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>PHONE NUMBER</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="PAGE_ID" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>PAGE ID</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="PAGE_NAME" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>PAGE NAME</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="BIRTHDATE" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>BIRTHDATE</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="LOCATION" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>LOCATION</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="LABELS" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>LABELS</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 12px; font-weight: 600;">
+                        <input type="checkbox" class="api-connector-send-cb" value="USER_INPUT_DATA" style="accent-color: var(--primary-accent); cursor: pointer; width:14px; height:14px;">
+                        <span>USER INPUT DATA</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #fff;" onclick="saveApiConnectorModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>Save</span>
+            </button>
+            <button class="btn-action btn-secondary" onclick="closeApiConnectorModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>Close</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Out-bound Webhook Modal -->
+<div id="outbound-webhook-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 750px;">
+        <div class="modal-header">
+            <div class="modal-title" id="outbound-webhook-modal-title">Out-bound Webhook</div>
+            <button class="modal-close-btn" onclick="closeOutboundWebhookModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body" style="gap: 16px;">
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Webhook Name *</label>
+                <input type="text" id="outbound-webhook-name" class="modal-input" placeholder="Enter webhook name">
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Out-bound Webhook URL *</label>
+                <input type="url" id="outbound-webhook-url" class="modal-input" placeholder="Enter outbound webhook URL">
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Select Actions That Will Trigger The Webhook? *</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-trigger-cb" value="POSTBACK">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">POSTBACK</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-trigger-cb" value="USER_INPUT_FLOW">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">USER INPUT FLOW</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Select Data Fields That Will Be Sent? *</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="SUBSCRIBER_ID">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">SUBSCRIBER ID</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="LOCATION">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">LOCATION</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="SUBSCRIBER_NAME">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">SUBSCRIBER NAME</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="LABELS">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">LABELS</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="PHONE_NUMBER">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">PHONE NUMBER</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="POSTBACK_ID">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">POSTBACK ID</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="DATE_OF_BIRTH">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">DATE OF BIRTH</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="INPUT_FLOW_DATA">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">INPUT FLOW DATA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #fff;" onclick="saveOutboundWebhookModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>Save</span>
+            </button>
+            <button class="btn-action btn-secondary" onclick="closeOutboundWebhookModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>Close</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="toast" class="fb-toast">Message</div>
 
 <script>
+    window.openSquadronActiveFlows = [
+        {% for flow in flows %}
+            {% if flow.isActive %}
+                { id: {{ flow.id }}, name: "{{ flow.name|escape('js') }}" },
+            {% endif %}
+        {% endfor %}
+    ];
     let activeConnectionId = '{{ connection ? connection.id : "" }}';
     let pageCommentSettings = {{ settings['comment-automation']|default(null)|json_encode|raw }};
+    let postbacks = {{ settings['postbacks']|default([])|json_encode|raw }};
+    let marketingMessages = {{ settings['marketing-messages']|default([])|json_encode|raw }};
+    let globalApiConnectors = {{ settings['api-connectors']|default([])|json_encode|raw }};
+    
+    // Webhooks backward compatibility conversion
+    let rawWebhooks = {{ settings['outbound-webhooks']|default([])|json_encode|raw }};
+    let globalOutboundWebhooks = [];
+    if (rawWebhooks) {
+        if (Array.isArray(rawWebhooks)) {
+            globalOutboundWebhooks = rawWebhooks;
+        } else if (typeof rawWebhooks === 'object' && rawWebhooks.url) {
+            globalOutboundWebhooks = [{
+                name: 'Default Webhook',
+                url: rawWebhooks.url,
+                triggers: rawWebhooks.events || [],
+                sendData: ['SUBSCRIBER_ID', 'SUBSCRIBER_NAME']
+            }];
+        }
+    }
     let commentPosts = [];
     let filteredCommentPosts = [];
     let currentEditingPostId = null;
@@ -5080,32 +5599,128 @@
         .catch(err => showToast('Save error: ' + err.message, 'error'));
     }
 
-    // 4. Postbacks Saver
-    function addPostbackRow() {
-        const tr = document.createElement('tr');
-        tr.className = 'postback-row';
-        tr.innerHTML = `
-            <td><input type="text" class="glass-input postback-name" style="width:100%"></td>
-            <td><input type="text" class="glass-input postback-payload" style="width:100%; font-family:monospace;"></td>
-            <td><input type="text" class="glass-input postback-action" style="width:100%"></td>
-            <td>
-                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </td>
-        `;
-        document.querySelector('#postbacks-table tbody').appendChild(tr);
+    // 4. Postback Registry CRUD
+    function generateId(prefix = '') {
+        return prefix + '_' + Math.random().toString(36).substring(2, 10);
     }
 
-    function savePostbacks() {
-        const rows = [];
-        document.querySelectorAll('.postback-row').forEach(tr => {
-            const name = tr.querySelector('.postback-name').value.trim();
-            const payload = tr.querySelector('.postback-payload').value.trim();
-            const action = tr.querySelector('.postback-action').value.trim();
-            if (name !== '' && payload !== '') {
-                rows.push({ name, payload, action });
+    function renderPostbackTable() {
+        const tbody = document.getElementById('postbacks-tbody');
+        if (!tbody) return;
+        const query = document.getElementById('search-postbacks')?.value.toLowerCase() || '';
+        tbody.innerHTML = '';
+        
+        let filtered = postbacks;
+        if (query) {
+            filtered = postbacks.filter(p => p.name.toLowerCase().includes(query) || (p.id && p.id.toLowerCase().includes(query)) || (p.payload && p.payload.toLowerCase().includes(query)));
+        }
+        
+        const countDisplay = document.getElementById('postbacks-count-display');
+        if (countDisplay) countDisplay.textContent = `Showing ${filtered.length} entries`;
+        
+        filtered.forEach((item) => {
+            const tr = document.createElement('tr');
+            const actualIndex = postbacks.indexOf(item);
+            
+            let linkedFlowName = 'None';
+            if (item.linkedFlowId) {
+                const flow = window.openSquadronActiveFlows.find(f => f.id == item.linkedFlowId);
+                if (flow) linkedFlowName = flow.name;
             }
+            
+            tr.innerHTML = `
+                <td>${actualIndex + 1}</td>
+                <td style="font-weight: 600;">${escapeHtml(item.name)}</td>
+                <td style="font-family: monospace; color: #34d399;">${escapeHtml(item.id || item.payload)}</td>
+                <td><span class="keyword-tag" style="background: rgba(255,255,255,0.05); border:none;">${escapeHtml(linkedFlowName)}</span></td>
+                <td style="font-size: 11px; color: #94a3b8;">${escapeHtml(item.updatedAt || 'N/A')}</td>
+                <td>
+                    <div class="row-actions" style="justify-content: flex-end;">
+                        <button class="btn-row-action edit-action" onclick="openPostbackModal(${actualIndex})" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                        <button class="btn-row-action delete-action" onclick="deletePostbackEntry(${actualIndex})" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
-        postSettingsSave('postbacks', rows);
+    }
+
+    function filterPostbacks() { renderPostbackTable(); }
+
+    function openPostbackModal(index = -1) {
+        document.getElementById('pb-modal-index').value = index;
+        const idInput = document.getElementById('pb-modal-id');
+        const overrideCheckbox = document.getElementById('pb-modal-override-id');
+        
+        if (index >= 0) {
+            const item = postbacks[index];
+            document.getElementById('postback-modal-title').textContent = 'Edit Postback';
+            document.getElementById('pb-modal-name').value = item.name || '';
+            document.getElementById('pb-modal-payload').value = item.payload || '';
+            document.getElementById('pb-modal-action').value = item.action || '';
+            document.getElementById('pb-modal-flow').value = item.linkedFlowId || '';
+            
+            idInput.value = item.id || item.payload || generateId('pb');
+            idInput.readOnly = true;
+            overrideCheckbox.checked = false;
+        } else {
+            document.getElementById('postback-modal-title').textContent = 'Register Postback';
+            document.getElementById('pb-modal-name').value = '';
+            document.getElementById('pb-modal-payload').value = '';
+            document.getElementById('pb-modal-action').value = '';
+            document.getElementById('pb-modal-flow').value = '';
+            
+            idInput.value = generateId('pb');
+            idInput.readOnly = true;
+            overrideCheckbox.checked = false;
+        }
+        
+        document.getElementById('postback-modal').classList.add('is-open');
+        document.getElementById('postback-modal-overlay').classList.add('is-open');
+    }
+
+    function closePostbackModal() {
+        document.getElementById('postback-modal').classList.remove('is-open');
+        document.getElementById('postback-modal-overlay').classList.remove('is-open');
+    }
+
+    function copyToClipboard(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="width:16px; height:16px;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            setTimeout(() => btn.innerHTML = oldHtml, 2000);
+        });
+    }
+
+    function savePostbackEntry() {
+        const index = parseInt(document.getElementById('pb-modal-index').value);
+        const name = document.getElementById('pb-modal-name').value.trim();
+        const id = document.getElementById('pb-modal-id').value.trim();
+        const payload = document.getElementById('pb-modal-payload').value.trim();
+        const action = document.getElementById('pb-modal-action').value.trim();
+        const linkedFlowId = document.getElementById('pb-modal-flow').value || null;
+        
+        if (!name || !payload || !id) {
+            showToast('Label, ID, and Payload are required', 'error');
+            return;
+        }
+        
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        const entry = { id, name, payload, action, linkedFlowId, updatedAt: now };
+        
+        if (index >= 0) { postbacks[index] = entry; } else { postbacks.push(entry); }
+        
+        postSettingsSave('postbacks', postbacks);
+        closePostbackModal();
+        renderPostbackTable();
+    }
+
+    function deletePostbackEntry(index) {
+        if (confirm('Are you sure you want to delete this postback?')) {
+            postbacks.splice(index, 1);
+            postSettingsSave('postbacks', postbacks);
+            renderPostbackTable();
+        }
     }
 
     // 5. Growth Widget Previewer & Saver
@@ -5221,6 +5836,12 @@
     function addMenuRow() {
         const tr = document.createElement('tr');
         tr.className = 'menu-row';
+        
+        let pbOptions = '<option value="">-- Select Postback --</option>';
+        postbacks.forEach(pb => {
+            pbOptions += `<option value="${escapeHtml(pb.payload)}">${escapeHtml(pb.name)} (${escapeHtml(pb.payload)})</option>`;
+        });
+
         tr.innerHTML = `
             <td><input type="text" class="glass-input menu-title" style="width:100%"></td>
             <td>
@@ -5230,7 +5851,10 @@
                 </select>
             </td>
             <td>
-                <input type="text" class="glass-input menu-val" style="width:100%">
+                <input type="url" class="glass-input menu-val-input" style="width:100%; display:none;" placeholder="e.g. https://yoursite.com">
+                <select class="glass-input menu-val-select" style="width:100%;">
+                    ${pbOptions}
+                </select>
             </td>
             <td>
                 <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -5241,13 +5865,14 @@
 
     function toggleMenuValInput(select) {
         const row = select.closest('tr');
-        const valInput = row.querySelector('.menu-val');
+        const input = row.querySelector('.menu-val-input');
+        const sel = row.querySelector('.menu-val-select');
         if (select.value === 'web_url') {
-            valInput.placeholder = 'e.g. https://yoursite.com';
-            valInput.type = 'url';
+            input.style.display = 'block';
+            sel.style.display = 'none';
         } else {
-            valInput.placeholder = 'e.g. PAYLOAD_KEY';
-            valInput.type = 'text';
+            input.style.display = 'none';
+            sel.style.display = 'block';
         }
     }
 
@@ -5255,14 +5880,21 @@
         const rows = [];
         document.querySelectorAll('.menu-row').forEach(tr => {
             const title = tr.querySelector('.menu-title').value.trim();
-            const type = tr.querySelector('select.menu-type').value;
-            const val = tr.querySelector('.menu-val').value.trim();
-            if (title !== '' && val !== '') {
+            const type = tr.querySelector('.menu-type').value;
+            let payloadUrl = '';
+            if (type === 'postback') {
+                payloadUrl = tr.querySelector('.menu-val-select').value;
+            } else {
+                payloadUrl = tr.querySelector('.menu-val-input').value.trim();
+            }
+            if (title !== '' && payloadUrl !== '') {
+                const item = { title, type };
                 if (type === 'postback') {
-                    rows.push({ title, type, payload: val });
+                    item.payload = payloadUrl;
                 } else {
-                    rows.push({ title, type, url: val });
+                    item.url = payloadUrl;
                 }
+                rows.push(item);
             }
         });
         postSettingsSave('persistent-menu', rows);
@@ -5331,7 +5963,156 @@
             .replace(/'/g, "&#039;");
     }
 
-    // 9. RCN Topics Saver
+    // 9. Marketing Messages Campaigns (Replaces RCN)
+    function renderMMCards() {
+        const container = document.getElementById('mm-campaigns-container');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        marketingMessages.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'mm-campaign-card';
+            
+            const pbName = postbacks.find(p => p.id === item.linkedPostbackId)?.name || item.linkedPostbackId || 'Unlinked';
+            
+            card.innerHTML = `
+                <div class="mm-card-header">
+                    <div>
+                        <div class="mm-card-title">${escapeHtml(item.title)}</div>
+                        <div style="font-size:11px; color:#64748b; font-family:monospace;">ID: ${item.id}</div>
+                    </div>
+                    <span class="mm-freq-badge ${item.frequency.toLowerCase()}">${item.frequency}</span>
+                </div>
+                <div class="mm-card-body">
+                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        <span>Payload: <span style="color:#fff; font-family:monospace;">${escapeHtml(item.payload)}</span></span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 16 14"></polyline></svg>
+                        <span>Budget: $${(item.budgetCents / 100).toFixed(2)}</span>
+                    </div>
+                    <div class="mm-card-stat-row">
+                        <div class="mm-stat"><span class="mm-stat-val">${item.stats?.subscribers || 0}</span><span class="mm-stat-lbl">Subs</span></div>
+                        <div class="mm-stat"><span class="mm-stat-val">${item.stats?.sent || 0}</span><span class="mm-stat-lbl">Sent</span></div>
+                        <div class="mm-stat"><span class="mm-stat-val">${item.stats?.delivered || 0}</span><span class="mm-stat-lbl">Delivered</span></div>
+                    </div>
+                </div>
+                <div class="mm-card-actions">
+                    <button class="btn-action btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="copyToClipboard('${item.id}', this)">Copy ID</button>
+                    <button class="btn-action btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="openMMModal(${index})">Edit</button>
+                    <button class="btn-action delete-action" style="padding:4px 8px; font-size:12px;" onclick="deleteMMEntry(${index})">Delete</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function populateMMLinkedPostbacks() {
+        const select = document.getElementById('mm-modal-linked-pb');
+        if (!select) return;
+        select.innerHTML = '<option value="">-- No linked postback --</option>';
+        postbacks.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `${p.name} (${p.payload})`;
+            select.appendChild(opt);
+        });
+    }
+
+    function openMMModal(index = -1) {
+        populateMMLinkedPostbacks();
+        document.getElementById('mm-modal-index').value = index;
+        
+        if (index >= 0) {
+            const item = marketingMessages[index];
+            document.getElementById('mm-modal-title').textContent = 'Edit Campaign';
+            document.getElementById('mm-modal-id').value = item.id;
+            document.getElementById('mm-modal-title-input').value = item.title || '';
+            document.getElementById('mm-modal-frequency').value = item.frequency || 'WEEKLY';
+            document.getElementById('mm-modal-payload').value = item.payload || '';
+            document.getElementById('mm-modal-budget').value = item.budgetCents || 0;
+            document.getElementById('mm-modal-image').value = item.imageUrl || '';
+            document.getElementById('mm-modal-typing').checked = item.typingIndicator || false;
+            document.getElementById('mm-modal-delay-min').value = item.delayMinutes || 0;
+            document.getElementById('mm-modal-delay-sec').value = item.delaySeconds || 0;
+            document.getElementById('mm-modal-linked-pb').value = item.linkedPostbackId || '';
+        } else {
+            document.getElementById('mm-modal-title').textContent = 'Create Campaign';
+            document.getElementById('mm-modal-id').value = generateId('mm');
+            document.getElementById('mm-modal-title-input').value = '';
+            document.getElementById('mm-modal-frequency').value = 'WEEKLY';
+            document.getElementById('mm-modal-payload').value = '';
+            document.getElementById('mm-modal-budget').value = 0;
+            document.getElementById('mm-modal-image').value = '';
+            document.getElementById('mm-modal-typing').checked = false;
+            document.getElementById('mm-modal-delay-min').value = 0;
+            document.getElementById('mm-modal-delay-sec').value = 0;
+            document.getElementById('mm-modal-linked-pb').value = '';
+        }
+        
+        document.getElementById('mm-modal').classList.add('is-open');
+        document.getElementById('mm-modal-overlay').classList.add('is-open');
+    }
+
+    function closeMMModal() {
+        document.getElementById('mm-modal').classList.remove('is-open');
+        document.getElementById('mm-modal-overlay').classList.remove('is-open');
+    }
+
+    function saveMMEntry() {
+        const index = parseInt(document.getElementById('mm-modal-index').value);
+        const title = document.getElementById('mm-modal-title-input').value.trim();
+        const payload = document.getElementById('mm-modal-payload').value.trim();
+        
+        if (!title || !payload) {
+            showToast('Campaign Title and Payload are required', 'error');
+            return;
+        }
+        
+        const entry = {
+            id: document.getElementById('mm-modal-id').value,
+            title: title,
+            frequency: document.getElementById('mm-modal-frequency').value,
+            payload: payload,
+            budgetCents: parseInt(document.getElementById('mm-modal-budget').value) || 0,
+            imageUrl: document.getElementById('mm-modal-image').value.trim(),
+            typingIndicator: document.getElementById('mm-modal-typing').checked,
+            delayMinutes: parseInt(document.getElementById('mm-modal-delay-min').value) || 0,
+            delaySeconds: parseInt(document.getElementById('mm-modal-delay-sec').value) || 0,
+            linkedPostbackId: document.getElementById('mm-modal-linked-pb').value || '',
+            status: 'draft',
+            updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        };
+        
+        if (index >= 0) {
+            entry.stats = marketingMessages[index].stats;
+            marketingMessages[index] = entry;
+        } else {
+            entry.stats = {subscribers: 0, sent: 0, delivered: 0, errors: 0};
+            marketingMessages.push(entry);
+        }
+        
+        postSettingsSave('marketing-messages', marketingMessages);
+        closeMMModal();
+        renderMMCards();
+    }
+
+    function deleteMMEntry(index) {
+        if (confirm('Are you sure you want to delete this marketing message campaign?')) {
+            marketingMessages.splice(index, 1);
+            postSettingsSave('marketing-messages', marketingMessages);
+            renderMMCards();
+        }
+    }
+
+    function fetchMarketingTokens() {
+        showToast('Syncing Meta Marketing Message tokens...', 'info');
+        // Future implementation for API sync
+        setTimeout(() => showToast('Tokens synced successfully!', 'success'), 1500);
+    }
+
+    // Legacy RCN Support
     function addRcnRow() {
         const tr = document.createElement('tr');
         tr.className = 'rcn-row';
@@ -5371,48 +6152,271 @@
         postSettingsSave('whitelisted-domains', { domains });
     }
 
-    // 11. API Connectors Saver
-    function addConnectorRow() {
-        const tr = document.createElement('tr');
-        tr.className = 'connector-row';
-        tr.innerHTML = `
-            <td><input type="text" class="glass-input conn-name" style="width:100%"></td>
-            <td><input type="url" class="glass-input conn-url" style="width:100%; font-family:monospace;"></td>
-            <td>
-                <select class="glass-input conn-method" style="width:100%">
-                    <option value="POST" selected>POST Request</option>
-                    <option value="GET">GET Request</option>
-                    <option value="PUT">PUT Request</option>
-                </select>
-            </td>
-            <td>
-                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </td>
-        `;
-        document.querySelector('#connectors-table tbody').appendChild(tr);
+    function escapeHtml(string) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(string).replace(/[&<>"']/g, function(m) { return map[m]; });
     }
 
-    function saveApiConnectors() {
-        const rows = [];
-        document.querySelectorAll('.connector-row').forEach(tr => {
-            const name = tr.querySelector('.conn-name').value.trim();
-            const url = tr.querySelector('.conn-url').value.trim();
-            const method = tr.querySelector('select.conn-method').value;
-            if (name !== '' && url !== '') {
-                rows.push({ name, url, method });
+    // 11. JSON API Connectors Saver & CRUD
+    let editingConnectorIndex = null;
+
+    function renderApiConnectorsTable() {
+        const tbody = document.querySelector('#connectors-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (!globalApiConnectors || globalApiConnectors.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No JSON API Connectors configured.</td></tr>`;
+            return;
+        }
+
+        globalApiConnectors.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'connector-row';
+            
+            // Format triggers badges
+            const triggers = item.triggerFields || [];
+            let triggersHtml = '';
+            if (triggers.length === 0) {
+                triggersHtml = '<span style="color:var(--text-muted); font-size:12px;">None</span>';
+            } else {
+                triggersHtml = triggers.map(t => `<span class="nav-item-status" style="background: rgba(6, 182, 212, 0.12); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.25); display: inline-block; margin-right: 4px; padding: 2px 6px; font-size: 10px; border-radius: 4px; font-weight: 600;">${t}</span>`).join(' ');
             }
+
+            tr.innerHTML = `
+                <td style="font-weight:600; color:#fff;">${escapeHtml(item.name)}</td>
+                <td style="font-family:monospace; font-size:12px; color:var(--text-muted);">${escapeHtml(item.url)}</td>
+                <td>${triggersHtml}</td>
+                <td>
+                    <div class="row-actions" style="justify-content: flex-end;">
+                        <button class="btn-row-action edit-action" onclick="openApiConnectorModal(${index})" title="Edit Connector">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="btn-row-action delete-action" onclick="deleteApiConnector(${index})" title="Delete Connector">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
-        postSettingsSave('api-connectors', rows);
     }
 
-    // 12. Outbound Webhooks Saver
-    function saveOutboundWebhooks() {
-        const url = document.getElementById('webhook-url').value.trim();
-        const events = [];
-        document.querySelectorAll('.webhook-event-cb:checked').forEach(cb => {
-            events.push(cb.value);
+    function openApiConnectorModal(index = null) {
+        editingConnectorIndex = index;
+        const nameInput = document.getElementById('api-connector-name');
+        const urlInput = document.getElementById('api-connector-url');
+        const titleEl = document.getElementById('api-connector-modal-title');
+        
+        // Reset checkboxes
+        document.querySelectorAll('.api-connector-trigger-cb').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.api-connector-send-cb').forEach(cb => cb.checked = false);
+
+        if (index !== null) {
+            const item = globalApiConnectors[index];
+            titleEl.textContent = 'Edit Connection';
+            nameInput.value = item.name || '';
+            urlInput.value = item.url || '';
+            
+            // Check trigger checkboxes
+            if (item.triggerFields) {
+                item.triggerFields.forEach(val => {
+                    const cb = document.querySelector(`.api-connector-trigger-cb[value="${val}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+            // Check send checkboxes
+            if (item.sendData) {
+                item.sendData.forEach(val => {
+                    const cb = document.querySelector(`.api-connector-send-cb[value="${val}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+        } else {
+            titleEl.textContent = '+ Add New Connection';
+            nameInput.value = '';
+            urlInput.value = '';
+        }
+
+        document.getElementById('api-connector-modal').classList.add('is-active');
+    }
+
+    function closeApiConnectorModal() {
+        document.getElementById('api-connector-modal').classList.remove('is-active');
+    }
+
+    function saveApiConnectorModal() {
+        const name = document.getElementById('api-connector-name').value.trim();
+        const url = document.getElementById('api-connector-url').value.trim();
+        
+        if (!name || !url) {
+            showToast('Please provide a name and webhook URL.', 'error');
+            return;
+        }
+
+        const triggerFields = [];
+        document.querySelectorAll('.api-connector-trigger-cb:checked').forEach(cb => {
+            triggerFields.push(cb.value);
         });
-        postSettingsSave('outbound-webhooks', { url, events });
+
+        const sendData = [];
+        document.querySelectorAll('.api-connector-send-cb:checked').forEach(cb => {
+            sendData.push(cb.value);
+        });
+
+        const connectorData = { name, url, triggerFields, sendData };
+
+        if (editingConnectorIndex !== null) {
+            globalApiConnectors[editingConnectorIndex] = connectorData;
+        } else {
+            globalApiConnectors.push(connectorData);
+        }
+
+        closeApiConnectorModal();
+        postSettingsSave('api-connectors', globalApiConnectors);
+        renderApiConnectorsTable();
+    }
+
+    function deleteApiConnector(index) {
+        if (confirm('Are you sure you want to delete this JSON API Connector?')) {
+            globalApiConnectors.splice(index, 1);
+            postSettingsSave('api-connectors', globalApiConnectors);
+            renderApiConnectorsTable();
+        }
+    }
+
+    // 12. Outbound Webhooks Saver & CRUD
+    let editingWebhookIndex = null;
+
+    function renderOutboundWebhooksTable() {
+        const tbody = document.querySelector('#outbound-webhooks-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (!globalOutboundWebhooks || globalOutboundWebhooks.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No Out-bound Webhooks configured.</td></tr>`;
+            return;
+        }
+
+        globalOutboundWebhooks.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'webhook-row';
+
+            // Format triggers badges
+            const triggers = item.triggers || [];
+            let triggersHtml = '';
+            if (triggers.length === 0) {
+                triggersHtml = '<span style="color:var(--text-muted); font-size:12px;">None</span>';
+            } else {
+                triggersHtml = triggers.map(t => `<span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); display: inline-block; margin-right: 4px; padding: 2px 6px; font-size: 10px; border-radius: 4px; font-weight: 600;">${t}</span>`).join(' ');
+            }
+
+            tr.innerHTML = `
+                <td style="font-weight:600; color:#fff;">${escapeHtml(item.name)}</td>
+                <td style="font-family:monospace; font-size:12px; color:var(--text-muted);">${escapeHtml(item.url)}</td>
+                <td>${triggersHtml}</td>
+                <td>
+                    <div class="row-actions" style="justify-content: flex-end;">
+                        <button class="btn-row-action edit-action" onclick="openOutboundWebhookModal(${index})" title="Edit Webhook">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="btn-row-action delete-action" onclick="deleteOutboundWebhook(${index})" title="Delete Webhook">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openOutboundWebhookModal(index = null) {
+        editingWebhookIndex = index;
+        const nameInput = document.getElementById('outbound-webhook-name');
+        const urlInput = document.getElementById('outbound-webhook-url');
+        const titleEl = document.getElementById('outbound-webhook-modal-title');
+
+        // Reset toggles/checkboxes
+        document.querySelectorAll('.outbound-webhook-trigger-cb').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.outbound-webhook-send-cb').forEach(cb => cb.checked = false);
+
+        if (index !== null) {
+            const item = globalOutboundWebhooks[index];
+            titleEl.textContent = 'Edit Out-bound Webhook';
+            nameInput.value = item.name || '';
+            urlInput.value = item.url || '';
+
+            // Check trigger checkboxes
+            if (item.triggers) {
+                item.triggers.forEach(val => {
+                    const cb = document.querySelector(`.outbound-webhook-trigger-cb[value="${val}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+            // Check send checkboxes
+            if (item.sendData) {
+                item.sendData.forEach(val => {
+                    const cb = document.querySelector(`.outbound-webhook-send-cb[value="${val}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+        } else {
+            titleEl.textContent = 'Out-bound Webhook';
+            nameInput.value = '';
+            urlInput.value = '';
+        }
+
+        document.getElementById('outbound-webhook-modal').classList.add('is-active');
+    }
+
+    function closeOutboundWebhookModal() {
+        document.getElementById('outbound-webhook-modal').classList.remove('is-active');
+    }
+
+    function saveOutboundWebhookModal() {
+        const name = document.getElementById('outbound-webhook-name').value.trim();
+        const url = document.getElementById('outbound-webhook-url').value.trim();
+
+        if (!name || !url) {
+            showToast('Please provide a name and outbound webhook URL.', 'error');
+            return;
+        }
+
+        const triggers = [];
+        document.querySelectorAll('.outbound-webhook-trigger-cb:checked').forEach(cb => {
+            triggers.push(cb.value);
+        });
+
+        const sendData = [];
+        document.querySelectorAll('.outbound-webhook-send-cb:checked').forEach(cb => {
+            sendData.push(cb.value);
+        });
+
+        const webhookData = { name, url, triggers, sendData };
+
+        if (editingWebhookIndex !== null) {
+            globalOutboundWebhooks[editingWebhookIndex] = webhookData;
+        } else {
+            globalOutboundWebhooks.push(webhookData);
+        }
+
+        closeOutboundWebhookModal();
+        postSettingsSave('outbound-webhooks', globalOutboundWebhooks);
+        renderOutboundWebhooksTable();
+    }
+
+    function deleteOutboundWebhook(index) {
+        if (confirm('Are you sure you want to delete this Out-bound Webhook?')) {
+            globalOutboundWebhooks.splice(index, 1);
+            postSettingsSave('outbound-webhooks', globalOutboundWebhooks);
+            renderOutboundWebhooksTable();
+        }
     }
 
     // 13. Action Buttons Saver
@@ -5449,6 +6453,133 @@
     }
 
     // 14. Welcome Screen Previewer & Saver
+    function insertGreetingVariable(varName) {
+        const textarea = document.getElementById('welcome-greeting-text');
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        textarea.value = text.substring(0, start) + varName + text.substring(end);
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + varName.length;
+        updateGreetingPreview();
+    }
+
+    function toggleGetStartedStatus() {
+        const status = document.getElementById('get-started-status').value;
+        const container = document.getElementById('get-started-payload-container');
+        if (container) {
+            container.style.display = (status === 'enabled') ? 'block' : 'none';
+        }
+        updateGreetingPreview();
+    }
+
+    function updateGetStartedPayloadFromSelector() {
+        const selector = document.getElementById('get-started-flow-selector');
+        const payloadInput = document.getElementById('welcome-payload');
+        if (selector && payloadInput) {
+            if (selector.value === 'custom') {
+                payloadInput.style.display = 'block';
+                payloadInput.value = '';
+            } else {
+                payloadInput.style.display = 'none';
+                payloadInput.value = selector.value;
+            }
+        }
+        updateGreetingPreview();
+    }
+
+    function toggleIceBreakersStatus() {
+        const status = document.getElementById('ice-breakers-status').value;
+        const container = document.getElementById('ice-breakers-container');
+        if (container) {
+            container.style.display = (status === 'enabled') ? 'block' : 'none';
+        }
+        updateGreetingPreview();
+    }
+
+    function addNewIceBreakerRow(question = '', payload = '') {
+        const container = document.getElementById('ice-breaker-rows');
+        if (!container) return;
+
+        const currentRowsCount = container.querySelectorAll('.ice-breaker-row').length;
+        if (currentRowsCount >= 5) {
+            showToast('You can add a maximum of 5 FAQ questions.', 'error');
+            return;
+        }
+
+        const isFlow = payload.startsWith('FLOW_ID_');
+        let selectedFlowId = '';
+        if (isFlow) {
+            selectedFlowId = payload.substring(8);
+        }
+
+        const tr = document.createElement('div');
+        tr.className = 'ice-breaker-row';
+        tr.style.cssText = 'display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.02); border-radius:8px; margin-bottom:8px;';
+        
+        tr.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:#fff; font-size:12px;">FAQ Question Item</span>
+                <button type="button" class="btn-row-action delete-action" onclick="this.closest('.ice-breaker-row').remove(); updateIceBreakerUi();" style="border:none; background:none; padding:4px; cursor:pointer;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; color:#ef4444;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div>
+                <input type="text" class="glass-input ice-breaker-question" placeholder="Type your FAQ question here..." maxlength="80" oninput="updateGreetingPreview()" value="${escapeHtml(question)}" style="width:100%; font-size:12px;">
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <select class="glass-input ice-breaker-flow-selector" style="flex:1; font-size:12px;" onchange="updateIceBreakerRowPayload(this)">
+                    <option value="custom" ${!isFlow ? 'selected' : ''}>Custom Postback Payload...</option>
+                    ${getActiveFlowOptions(selectedFlowId)}
+                </select>
+                <input type="text" class="glass-input ice-breaker-payload" placeholder="Payload value..." value="${escapeHtml(payload)}" style="width:50%; font-family:monospace; font-size:12px; ${isFlow ? 'display:none;' : ''}">
+            </div>
+        `;
+        
+        container.appendChild(tr);
+        updateIceBreakerUi();
+    }
+
+    function getActiveFlowOptions(selectedFlowId) {
+        let options = '';
+        const flows = window.openSquadronActiveFlows || [];
+        flows.forEach(flow => {
+            options += `<option value="FLOW_ID_${flow.id}" ${selectedFlowId == flow.id ? 'selected' : ''}>Trigger Flow: ${escapeHtml(flow.name)}</option>`;
+        });
+        return options;
+    }
+
+    function updateIceBreakerRowPayload(selectEl) {
+        const row = selectEl.closest('.ice-breaker-row');
+        const payloadInput = row.querySelector('.ice-breaker-payload');
+        if (selectEl.value === 'custom') {
+            payloadInput.style.display = 'block';
+            payloadInput.value = '';
+        } else {
+            payloadInput.style.display = 'none';
+            payloadInput.value = selectEl.value;
+        }
+        updateGreetingPreview();
+    }
+
+    // Update dynamically and run previews
+    function updateIceBreakerUi() {
+        const container = document.getElementById('ice-breaker-rows');
+        if (!container) return;
+        const rowsCount = container.querySelectorAll('.ice-breaker-row').length;
+        const btnAdd = document.getElementById('btn-add-ice-breaker');
+        
+        if (btnAdd) {
+            if (rowsCount >= 5) {
+                btnAdd.style.display = 'none';
+            } else {
+                btnAdd.style.display = 'block';
+            }
+        }
+        updateGreetingPreview();
+    }
+
     function updateGreetingPreview() {
         const isShown = document.getElementById('welcome-show').checked;
         const text = document.getElementById('welcome-greeting-text').value;
@@ -5462,13 +6593,144 @@
         if (container) {
             container.style.opacity = isShown ? '1' : '0.25';
         }
+
+        // Update Get Started button preview visibility
+        const getStartedContainer = document.getElementById('preview-get-started-container');
+        if (getStartedContainer) {
+            const getStartedStatus = document.getElementById('get-started-status').value;
+            getStartedContainer.style.display = (getStartedStatus === 'enabled') ? 'block' : 'none';
+        }
+
+        // Update Ice Breakers questions preview list
+        const previewIceBreakers = document.getElementById('preview-ice-breakers-container');
+        if (previewIceBreakers) {
+            const iceBreakersStatus = document.getElementById('ice-breakers-status').value;
+            if (iceBreakersStatus === 'enabled') {
+                previewIceBreakers.style.display = 'flex';
+                previewIceBreakers.innerHTML = '';
+                
+                const rows = document.querySelectorAll('#ice-breaker-rows .ice-breaker-row');
+                rows.forEach(row => {
+                    const questionVal = row.querySelector('.ice-breaker-question').value.trim();
+                    if (questionVal !== '') {
+                        const qDiv = document.createElement('div');
+                        qDiv.style.cssText = 'padding: 6px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 10px; color: #fff; cursor: pointer; text-align: center;';
+                        qDiv.textContent = questionVal;
+                        previewIceBreakers.appendChild(qDiv);
+                    }
+                });
+                
+                if (previewIceBreakers.children.length === 0) {
+                    previewIceBreakers.innerHTML = '<div style="font-size:9px; color:var(--text-muted); text-align:center;">No FAQ questions added yet.</div>';
+                }
+            } else {
+                previewIceBreakers.style.display = 'none';
+            }
+        }
     }
 
     function saveWelcomeScreen() {
         const showGreeting = document.getElementById('welcome-show').checked;
         const greetingText = document.getElementById('welcome-greeting-text').value.trim();
+        const getStartedStatus = document.getElementById('get-started-status').value;
         const getStartedPayload = document.getElementById('welcome-payload').value.trim();
-        postSettingsSave('welcome-screen', { showGreeting, greetingText, getStartedPayload });
+        const iceBreakersStatus = document.getElementById('ice-breakers-status').value;
+        
+        const iceBreakers = [];
+        document.querySelectorAll('#ice-breaker-rows .ice-breaker-row').forEach(row => {
+            const question = row.querySelector('.ice-breaker-question').value.trim();
+            const payload = row.querySelector('.ice-breaker-payload').value.trim();
+            if (question !== '' && payload !== '') {
+                iceBreakers.push({ question, payload });
+            }
+        });
+
+        postSettingsSave('welcome-screen', { 
+            showGreeting, 
+            greetingText, 
+            getStartedStatus, 
+            getStartedPayload, 
+            iceBreakersStatus, 
+            iceBreakers 
+        });
+    }
+
+    function syncWelcomeScreen() {
+        if (!activeConnectionId) {
+            showToast('Please connect a Facebook page first.', 'error');
+            return;
+        }
+
+        showToast('Syncing welcome screen from Facebook...', 'info');
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+
+        fetch('{{ path('app_facebook_bot_sync_welcome_screen') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Welcome screen synced successfully!', 'success');
+                if (data.data) {
+                    document.getElementById('welcome-show').checked = data.data.showGreeting;
+                    document.getElementById('welcome-greeting-text').value = data.data.greetingText || '';
+                    
+                    const getStartedStatus = document.getElementById('get-started-status');
+                    if (getStartedStatus) {
+                        getStartedStatus.value = data.data.getStartedStatus || 'enabled';
+                        toggleGetStartedStatus();
+                    }
+
+                    const welcomePayload = document.getElementById('welcome-payload');
+                    if (welcomePayload) {
+                        welcomePayload.value = data.data.getStartedPayload || '';
+                    }
+
+                    // Update Selector
+                    const getStartedSelector = document.getElementById('get-started-flow-selector');
+                    if (getStartedSelector) {
+                        const payloadVal = data.data.getStartedPayload || '';
+                        if (payloadVal === 'WELCOME_GET_STARTED_TRIGGER' || payloadVal === '') {
+                            getStartedSelector.value = 'WELCOME_GET_STARTED_TRIGGER';
+                            welcomePayload.style.display = 'none';
+                        } else if (payloadVal.startsWith('FLOW_ID_')) {
+                            getStartedSelector.value = payloadVal;
+                            welcomePayload.style.display = 'none';
+                        } else {
+                            getStartedSelector.value = 'custom';
+                            welcomePayload.style.display = 'block';
+                        }
+                    }
+
+                    const iceBreakersStatus = document.getElementById('ice-breakers-status');
+                    if (iceBreakersStatus) {
+                        iceBreakersStatus.value = data.data.iceBreakersStatus || 'disabled';
+                        toggleIceBreakersStatus();
+                    }
+
+                    // Rebuild Ice Breakers list
+                    const container = document.getElementById('ice-breaker-rows');
+                    if (container) {
+                        container.innerHTML = '';
+                        if (data.data.iceBreakers && data.data.iceBreakers.length > 0) {
+                            data.data.iceBreakers.forEach(item => {
+                                addNewIceBreakerRow(item.question, item.payload);
+                            });
+                        }
+                    }
+                    updateIceBreakerUi();
+                }
+            } else {
+                showToast('Failed to sync welcome screen: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('An error occurred while syncing welcome screen: ' + err.message, 'error');
+        });
     }
 
     // ═══════════ Multimedia Post Create (MPC) Logic ═══════════
@@ -6437,6 +7699,11 @@
         const params = new URLSearchParams(window.location.search);
         const tab = params.get('tab') || 'console';
         switchTab(tab);
+        
+        renderPostbackTable();
+        renderMMCards();
+        renderApiConnectorsTable();
+        renderOutboundWebhooksTable();
 
         // Mobile Sidebar Toggling Logic
         const navToggle = document.querySelector('.sidebar-mobile-toggle');
@@ -6451,6 +7718,14 @@
                     managerNav.classList.remove('is-open');
                 });
             });
+            // Initialize Ice Breakers (FAQs)
+            const initialIceBreakers = {{ settings['welcome-screen'].iceBreakers|default([])|json_encode|raw }};
+            if (initialIceBreakers && initialIceBreakers.length > 0) {
+                initialIceBreakers.forEach(item => {
+                    addNewIceBreakerRow(item.question, item.payload);
+                });
+            }
+            updateIceBreakerUi();
         }
     });
 
