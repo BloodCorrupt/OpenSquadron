@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Subscriber;
 use App\Entity\Message;
 use App\Entity\WhatsAppConnection;
+use App\Entity\WhatsappActionButton;
 
 class WhatsAppController extends AbstractController
 {
@@ -150,6 +151,7 @@ class WhatsAppController extends AbstractController
                         $metaMessageId = $message['id'] ?? null;
 
                         if ($msgBody !== '' || $mediaUrl !== null) {
+                            $isNewSubscriber = false;
                             $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
                                 'phoneNumber' => $from,
                                 'whatsAppConnection' => $resolvedConnection
@@ -164,6 +166,7 @@ class WhatsAppController extends AbstractController
                                     $subscriber->setName($name);
                                 }
                                 $this->entityManager->persist($subscriber);
+                                $isNewSubscriber = true;
                             }
 
                             $msg = new Message();
@@ -180,7 +183,49 @@ class WhatsAppController extends AbstractController
                             // Check for Automations (Bot Flows) or waiting state interception.
                             $isResumed = false;
                             
-                            if ($msgType === 'text' && $msgBody !== '') {
+                            // Check for opt-out/opt-in first (Unsubscribe / Resubscribe action buttons)
+                            $msgBodyLower = strtolower(trim($msgBody));
+                            $stopWords = ['stop', 'unsubscribe', 'cancel', 'quit', 'optout', 'opt-out'];
+                            $startWords = ['start', 'subscribe', 'unstop', 'optin', 'opt-in'];
+
+                            if (in_array($msgBodyLower, $stopWords)) {
+                                $subscriber->setStatus('unsubscribed');
+                                $this->entityManager->persist($subscriber);
+                                $this->entityManager->flush();
+
+                                $actionButton = $this->entityManager->getRepository(WhatsappActionButton::class)
+                                    ->findOneBy([
+                                        'whatsAppConnection' => $resolvedConnection,
+                                        'buttonKey' => 'unsubscribe',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeWhatsappActionButton($actionButton, $subscriber);
+                                }
+                                $isResumed = true;
+                            } elseif (in_array($msgBodyLower, $startWords)) {
+                                $subscriber->setStatus('active');
+                                $this->entityManager->persist($subscriber);
+                                $this->entityManager->flush();
+
+                                $actionButton = $this->entityManager->getRepository(WhatsappActionButton::class)
+                                    ->findOneBy([
+                                        'whatsAppConnection' => $resolvedConnection,
+                                        'buttonKey' => 'resubscribe',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeWhatsappActionButton($actionButton, $subscriber);
+                                }
+                                $isResumed = true;
+                            }
+
+                            // If subscriber is unsubscribed, ignore everything else
+                            if (!$isResumed && $subscriber->getStatus() === 'unsubscribed') {
+                                $isResumed = true;
+                            }
+
+                            if (!$isResumed && $msgType === 'text' && $msgBody !== '') {
                                 $attrs = $subscriber->getCustomAttributes();
                                 $waitingForInput = $attrs['_waiting_for_input'] ?? null;
                                 $waitingNodeId = $attrs['_waiting_node_id'] ?? null;
@@ -219,8 +264,75 @@ class WhatsAppController extends AbstractController
                                 }
                             }
 
+                            // Check system events (Get Started, Human Escalation, Resume Bot)
+                            if (!$isResumed && $isNewSubscriber) {
+                                $actionButton = $this->entityManager->getRepository(WhatsappActionButton::class)
+                                    ->findOneBy([
+                                        'whatsAppConnection' => $resolvedConnection,
+                                        'buttonKey' => 'get-started',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeWhatsappActionButton($actionButton, $subscriber);
+                                    $isResumed = true;
+                                }
+                            }
+
+                            if (!$isResumed && $msgType === 'text' && $msgBody !== '') {
+                                if ($msgBody === 'ESCALATE_HUMAN_TRIGGER') {
+                                    $subscriber->setStatus('paused');
+                                    $this->entityManager->persist($subscriber);
+                                    $this->entityManager->flush();
+
+                                    $actionButton = $this->entityManager->getRepository(WhatsappActionButton::class)
+                                        ->findOneBy([
+                                            'whatsAppConnection' => $resolvedConnection,
+                                            'buttonKey' => 'chat-with-human',
+                                            'isEnabled' => true
+                                        ]);
+                                    if ($actionButton) {
+                                        $this->executeWhatsappActionButton($actionButton, $subscriber);
+                                        $isResumed = true;
+                                    }
+                                } elseif ($msgBody === 'RESUME_BOT_TRIGGER') {
+                                    $subscriber->setStatus('active');
+                                    $this->entityManager->persist($subscriber);
+                                    $this->entityManager->flush();
+
+                                    $actionButton = $this->entityManager->getRepository(WhatsappActionButton::class)
+                                        ->findOneBy([
+                                            'whatsAppConnection' => $resolvedConnection,
+                                            'buttonKey' => 'chat-with-bot',
+                                            'isEnabled' => true
+                                        ]);
+                                    if ($actionButton) {
+                                        $this->executeWhatsappActionButton($actionButton, $subscriber);
+                                        $isResumed = true;
+                                    }
+                                }
+                            }
+
+                            // Check location reply
+                            if (!$isResumed && $msgType === 'location') {
+                                $actionButton = $this->entityManager->getRepository(WhatsappActionButton::class)
+                                    ->findOneBy([
+                                        'whatsAppConnection' => $resolvedConnection,
+                                        'buttonKey' => 'location-reply',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeWhatsappActionButton($actionButton, $subscriber);
+                                    $isResumed = true;
+                                }
+                            }
+
+                            // If subscriber is paused, ignore bot keyword flows
+                            if (!$isResumed && $subscriber->getStatus() === 'paused') {
+                                $isResumed = true;
+                            }
+
                             if ($isResumed) {
-                                // Already resumed the flow, do not trigger keyword automations.
+                                // Already handled
                             } elseif ($msgType === 'text' && $msgBody !== '') {
                                 $flows = $this->entityManager
                                     ->getRepository(\App\Entity\WhatsappBotFlow::class)
@@ -239,7 +351,16 @@ class WhatsAppController extends AbstractController
                                 }
 
                                 if (!$matched) {
-                                    if ($resolvedConnection && $resolvedConnection->isAiActive()) {
+                                    // Check No Match Action Button first!
+                                    $actionButton = $this->entityManager->getRepository(WhatsappActionButton::class)
+                                        ->findOneBy([
+                                            'whatsAppConnection' => $resolvedConnection,
+                                            'buttonKey' => 'no-match',
+                                            'isEnabled' => true
+                                        ]);
+                                    if ($actionButton) {
+                                        $this->executeWhatsappActionButton($actionButton, $subscriber);
+                                    } elseif ($resolvedConnection && $resolvedConnection->isAiActive()) {
                                         $aiSetting = $this->entityManager->getRepository(\App\Entity\AiSetting::class)->findOneBy([
                                             'owner' => $resolvedConnection->getOwner(),
                                             'isActive' => true
@@ -300,6 +421,44 @@ class WhatsAppController extends AbstractController
             return new JsonResponse(['status' => 'success', 'data' => $response]);
         } catch (\Exception $e) {
             return new JsonResponse(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    private function executeWhatsappActionButton(\App\Entity\WhatsappActionButton $action, Subscriber $subscriber): void
+    {
+        if ($action->getReplyType() === 'flow') {
+            $flow = $action->getBotFlow();
+            if ($flow && $flow->isActive()) {
+                $subscriber->setAssignedWhatsappFlow($flow);
+                $this->entityManager->persist($subscriber);
+                $this->entityManager->flush();
+                $this->WhatsappBotFlowExecutor->execute($flow, $subscriber);
+            }
+        } elseif ($action->getReplyType() === 'text') {
+            $replyText = $action->getReplyText();
+            if (!empty($replyText)) {
+                try {
+                    $response = $this->whatsappService->sendMessage($subscriber->getPhoneNumber(), $replyText, $action->getWhatsAppConnection());
+                    $metaMessageId = $response['messages'][0]['id'] ?? null;
+
+                    $outboundMsg = new Message();
+                    $outboundMsg->setSubscriber($subscriber);
+                    $outboundMsg->setDirection('outbound');
+                    $outboundMsg->setStatus('sent');
+                    $outboundMsg->setType('text');
+                    $outboundMsg->setContent($replyText);
+                    $outboundMsg->setMetaMessageId($metaMessageId);
+
+                    $this->entityManager->persist($outboundMsg);
+                    $this->entityManager->flush();
+                } catch (\Exception $sendEx) {
+                    file_put_contents(
+                        $this->getParameter('kernel.project_dir') . '/var/webhook.log',
+                        date('Y-m-d H:i:s') . " - Action Button Send Error: " . $sendEx->getMessage() . PHP_EOL,
+                        FILE_APPEND
+                    );
+                }
+            }
         }
     }
 }

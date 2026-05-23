@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\FacebookBotFlow;
 use App\Entity\FacebookConnection;
 use App\Entity\FacebookDripSequence;
+use App\Entity\FacebookActionButton;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -117,6 +118,7 @@ class FacebookBotManagerController extends AbstractController
         ];
 
         $sequences = [];
+        $actionButtons = [];
         if ($selectedConnection) {
             $flows = $em->getRepository(FacebookBotFlow::class)->findBy(['facebookConnection' => $selectedConnection], ['id' => 'DESC']);
             
@@ -135,6 +137,48 @@ class FacebookBotManagerController extends AbstractController
             foreach ($seqEntities as $seq) {
                 $sequences[] = $seq->toArray();
             }
+
+            // Load action buttons
+            $actionBtnRepo = $em->getRepository(FacebookActionButton::class);
+            $actionBtnEntities = $actionBtnRepo->findBy(['facebookConnection' => $selectedConnection], ['id' => 'ASC']);
+            
+            $presets = [
+                'get-started' => 'Get-started',
+                'no-match' => 'No Match',
+                'location-reply' => 'Location Reply',
+                'unsubscribe' => 'Un-subscribe',
+                'resubscribe' => 'Re-subscribe',
+                'chat-with-human' => 'Chat with Human',
+                'chat-with-bot' => 'Chat with Bot',
+            ];
+            
+            $existingKeys = [];
+            foreach ($actionBtnEntities as $btn) {
+                $existingKeys[] = $btn->getButtonKey();
+            }
+            
+            $seeded = false;
+            foreach ($presets as $key => $label) {
+                if (!in_array($key, $existingKeys)) {
+                    $newBtn = new FacebookActionButton();
+                    $newBtn->setOwner($selectedConnection->getOwner());
+                    $newBtn->setFacebookConnection($selectedConnection);
+                    $newBtn->setButtonKey($key);
+                    $newBtn->setButtonLabel($label);
+                    $newBtn->setIsEnabled(false);
+                    $newBtn->setReplyType('none');
+                    $em->persist($newBtn);
+                    $seeded = true;
+                }
+            }
+            if ($seeded) {
+                $em->flush();
+                $actionBtnEntities = $actionBtnRepo->findBy(['facebookConnection' => $selectedConnection], ['id' => 'ASC']);
+            }
+            
+            foreach ($actionBtnEntities as $btn) {
+                $actionButtons[] = $btn->toArray();
+            }
         } else {
             $settings = $defaultSettings;
         }
@@ -142,13 +186,72 @@ class FacebookBotManagerController extends AbstractController
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
 
         return $this->render('facebook_bot_manager/index.html.twig', [
-            'flows'       => $flows,
-            'connection'  => $selectedConnection,
-            'connections' => $connections,
-            'contexts'    => $contexts,
-            'settings'    => $settings,
-            'sequences'   => $sequences,
+            'flows'         => $flows,
+            'connection'    => $selectedConnection,
+            'connections'   => $connections,
+            'contexts'      => $contexts,
+            'settings'      => $settings,
+            'sequences'     => $sequences,
+            'actionButtons' => $actionButtons,
         ]);
+    }
+
+    #[Route('/facebook-bot-manager/action-buttons/save', name: 'app_facebook_action_buttons_save', methods: ['POST'])]
+    public function saveActionButtons(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid Connection ID.'], 400);
+        }
+
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
+        $data = $request->request->get('data');
+        $presets = json_decode($data, true);
+        if (!is_array($presets)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid presets data.'], 400);
+        }
+
+        $actionBtnRepo = $em->getRepository(FacebookActionButton::class);
+
+        foreach ($presets as $preset) {
+            $key = $preset['buttonKey'] ?? null;
+            if (!$key) continue;
+
+            $entity = $actionBtnRepo->findOneBy([
+                'facebookConnection' => $connection,
+                'buttonKey' => $key
+            ]);
+
+            if (!$entity) {
+                $entity = new FacebookActionButton();
+                $entity->setOwner($connection->getOwner());
+                $entity->setFacebookConnection($connection);
+                $entity->setButtonKey($key);
+            }
+
+            $entity->setButtonLabel($preset['buttonLabel'] ?? $key);
+            $entity->setIsEnabled((bool)($preset['isEnabled'] ?? false));
+            $entity->setReplyType($preset['replyType'] ?? 'none');
+            $entity->setReplyText($preset['replyText'] ?? null);
+
+            $flowId = $preset['flowId'] ?? null;
+            if ($flowId) {
+                $flow = $em->getRepository(FacebookBotFlow::class)->find($flowId);
+                $entity->setBotFlow($flow);
+            } else {
+                $entity->setBotFlow(null);
+            }
+
+            $em->persist($entity);
+        }
+
+        $em->flush();
+
+        return new JsonResponse(['success' => true, 'message' => 'Action button templates saved successfully.']);
     }
 
     #[Route('/facebook-bot-manager/save-settings', name: 'app_facebook_bot_save_settings', methods: ['POST'])]

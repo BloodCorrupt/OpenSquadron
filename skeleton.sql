@@ -98,6 +98,77 @@ CREATE TABLE IF NOT EXISTS `whatsapp_bot_flow` (
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
+-- ───── Facebook Drip Sequences ─────
+CREATE TABLE IF NOT EXISTS `facebook_drip_sequence` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT DEFAULT NULL,
+    facebook_connection_id INT DEFAULT NULL,
+    name VARCHAR(200) NOT NULL,
+    preferred_time VARCHAR(30) NOT NULL DEFAULT 'anytime',
+    timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
+    message_tag VARCHAR(60) NOT NULL DEFAULT 'NON_PROMOTIONAL_SUBSCRIPTION',
+    allow_reentry TINYINT(1) NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    steps_count INT NOT NULL DEFAULT 0,
+    graph_data JSON DEFAULT NULL,
+    INDEX IDX_FD73AE227E3C61F9 (owner_id),
+    INDEX IDX_FD73AE22BE73D3C2 (facebook_connection_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
+-- ───── WhatsApp Drip Sequences ─────
+CREATE TABLE IF NOT EXISTS `whatsapp_drip_sequence` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT DEFAULT NULL,
+    whatsapp_connection_id INT DEFAULT NULL,
+    name VARCHAR(200) NOT NULL,
+    `trigger` VARCHAR(60) NOT NULL DEFAULT 'NEW_SUBSCRIBER',
+    preferred_time VARCHAR(30) NOT NULL DEFAULT 'anytime',
+    timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
+    message_tag VARCHAR(60) NOT NULL DEFAULT 'NON_PROMOTIONAL_SUBSCRIPTION',
+    allow_reentry TINYINT(1) NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    steps_count INT NOT NULL DEFAULT 0,
+    graph_data JSON DEFAULT NULL,
+    INDEX IDX_8564B5EF7E3C61F9 (owner_id),
+    INDEX IDX_8564B5EFC664C80F (whatsapp_connection_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
+-- ───── Facebook Action Buttons ─────
+CREATE TABLE IF NOT EXISTS `facebook_action_button` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT DEFAULT NULL,
+    facebook_connection_id INT DEFAULT NULL,
+    facebook_bot_flow_id INT DEFAULT NULL,
+    button_key VARCHAR(50) NOT NULL,
+    button_label VARCHAR(100) NOT NULL,
+    is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    reply_type VARCHAR(20) NOT NULL DEFAULT 'none',
+    reply_text LONGTEXT DEFAULT NULL,
+    INDEX IDX_4B9571957E3C61F9 (owner_id),
+    INDEX IDX_4B957195BE73D3C2 (facebook_connection_id),
+    INDEX IDX_4B957195AD962686 (facebook_bot_flow_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
+-- ───── WhatsApp Action Buttons ─────
+CREATE TABLE IF NOT EXISTS `whatsapp_action_button` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT DEFAULT NULL,
+    whats_app_connection_id INT DEFAULT NULL,
+    whats_app_bot_flow_id INT DEFAULT NULL,
+    button_key VARCHAR(50) NOT NULL,
+    button_label VARCHAR(100) NOT NULL,
+    is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    reply_type VARCHAR(20) NOT NULL DEFAULT 'none',
+    reply_text LONGTEXT DEFAULT NULL,
+    INDEX IDX_33826A587E3C61F9 (owner_id),
+    INDEX IDX_33826A586381BF43 (whats_app_connection_id),
+    INDEX IDX_33826A58B2B4395F (whats_app_bot_flow_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
 
 -- ───── Subscribers ─────
 CREATE TABLE IF NOT EXISTS `subscriber` (
@@ -238,6 +309,20 @@ ALTER TABLE `subscriber`
     ADD CONSTRAINT FK_AD005B6942F7871F FOREIGN KEY (assigned_whatsapp_flow_id) REFERENCES whatsapp_bot_flow (id),
     ADD CONSTRAINT FK_AD005B69C9CE08D1 FOREIGN KEY (assigned_facebook_flow_id) REFERENCES facebook_bot_flow (id) ON DELETE SET NULL;
 
+ALTER TABLE `facebook_drip_sequence`
+    ADD CONSTRAINT FK_FD73AE22BE73D3C2 FOREIGN KEY (facebook_connection_id) REFERENCES facebook_connection (id) ON DELETE CASCADE;
+
+ALTER TABLE `whatsapp_drip_sequence`
+    ADD CONSTRAINT FK_8564B5EFC664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
+
+ALTER TABLE `facebook_action_button`
+    ADD CONSTRAINT FK_4B957195BE73D3C2 FOREIGN KEY (facebook_connection_id) REFERENCES facebook_connection (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_4B957195AD962686 FOREIGN KEY (facebook_bot_flow_id) REFERENCES facebook_bot_flow (id) ON DELETE SET NULL;
+
+ALTER TABLE `whatsapp_action_button`
+    ADD CONSTRAINT FK_33826A586381BF43 FOREIGN KEY (whats_app_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_33826A58B2B4395F FOREIGN KEY (whats_app_bot_flow_id) REFERENCES whatsapp_bot_flow (id) ON DELETE SET NULL;
+
 -- ───── Workspace Owner Constraints ─────
 ALTER TABLE `ai_context`
     ADD CONSTRAINT FK_AI_CONTEXT_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
@@ -265,6 +350,18 @@ ALTER TABLE `whatsapp_bot_flow`
     ADD CONSTRAINT FK_68901F927E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE,
     ADD CONSTRAINT FK_68901F92C664C80F FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE;
 
+ALTER TABLE `facebook_drip_sequence`
+    ADD CONSTRAINT FK_FD73AE227E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
+
+ALTER TABLE `whatsapp_drip_sequence`
+    ADD CONSTRAINT FK_8564B5EF7E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
+
+ALTER TABLE `facebook_action_button`
+    ADD CONSTRAINT FK_4B9571957E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
+
+ALTER TABLE `whatsapp_action_button`
+    ADD CONSTRAINT FK_33826A587E3C61F9 FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE;
+
 -- ───── Seed: Default Admin User ─────
 -- Password: "admin123" (bcrypt hash — change immediately after first login)
 INSERT INTO `admin` (email, roles, password) VALUES
@@ -284,6 +381,7 @@ INSERT INTO `doctrine_migration_versions` (version, executed_at, execution_time)
     ('DoctrineMigrations\\Version20260520091945', NOW(), 97),
     ('DoctrineMigrations\\Version20260520093159', NOW(), 82),
     ('DoctrineMigrations\\Version20260521094438', NOW(), 100),
-    ('DoctrineMigrations\\Version20260521102506', NOW(), 58);
+    ('DoctrineMigrations\\Version20260521102506', NOW(), 58),
+    ('DoctrineMigrations\\Version20260523070711', NOW(), 45);
 
 SET FOREIGN_KEY_CHECKS = 1;

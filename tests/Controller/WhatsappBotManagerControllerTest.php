@@ -353,5 +353,68 @@ class WhatsappBotManagerControllerTest extends WebTestCase
         $resDel = json_decode($client->getResponse()->getContent(), true);
         $this->assertTrue($resDel['success']);
     }
+
+    public function testSaveActionButtons(): void
+    {
+        $client = static::createClient();
+        $connection = $this->createAndLoginAdmin($client);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        // 1. Verify dashboard load seeds 7 action buttons automatically
+        $client->request('GET', '/whatsapp-bot-manager');
+        $this->assertResponseIsSuccessful();
+
+        $em->clear();
+        $seededButtons = $em->getRepository(\App\Entity\WhatsappActionButton::class)->findBy(['whatsAppConnection' => $connection]);
+        $this->assertCount(7, $seededButtons);
+
+        // 2. Save settings for Action Buttons
+        $client->request('POST', '/whatsapp-bot-manager/action-buttons/save', [
+            'connectionId' => $connection->getId(),
+            'data' => json_encode([
+                [
+                    'buttonKey' => 'get-started',
+                    'buttonLabel' => 'Get-started WA Custom',
+                    'isEnabled' => true,
+                    'replyType' => 'text',
+                    'replyText' => 'Welcome back to WhatsApp!',
+                    'flowId' => null
+                ],
+                [
+                    'buttonKey' => 'no-match',
+                    'buttonLabel' => 'No Match WA Custom',
+                    'isEnabled' => false,
+                    'replyType' => 'none',
+                    'replyText' => null,
+                    'flowId' => null
+                ]
+            ])
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $res = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($res['success']);
+        $this->assertSame('Action button templates saved successfully.', $res['message']);
+
+        // 3. Verify they were updated in MySQL database
+        $em->clear();
+        $btn = $em->getRepository(\App\Entity\WhatsappActionButton::class)->findOneBy([
+            'whatsAppConnection' => $connection,
+            'buttonKey' => 'get-started'
+        ]);
+        $this->assertNotNull($btn);
+        $this->assertSame('Get-started WA Custom', $btn->getButtonLabel());
+        $this->assertTrue($btn->isEnabled());
+        $this->assertSame('text', $btn->getReplyType());
+        $this->assertSame('Welcome back to WhatsApp!', $btn->getReplyText());
+
+        $btnNoMatch = $em->getRepository(\App\Entity\WhatsappActionButton::class)->findOneBy([
+            'whatsAppConnection' => $connection,
+            'buttonKey' => 'no-match'
+        ]);
+        $this->assertNotNull($btnNoMatch);
+        $this->assertSame('No Match WA Custom', $btnNoMatch->getButtonLabel());
+        $this->assertFalse($btnNoMatch->isEnabled());
+    }
 }
 

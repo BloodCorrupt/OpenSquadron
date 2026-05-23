@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\WhatsappBotFlow;
 use App\Entity\WhatsappDripSequence;
+use App\Entity\WhatsappActionButton;
 use App\Entity\MessageTemplate;
 use App\Entity\AiSetting;
 use App\Entity\AiContext;
@@ -93,6 +94,7 @@ class WhatsappBotManagerController extends AbstractController
 
         $settings = $defaultSettings;
         $sequences = [];
+        $actionButtons = [];
         if ($selectedConnection) {
             $dir = __DIR__ . '/../../var/whatsapp_bot_settings';
             $file = $dir . "/conn_{$selectedConnection->getId()}.json";
@@ -106,6 +108,48 @@ class WhatsappBotManagerController extends AbstractController
             foreach ($seqEntities as $seq) {
                 $sequences[] = $seq->toArray();
             }
+
+            // Load action buttons
+            $actionBtnRepo = $em->getRepository(WhatsappActionButton::class);
+            $actionBtnEntities = $actionBtnRepo->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'ASC']);
+            
+            $presets = [
+                'get-started' => 'Get-started',
+                'no-match' => 'No Match',
+                'location-reply' => 'Location Reply',
+                'unsubscribe' => 'Un-subscribe',
+                'resubscribe' => 'Re-subscribe',
+                'chat-with-human' => 'Chat with Human',
+                'chat-with-bot' => 'Chat with Bot',
+            ];
+            
+            $existingKeys = [];
+            foreach ($actionBtnEntities as $btn) {
+                $existingKeys[] = $btn->getButtonKey();
+            }
+            
+            $seeded = false;
+            foreach ($presets as $key => $label) {
+                if (!in_array($key, $existingKeys)) {
+                    $newBtn = new WhatsappActionButton();
+                    $newBtn->setOwner($selectedConnection->getOwner());
+                    $newBtn->setWhatsAppConnection($selectedConnection);
+                    $newBtn->setButtonKey($key);
+                    $newBtn->setButtonLabel($label);
+                    $newBtn->setIsEnabled(false);
+                    $newBtn->setReplyType('none');
+                    $em->persist($newBtn);
+                    $seeded = true;
+                }
+            }
+            if ($seeded) {
+                $em->flush();
+                $actionBtnEntities = $actionBtnRepo->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'ASC']);
+            }
+            
+            foreach ($actionBtnEntities as $btn) {
+                $actionButtons[] = $btn->toArray();
+            }
         }
 
         return $this->render('whatsapp_bot_manager/index.html.twig', [
@@ -117,7 +161,66 @@ class WhatsappBotManagerController extends AbstractController
             'contexts' => $contexts,
             'settings' => $settings,
             'sequences' => $sequences,
+            'actionButtons' => $actionButtons,
         ]);
+    }
+
+    #[Route('/whatsapp-bot-manager/action-buttons/save', name: 'app_whatsapp_action_buttons_save', methods: ['POST'])]
+    public function saveActionButtons(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid Connection ID.'], 400);
+        }
+
+        $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
+        $data = $request->request->get('data');
+        $presets = json_decode($data, true);
+        if (!is_array($presets)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid presets data.'], 400);
+        }
+
+        $actionBtnRepo = $em->getRepository(WhatsappActionButton::class);
+
+        foreach ($presets as $preset) {
+            $key = $preset['buttonKey'] ?? null;
+            if (!$key) continue;
+
+            $entity = $actionBtnRepo->findOneBy([
+                'whatsAppConnection' => $connection,
+                'buttonKey' => $key
+            ]);
+
+            if (!$entity) {
+                $entity = new WhatsappActionButton();
+                $entity->setOwner($connection->getOwner());
+                $entity->setWhatsAppConnection($connection);
+                $entity->setButtonKey($key);
+            }
+
+            $entity->setButtonLabel($preset['buttonLabel'] ?? $key);
+            $entity->setIsEnabled((bool)($preset['isEnabled'] ?? false));
+            $entity->setReplyType($preset['replyType'] ?? 'none');
+            $entity->setReplyText($preset['replyText'] ?? null);
+
+            $flowId = $preset['flowId'] ?? null;
+            if ($flowId) {
+                $flow = $em->getRepository(WhatsappBotFlow::class)->find($flowId);
+                $entity->setBotFlow($flow);
+            } else {
+                $entity->setBotFlow(null);
+            }
+
+            $em->persist($entity);
+        }
+
+        $em->flush();
+
+        return new JsonResponse(['success' => true, 'message' => 'Action button templates saved successfully.']);
     }
 
     #[Route('/whatsapp-bot-manager/save-settings', name: 'app_whatsapp_bot_save_settings', methods: ['POST'])]

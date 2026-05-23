@@ -213,11 +213,52 @@ class FacebookWebhookController extends AbstractController
                         $msg->setStatus('received');
 
                         $this->entityManager->persist($msg);
-
                         // Check for Automations (Facebook Bot Flows) or waiting state interception.
                         $isResumed = false;
                         
-                        if ($msgType === 'text' && $msgBody !== '') {
+                        // Check for opt-out/opt-in first (Unsubscribe / Resubscribe action buttons)
+                        $msgBodyLower = strtolower(trim($msgBody));
+                        $stopWords = ['stop', 'unsubscribe', 'cancel', 'quit', 'optout', 'opt-out'];
+                        $startWords = ['start', 'subscribe', 'unstop', 'optin', 'opt-in'];
+
+                        if (in_array($msgBodyLower, $stopWords)) {
+                            $subscriber->setStatus('unsubscribed');
+                            $this->entityManager->persist($subscriber);
+                            $this->entityManager->flush();
+
+                            $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                ->findOneBy([
+                                    'facebookConnection' => $resolvedConnection,
+                                    'buttonKey' => 'unsubscribe',
+                                    'isEnabled' => true
+                                ]);
+                            if ($actionButton) {
+                                $this->executeFacebookActionButton($actionButton, $subscriber);
+                            }
+                            $isResumed = true;
+                        } elseif (in_array($msgBodyLower, $startWords)) {
+                            $subscriber->setStatus('active');
+                            $this->entityManager->persist($subscriber);
+                            $this->entityManager->flush();
+
+                            $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                ->findOneBy([
+                                    'facebookConnection' => $resolvedConnection,
+                                    'buttonKey' => 'resubscribe',
+                                    'isEnabled' => true
+                                ]);
+                            if ($actionButton) {
+                                $this->executeFacebookActionButton($actionButton, $subscriber);
+                            }
+                            $isResumed = true;
+                        }
+
+                        // If user is unsubscribed, ignore everything else
+                        if (!$isResumed && $subscriber->getStatus() === 'unsubscribed') {
+                            $isResumed = true; 
+                        }
+
+                        if (!$isResumed && $msgType === 'text' && $msgBody !== '') {
                             $attrs = $subscriber->getCustomAttributes();
                             $waitingForInput = $attrs['_waiting_for_input'] ?? null;
                             $waitingNodeId = $attrs['_waiting_node_id'] ?? null;
@@ -260,8 +301,78 @@ class FacebookWebhookController extends AbstractController
                             }
                         }
 
+                        // Check system events (Get Started, Human Escalation, Resume Bot)
+                        if (!$isResumed && $msgType === 'text' && $msgBody !== '') {
+                            // Check for get-started
+                            if ($msgBody === 'WELCOME_GET_STARTED_TRIGGER') {
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                    ->findOneBy([
+                                        'facebookConnection' => $resolvedConnection,
+                                        'buttonKey' => 'get-started',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                    $isResumed = true;
+                                }
+                            }
+                            // Check for Chat with Human
+                            elseif ($msgBody === 'ESCALATE_HUMAN_TRIGGER') {
+                                $subscriber->setStatus('paused');
+                                $this->entityManager->persist($subscriber);
+                                $this->entityManager->flush();
+
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                    ->findOneBy([
+                                        'facebookConnection' => $resolvedConnection,
+                                        'buttonKey' => 'chat-with-human',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                    $isResumed = true;
+                                }
+                            }
+                            // Check for Chat with Bot (Resume)
+                            elseif ($msgBody === 'RESUME_BOT_TRIGGER') {
+                                $subscriber->setStatus('active');
+                                $this->entityManager->persist($subscriber);
+                                $this->entityManager->flush();
+
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                    ->findOneBy([
+                                        'facebookConnection' => $resolvedConnection,
+                                        'buttonKey' => 'chat-with-bot',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                    $isResumed = true;
+                                }
+                            }
+                        }
+
+                        // Check location reply
+                        if (!$isResumed && $msgType === 'location') {
+                            $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                ->findOneBy([
+                                    'facebookConnection' => $resolvedConnection,
+                                    'buttonKey' => 'location-reply',
+                                    'isEnabled' => true
+                                ]);
+                            if ($actionButton) {
+                                $this->executeFacebookActionButton($actionButton, $subscriber);
+                                $isResumed = true;
+                            }
+                        }
+
+                        // If subscriber is paused (bot paused for live chat), ignore regular flows
+                        if (!$isResumed && $subscriber->getStatus() === 'paused') {
+                            $isResumed = true;
+                        }
+
                         if ($isResumed) {
-                            // Already resumed the flow, do not trigger keyword automations.
+                            // Already handled
                         } elseif ($msgType === 'text' && $msgBody !== '' && $resolvedConnection) {
                             $flows = $this->entityManager
                                 ->getRepository(\App\Entity\FacebookBotFlow::class)
@@ -297,10 +408,21 @@ class FacebookWebhookController extends AbstractController
                                 // Execute the flow
                                 $this->WhatsappBotFlowExecutor->execute($matchedFlow, $subscriber);
                             } else {
-                                // Clear if they say something else
-                                if ($subscriber->getAssignedFacebookFlow()) {
-                                    $subscriber->setAssignedFacebookFlow(null);
-                                    $this->entityManager->persist($subscriber);
+                                // No keyword match! Check if No Match is enabled and trigger it.
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                    ->findOneBy([
+                                        'facebookConnection' => $resolvedConnection,
+                                        'buttonKey' => 'no-match',
+                                        'isEnabled' => true
+                                    ]);
+                                if ($actionButton) {
+                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                } else {
+                                    // Clear if they say something else and no preset is configured
+                                    if ($subscriber->getAssignedFacebookFlow()) {
+                                        $subscriber->setAssignedFacebookFlow(null);
+                                        $this->entityManager->persist($subscriber);
+                                    }
                                 }
                             }
                         }
@@ -687,5 +809,23 @@ class FacebookWebhookController extends AbstractController
         }
 
         return null;
+    }
+
+    private function executeFacebookActionButton(\App\Entity\FacebookActionButton $action, Subscriber $subscriber): void
+    {
+        if ($action->getReplyType() === 'flow') {
+            $flow = $action->getBotFlow();
+            if ($flow && $flow->isActive()) {
+                $subscriber->setAssignedFacebookFlow($flow);
+                $this->entityManager->persist($subscriber);
+                $this->entityManager->flush();
+                $this->WhatsappBotFlowExecutor->execute($flow, $subscriber);
+            }
+        } elseif ($action->getReplyType() === 'text') {
+            $replyText = $action->getReplyText();
+            if (!empty($replyText)) {
+                $this->facebookService->sendMessage($subscriber->getPsid(), $replyText, $action->getFacebookConnection());
+            }
+        }
     }
 }

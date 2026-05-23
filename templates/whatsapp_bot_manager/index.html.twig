@@ -1216,12 +1216,11 @@
             <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
         </div>
 
-        <div class="nav-item is-disabled" data-tab-target="action-buttons">
+        <div class="nav-item" data-tab-target="action-buttons">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
             </span>
             <span>Action Button Presets</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
         </div>
 
         <!-- Group 5: Integrations & API -->
@@ -2071,52 +2070,76 @@
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    <span>Action Button Presets</span>
+                    <span>Action Button Settings</span>
                 </h1>
-                <div class="content-subtitle">Configure quick action button templates and interactive quick replies presets.</div>
+                <div class="content-subtitle">Configure automated quick-action templates and system-level event responders.</div>
             </div>
-            <button class="btn-action btn-create" onclick="addButtonRow()">Add Button Preset</button>
+            
+            <div class="dropdown-options-container" style="position: relative; display: inline-block;">
+                <button class="btn-action btn-secondary" onclick="toggleOptionsDropdown(event)" style="display:flex; align-items:center; gap:8px;">
+                    <span>Options</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="options-dropdown-menu" style="display:none; position: absolute; right:0; top:42px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--glass-border); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index:100; min-width: 180px; padding: 6px 0;">
+                    <a href="javascript:void(0)" onclick="bulkTogglePresets(true)" style="display:block; padding: 10px 16px; color:#fff; font-size:13px; text-decoration:none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">Enable All Presets</a>
+                    <a href="javascript:void(0)" onclick="bulkTogglePresets(false)" style="display:block; padding: 10px 16px; color:#fff; font-size:13px; text-decoration:none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='transparent'">Disable All Presets</a>
+                </div>
+            </div>
         </div>
 
         <div class="preview-container">
-            <div class="form-side glass-form-card">
-                <div class="table-container">
-                    <table class="custom-table" id="buttons-table">
-                        <thead>
-                            <tr>
-                                <th>Action Label</th>
-                                <th style="width: 140px;">Type</th>
-                                <th>Target Value</th>
-                                <th style="width: 60px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in settings['action-buttons'] %}
-                            <tr class="btn-row">
-                                <td><input type="text" class="glass-input btn-label" style="width:100%" value="{{ item.label }}" oninput="updateButtonsPreview()"></td>
-                                <td>
-                                    <select class="glass-input btn-type" style="width:100%" onchange="updateButtonsPreview()">
-                                        <option value="quick_reply" {% if item.type == 'quick_reply' %}selected{% endif %}>Quick Reply</option>
-                                        <option value="url" {% if item.type == 'url' %}selected{% endif %}>Web URL</option>
-                                    </select>
-                                </td>
-                                <td><input type="text" class="glass-input btn-val" style="width:100%" value="{{ item.payload|default(item.value|default('')) }}"></td>
-                                <td>
-                                    <button class="btn-row-action delete-action" onclick="this.closest('tr').remove(); updateButtonsPreview();"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end;">
-                    <button class="btn-action btn-create" onclick="saveActionButtons()">Save Button Presets</button>
+            <div class="form-side" style="width:60%; display:flex; flex-direction:column; gap:20px;">
+                <div class="presets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; width: 100%;">
+                    {% for item in actionButtons %}
+                    <div class="preset-card {% if item.isEnabled %}is-active{% endif %}" data-key="{{ item.buttonKey }}" onclick="openPresetConfig('{{ item.buttonKey }}')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.25s ease; position: relative;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="preset-icon-wrapper" style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+                                {% if item.isEnabled %}
+                                    background: rgba(18, 140, 126, 0.15); color: #128c7e; border: 1px solid rgba(18, 140, 126, 0.25);
+                                {% else %}
+                                    background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.05);
+                                {% endif %}">
+                                {% if item.buttonKey == 'get-started' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                {% elseif item.buttonKey == 'no-match' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M18.85 15.08a9 9 0 0 0-2.28-7.57M13.73 21a2 2 0 0 1-3.46 0M3 3l18 18M9 9v0a6 6 0 0 0 6 6v0M4.27 4.27a6 6 0 0 0 0 7.46"></path></svg>
+                                {% elseif item.buttonKey == 'location-reply' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                {% elseif item.buttonKey == 'unsubscribe' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                                {% elseif item.buttonKey == 'resubscribe' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                                {% elseif item.buttonKey == 'chat-with-human' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                                {% elseif item.buttonKey == 'chat-with-bot' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01M9 2v3M15 2v3"></path></svg>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="preset-label" style="font-weight: 600; color: #fff; font-size: 13px; margin-bottom: 2px;">{{ item.buttonLabel }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">
+                                    {% if item.replyType == 'flow' %}
+                                        Triggers Chat Flow
+                                    {% elseif item.replyType == 'text' %}
+                                        Sends Text Reply
+                                    {% else %}
+                                        No action configured
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <label class="switch-toggle" onclick="event.stopPropagation();" style="margin: 0;">
+                            <input type="checkbox" class="preset-toggle" data-key="{{ item.buttonKey }}" {% if item.isEnabled %}checked{% endif %} onchange="togglePresetActive('{{ item.buttonKey }}', this.checked)">
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
             <!-- WhatsApp Chat Preview with Interactive Buttons -->
-            <div class="preview-side">
+            <div class="preview-side" style="width:35%;">
                 <div class="form-label">WhatsApp Live Mock Preview</div>
                 <div class="iphone-shell">
                     <div class="iphone-header">
@@ -2137,6 +2160,65 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preset Configuration Modal -->
+    <div class="glass-modal-backdrop" id="preset-config-modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); z-index: 1050; align-items: center; justify-content: center;">
+        <div class="glass-form-card" style="width: 500px; padding: 25px; border-radius: 16px; border: 1px solid var(--glass-border); box-shadow: 0 15px 35px rgba(0,0,0,0.6); position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 20px;">
+                <h3 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0;" id="preset-modal-title">Configure Preset Button</h3>
+                <button class="btn-row-action delete-action" onclick="closePresetConfigModal()" style="border:none; background:none; cursor:pointer; color:var(--text-muted);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            
+            <input type="hidden" id="preset-edit-key">
+            
+            <div class="form-group" style="margin-bottom:15px;">
+                <label class="form-label">Button Status</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <label class="switch-toggle" style="margin: 0;">
+                        <input type="checkbox" id="preset-edit-enabled">
+                        <span class="slider-round"></span>
+                    </label>
+                    <span style="font-size:12px; color:var(--text-muted);">Enable action handler for this trigger event</span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:15px;">
+                <label class="form-label" for="preset-edit-label">Custom Button Label</label>
+                <input type="text" id="preset-edit-label" class="glass-input" style="width:100%;">
+            </div>
+
+            <div class="form-group" style="margin-bottom:15px;">
+                <label class="form-label" for="preset-edit-reply-type">Action Handler Type</label>
+                <select id="preset-edit-reply-type" class="glass-input" style="width:100%;" onchange="togglePresetReplyFields()">
+                    <option value="none">None (Disabled)</option>
+                    <option value="flow">Trigger Bot Flow</option>
+                    <option value="text">Send Reply Message</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="preset-flow-field-container" style="display:none; margin-bottom:15px;">
+                <label class="form-label" for="preset-edit-flow">Target Chat Bot Flow</label>
+                <select id="preset-edit-flow" class="glass-input" style="width:100%;">
+                    <option value="">-- Select Flow --</option>
+                    {% for flow in flows %}
+                        {% if flow.isActive %}
+                            <option value="{{ flow.id }}">{{ flow.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" id="preset-text-field-container" style="display:none; margin-bottom:15px;">
+                <label class="form-label" for="preset-edit-text">Reply Text Message</label>
+                <textarea id="preset-edit-text" class="glass-textarea" style="width:100%; height:80px;"></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; border-top: 1px solid var(--glass-border); padding-top:15px;">
+                <button class="btn-action btn-secondary" onclick="closePresetConfigModal()">Cancel</button>
+                <button class="btn-action btn-create" onclick="savePresetConfig()">Save Configuration</button>
             </div>
         </div>
     </div>
@@ -2721,34 +2803,196 @@
         updateButtonsPreview();
     }
 
+    // 8. Action Buttons Manager & Saver
+    let globalActionButtons = {{ actionButtons|default([])|json_encode|raw }};
+
+    function toggleOptionsDropdown(event) {
+        event.stopPropagation();
+        const menu = document.getElementById('options-dropdown-menu');
+        if (menu) {
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    document.addEventListener('click', () => {
+        const menu = document.getElementById('options-dropdown-menu');
+        if (menu) menu.style.display = 'none';
+    });
+
+    function openPresetConfig(key) {
+        const item = globalActionButtons.find(x => x.buttonKey === key);
+        if (!item) return;
+
+        document.getElementById('preset-edit-key').value = key;
+        document.getElementById('preset-modal-title').textContent = `Configure Preset: ${item.buttonLabel}`;
+        document.getElementById('preset-edit-enabled').checked = item.isEnabled;
+        document.getElementById('preset-edit-label').value = item.buttonLabel;
+        document.getElementById('preset-edit-reply-type').value = item.replyType;
+        document.getElementById('preset-edit-flow').value = item.flowId || '';
+        document.getElementById('preset-edit-text').value = item.replyText || '';
+
+        togglePresetReplyFields();
+
+        const modal = document.getElementById('preset-config-modal-backdrop');
+        modal.style.display = 'flex';
+    }
+
+    function closePresetConfigModal() {
+        document.getElementById('preset-config-modal-backdrop').style.display = 'none';
+    }
+
+    function togglePresetReplyFields() {
+        const replyType = document.getElementById('preset-edit-reply-type').value;
+        const flowContainer = document.getElementById('preset-flow-field-container');
+        const textContainer = document.getElementById('preset-text-field-container');
+
+        if (replyType === 'flow') {
+            flowContainer.style.display = 'block';
+            textContainer.style.display = 'none';
+        } else if (replyType === 'text') {
+            flowContainer.style.display = 'none';
+            textContainer.style.display = 'block';
+        } else {
+            flowContainer.style.display = 'none';
+            textContainer.style.display = 'none';
+        }
+    }
+
+    function savePresetConfig() {
+        const key = document.getElementById('preset-edit-key').value;
+        const item = globalActionButtons.find(x => x.buttonKey === key);
+        if (!item) return;
+
+        item.isEnabled = document.getElementById('preset-edit-enabled').checked;
+        item.buttonLabel = document.getElementById('preset-edit-label').value.trim();
+        item.replyType = document.getElementById('preset-edit-reply-type').value;
+        item.flowId = document.getElementById('preset-edit-flow').value ? parseInt(document.getElementById('preset-edit-flow').value) : null;
+        item.replyText = document.getElementById('preset-edit-text').value.trim();
+
+        if (item.replyType === 'flow' && !item.flowId) {
+            showToast('Please select a target chat flow.', 'error');
+            return;
+        }
+        if (item.replyType === 'text' && !item.replyText) {
+            showToast('Please enter a reply message.', 'error');
+            return;
+        }
+
+        // Update UI
+        updatePresetCardUI(item);
+        closePresetConfigModal();
+
+        // Save
+        saveActionButtonsBackend();
+    }
+
+    function togglePresetActive(key, isEnabled) {
+        const item = globalActionButtons.find(x => x.buttonKey === key);
+        if (!item) return;
+
+        item.isEnabled = isEnabled;
+        updatePresetCardUI(item);
+        saveActionButtonsBackend();
+    }
+
+    function updatePresetCardUI(item) {
+        const card = document.querySelector(`.preset-card[data-key="${item.buttonKey}"]`);
+        if (!card) return;
+
+        if (item.isEnabled) {
+            card.classList.add('is-active');
+        } else {
+            card.classList.remove('is-active');
+        }
+
+        // Update card description text
+        let desc = 'No action configured';
+        if (item.replyType === 'flow') desc = 'Triggers Chat Flow';
+        else if (item.replyType === 'text') desc = 'Sends Text Reply';
+        card.querySelector('.preset-label').nextElementSibling.textContent = desc;
+
+        // Update icon styling
+        const iconWrapper = card.querySelector('.preset-icon-wrapper');
+        if (item.isEnabled) {
+            iconWrapper.style.background = 'rgba(18, 140, 126, 0.15)';
+            iconWrapper.style.color = '#128c7e';
+            iconWrapper.style.border = '1px solid rgba(18, 140, 126, 0.25)';
+        } else {
+            iconWrapper.style.background = 'rgba(255,255,255,0.03)';
+            iconWrapper.style.color = 'rgba(255,255,255,0.3)';
+            iconWrapper.style.border = '1px solid rgba(255,255,255,0.05)';
+        }
+
+        // Update toggle state
+        const toggle = card.querySelector('.preset-toggle');
+        if (toggle) toggle.checked = item.isEnabled;
+
+        // Refresh WhatsApp mock live preview
+        updateButtonsPreview();
+    }
+
     function updateButtonsPreview() {
         const container = document.getElementById('preview-buttons-container');
         if (!container) return;
         container.innerHTML = '';
-        
-        document.querySelectorAll('.btn-row').forEach(tr => {
-            const label = tr.querySelector('.btn-label').value.trim() || 'Button Label';
-            const type = tr.querySelector('select.btn-type').value;
-            
-            const btnEl = document.createElement('div');
-            btnEl.className = 'wa-btn';
-            btnEl.innerHTML = (type === 'url' ? '🔗 ' : '💬 ') + label;
-            container.appendChild(btnEl);
-        });
-    }
 
-    function saveActionButtons() {
-        const rows = [];
-        document.querySelectorAll('.btn-row').forEach(tr => {
-            const label = tr.querySelector('.btn-label').value.trim();
-            const type = tr.querySelector('select.btn-type').value;
-            const value = tr.querySelector('.btn-val').value.trim();
-            if (label !== '') {
-                rows.push({ label, type, value, payload: value });
+        let count = 0;
+        globalActionButtons.forEach(item => {
+            if (item.isEnabled) {
+                count++;
+                const btnEl = document.createElement('div');
+                btnEl.className = 'wa-btn';
+                btnEl.innerHTML = (item.replyType === 'flow' ? '💬 ' : '🔗 ') + item.buttonLabel;
+                container.appendChild(btnEl);
             }
         });
-        postSettingsSave('action-buttons', rows);
+
+        if (count === 0) {
+            const btnEl = document.createElement('div');
+            btnEl.className = 'wa-btn';
+            btnEl.style.color = 'rgba(255,255,255,0.2)';
+            btnEl.innerHTML = 'No active options';
+            container.appendChild(btnEl);
+        }
     }
+
+    function bulkTogglePresets(isEnabled) {
+        globalActionButtons.forEach(item => {
+            item.isEnabled = isEnabled;
+            updatePresetCardUI(item);
+        });
+        saveActionButtonsBackend();
+    }
+
+    function saveActionButtonsBackend() {
+        if (!activeConnectionId) {
+            showToast('Please connect a WhatsApp connection first.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+        formData.append('data', JSON.stringify(globalActionButtons));
+
+        fetch('/whatsapp-bot-manager/action-buttons/save', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Action button configurations saved!', 'success');
+            } else {
+                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Save error: ' + err.message, 'error'));
+    }
+
+    // Initialize mock preview on document load
+    document.addEventListener('DOMContentLoaded', () => {
+        updateButtonsPreview();
+    });
 
     // 9. eCommerce Automations Saver
     function saveEcommerceAutomations() {
