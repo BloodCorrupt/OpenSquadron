@@ -99,7 +99,7 @@ class WhatsappBotManagerController extends AbstractController
             $file = $dir . "/conn_{$selectedConnection->getId()}.json";
             if (file_exists($file)) {
                 $saved = json_decode(file_get_contents($file), true) ?: [];
-                $settings = array_replace_recursive($defaultSettings, $saved);
+                $settings = $this->mergeSettings($defaultSettings, $saved);
             }
         }
 
@@ -502,5 +502,22 @@ class WhatsappBotManagerController extends AbstractController
                 : null,
             'legacyActions' => $isGraph ? null : $data,
         ];
+     }
+
+    private function mergeSettings(array $defaults, array $saved): array
+    {
+        $result = $defaults;
+        foreach ($saved as $key => $value) {
+            if (array_key_exists($key, $defaults) && is_array($value) && is_array($defaults[$key])) {
+                if (array_is_list($value) || array_is_list($defaults[$key])) {
+                    $result[$key] = $value;
+                } else {
+                    $result[$key] = $this->mergeSettings($defaults[$key], $value);
+                }
+            } else {
+                $result[$key] = $value;
+            }
+        }
+        return $result;
     }
 }

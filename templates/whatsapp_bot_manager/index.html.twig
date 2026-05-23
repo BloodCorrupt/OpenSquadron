@@ -2492,7 +2492,7 @@
         const rows = [];
         document.querySelectorAll('.broadcast-row').forEach(tr => {
             const name = tr.querySelector('.bc-name').value.trim();
-            const template = tr.querySelector('.bc-template').value;
+            const template = tr.querySelector('select.bc-template').value;
             if (name !== '') {
                 rows.push({ name, template, status: 'SCHEDULED', sentCount: 0, deliveredCount: 0 });
             }
@@ -2561,7 +2561,7 @@
         const rows = [];
         document.querySelectorAll('.input-row').forEach(tr => {
             const fieldName = tr.querySelector('.ui-name').value.trim();
-            const dataType = tr.querySelector('.ui-type').value;
+            const dataType = tr.querySelector('select.ui-type').value;
             const prompt = tr.querySelector('.ui-prompt').value.trim();
             if (fieldName !== '' && prompt !== '') {
                 rows.push({ fieldName, dataType, prompt });
@@ -2595,7 +2595,7 @@
         document.querySelectorAll('.flow-grid-row').forEach(tr => {
             const name = tr.querySelector('.df-name').value.trim();
             const flowId = tr.querySelector('.df-id').value.trim();
-            const status = tr.querySelector('.df-status').value;
+            const status = tr.querySelector('select.df-status').value;
             if (name !== '' && flowId !== '') {
                 rows.push({ name, flowId, status });
             }
@@ -2631,7 +2631,7 @@
         
         document.querySelectorAll('.btn-row').forEach(tr => {
             const label = tr.querySelector('.btn-label').value.trim() || 'Button Label';
-            const type = tr.querySelector('.btn-type').value;
+            const type = tr.querySelector('select.btn-type').value;
             
             const btnEl = document.createElement('div');
             btnEl.className = 'wa-btn';
@@ -2644,7 +2644,7 @@
         const rows = [];
         document.querySelectorAll('.btn-row').forEach(tr => {
             const label = tr.querySelector('.btn-label').value.trim();
-            const type = tr.querySelector('.btn-type').value;
+            const type = tr.querySelector('select.btn-type').value;
             const value = tr.querySelector('.btn-val').value.trim();
             if (label !== '') {
                 rows.push({ label, type, value, payload: value });
@@ -3198,7 +3198,7 @@
             const buttons = [];
             document.querySelectorAll('.mixed-btn-row').forEach(row => {
                 const bText = row.querySelector('.btn-text').value.trim();
-                const bType = row.querySelector('.btn-type').value;
+                const bType = row.querySelector('select.btn-type').value;
                 const bVal = row.querySelector('.btn-value').value.trim();
                 
                 if (bText) {

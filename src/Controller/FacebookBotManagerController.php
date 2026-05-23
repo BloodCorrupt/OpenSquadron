@@ -123,7 +123,7 @@ class FacebookBotManagerController extends AbstractController
             $file = $dir . "/conn_{$selectedConnection->getId()}.json";
             if (file_exists($file)) {
                 $saved = json_decode(file_get_contents($file), true) ?: [];
-                $settings = array_replace_recursive($defaultSettings, $saved);
+                $settings = $this->mergeSettings($defaultSettings, $saved);
             } else {
                 $settings = $defaultSettings;
             }
@@ -143,8 +143,11 @@ class FacebookBotManagerController extends AbstractController
     }
 
     #[Route('/facebook-bot-manager/save-settings', name: 'app_facebook_bot_save_settings', methods: ['POST'])]
-    public function saveSettings(Request $request): JsonResponse
-    {
+    public function saveSettings(
+        Request $request,
+        EntityManagerInterface $em,
+        FacebookService $facebookService
+    ): JsonResponse {
         $connectionId = (int)$request->request->get('connectionId');
         if (!$connectionId) {
             return new JsonResponse(['success' => false, 'error' => 'Invalid Facebook Connection ID.'], 400);
@@ -178,6 +181,41 @@ class FacebookBotManagerController extends AbstractController
             $currentSettings[$type] = $data;
         }
 
+        if ($type === 'persistent-menu') {
+            file_put_contents($dir . '/last_persistent_menu_payload.json', json_encode($currentSettings, JSON_PRETTY_PRINT));
+            $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+            if ($connection) {
+                $menuItems = [];
+                if (is_array($currentSettings['persistent-menu'])) {
+                    foreach ($currentSettings['persistent-menu'] as $item) {
+                        $cta = [
+                            'title' => $item['title'] ?? '',
+                            'type' => $item['type'] ?? 'postback'
+                        ];
+                        if ($cta['type'] === 'postback') {
+                            $cta['payload'] = $item['payload'] ?? '';
+                        } else {
+                            $cta['url'] = $item['url'] ?? '';
+                        }
+                        $menuItems[] = $cta;
+                    }
+                }
+
+                try {
+                    if (empty($menuItems)) {
+                        $facebookService->deletePersistentMenu($connection);
+                    } else {
+                        $facebookService->setPersistentMenu($connection, $menuItems);
+                    }
+                } catch (\Exception $e) {
+                    return new JsonResponse([
+                        'success' => false,
+                        'error' => 'Saved locally but failed to update Facebook: ' . $e->getMessage()
+                    ], 500);
+                }
+            }
+        }
+
         file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
 
         return new JsonResponse([
@@ -185,6 +223,37 @@ class FacebookBotManagerController extends AbstractController
             'message' => 'Settings saved successfully.',
             'data'    => $currentSettings[$type]
         ]);
+    }
+
+    #[Route('/facebook-bot-manager/sync-persistent-menu', name: 'app_facebook_bot_sync_persistent_menu', methods: ['POST'])]
+    public function syncPersistentMenu(
+        Request $request,
+        EntityManagerInterface $em,
+        FacebookService $facebookService
+    ): JsonResponse {
+        $connectionId = (int)$request->request->get('connectionId');
+        if (!$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid Facebook Connection ID.'], 400);
+        }
+
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Facebook connection not found.'], 404);
+        }
+
+        try {
+            $menuItems = $facebookService->syncPersistentMenuFromFacebook($connection);
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Persistent menu synced from Facebook successfully.',
+                'data' => $menuItems
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Failed to sync from Facebook: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     #[Route('/facebook-bot-manager/get-connection-details', name: 'app_facebook_bot_connection_details', methods: ['GET'])]
@@ -968,5 +1037,22 @@ class FacebookBotManagerController extends AbstractController
         file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
 
         return new JsonResponse(['success' => true, 'post' => $newPost]);
+    }
+
+    private function mergeSettings(array $defaults, array $saved): array
+    {
+        $result = $defaults;
+        foreach ($saved as $key => $value) {
+            if (array_key_exists($key, $defaults) && is_array($value) && is_array($defaults[$key])) {
+                if (array_is_list($value) || array_is_list($defaults[$key])) {
+                    $result[$key] = $value;
+                } else {
+                    $result[$key] = $this->mergeSettings($defaults[$key], $value);
+                }
+            } else {
+                $result[$key] = $value;
+            }
+        }
+        return $result;
     }
 }

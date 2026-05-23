@@ -195,7 +195,7 @@ class FacebookConnectionController extends AbstractController
 
         try {
             // Save the connection (which encrypts the tokens)
-            $this->facebookService->saveConnection(
+            $connection = $this->facebookService->saveConnection(
                 $pageData['id'],
                 $pageData['access_token'],
                 $appId,
@@ -203,6 +203,13 @@ class FacebookConnectionController extends AbstractController
                 $pageData['name'],
                 $label ?: null
             );
+
+            // Sync persistent menu if it exists on Facebook
+            try {
+                $this->facebookService->syncPersistentMenuFromFacebook($connection);
+            } catch (\Exception $e) {
+                // Fail silently so it doesn't block page connection setup
+            }
 
             // Clear connection session data
             $session->remove('fb_pages_list');

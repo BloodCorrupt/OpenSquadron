@@ -2138,12 +2138,12 @@
             <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
         </div>
 
-        <div class="nav-item is-disabled" data-tab-target="persistent-menu">
+        <div class="nav-item" data-tab-target="persistent-menu">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </span>
             <span>Persistent Chat Menu</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
+            <span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">Active</span>
         </div>
 
         <div class="nav-item is-disabled" data-tab-target="action-buttons">
@@ -2316,13 +2316,13 @@
                 </div>
 
                 <!-- 8. Persistent Menu -->
-                <div class="console-card is-disabled">
+                <div class="console-card" onclick="switchTab('persistent-menu')">
                     <div class="console-card-header">
                         <div class="console-icon-wrapper" style="background: rgba(45, 212, 191, 0.1); color: #2dd4bf;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                         </div>
                         <span class="console-card-title">Persistent Menu</span>
-                        <span class="console-card-status">Soon</span>
+                        <span class="console-card-status">Active</span>
                     </div>
                     <p class="console-card-desc">Structure the persistent navigation bar visible to users at the bottom of their Messenger screen.</p>
                     <div class="console-card-action">
@@ -3038,7 +3038,10 @@
                 </h1>
                 <div class="content-subtitle">Structure the persistent navigation bar visible to users at the bottom of their Messenger screen.</div>
             </div>
-            <button class="btn-action btn-create" onclick="addMenuRow()">Add Menu Item</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-action btn-secondary" onclick="syncPersistentMenu()">Sync from Facebook</button>
+                <button class="btn-action btn-create" onclick="addMenuRow()">Add Menu Item</button>
+            </div>
         </div>
 
         <div class="glass-form-card">
@@ -5170,7 +5173,7 @@
         const rows = [];
         document.querySelectorAll('.sequence-row').forEach(tr => {
             const name = tr.querySelector('.seq-name').value.trim();
-            const delay = tr.querySelector('.seq-delay').value;
+            const delay = tr.querySelector('select.seq-delay').value;
             const isActive = tr.querySelector('.seq-active').checked;
             if (name !== '') {
                 rows.push({ name, delay, isActive });
@@ -5205,7 +5208,7 @@
         const rows = [];
         document.querySelectorAll('.user-input-row').forEach(tr => {
             const fieldName = tr.querySelector('.ui-name').value.trim();
-            const dataType = tr.querySelector('.ui-type').value;
+            const dataType = tr.querySelector('select.ui-type').value;
             const prompt = tr.querySelector('.ui-prompt').value.trim();
             if (fieldName !== '' && prompt !== '') {
                 rows.push({ fieldName, dataType, prompt });
@@ -5252,7 +5255,7 @@
         const rows = [];
         document.querySelectorAll('.menu-row').forEach(tr => {
             const title = tr.querySelector('.menu-title').value.trim();
-            const type = tr.querySelector('.menu-type').value;
+            const type = tr.querySelector('select.menu-type').value;
             const val = tr.querySelector('.menu-val').value.trim();
             if (title !== '' && val !== '') {
                 if (type === 'postback') {
@@ -5263,6 +5266,69 @@
             }
         });
         postSettingsSave('persistent-menu', rows);
+    }
+
+    function syncPersistentMenu() {
+        if (!activeConnectionId) {
+            showToast('Please connect a Facebook page first.', 'error');
+            return;
+        }
+
+        showToast('Syncing persistent menu from Facebook...', 'info');
+
+        const formData = new FormData();
+        formData.append('connectionId', activeConnectionId);
+
+        fetch('{{ path('app_facebook_bot_sync_persistent_menu') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Persistent menu synced successfully!', 'success');
+                const tbody = document.querySelector('#menu-table tbody');
+                tbody.innerHTML = '';
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'menu-row';
+                        const typeVal = item.type === 'postback' ? item.payload : item.url;
+                        tr.innerHTML = `
+                            <td><input type="text" class="glass-input menu-title" style="width:100%" value="${escapeHtml(item.title)}"></td>
+                            <td>
+                                <select class="glass-input menu-type" style="width:100%" onchange="toggleMenuValInput(this)">
+                                    <option value="postback" ${item.type === 'postback' ? 'selected' : ''}>Trigger Postback Payload</option>
+                                    <option value="web_url" ${item.type === 'web_url' ? 'selected' : ''}>Redirect to Web URL</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="glass-input menu-val" style="width:100%" value="${escapeHtml(typeVal)}">
+                            </td>
+                            <td>
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    showToast('No persistent menu found on Facebook page.', 'info');
+                }
+            } else {
+                showToast('Sync failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Sync error: ' + err.message, 'error'));
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     // 9. RCN Topics Saver
@@ -5290,7 +5356,7 @@
         const rows = [];
         document.querySelectorAll('.rcn-row').forEach(tr => {
             const title = tr.querySelector('.rcn-title').value.trim();
-            const frequency = tr.querySelector('.rcn-freq').value;
+            const frequency = tr.querySelector('select.rcn-freq').value;
             const payload = tr.querySelector('.rcn-payload').value.trim();
             if (title !== '' && payload !== '') {
                 rows.push({ title, frequency, payload });
@@ -5331,7 +5397,7 @@
         document.querySelectorAll('.connector-row').forEach(tr => {
             const name = tr.querySelector('.conn-name').value.trim();
             const url = tr.querySelector('.conn-url').value.trim();
-            const method = tr.querySelector('.conn-method').value;
+            const method = tr.querySelector('select.conn-method').value;
             if (name !== '' && url !== '') {
                 rows.push({ name, url, method });
             }
@@ -5373,7 +5439,7 @@
         const rows = [];
         document.querySelectorAll('.btn-row').forEach(tr => {
             const label = tr.querySelector('.btn-label').value.trim();
-            const type = tr.querySelector('.btn-type').value;
+            const type = tr.querySelector('select.btn-type').value;
             const value = tr.querySelector('.btn-val').value.trim();
             if (label !== '' && value !== '') {
                 rows.push({ label, type, value });

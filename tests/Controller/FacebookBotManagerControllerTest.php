@@ -16,6 +16,7 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $container = self::getContainer();
         $em = $container->get(EntityManagerInterface::class);
         $hasher = $container->get(UserPasswordHasherInterface::class);
+        $facebookService = $container->get(\App\Service\FacebookService::class);
 
         // Delete any existing test admin and Facebook connections/flows
         $existingAdmin = $em->getRepository(Admin::class)->findOneBy(['email' => 'test_bot_mgr@admin.local']);
@@ -47,9 +48,9 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $connection->setOwner($admin);
         $connection->setPageId('98765432101');
         $connection->setPageName('Test Management Page');
-        $connection->setEncryptedPageAccessToken('encrypted_token_here');
+        $connection->setEncryptedPageAccessToken($facebookService->encryptToken('mock_page_token'));
         $connection->setAppId('1234567890');
-        $connection->setEncryptedAppSecret('encrypted_secret_here');
+        $connection->setEncryptedAppSecret($facebookService->encryptToken('mock_app_secret'));
         $connection->setVerifyToken('test_verify_token');
         $connection->setStatus('active');
         $connection->setAiActive(false);
@@ -209,5 +210,102 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $this->assertSame('OpenSquadron Bot Copilot', $updatedConnection->getAgentName());
         $this->assertSame('Sales Assistant', $updatedConnection->getAgentRole());
         $this->assertSame('This is a premium context background for test.', $updatedConnection->getContextData());
+    }
+
+    public function testSavePersistentMenuSyncsToFacebook(): void
+    {
+        $client = static::createClient();
+
+        // Mock HttpClient to intercept Graph API calls
+        $mockResponse = $this->createMock(\Symfony\Contracts\HttpClient\ResponseInterface::class);
+        $mockResponse->method('getStatusCode')->willReturn(200);
+        $mockResponse->method('toArray')->willReturn(['success' => true]);
+
+        $mockHttpClient = $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class);
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->with('POST', 'https://graph.facebook.com/v21.0/me/messenger_profile')
+            ->willReturn($mockResponse);
+
+        self::getContainer()->set(\Symfony\Contracts\HttpClient\HttpClientInterface::class, $mockHttpClient);
+
+        $connection = $this->createAndLoginAdmin($client);
+
+        $client->request('POST', '/facebook-bot-manager/save-settings', [
+            'connectionId' => $connection->getId(),
+            'type' => 'persistent-menu',
+            'data' => json_encode([
+                ['title' => '🏠 Home Portal', 'type' => 'postback', 'payload' => 'MAIN_MENU_TRIGGER'],
+                ['title' => '🛍️ View Products', 'type' => 'web_url', 'url' => 'https://opensquadron.io/shop']
+            ])
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($data['success']);
+
+        // Verify JSON file is stored and contains saved values
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        $file = $dir . "/conn_{$connection->getId()}.json";
+        $this->assertFileExists($file);
+        
+        $savedContent = json_decode(file_get_contents($file), true);
+        $this->assertCount(2, $savedContent['persistent-menu']);
+        $this->assertSame('🏠 Home Portal', $savedContent['persistent-menu'][0]['title']);
+        $this->assertSame('web_url', $savedContent['persistent-menu'][1]['type']);
+        $this->assertSame('https://opensquadron.io/shop', $savedContent['persistent-menu'][1]['url']);
+    }
+
+    public function testSyncPersistentMenuFromFacebook(): void
+    {
+        $client = static::createClient();
+
+        // Mock HttpClient for GET request to messenger_profile
+        $mockResponse = $this->createMock(\Symfony\Contracts\HttpClient\ResponseInterface::class);
+        $mockResponse->method('getStatusCode')->willReturn(200);
+        $mockResponse->method('toArray')->willReturn([
+            'data' => [
+                [
+                    'persistent_menu' => [
+                        [
+                            'locale' => 'default',
+                            'call_to_actions' => [
+                                ['title' => '🏠 Synced Home', 'type' => 'postback', 'payload' => 'SYNCED_HOME_PAYLOAD'],
+                                ['title' => '🌐 Website', 'type' => 'web_url', 'url' => 'https://synced.com']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        $mockHttpClient = $this->createMock(\Symfony\Contracts\HttpClient\HttpClientInterface::class);
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->with('GET', 'https://graph.facebook.com/v21.0/me/messenger_profile')
+            ->willReturn($mockResponse);
+
+        self::getContainer()->set(\Symfony\Contracts\HttpClient\HttpClientInterface::class, $mockHttpClient);
+
+        $connection = $this->createAndLoginAdmin($client);
+
+        $client->request('POST', '/facebook-bot-manager/sync-persistent-menu', [
+            'connectionId' => $connection->getId()
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($data['success']);
+        $this->assertCount(2, $data['data']);
+        $this->assertSame('🏠 Synced Home', $data['data'][0]['title']);
+        $this->assertSame('SYNCED_HOME_PAYLOAD', $data['data'][0]['payload']);
+
+        // Verify it was saved to the JSON file
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        $file = $dir . "/conn_{$connection->getId()}.json";
+        $this->assertFileExists($file);
+        
+        $savedContent = json_decode(file_get_contents($file), true);
+        $this->assertSame('🏠 Synced Home', $savedContent['persistent-menu'][0]['title']);
     }
 }

@@ -127,8 +127,8 @@ class FacebookWebhookController extends AbstractController
                 }
 
                 foreach ($entry['messaging'] as $messagingEvent) {
-                    // Only process message events (not deliveries, reads, etc.)
-                    if (!isset($messagingEvent['message'])) {
+                    // Only process message or postback events (not deliveries, reads, etc.)
+                    if (!isset($messagingEvent['message']) && !isset($messagingEvent['postback'])) {
                         continue;
                     }
 
@@ -149,6 +149,8 @@ class FacebookWebhookController extends AbstractController
 
                     if (isset($messagingEvent['message']['text'])) {
                         $msgBody = $messagingEvent['message']['text'];
+                    } elseif (isset($messagingEvent['postback']['payload'])) {
+                        $msgBody = $messagingEvent['postback']['payload'];
                     }
 
                     // Handle attachments (images, audio, files)
@@ -165,7 +167,7 @@ class FacebookWebhookController extends AbstractController
                         }
                     }
 
-                    $metaMessageId = $messagingEvent['message']['mid'] ?? null;
+                    $metaMessageId = $messagingEvent['message']['mid'] ?? $messagingEvent['postback']['mid'] ?? ('pb_' . uniqid());
 
                     if ($msgBody !== '' || $mediaUrl !== null) {
                         // Find or create subscriber

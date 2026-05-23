@@ -1350,7 +1350,23 @@
                         cls !== 'glass-select' &&
                         cls !== 'sidebar-select' &&
                         cls !== 'toolbar-select' &&
-                        cls !== 'sidebar-filter-select') {
+                        cls !== 'sidebar-filter-select' &&
+                        !cls.startsWith('menu-') &&
+                        !cls.startsWith('btn-') &&
+                        !cls.startsWith('ui-') &&
+                        !cls.startsWith('df-') &&
+                        !cls.startsWith('bc-') &&
+                        !cls.startsWith('seq-') &&
+                        !cls.startsWith('rcn-') &&
+                        !cls.startsWith('conn-') &&
+                        !cls.endsWith('-type') &&
+                        !cls.endsWith('-freq') &&
+                        !cls.endsWith('-delay') &&
+                        !cls.endsWith('-template') &&
+                        !cls.endsWith('-status') &&
+                        !cls.endsWith('-method') &&
+                        !cls.endsWith('-trigger')
+                    ) {
                         wrapper.classList.add(cls);
                     }
                 });

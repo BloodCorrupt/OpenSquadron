@@ -813,6 +813,135 @@ class FacebookService
         return $content;
     }
 
+    /**
+     * Retrieve the persistent menu from Facebook for a given page connection.
+     */
+    public function getPersistentMenu(FacebookConnection $connection): ?array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
+
+        $response = $this->httpClient->request('GET', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+            ],
+            'query' => [
+                'fields' => 'persistent_menu'
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            return null;
+        }
+
+        if (isset($content['data'][0]['persistent_menu'][0]['call_to_actions'])) {
+            return $content['data'][0]['persistent_menu'][0]['call_to_actions'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Update the persistent menu on Facebook for a given page connection.
+     */
+    public function setPersistentMenu(FacebookConnection $connection, array $menuItems): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
+
+        $payload = [
+            'persistent_menu' => [
+                [
+                    'locale' => 'default',
+                    'composer_input_disabled' => false,
+                    'call_to_actions' => $menuItems
+                ]
+            ]
+        ];
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to update persistent menu on Facebook.');
+        }
+
+        return $content;
+    }
+
+    /**
+     * Delete the persistent menu on Facebook for a given page connection.
+     */
+    public function deletePersistentMenu(FacebookConnection $connection): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
+
+        $response = $this->httpClient->request('DELETE', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'fields' => ['persistent_menu']
+            ]
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete persistent menu on Facebook.');
+        }
+
+        return $content;
+    }
+
+    /**
+     * Sync the persistent menu from Facebook page messenger profile back to OpenSquadron connection settings.
+     */
+    public function syncPersistentMenuFromFacebook(FacebookConnection $connection): array
+    {
+        $fbMenu = $this->getPersistentMenu($connection);
+        $menuItems = [];
+        if ($fbMenu !== null) {
+            foreach ($fbMenu as $cta) {
+                $item = [
+                    'title' => $cta['title'] ?? '',
+                    'type' => $cta['type'] ?? 'postback'
+                ];
+                if ($item['type'] === 'postback') {
+                    $item['payload'] = $cta['payload'] ?? '';
+                } else {
+                    $item['url'] = $cta['url'] ?? '';
+                }
+                $menuItems[] = $item;
+            }
+        }
+
+        // Save menuItems to connection's settings file
+        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $file = $dir . "/conn_{$connection->getId()}.json";
+
+        $currentSettings = [];
+        if (file_exists($file)) {
+            $currentSettings = json_decode(file_get_contents($file), true) ?: [];
+        }
+
+        $currentSettings['persistent-menu'] = $menuItems;
+        file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
+
+        return $menuItems;
+    }
+
     private function base64UrlDecode(string $input): string
     {
         $remainder = strlen($input) % 4;
