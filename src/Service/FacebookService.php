@@ -985,6 +985,8 @@ class FacebookService
         $iceBreakersStatus = $settings['iceBreakersStatus'] ?? 'disabled';
         $iceBreakers = $settings['iceBreakers'] ?? [];
 
+        $deleteGreeting = false;
+
         if ($showGreeting && $greetingText !== '') {
             $payload['greeting'] = [
                 [
@@ -993,7 +995,7 @@ class FacebookService
                 ]
             ];
         } else {
-            $deleteFields[] = 'greeting';
+            $deleteGreeting = true;
         }
 
         if ($getStartedStatus === 'enabled' && $getStartedPayload !== '') {
@@ -1047,6 +1049,23 @@ class FacebookService
                 throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete welcome settings on Facebook.');
             }
             $results['delete'] = $content;
+        }
+
+        if ($deleteGreeting) {
+            try {
+                $this->httpClient->request('DELETE', $url, [
+                    'headers' => [
+                        'Authorization' => "Bearer {$accessToken}",
+                        'Content-Type' => 'application/json',
+                    ],
+                    'json' => [
+                        'fields' => ['greeting']
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                // Silently ignore greeting deletion errors. Facebook Graph API sometimes
+                // omits 'greeting' from the valid fields enum, causing an exception.
+            }
         }
 
         if (!empty($payload)) {
