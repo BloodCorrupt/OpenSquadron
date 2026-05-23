@@ -793,3 +793,4 @@ class WhatsappBotManagerController extends AbstractController
         return $result;
     }
 }
+
