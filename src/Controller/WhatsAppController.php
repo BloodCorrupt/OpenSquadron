@@ -424,7 +424,7 @@ class WhatsAppController extends AbstractController
         }
     }
 
-    private function executeWhatsappActionButton(\App\Entity\WhatsappActionButton $action, Subscriber $subscriber): void
+    private function executeWhatsappActionButton(WhatsappActionButton $action, Subscriber $subscriber): void
     {
         if ($action->getReplyType() === 'flow') {
             $flow = $action->getBotFlow();

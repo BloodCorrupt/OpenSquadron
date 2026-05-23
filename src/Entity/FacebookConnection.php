@@ -73,7 +73,7 @@ class FacebookConnection implements TenantAwareInterface
     private ?AiContext $activeContext = null;
 
     /**
-     * @var Collection<int, FacebookCommentAutomation>
+     * @var \Doctrine\Common\Collections\Collection<int, FacebookCommentAutomation>
      */
     #[ORM\OneToMany(mappedBy: 'facebookConnection', targetEntity: FacebookCommentAutomation::class, orphanRemoval: true)]
     private \Doctrine\Common\Collections\Collection $commentAutomations;

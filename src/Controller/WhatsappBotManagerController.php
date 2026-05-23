@@ -722,7 +722,7 @@ class WhatsappBotManagerController extends AbstractController
         }
 
         if ($activeContextId !== null && $activeContextId !== '') {
-            $context = $em->getRepository(\App\Entity\AiContext::class)->find($activeContextId);
+            $context = $em->getRepository(AiContext::class)->find($activeContextId);
             $connection->setActiveContext($context);
         } else {
             $connection->setActiveContext(null);
