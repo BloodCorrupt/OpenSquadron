@@ -65,6 +65,10 @@ class FacebookBotManagerController extends AbstractController
                 ['id' => 'mm_weekly_updates', 'title' => 'Weekly Product Updates', 'frequency' => 'WEEKLY', 'payload' => 'WEEKLY_UPDATE_MM', 'linkedPostbackId' => '', 'imageUrl' => '', 'typingIndicator' => false, 'delaySeconds' => 0, 'delayMinutes' => 0, 'budgetCents' => 5000, 'status' => 'draft', 'stats' => ['subscribers' => 0, 'sent' => 0, 'delivered' => 0, 'errors' => 0], 'updatedAt' => '2026-01-01 00:00:00'],
                 ['id' => 'mm_monthly_deals', 'title' => 'Monthly Exclusive Offers', 'frequency' => 'MONTHLY', 'payload' => 'MONTHLY_DEALS_MM', 'linkedPostbackId' => '', 'imageUrl' => '', 'typingIndicator' => false, 'delaySeconds' => 0, 'delayMinutes' => 0, 'budgetCents' => 10000, 'status' => 'draft', 'stats' => ['subscribers' => 0, 'sent' => 0, 'delivered' => 0, 'errors' => 0], 'updatedAt' => '2026-01-01 00:00:00'],
             ],
+            'rcn-notifications' => [
+                ['title' => 'Weekly Newsletter Opt-in', 'frequency' => 'WEEKLY', 'payload' => 'WEEKLY_NEWSLETTER_RCN'],
+                ['title' => 'Monthly Promotion Opt-in', 'frequency' => 'MONTHLY', 'payload' => 'MONTHLY_PROMO_RCN'],
+            ],
             'whitelisted-domains' => [
                 'domains' => "https://opensquadron.io\nhttps://messenger.opensquadron.io"
             ],

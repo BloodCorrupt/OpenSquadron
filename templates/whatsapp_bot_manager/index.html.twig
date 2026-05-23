@@ -1925,9 +1925,14 @@
                             <td>{{ bc.unreachedCount }}</td>
                             <td>{{ bc.scheduledAt ?: 'Immediate' }}</td>
                             <td style="text-align:center;">
-                                <button class="btn-row-action delete-action" title="Delete" onclick="deleteBroadcast({{ bc.id }})">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                </button>
+                                <div style="display:inline-flex; gap: 8px; justify-content:center; align-items:center; width:100%;">
+                                    <button class="btn-row-action edit-action" title="View Report" onclick="viewCampaignReport({{ bc.id }})">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    </button>
+                                    <button class="btn-row-action delete-action" title="Delete" onclick="deleteBroadcast({{ bc.id }})">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% else %}
@@ -4497,36 +4502,264 @@
 </script>
 
     <!-- Modals for Broadcast & Widgets -->
-    <div id="modal-broadcast" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
-        <div class="glass-form-card" style="width: 600px; padding: 24px; position:relative;">
-            <h3 style="margin-top:0;">Create Broadcast Campaign</h3>
-            <div class="form-group">
-                <label class="form-label">Campaign Name *</label>
-                <input type="text" id="bc-name" class="glass-input" style="width:100%" placeholder="e.g. Summer Sale 2026">
+    <div id="modal-broadcast" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); z-index:9999; justify-content:center; align-items:center; backdrop-filter: blur(16px);">
+        <div class="glass-form-card" style="width: 550px; padding: 32px; background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1); backdrop-filter: blur(35px); color:#f8fafc; position:relative;">
+            
+            <button onclick="document.getElementById('modal-broadcast').style.display='none'" style="position:absolute; top:28px; right:28px; background:transparent; border:none; font-size:26px; color:#94a3b8; cursor:pointer; font-weight:bold; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+            
+            <h3 style="margin-top:0; margin-bottom:24px; font-size:19px; font-weight:700; color:#fff; display:flex; align-items:center; gap:10px;">
+                <svg style="width:22px; height:22px; color:var(--wa-primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                Create Broadcast Campaign
+            </h3>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:block;">Campaign Name *</label>
+                <input type="text" id="bc-name" class="glass-input" style="width:100%; padding:11px 14px; border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-size:13.5px; outline:none; background:rgba(0,0,0,0.25); color:#fff; transition: border-color 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);" placeholder="e.g. Summer Sale 2026" onfocus="this.style.borderColor='var(--wa-primary)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
             </div>
-            <div class="form-group">
-                <label class="form-label">Broadcast Type *</label>
-                <select id="bc-type" class="glass-input" style="width:100%" onchange="toggleBcTemplate()">
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:block;">Broadcast Type *</label>
+                <select id="bc-type" class="glass-input" style="width:100%; padding:11px 14px; border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-size:13.5px; outline:none; background:rgba(0,0,0,0.25); color:#fff; transition: border-color 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);" onchange="toggleBcTemplate()" onfocus="this.style.borderColor='var(--wa-primary)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
                     <option value="anytime">Anytime (Requires Template)</option>
                     <option value="24_hours">24 Hours (Free messaging)</option>
                 </select>
             </div>
-            <div class="form-group" id="bc-template-group">
-                <label class="form-label">Message Template *</label>
-                <select id="bc-template" class="glass-input" style="width:100%">
+            
+            <div class="form-group" id="bc-template-group" style="margin-bottom: 20px;">
+                <label class="form-label" style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:block;">Message Template *</label>
+                <select id="bc-template" class="glass-input" style="width:100%; padding:11px 14px; border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-size:13.5px; outline:none; background:rgba(0,0,0,0.25); color:#fff; transition: border-color 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);" onfocus="this.style.borderColor='var(--wa-primary)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
                     <option value="">-- Select Template --</option>
                     {% for t in templates %}
                         <option value="{{ t.name }}">{{ t.name }} ({{ t.language }})</option>
                     {% endfor %}
                 </select>
             </div>
-            <div style="display:flex; justify-content:flex-end; gap: 12px; margin-top:20px;">
-                <button class="btn-action" style="background:transparent; border:1px solid rgba(255,255,255,0.2);" onclick="document.getElementById('modal-broadcast').style.display='none'">Cancel</button>
-                <button class="btn-action btn-create" onclick="saveBroadcast()">Create Campaign</button>
+            
+            <div class="form-group" id="bc-custom-message-group" style="display:none; margin-bottom: 20px;">
+                <label class="form-label" style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:block;">Message Text *</label>
+                <textarea id="bc-custom-message" class="glass-input" style="width:100%; padding:11px 14px; border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-size:13.5px; outline:none; background:rgba(0,0,0,0.25); color:#fff; transition: border-color 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2); resize: vertical;" placeholder="Type your campaign message here..." rows="3" onfocus="this.style.borderColor='var(--wa-primary)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'"></textarea>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; gap: 12px; margin-top:28px;">
+                <button class="btn-action" style="background:rgba(255,255,255,0.06); color:#f8fafc; border:1px solid rgba(255,255,255,0.1); padding:10px 22px; border-radius:8px; cursor:pointer; font-weight:700; font-size:13px; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'" onclick="document.getElementById('modal-broadcast').style.display='none'">Cancel</button>
+                <button class="btn-action btn-create" style="background: linear-gradient(135deg, #10b981, #059669); color:#fff; font-weight:700; border-radius:8px; padding:10px 22px; font-size:13px; border:none; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'" onclick="saveBroadcast()">Create Campaign</button>
             </div>
         </div>
     </div>
+    <div id="modal-report" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); z-index:9999; justify-content:center; align-items:center; backdrop-filter: blur(16px);">
+        <div class="glass-form-card" style="width: 1250px; max-width: 95%; max-height: 90vh; background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1); display:flex; flex-direction:column; overflow:hidden; color: #f8fafc; padding: 0; backdrop-filter: blur(35px);">
+            
+            <!-- Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 20px 28px; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(15, 23, 42, 0.3);">
+                <h3 style="margin:0; font-size: 19px; font-weight:700; color:#fff; display:flex; align-items:center; gap:10px;">
+                    <svg style="width:20px; height:20px; color:var(--wa-primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    Campaign Intelligence Report
+                </h3>
+                <button onclick="document.getElementById('modal-report').style.display='none'" style="background:transparent; border:none; font-size:26px; color:#94a3b8; cursor:pointer; font-weight:bold; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+            </div>
 
+            <!-- Scrollable Content -->
+            <div style="flex:1; overflow-y:auto; padding: 28px; display:flex; flex-direction:column; gap:24px; background:transparent;">
+                
+                <!-- Campaign Headline -->
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--wa-primary); box-shadow: 0 0 10px var(--wa-primary);"></span>
+                    <strong id="report-campaign-title" style="font-size: 16px; color:var(--wa-accent); font-weight:700; letter-spacing: 0.3px;">Campaign Title (Anytime)</strong>
+                </div>
+
+                <!-- Parameters Glass Grid -->
+                <div style="background: rgba(15, 23, 42, 0.25); border-radius:14px; padding:22px; border: 1px solid rgba(255, 255, 255, 0.05); display:grid; grid-template-columns: repeat(3, 1fr); gap:20px;">
+                    <!-- Template/Msg -->
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:42px; height:42px; border-radius:10px; background:rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.2); color:var(--wa-accent); display:grid; place-items:center; flex-shrink:0;">
+                            <svg style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Template / Message Content</div>
+                            <strong id="report-template" style="font-size:13px; color:#f8fafc; word-break:break-all;">N/A</strong>
+                        </div>
+                    </div>
+                    <!-- Included labels -->
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:42px; height:42px; border-radius:10px; background:rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.2); color:var(--wa-accent); display:grid; place-items:center; flex-shrink:0;">
+                            <svg style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Included Labels</div>
+                            <strong style="font-size:13px; color:#f8fafc;">broadcast</strong>
+                        </div>
+                    </div>
+                    <!-- Excluded labels -->
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:42px; height:42px; border-radius:10px; background:rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.2); color:var(--wa-accent); display:grid; place-items:center; flex-shrink:0;">
+                            <svg style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Excluded Labels</div>
+                            <strong style="font-size:13px; color:#f8fafc;">N/A</strong>
+                        </div>
+                    </div>
+                    <!-- Country -->
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:42px; height:42px; border-radius:10px; background:rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.2); color:var(--wa-accent); display:grid; place-items:center; flex-shrink:0;">
+                            <svg style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Subscriber Country</div>
+                            <strong style="font-size:13px; color:#f8fafc;">N/A</strong>
+                        </div>
+                    </div>
+                    <!-- Custom field -->
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:42px; height:42px; border-radius:10px; background:rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.2); color:var(--wa-accent); display:grid; place-items:center; flex-shrink:0;">
+                            <svg style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Custom field value</div>
+                            <strong style="font-size:13px; color:#f8fafc;">N/A</strong>
+                        </div>
+                    </div>
+                    <!-- Label post-broadcast -->
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="width:42px; height:42px; border-radius:10px; background:rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.2); color:var(--wa-accent); display:grid; place-items:center; flex-shrink:0;">
+                            <svg style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Assign label post-broadcast</div>
+                            <strong style="font-size:13px; color:#f8fafc;">N/A</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mid stats cards row -->
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px;">
+                    <!-- Card 1: Status -->
+                    <div style="background: rgba(15, 23, 42, 0.25); border-radius:14px; padding:20px; border:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:14px;">
+                        <div style="width:38px; height:38px; border-radius:50%; background:rgba(16, 185, 129, 0.15); color:#10b981; display:grid; place-items:center;">
+                            <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Status</div>
+                            <strong id="report-status-badge" style="font-size:14px; color:#10b981; display:flex; align-items:center; gap:6px;">
+                                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow: 0 0 8px #10b981;"></span>
+                                Completed
+                            </strong>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Export CSV -->
+                    <div style="background: rgba(15, 23, 42, 0.25); border-radius:14px; padding:12px; border:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center;">
+                        <a id="report-download-btn" href="#" style="background: linear-gradient(135deg, #10b981, #059669); color:#fff; font-weight:700; border-radius:10px; padding:11px 20px; font-size:13px; text-decoration:none; display:flex; align-items:center; gap:8px; cursor:pointer; width:100%; justify-content:center; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <svg style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Export CSV Dispatch Log
+                        </a>
+                    </div>
+
+                    <!-- Card 3: Msg Count -->
+                    <div style="background: rgba(15, 23, 42, 0.25); border-radius:14px; padding:20px; border:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:14px;">
+                        <div style="width:38px; height:38px; border-radius:50%; background:rgba(59, 130, 246, 0.15); color:#3b82f6; display:grid; place-items:center;">
+                            <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        </div>
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Message Count</div>
+                            <strong id="report-message-count" style="font-size:14px; color:#f8fafc;">1</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Glow metrics panels -->
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:20px;">
+                    <!-- Sent / Processed -->
+                    <div style="background: rgba(59, 130, 246, 0.08); border-radius:14px; padding:18px; border:1px solid rgba(59, 130, 246, 0.15);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Processed</span>
+                            <span style="font-size:18px; color:#3b82f6;">✈</span>
+                        </div>
+                        <div style="font-size:14px; font-weight:700; color:#fff;" id="metric-processed-txt">Sent (100%)</div>
+                        <div style="font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:12px;" id="metric-processed-ratio">7/7</div>
+                        <div style="width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+                            <div id="metric-processed-bar" style="height:100%; background:linear-gradient(90deg, #3b82f6, #60a5fa); width:100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Delivered -->
+                    <div style="background: rgba(16, 185, 129, 0.08); border-radius:14px; padding:18px; border:1px solid rgba(16, 185, 129, 0.15);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Delivered</span>
+                            <span style="font-size:18px; color:#10b981;">✔</span>
+                        </div>
+                        <div style="font-size:14px; font-weight:700; color:#fff;" id="metric-delivered-txt">Delivered (100%)</div>
+                        <div style="font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:12px;" id="metric-delivered-ratio">7/7</div>
+                        <div style="width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+                            <div id="metric-delivered-bar" style="height:100%; background:linear-gradient(90deg, #10b981, #34d399); width:100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Opened -->
+                    <div style="background: rgba(245, 158, 11, 0.08); border-radius:14px; padding:18px; border:1px solid rgba(245, 158, 11, 0.15);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Opened</span>
+                            <span style="font-size:18px; color:#f59e0b;">👁</span>
+                        </div>
+                        <div style="font-size:14px; font-weight:700; color:#fff;" id="metric-opened-txt">Opened (0%)</div>
+                        <div style="font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:12px;" id="metric-opened-ratio">0/7</div>
+                        <div style="width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+                            <div id="metric-opened-bar" style="height:100%; background:linear-gradient(90deg, #f59e0b, #fbbf24); width:0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Unreached -->
+                    <div style="background: rgba(239, 68, 68, 0.08); border-radius:14px; padding:18px; border:1px solid rgba(239, 68, 68, 0.15);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Unreached</span>
+                            <span style="font-size:18px; color:#ef4444;">🕒</span>
+                        </div>
+                        <div style="font-size:14px; font-weight:700; color:#fff;" id="metric-unreached-txt">Unreached (0%)</div>
+                        <div style="font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:12px;" id="metric-unreached-ratio">0/7</div>
+                        <div style="width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+                            <div id="metric-unreached-bar" style="height:100%; background:linear-gradient(90deg, #ef4444, #f87171); width:0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs glass panel -->
+                <div style="background: rgba(15, 23, 42, 0.25); border-radius:14px; padding:22px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; gap:16px;">
+                    <div style="width:220px;">
+                        <input type="text" id="report-log-search" oninput="filterReportLogs()" placeholder="Search logs..." style="width:100%; padding:10px 14px; border:1px solid rgba(255,255,255,0.08); border-radius:8px; font-size:13px; outline:none; background:rgba(0,0,0,0.25); color:#fff; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--wa-primary)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px;" id="report-logs-table">
+                            <thead>
+                                <tr style="background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.06); color:#94a3b8; font-weight:700;">
+                                    <th style="padding:14px 10px;">#</th>
+                                    <th style="padding:14px 10px;">Chat ID</th>
+                                    <th style="padding:14px 10px;">Name</th>
+                                    <th style="padding:14px 10px;">Status</th>
+                                    <th style="padding:14px 10px;">Sent at</th>
+                                    <th style="padding:14px 10px;">Delivered at</th>
+                                    <th style="padding:14px 10px;">Opened at</th>
+                                    <th style="padding:14px 10px;">Failed at</th>
+                                    <th style="padding:14px 10px;">Message ID</th>
+                                    <th style="padding:14px 10px;">Error Log</th>
+                                </tr>
+                            </thead>
+                            <tbody style="color:#cbd5e1;">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div style="display:flex; justify-content:flex-end; padding:18px 28px; border-top:1px solid rgba(255,255,255,0.08); background: rgba(15, 23, 42, 0.3);">
+                <button onclick="document.getElementById('modal-report').style.display='none'" style="background:rgba(255,255,255,0.06); color:#f8fafc; border:1px solid rgba(255,255,255,0.1); padding:9px 20px; border-radius:8px; cursor:pointer; font-weight:700; font-size:13px; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Dismiss</button>
+            </div>
+
+        </div>
+    </div>
     <div id="modal-widget" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
         <div class="glass-form-card" style="width: 500px; padding: 24px; position:relative;">
             <h3 style="margin-top:0;">Create Web Widget</h3>
@@ -4553,17 +4786,21 @@
             document.getElementById('bc-name').value = '';
             document.getElementById('bc-type').value = 'anytime';
             document.getElementById('bc-template').value = '';
+            document.getElementById('bc-custom-message').value = '';
             toggleBcTemplate();
             document.getElementById('modal-broadcast').style.display = 'flex';
         }
 
         function toggleBcTemplate() {
             const type = document.getElementById('bc-type').value;
-            const group = document.getElementById('bc-template-group');
+            const templateGroup = document.getElementById('bc-template-group');
+            const customMessageGroup = document.getElementById('bc-custom-message-group');
             if (type === '24_hours') {
-                group.style.display = 'none';
+                templateGroup.style.display = 'none';
+                customMessageGroup.style.display = 'block';
             } else {
-                group.style.display = 'block';
+                templateGroup.style.display = 'block';
+                customMessageGroup.style.display = 'none';
             }
         }
 
@@ -4571,9 +4808,11 @@
             const name = document.getElementById('bc-name').value.trim();
             const type = document.getElementById('bc-type').value;
             const template = document.getElementById('bc-template').value;
+            const customMessage = document.getElementById('bc-custom-message').value.trim();
 
             if (!name) return showToast('Campaign Name is required', 'error');
             if (type === 'anytime' && !template) return showToast('Template is required for Anytime broadcasts', 'error');
+            if (type === '24_hours' && !customMessage) return showToast('Message Text is required for 24 Hours broadcasts', 'error');
 
             fetch('/whatsapp-bot-manager/broadcasts/save', {
                 method: 'POST',
@@ -4582,7 +4821,8 @@
                     connectionId: activeConnectionId,
                     campaignName: name,
                     broadcastType: type,
-                    templateName: type === 'anytime' ? template : null
+                    templateName: type === 'anytime' ? template : null,
+                    customMessage: type === '24_hours' ? customMessage : null
                 })
             }).then(r => r.json()).then(res => {
                 if (res.success) {
@@ -4644,6 +4884,123 @@
             }).then(r=>r.json()).then(res => {
                 if(res.success) location.reload();
             });
+        }
+
+        let reportLogsCached = [];
+
+        function viewCampaignReport(id) {
+            document.getElementById('report-log-search').value = '';
+            const tbody = document.querySelector('#report-logs-table tbody');
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color:#64748b;">Loading report data...</td></tr>';
+            
+            document.getElementById('modal-report').style.display = 'flex';
+
+            fetch(`/whatsapp-bot-manager/broadcasts/${id}/report`)
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.success) {
+                        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 20px; color:#ef4444;">${res.error}</td></tr>`;
+                        return;
+                    }
+
+                    const c = res.campaign;
+                    document.getElementById('report-campaign-title').textContent = `${c.name} (${c.type === 'anytime' ? 'Anytime' : '24 Hours'})`;
+                    document.getElementById('report-template').textContent = c.template;
+                    
+                    // Status Badge
+                    const statusBadge = document.getElementById('report-status-badge');
+                    statusBadge.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span> ${c.status}`;
+                    
+                    // Message Count
+                    document.getElementById('report-message-count').textContent = c.processed;
+
+                    // Metrics Rows
+                    const total = c.processed || 1;
+                    const procPct = Math.round((c.processed / total) * 100);
+                    const delPct = Math.round((c.delivered / total) * 100);
+                    const opnPct = Math.round((c.opened / total) * 100);
+                    const unrPct = Math.round((c.unreached / total) * 100);
+
+                    // Text fields
+                    document.getElementById('metric-processed-txt').textContent = `Sent (${procPct}%)`;
+                    document.getElementById('metric-processed-ratio').textContent = `${c.processed}/${total}`;
+                    document.getElementById('metric-processed-bar').style.width = `${procPct}%`;
+
+                    document.getElementById('metric-delivered-txt').textContent = `Delivered (${delPct}%)`;
+                    document.getElementById('metric-delivered-ratio').textContent = `${c.delivered}/${total}`;
+                    document.getElementById('metric-delivered-bar').style.width = `${delPct}%`;
+
+                    document.getElementById('metric-opened-txt').textContent = `Opened (${opnPct}%)`;
+                    document.getElementById('metric-opened-ratio').textContent = `${c.opened}/${total}`;
+                    document.getElementById('metric-opened-bar').style.width = `${opnPct}%`;
+
+                    document.getElementById('metric-unreached-txt').textContent = `Unreached (${unrPct}%)`;
+                    document.getElementById('metric-unreached-ratio').textContent = `${c.unreached}/${total}`;
+                    document.getElementById('metric-unreached-bar').style.width = `${unrPct}%`;
+
+                    // Download Button
+                    document.getElementById('report-download-btn').setAttribute('href', `/whatsapp-bot-manager/broadcasts/${id}/report/download`);
+
+                    // Populate Logs
+                    reportLogsCached = res.logs;
+                    renderReportLogs(reportLogsCached);
+                });
+        }
+
+        function renderReportLogs(logs) {
+            const tbody = document.querySelector('#report-logs-table tbody');
+            tbody.innerHTML = '';
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color:#64748b;">No subscriber logs found.</td></tr>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #f1f5f9';
+                
+                let statusColor = '#3b82f6';
+                let statusBg = 'rgba(59, 130, 246, 0.1)';
+                if (log.status === 'Delivered') {
+                    statusColor = '#10b981';
+                    statusBg = 'rgba(16, 185, 129, 0.1)';
+                } else if (log.status === 'Failed') {
+                    statusColor = '#ef4444';
+                    statusBg = 'rgba(239, 68, 68, 0.1)';
+                }
+
+                tr.innerHTML = `
+                    <td style="padding:10px 8px;">${log.index}</td>
+                    <td style="padding:10px 8px; font-weight:700;">${log.chatId}</td>
+                    <td style="padding:10px 8px;">${log.name}</td>
+                    <td style="padding:10px 8px;">
+                        <span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; color:${statusColor}; background:${statusBg};">${log.status}</span>
+                    </td>
+                    <td style="padding:10px 8px;">${log.sentAt}</td>
+                    <td style="padding:10px 8px;">${log.deliveredAt}</td>
+                    <td style="padding:10px 8px;">${log.openedAt}</td>
+                    <td style="padding:10px 8px;">${log.failedAt}</td>
+                    <td style="padding:10px 8px; font-family:monospace; font-size:11px; color:#64748b;">${log.messageId}</td>
+                    <td style="padding:10px 8px; color:#ef4444; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${log.error}">${log.error}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterReportLogs() {
+            const query = document.getElementById('report-log-search').value.toLowerCase().trim();
+            if (query === '') {
+                renderReportLogs(reportLogsCached);
+                return;
+            }
+
+            const filtered = reportLogsCached.filter(log => {
+                return log.chatId.toLowerCase().includes(query) || 
+                       log.name.toLowerCase().includes(query) || 
+                       log.status.toLowerCase().includes(query) ||
+                       log.error.toLowerCase().includes(query);
+            });
+            renderReportLogs(filtered);
         }
     </script>
 {% endblock %}

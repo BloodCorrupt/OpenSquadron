@@ -3338,6 +3338,81 @@
         </div>
     </div>
 
+    {# 9b. Recurring Notifications (RCN) Content Pane #}
+    <div class="manager-content-pane" id="pane-rcn-notifications">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <span>Recurring Notifications (RCN)</span>
+                </h1>
+                <div class="content-subtitle">Draft opt-in sequences permitting daily, weekly, or monthly notifications outside standard window rules.</div>
+            </div>
+        </div>
+
+        <!-- Premium Meta Deprecation Advisory Glass Box -->
+        <div class="glass-notice-box" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 20px; border-radius: 14px; margin-bottom: 24px; display:flex; flex-direction:column; gap:12px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);">
+            <div style="display:flex; align-items:center; gap:10px; color:#f87171; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.5px;">
+                <svg style="width:20px; height:20px; color:#f87171;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Meta Deprecation Advisory (Feb 2026)
+            </div>
+            <p style="font-size:13.5px; line-height:1.6; color:#cbd5e1; margin:0;">
+                Recurring Notifications (RCN) has been **officially deprecated by Meta as of February 2026**. Modern applications should migrate to the **Marketing Messages (MM)** API to ensure long-term compatibility and advanced promotional reach.
+            </p>
+            <div style="display:flex; margin-top:4px;">
+                <button class="btn-action btn-secondary" onclick="switchTab('marketing-messages')" style="display:inline-flex; align-items:center; gap:6px; background:rgba(6, 182, 212, 0.15); border:1px solid rgba(6, 182, 212, 0.3); color:#22d3ee; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(6, 182, 212, 0.25)'" onmouseout="this.style.background='rgba(6, 182, 212, 0.15)'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px; height:14px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    Go to Marketing Messages (MM)
+                </button>
+            </div>
+        </div>
+
+        <!-- Legacy Config Form Card -->
+        <div class="glass-form-card" style="width:100%;">
+            <h3 style="margin-top:0; font-size:16px; font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
+                <svg style="width:18px; height:18px; color:var(--primary-accent);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Legacy RCN Setup (Developer Access)
+            </h3>
+            <div class="form-helper" style="margin-bottom:20px; color:#94a3b8;">This table retains legacy configurations. Row payloads can be bound to conversational quick replies and triggers.</div>
+            
+            <div class="table-container" style="border: 1px solid var(--glass-border); border-radius: 10px; overflow: hidden; background: rgba(15, 23, 42, 0.25);">
+                <table class="custom-table" id="rcn-table" style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--glass-border);">
+                            <th style="padding:14px 12px; text-align:left; font-weight:700; color:#94a3b8;">Notification Title</th>
+                            <th style="width: 250px; padding:14px 12px; text-align:left; font-weight:700; color:#94a3b8;">Frequency</th>
+                            <th style="width: 280px; padding:14px 12px; text-align:left; font-weight:700; color:#94a3b8;">Opt-In Payload Reference</th>
+                            <th style="width: 80px; text-align:center; padding:14px 12px; font-weight:700; color:#94a3b8;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in settings['rcn-notifications']|default([]) %}
+                        <tr class="rcn-row" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                            <td style="padding:10px 12px;"><input type="text" class="glass-input rcn-title" style="width:100%" value="{{ row.title }}"></td>
+                            <td style="padding:10px 12px;">
+                                <select class="glass-input rcn-freq" style="width:100%">
+                                    <option value="DAILY" {% if row.frequency == 'DAILY' %}selected{% endif %}>Daily notifications</option>
+                                    <option value="WEEKLY" {% if row.frequency == 'WEEKLY' or row.frequency == '' %}selected{% endif %}>Weekly notifications</option>
+                                    <option value="MONTHLY" {% if row.frequency == 'MONTHLY' %}selected{% endif %}>Monthly notifications</option>
+                                </select>
+                            </td>
+                            <td style="padding:10px 12px;"><input type="text" class="glass-input rcn-payload" style="width:100%; font-family:monospace;" value="{{ row.payload }}"></td>
+                            <td style="text-align:center; padding:10px 12px;">
+                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-top:20px; gap:12px;">
+                <button class="btn-action btn-secondary" onclick="addRcnRow()">+ Add Campaign Row</button>
+                <button class="btn-action btn-create" onclick="saveRcn()">Save RCN Setup</button>
+            </div>
+        </div>
+    </div>
+
     {# 10. Whitelisted Domains Content Pane #}
     <div class="manager-content-pane" id="pane-whitelisted-domains">
         <div class="content-header">
