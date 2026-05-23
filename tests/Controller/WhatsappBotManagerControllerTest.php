@@ -270,4 +270,88 @@ class WhatsappBotManagerControllerTest extends WebTestCase
         $this->assertSame('Template submitted to Meta! It will appear as APPROVED once Meta reviews it.', $dataCreate['message']);
         $this->assertSame('template_12345', $dataCreate['id']);
     }
+
+    public function testSequenceBuilderEndpoints(): void
+    {
+        $client = static::createClient();
+        $connection = $this->createAndLoginAdmin($client);
+
+        // 1. Load sequence builder page (GET)
+        $client->request('GET', '/whatsapp-bot-manager/sequence-builder', [
+            'connectionId' => $connection->getId()
+        ]);
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.fb-shell');
+
+        // 2. Save new sequence (POST) — id is null for brand-new sequences
+        $client->request('POST', '/whatsapp-bot-manager/sequence-builder/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'id' => null,
+            'connectionId' => $connection->getId(),
+            'name' => 'Test WhatsApp Sequence',
+            'trigger' => 'NEW_SUBSCRIBER',
+            'preferredTime' => 'daytime',
+            'timezone' => 'UTC',
+            'allowReentry' => false,
+            'isActive' => true,
+            'graph' => [
+                'nodes' => [
+                    ['id' => 'start_node', 'type' => 'start', 'x' => 100, 'y' => 100],
+                    ['id' => 'campaign_node', 'type' => 'sequence_campaign', 'x' => 300, 'y' => 100],
+                    ['id' => 'msg_node', 'type' => 'send_message_after', 'x' => 500, 'y' => 100, 'data' => ['delayNumber' => 24, 'delayUnit' => 'hours']]
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_node', 'sourceHandle' => 'subscribe_to_sequence', 'target' => 'campaign_node', 'targetHandle' => 'in'],
+                    ['id' => 'e2', 'source' => 'campaign_node', 'sourceHandle' => 'schedule_message', 'target' => 'msg_node', 'targetHandle' => 'in']
+                ],
+                'viewport' => ['x' => 0, 'y' => 0, 'scale' => 1]
+            ]
+        ]));
+
+        $this->assertResponseIsSuccessful();
+        $res = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($res['success']);
+        $this->assertSame('Test WhatsApp Sequence', $res['sequence']['name']);
+        $this->assertSame(1, $res['sequence']['stepsCount']);
+        $this->assertIsInt($res['sequence']['id']);
+
+        // 3. Update the same sequence by passing the returned DB ID
+        $savedId = $res['sequence']['id'];
+        $client->request('POST', '/whatsapp-bot-manager/sequence-builder/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'id' => $savedId,
+            'connectionId' => $connection->getId(),
+            'name' => 'Updated WhatsApp Sequence',
+            'trigger' => 'CUSTOM_TRIGGER',
+            'preferredTime' => 'business_hours',
+            'timezone' => 'UTC',
+            'allowReentry' => true,
+            'isActive' => true,
+            'graph' => [
+                'nodes' => [
+                    ['id' => 'start_node', 'type' => 'start', 'x' => 100, 'y' => 100],
+                    ['id' => 'campaign_node', 'type' => 'sequence_campaign', 'x' => 300, 'y' => 100],
+                    ['id' => 'msg_node', 'type' => 'send_message_after', 'x' => 500, 'y' => 100, 'data' => ['delayNumber' => 24, 'delayUnit' => 'hours']]
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_node', 'sourceHandle' => 'subscribe_to_sequence', 'target' => 'campaign_node', 'targetHandle' => 'in'],
+                    ['id' => 'e2', 'source' => 'campaign_node', 'sourceHandle' => 'schedule_message', 'target' => 'msg_node', 'targetHandle' => 'in']
+                ],
+                'viewport' => ['x' => 0, 'y' => 0, 'scale' => 1]
+            ]
+        ]));
+
+        $this->assertResponseIsSuccessful();
+        $resUpdate = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($resUpdate['success']);
+        $this->assertSame($savedId, $resUpdate['sequence']['id']);
+        $this->assertSame('Updated WhatsApp Sequence', $resUpdate['sequence']['name']);
+
+        // 4. Delete the sequence
+        $client->request('POST', '/whatsapp-bot-manager/sequence-builder/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'sequenceId' => $savedId
+        ]));
+        $this->assertResponseIsSuccessful();
+        $resDel = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($resDel['success']);
+    }
 }
+

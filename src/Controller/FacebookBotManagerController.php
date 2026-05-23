@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\FacebookBotFlow;
 use App\Entity\FacebookConnection;
+use App\Entity\FacebookDripSequence;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -49,10 +50,7 @@ class FacebookBotManagerController extends AbstractController
                 'size' => 'large',
                 'domains' => 'opensquadron.io',
             ],
-            'sequences' => [
-                ['name' => 'Day 1 Warmup', 'delay' => '24 hours', 'isActive' => true],
-                ['name' => 'Day 3 Promo Offer', 'delay' => '72 hours', 'isActive' => false],
-            ],
+            'sequences' => [],
             'user-inputs' => [
                 ['fieldName' => 'user_email', 'dataType' => 'EMAIL', 'prompt' => 'Please share your email address:'],
                 ['fieldName' => 'user_phone', 'dataType' => 'PHONE', 'prompt' => 'Please provide your mobile number:'],
@@ -118,6 +116,7 @@ class FacebookBotManagerController extends AbstractController
             ]
         ];
 
+        $sequences = [];
         if ($selectedConnection) {
             $flows = $em->getRepository(FacebookBotFlow::class)->findBy(['facebookConnection' => $selectedConnection], ['id' => 'DESC']);
             
@@ -129,6 +128,12 @@ class FacebookBotManagerController extends AbstractController
                 $settings = $this->mergeSettings($defaultSettings, $saved);
             } else {
                 $settings = $defaultSettings;
+            }
+
+            // Load sequences from DB
+            $seqEntities = $em->getRepository(FacebookDripSequence::class)->findBy(['facebookConnection' => $selectedConnection], ['id' => 'DESC']);
+            foreach ($seqEntities as $seq) {
+                $sequences[] = $seq->toArray();
             }
         } else {
             $settings = $defaultSettings;
@@ -142,6 +147,7 @@ class FacebookBotManagerController extends AbstractController
             'connections' => $connections,
             'contexts'    => $contexts,
             'settings'    => $settings,
+            'sequences'   => $sequences,
         ]);
     }
 
@@ -409,6 +415,129 @@ class FacebookBotManagerController extends AbstractController
             'templates'   => $templates,
             'httpApis'    => $httpApis,
         ]);
+    }
+
+    #[Route('/facebook-bot-manager/sequence-builder', name: 'app_facebook_bot_sequence_builder', methods: ['GET'])]
+    public function sequenceBuilder(Request $request, EntityManagerInterface $em): Response
+    {
+        $connectionId = (int)$request->query->get('connectionId');
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            throw $this->createNotFoundException('Connection not found.');
+        }
+
+        $sequenceId = $request->query->get('id');
+        $sequence = null;
+
+        if ($sequenceId) {
+            $entity = $em->getRepository(FacebookDripSequence::class)->find((int)$sequenceId);
+            if ($entity && $entity->getFacebookConnection()?->getId() === $connection->getId()) {
+                $sequence = $entity->toArray();
+            }
+        }
+
+        if (!$sequence) {
+            // Default for a brand-new sequence (not yet persisted)
+            $sequence = [
+                'id' => null,
+                'name' => 'New Sequence Campaign',
+                'preferredTime' => 'anytime',
+                'timezone' => 'UTC',
+                'messageTag' => 'NON_PROMOTIONAL_SUBSCRIPTION',
+                'allowReentry' => false,
+                'isActive' => true,
+                'stepsCount' => 0,
+                'graph' => null
+            ];
+        }
+
+        $flows = $em->getRepository(FacebookBotFlow::class)->findBy(['facebookConnection' => $connection], ['id' => 'DESC']);
+        $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
+        $httpApis = $em->getRepository(\App\Entity\HttpApi::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
+
+        return $this->render('facebook_bot_manager/sequence_builder.html.twig', [
+            'connection' => $connection,
+            'sequence' => $sequence,
+            'flows' => $flows,
+            'contexts' => $contexts,
+            'httpApis' => $httpApis,
+        ]);
+    }
+
+    #[Route('/facebook-bot-manager/sequence-builder/save', name: 'app_facebook_bot_sequence_save', methods: ['POST'])]
+    public function saveSequence(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        $connectionId = (int)($payload['connectionId'] ?? 0);
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
+        $sequenceId = $payload['id'] ?? null;
+        $entity = null;
+
+        if ($sequenceId) {
+            $entity = $em->getRepository(FacebookDripSequence::class)->find((int)$sequenceId);
+            // Verify it belongs to the same connection
+            if ($entity && $entity->getFacebookConnection()?->getId() !== $connection->getId()) {
+                $entity = null;
+            }
+        }
+
+        if (!$entity) {
+            $entity = new FacebookDripSequence();
+            $entity->setFacebookConnection($connection);
+            $entity->setOwner($this->getUser());
+        }
+
+        // Count how many "Send Message After" nodes we have in the graph
+        $stepsCount = 0;
+        if (isset($payload['graph']['nodes']) && is_array($payload['graph']['nodes'])) {
+            foreach ($payload['graph']['nodes'] as $node) {
+                if (($node['type'] ?? '') === 'send_message_after') {
+                    $stepsCount++;
+                }
+            }
+        }
+
+        $entity->setName(trim((string)($payload['name'] ?? 'Untitled Sequence')));
+        $entity->setPreferredTime(trim((string)($payload['preferredTime'] ?? 'anytime')));
+        $entity->setTimezone(trim((string)($payload['timezone'] ?? 'UTC')));
+        $entity->setMessageTag(trim((string)($payload['messageTag'] ?? 'NON_PROMOTIONAL_SUBSCRIPTION')));
+        $entity->setAllowReentry((bool)($payload['allowReentry'] ?? false));
+        $entity->setActive((bool)($payload['isActive'] ?? true));
+        $entity->setStepsCount($stepsCount);
+        $entity->setGraphData($payload['graph'] ?? null);
+
+        $em->persist($entity);
+        $em->flush();
+
+        return new JsonResponse(['success' => true, 'sequence' => $entity->toArray()]);
+    }
+
+    #[Route('/facebook-bot-manager/sequence-builder/delete', name: 'app_facebook_bot_sequence_delete', methods: ['POST'])]
+    public function deleteSequence(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        $sequenceId = (int)($payload['sequenceId'] ?? 0);
+        $entity = $em->getRepository(FacebookDripSequence::class)->find($sequenceId);
+        if (!$entity) {
+            return new JsonResponse(['success' => false, 'error' => 'Sequence not found.'], 404);
+        }
+
+        $em->remove($entity);
+        $em->flush();
+
+        return new JsonResponse(['success' => true]);
     }
 
     #[Route('/facebook-bot-manager/flows/save', name: 'app_facebook_bot_flows_save', methods: ['POST'])]

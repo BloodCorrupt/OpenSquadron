@@ -1,0 +1,1375 @@
+{% extends 'empty.html.twig' %}
+
+{% block title %}Sequence Flow Builder - Bot Manager{% endblock %}
+
+{% block max_width %}none{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* ─── Dark-themed Glassmorphic Flow Builder Base ─── */
+    :root {
+        --fb-bg: #0b1329;
+        --fb-border: var(--glass-border);
+        --fb-text-main: var(--text-main);
+        --fb-text-muted: var(--text-muted);
+        --fb-card-bg: rgba(15, 23, 42, 0.6);
+        --fb-active-border: var(--primary-accent);
+        --fb-secondary-accent: var(--secondary-accent);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--fb-bg);
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .fb-shell {
+        display: grid;
+        grid-template-columns: 340px 1fr 340px;
+        gap: 0;
+        height: 100vh;
+        background: var(--fb-bg);
+        color: var(--fb-text-main);
+    }
+
+    /* ─── Left Sidebar (Configure Drip Sequence) ─── */
+    .fb-sidebar {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid var(--fb-border);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        z-index: 10;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+    .fb-sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--fb-border);
+    }
+    .fb-sidebar-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--fb-text-main);
+        margin: 0 0 4px 0;
+    }
+    .fb-sidebar-subtitle {
+        font-size: 12px;
+        color: var(--fb-text-muted);
+        margin: 0;
+    }
+    .fb-sidebar-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+    .fb-sidebar-body::-webkit-scrollbar { width: 5px; }
+    .fb-sidebar-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+
+    /* ─── Middle Canvas Area ─── */
+    .fb-canvas-container {
+        position: relative;
+        height: 100%;
+        overflow: hidden;
+        background-color: #0b1329;
+        background-image: 
+            radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),
+            radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
+        background-size: 24px 24px;
+        background-position: 0 0, 12px 12px;
+    }
+
+    .fb-floating-header {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        pointer-events: none;
+    }
+    .fb-floating-back {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--fb-border);
+        color: var(--fb-text-main);
+        padding: 8px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        pointer-events: auto;
+        text-decoration: none;
+    }
+    .fb-floating-back:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--fb-active-border);
+        transform: translateX(-2px);
+    }
+    .fb-top-actions {
+        display: flex;
+        gap: 10px;
+        pointer-events: auto;
+    }
+
+    .fb-action-btn {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--fb-border);
+        color: var(--fb-text-main);
+        padding: 8px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .fb-action-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--fb-active-border);
+    }
+    .fb-action-btn.primary {
+        background: var(--fb-active-border);
+        color: #fff;
+        border-color: var(--fb-active-border);
+    }
+    .fb-action-btn.primary:hover {
+        background: #0891b2;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    }
+
+    /* ─── Canvas Viewport & Node Stage ─── */
+    .fb-viewport {
+        position: absolute;
+        inset: 0;
+        cursor: grab;
+    }
+    .fb-viewport.is-panning { cursor: grabbing; }
+    .fb-viewport.is-connecting { cursor: crosshair; }
+    .fb-stage {
+        position: absolute;
+        top: 0; left: 0;
+        width: 1px; height: 1px;
+        transform-origin: 0 0;
+        will-change: transform;
+    }
+    
+    .fb-edges {
+        position: absolute;
+        top: -10000px; left: -10000px;
+        width: 20000px; height: 20000px;
+        pointer-events: none;
+        overflow: visible;
+    }
+    .fb-edges path {
+        fill: none;
+        stroke: #64748b;
+        stroke-width: 2.5;
+        pointer-events: stroke;
+        cursor: pointer;
+        transition: stroke 0.15s;
+    }
+    .fb-edges path.is-selected {
+        stroke: var(--fb-active-border);
+        stroke-width: 3.5;
+    }
+    .fb-edges path:hover {
+        stroke: #94a3b8;
+    }
+    .fb-edges path.is-temp {
+        stroke: var(--fb-active-border);
+        stroke-dasharray: 6 4;
+        animation: fb-dash 0.6s linear infinite;
+    }
+    @keyframes fb-dash { to { stroke-dashoffset: -20; } }
+
+    /* ─── Flow Builder Nodes ─── */
+    .fb-node {
+        position: absolute;
+        width: 240px;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--fb-border);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        font-size: 13px;
+        color: var(--fb-text-main);
+        user-select: none;
+        cursor: grab;
+        padding-bottom: 8px;
+        box-sizing: border-box;
+        transition: box-shadow 0.15s, border-color 0.15s;
+        border-top: 4px solid #cbd5e1;
+    }
+    .fb-node:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+    .fb-node.is-selected {
+        border-color: var(--fb-active-border) !important;
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25), 0 15px 40px rgba(0, 0, 0, 0.5);
+    }
+    .fb-node.is-dragging { cursor: grabbing; }
+
+    .fb-node-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-bottom: 1px dashed var(--fb-border);
+        font-weight: 700;
+        gap: 8px;
+    }
+    .fb-node-title-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+    }
+    .fb-node-icon {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .fb-node-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .fb-node-body {
+        padding: 12px 14px;
+        font-size: 12px;
+        color: var(--fb-text-muted);
+        line-height: 1.5;
+        min-height: 24px;
+    }
+    .fb-node-preview {
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 70px;
+        overflow: hidden;
+        color: var(--fb-text-main);
+    }
+    .fb-empty {
+        font-style: italic;
+        opacity: 0.65;
+    }
+
+    .fb-node-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 14px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--fb-text-muted);
+        position: relative;
+    }
+
+    /* Accent top borders */
+    .fb-node[data-type="start"] { border-top-color: #3b82f6; }
+    .fb-node[data-type="sequence_campaign"] { border-top-color: #06b6d4; }
+    .fb-node[data-type="send_message_after"] { border-top-color: #ec4899; }
+    .fb-node[data-type="send_text"] { border-top-color: var(--fb-secondary-accent); }
+    .fb-node[data-type="send_image"] { border-top-color: #a3e635; }
+    .fb-node[data-type="send_template"] { border-top-color: #fde047; }
+    .fb-node[data-type="http_api"] { border-top-color: #fb923c; }
+    .fb-node[data-type="condition"] { border-top-color: #a78bfa; }
+
+    .fb-port {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 2px solid var(--fb-active-border);
+        border-radius: 50%;
+        cursor: crosshair;
+        transition: transform 0.1s, background 0.1s;
+        z-index: 200;
+    }
+    .fb-port:hover {
+        transform: scale(1.4);
+        background: var(--fb-active-border);
+    }
+    .fb-port.is-in {
+        left: -7px;
+        top: 24px;
+        border-color: var(--fb-secondary-accent);
+    }
+    .fb-port.is-in:hover {
+        background: var(--fb-secondary-accent);
+    }
+    .fb-port.is-out {
+        right: -7px;
+    }
+
+    /* ─── Inspector panel (Right Sidebar) ─── */
+    .fb-inspector {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border-left: 1px solid var(--fb-border);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        z-index: 10;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+    .fb-inspector-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--fb-border);
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--fb-text-main);
+    }
+    .fb-inspector-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+    
+    .fb-form-group {
+        margin-bottom: 18px;
+    }
+    .fb-form-group label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--fb-text-muted);
+        margin-bottom: 6px;
+    }
+    .fb-input, .fb-textarea, .fb-select {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--fb-border);
+        color: var(--fb-text-main);
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 13px;
+        box-sizing: border-box;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .fb-input:focus, .fb-textarea:focus, .fb-select:focus {
+        background: rgba(0, 0, 0, 0.3);
+        border-color: var(--fb-active-border);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    .fb-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    .fb-help {
+        font-size: 11px;
+        color: var(--fb-text-muted);
+        margin-top: 4px;
+        line-height: 1.4;
+    }
+
+    /* ─── Context Menu (Floating block selector) ─── */
+    .fb-ctx-menu {
+        position: fixed;
+        z-index: 10000;
+        width: 240px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(15px);
+        border: 1px solid var(--fb-border);
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .fb-ctx-search {
+        padding: 10px;
+        border-bottom: 1px solid var(--fb-border);
+        background: rgba(0,0,0,0.1);
+    }
+    .fb-ctx-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .fb-ctx-item {
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--fb-text-main);
+        transition: background 0.15s;
+    }
+    .fb-ctx-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .fb-ctx-item.is-cancel {
+        border-top: 1px solid var(--fb-border);
+        color: #f87171;
+    }
+    .fb-ctx-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+    }
+
+    .fb-toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #0f172a;
+        color: #ffffff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s, transform 0.25s;
+        z-index: 10000;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    .fb-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .fb-toast.is-success { border-left: 4px solid var(--fb-secondary-accent); }
+    .fb-toast.is-error { border-left: 4px solid #ef4444; }
+
+    /* Zoom Controls */
+    .fb-controls {
+        position: absolute;
+        right: 20px;
+        top: 80px;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .fb-control-btn {
+        width: 36px;
+        height: 36px;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--fb-border);
+        color: var(--fb-text-main);
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .fb-control-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--fb-active-border);
+    }
+
+    .click-body {
+        display: flex;
+        justify-content: center;
+        padding: 8px;
+    }
+    .hand-cursor-icon {
+        font-size: 18px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="fb-shell">
+    <!-- Left Sidebar: Configure Sequence Metadata -->
+    <div class="fb-sidebar">
+        <div class="fb-sidebar-header">
+            <h2 class="fb-sidebar-title">Configure Drip Sequence</h2>
+            <p class="fb-sidebar-subtitle">Configure campaign constraints and default delivery windows.</p>
+        </div>
+        <div class="fb-sidebar-body">
+            <div class="fb-form-group">
+                <label for="seq-campaign-name">Sequence Campaign Name</label>
+                <input type="text" id="seq-campaign-name" class="fb-input" value="{{ sequence.name }}" placeholder="e.g. Day 1 Warmup">
+            </div>
+
+            <div class="fb-form-group">
+                <label for="seq-delivery-time">Preferred Delivery Time Window</label>
+                <select id="seq-delivery-time" class="fb-select">
+                    <option value="anytime" {% if sequence.preferredTime == 'anytime' %}selected{% endif %}>Send Anytime (Immediate)</option>
+                    <option value="business_hours" {% if sequence.preferredTime == 'business_hours' %}selected{% endif %}>Business Hours (9 AM - 6 PM)</option>
+                    <option value="daytime" {% if sequence.preferredTime == 'daytime' %}selected{% endif %}>Daytime (8 AM - 10 PM)</option>
+                </select>
+                <div class="fb-help">Messages scheduled outside the window will queue until the window re-opens.</div>
+            </div>
+
+            <div class="fb-form-group">
+                <label for="seq-timezone">Time Zone</label>
+                <select id="seq-timezone" class="fb-select">
+                    <option value="UTC" {% if sequence.timezone == 'UTC' %}selected{% endif %}>UTC (GMT+0)</option>
+                    <option value="America/New_York" {% if sequence.timezone == 'America/New_York' %}selected{% endif %}>Eastern Time (EST/EDT)</option>
+                    <option value="Europe/London" {% if sequence.timezone == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
+                    <option value="Asia/Dhaka" {% if sequence.timezone == 'Asia/Dhaka' %}selected{% endif %}>Bangladesh (GMT+6)</option>
+                </select>
+            </div>
+
+            <div class="fb-form-group">
+                <label for="seq-message-tag">Message Tag</label>
+                <select id="seq-message-tag" class="fb-select">
+                    <option value="NON_PROMOTIONAL_SUBSCRIPTION" {% if sequence.messageTag == 'NON_PROMOTIONAL_SUBSCRIPTION' %}selected{% endif %}>NON_PROMOTIONAL_SUBSCRIPTION</option>
+                    <option value="CONFIRMED_EVENT_UPDATE" {% if sequence.messageTag == 'CONFIRMED_EVENT_UPDATE' %}selected{% endif %}>CONFIRMED_EVENT_UPDATE</option>
+                    <option value="POST_PURCHASE_UPDATE" {% if sequence.messageTag == 'POST_PURCHASE_UPDATE' %}selected{% endif %}>POST_PURCHASE_UPDATE</option>
+                    <option value="ACCOUNT_UPDATE" {% if sequence.messageTag == 'ACCOUNT_UPDATE' %}selected{% endif %}>ACCOUNT_UPDATE</option>
+                </select>
+                <div class="fb-help">Standard Meta message tag allowed outside 24-hour windows.</div>
+            </div>
+
+            <div class="fb-form-group" style="margin-top: 24px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="seq-allow-reentry" style="width:16px; height:16px;" {% if sequence.allowReentry %}checked{% endif %}>
+                    <span style="font-weight:600; text-transform:none;">Allow Re-entry Only After Completion</span>
+                </label>
+                <div class="fb-help" style="margin-left: 24px; margin-top: 6px;">Subscribers won't be added again while the sequence is actively running.</div>
+            </div>
+            
+            <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" class="fb-action-btn primary" id="fb-save-flow" style="justify-content: center; width: 100%;">
+                    💾 Save Sequence Campaign
+                </button>
+                <a href="{{ path('app_facebook_bot_manager', {connectionId: connection.id}) }}" class="fb-action-btn" style="justify-content: center; text-decoration: none;">
+                    Close Editor
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Area: Canvas -->
+    <div class="fb-canvas-container">
+        <!-- Floating Header -->
+        <div class="fb-floating-header">
+            <a href="{{ path('app_facebook_bot_manager', {connectionId: connection.id}) }}" class="fb-floating-back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px; height:16px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 19"></polyline></svg>
+                <span>Back to Bot Manager</span>
+            </a>
+            
+            <div class="fb-top-actions">
+                <span style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid var(--fb-border); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+                    <span style="width: 8px; height: 8px; background: #06b6d4; border-radius: 50%; box-shadow: 0 0 8px #06b6d4;"></span>
+                    <span>FB Page: {{ connection.pageName }}</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Zoom fit tools -->
+        <div class="fb-controls">
+            <button class="fb-control-btn" id="fb-zoom-in" title="Zoom In">+</button>
+            <button class="fb-control-btn" id="fb-zoom-out" title="Zoom Out">−</button>
+            <button class="fb-control-btn" id="fb-zoom-fit" title="Fit Screen">⛶</button>
+        </div>
+
+        <!-- The actual viewport stage -->
+        <div class="fb-viewport" id="fb-viewport">
+            <div class="fb-stage" id="fb-stage">
+                <!-- SVG edges canvas -->
+                <svg class="fb-edges" id="fb-edges"></svg>
+                
+                <!-- Draggable node blocks -->
+                <div id="fb-nodes"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar: Block settings Inspector -->
+    <div class="fb-inspector">
+        <div class="fb-inspector-header">
+            <div style="font-weight: 700; font-size: 14px;" id="fb-inspector-title">Block Properties</div>
+            <div style="font-size: 11px; color: var(--fb-text-muted); margin-top: 4px;" id="fb-inspector-type">No block selected</div>
+        </div>
+        <div class="fb-inspector-body" id="fb-inspector-body">
+            <div style="text-align: center; color: var(--fb-text-muted); padding: 40px 10px;">
+                <div style="font-size: 32px; margin-bottom: 10px; opacity: 0.5;">👆</div>
+                Select a card block on the canvas to configure its settings.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Edge Context Menu -->
+<div class="fb-ctx-menu" id="fb-context-menu">
+    <div class="fb-ctx-search">
+        <input type="text" id="fb-ctx-search" class="fb-input" placeholder="Search message blocks..." style="padding: 6px 10px; font-size: 12px;">
+    </div>
+    <div class="fb-ctx-list" id="fb-ctx-list"></div>
+</div>
+
+<div id="fb-toast" class="fb-toast">Notification</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(() => {
+    // ───────── State Initialization ─────────
+    const SAVE_URL = '{{ path('app_facebook_bot_sequence_save') }}';
+    const state = {
+        currentId: '{{ sequence.id }}',
+        meta: {
+            name: '{{ sequence.name|escape('js') }}',
+            preferredTime: '{{ sequence.preferredTime }}',
+            timezone: '{{ sequence.timezone }}',
+            messageTag: '{{ sequence.messageTag }}',
+            allowReentry: {{ sequence.allowReentry ? 'true' : 'false' }},
+            isActive: {{ sequence.isActive ? 'true' : 'false' }},
+        },
+        nodes: new Map(),
+        edges: [],
+        viewport: { x: 80, y: 100, scale: 1 },
+        selection: { node: null, edge: null },
+        dirty: false,
+        nextId: 1,
+        templates: {{ templates|default([])|json_encode|raw }},
+        httpApis: {{ httpApis|default([])|json_encode|raw }},
+        customFields: []
+    };
+
+    // Load initial graph
+    const initialGraph = {{ sequence.graph|default(null)|json_encode|raw }};
+
+    // ───────── Blocks palette catalog definitions ─────────
+    const BLOCKS = {
+        start: {
+            label: 'Start Bot Flow',
+            icon: '👤',
+            defaults: {},
+            render: () => `
+                <div class="click-body" style="height: 50px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 20px;">👤</span>
+                </div>
+                <div class="fb-node-footer" style="border-top: 1px dashed var(--fb-border); margin-top: 10px;">
+                    <span style="font-size: 11px;">Subscribe to Sequence</span>
+                    <div class="fb-port is-out" data-role="out" data-port-id="subscribe_to_sequence" data-node-id="DYNAMIC_ID" style="bottom: 12px; right: -7px;"></div>
+                </div>
+            `,
+            inspector: () => {
+                const d = document.createElement('div');
+                d.className = 'fb-help';
+                d.innerHTML = 'This is the starting trigger for the drip sequence. Connect this to the Sequence Campaign.';
+                return d;
+            }
+        },
+        sequence_campaign: {
+            label: 'New Sequence Campaign',
+            icon: '⚙️',
+            defaults: {},
+            render: () => `
+                <div class="click-body" style="height: 50px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 20px;">⚙️</span>
+                </div>
+                <div class="fb-port is-in" data-role="in" data-port-id="in" data-node-id="DYNAMIC_ID" style="top: 36px;"></div>
+                <div class="fb-node-footer" style="border-top: 1px dashed var(--fb-border); margin-top: 10px;">
+                    <span style="font-size: 10px;">Setup Sequence / Messages</span>
+                    <div class="fb-port is-out" data-role="out" data-port-id="schedule_message" data-node-id="DYNAMIC_ID" style="bottom: 12px; right: -7px;"></div>
+                </div>
+            `,
+            inspector: () => {
+                const d = document.createElement('div');
+                d.className = 'fb-help';
+                d.innerHTML = 'This acts as the container of sequence messages. Connect its output to one or more "Send Message After" cards.';
+                return d;
+            }
+        },
+        send_message_after: {
+            label: 'Send Message After',
+            icon: '💧',
+            defaults: { delayNumber: 24, delayUnit: 'hours' },
+            render: (d) => `
+                <div class="click-body" style="height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #06b6d4;">
+                    Wait ${d.delayNumber || 24} ${d.delayUnit || 'hours'}
+                </div>
+                <div class="fb-port is-in" data-role="in" data-port-id="in" data-node-id="DYNAMIC_ID" style="top: 36px;"></div>
+                <div class="fb-node-footer" style="border-top: 1px dashed var(--fb-border); margin-top: 10px;">
+                    <span style="font-size: 11px;">Send Message</span>
+                    <div class="fb-port is-out" data-role="out" data-port-id="out" data-node-id="DYNAMIC_ID" style="bottom: 12px; right: -7px;"></div>
+                </div>
+            `,
+            inspector: (d, onChange) => {
+                const wrap = document.createDocumentFragment();
+                
+                const num = document.createElement('input');
+                num.type = 'number';
+                num.min = '1';
+                num.className = 'fb-input';
+                num.value = d.delayNumber || 24;
+                num.oninput = () => onChange({ delayNumber: parseInt(num.value, 10) || 1 });
+                wrap.appendChild(wrapField('Delay Amount', num));
+
+                const unit = document.createElement('select');
+                unit.className = 'fb-select';
+                unit.innerHTML = `
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                `;
+                unit.value = d.delayUnit || 'hours';
+                unit.onchange = () => onChange({ delayUnit: unit.value });
+                wrap.appendChild(wrapField('Delay Unit', unit));
+
+                return wrap;
+            }
+        },
+        send_text: {
+            label: 'Text Response',
+            icon: '💬',
+            defaults: { text: '' },
+            render: (d) => d.text
+                ? `<div class="fb-node-preview">${escapeHtml(d.text)}</div>`
+                : '<div class="fb-empty">Empty text message…</div>',
+            inspector: (d, onChange) => {
+                const txt = document.createElement('textarea');
+                txt.className = 'fb-textarea';
+                txt.value = d.text || '';
+                txt.placeholder = 'Type response text...';
+                txt.oninput = () => onChange({ text: txt.value });
+                return wrapField('Message Text Content', txt, 'Supports standard formatting emojis.');
+            }
+        },
+        send_image: {
+            label: 'Image File attachment',
+            icon: '🖼',
+            defaults: { url: '' },
+            render: (d) => d.url
+                ? `<div class="fb-node-preview" style="color:var(--fb-active-border); font-family:monospace; font-size:11px;">${escapeHtml(d.url)}</div>`
+                : '<div class="fb-empty">No image URL configured…</div>',
+            inspector: (d, onChange) => {
+                const inp = document.createElement('input');
+                inp.type = 'text'; inp.className = 'fb-input';
+                inp.value = d.url || '';
+                inp.placeholder = 'https://example.com/photo.jpg';
+                inp.oninput = () => onChange({ url: inp.value });
+                return wrapField('Secure Image URL (HTTPS)', inp);
+            }
+        },
+        send_template: {
+            label: 'Message Template',
+            icon: '📋',
+            defaults: { name: '', language: 'en_US' },
+            render: (d) => d.name
+                ? `<div><strong>${escapeHtml(d.name)}</strong><br><span style="opacity:0.6;font-size:11px;">${escapeHtml(d.language || 'en_US')}</span></div>`
+                : '<div class="fb-empty">Pick an approved template…</div>',
+            inspector: (d, onChange) => {
+                const wrap = document.createDocumentFragment();
+                const sel = document.createElement('select');
+                sel.className = 'fb-select';
+                sel.innerHTML = '<option value="">— select template —</option>';
+                state.templates.forEach(t => {
+                    const o = document.createElement('option');
+                    o.value = t.name;
+                    o.textContent = t.name + ' (' + (t.language || 'en_US') + ')';
+                    o.dataset.lang = t.language || 'en_US';
+                    if (t.name === d.name) o.selected = true;
+                    sel.appendChild(o);
+                });
+                sel.onchange = () => {
+                    const opt = sel.options[sel.selectedIndex];
+                    onChange({ name: sel.value, language: opt.dataset.lang || d.language || 'en_US' });
+                };
+                wrap.appendChild(wrapField('Approved Template', sel));
+                return wrap;
+            }
+        },
+        http_api: {
+            label: 'HTTP JSON API Request',
+            icon: '🔌',
+            defaults: { apiId: '', responseVar: '' },
+            render: (d) => {
+                const apiId = parseInt(d.apiId || d.api_id, 10) || 0;
+                const api = state.httpApis.find(a => parseInt(a.id, 10) === apiId);
+                if (api) {
+                    return `<div><strong>${escapeHtml(api.name)}</strong><br><span style="opacity:0.6;">${escapeHtml(api.method)}</span></div>`;
+                }
+                return '<div class="fb-empty">Select API configuration…</div>';
+            },
+            inspector: (d, onChange) => {
+                const wrap = document.createDocumentFragment();
+                const apiSelect = document.createElement('select');
+                apiSelect.className = 'fb-select';
+                let opts = '<option value="">-- Select Global HTTP API --</option>';
+                state.httpApis.forEach(api => {
+                    opts += `<option value="${api.id}">${escapeHtml(api.name)} (${escapeHtml(api.method)})</option>`;
+                });
+                apiSelect.innerHTML = opts;
+                apiSelect.value = d.apiId || d.api_id || '';
+                apiSelect.onchange = () => onChange({ apiId: apiSelect.value ? parseInt(apiSelect.value, 10) : '' });
+                wrap.appendChild(wrapField('API Request Call', apiSelect));
+
+                const resp = document.createElement('input');
+                resp.type = 'text'; resp.className = 'fb-input';
+                resp.placeholder = 'api_result';
+                resp.value = d.responseVar || '';
+                resp.oninput = () => onChange({ responseVar: resp.value });
+                wrap.appendChild(wrapField('Save Response into Variable', resp));
+                return wrap;
+            }
+        },
+        condition: {
+            label: 'Branch Condition Rule',
+            icon: '🔀',
+            defaults: { condition: '' },
+            render: (d) => d.condition
+                ? `<div class="fb-node-preview">If: ${escapeHtml(d.condition)}</div>`
+                : '<div class="fb-empty">Set condition rule…</div>',
+            inspector: (d, onChange) => {
+                const inp = document.createElement('input');
+                inp.type = 'text'; inp.className = 'fb-input';
+                inp.placeholder = 'lead_email !== ""';
+                inp.value = d.condition || '';
+                inp.oninput = () => onChange({ condition: inp.value });
+                return wrapField('Condition Expression', inp);
+            }
+        }
+    };
+
+    // ───────── DOM Elements ─────────
+    const elView = document.getElementById('fb-viewport');
+    const elStage = document.getElementById('fb-stage');
+    const elNodes = document.getElementById('fb-nodes');
+    const elEdges = document.getElementById('fb-edges');
+    const elInspectorTitle = document.getElementById('fb-inspector-title');
+    const elInspectorType = document.getElementById('fb-inspector-type');
+    const elInspectorBody = document.getElementById('fb-inspector-body');
+
+    // ───────── Canvas Navigation (Pan/Zoom) ─────────
+    let panState = null;
+    elView.addEventListener('mousedown', (e) => {
+        if (e.target !== elView && e.target !== elEdges) return;
+        panState = { startX: e.clientX, startY: e.clientY, viewX: state.viewport.x, viewY: state.viewport.y };
+        elView.classList.add('is-panning');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!panState) return;
+        state.viewport.x = panState.viewX + (e.clientX - panState.startX);
+        state.viewport.y = panState.viewY + (e.clientY - panState.startY);
+        applyTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (panState) { panState = null; elView.classList.remove('is-panning'); }
+    });
+
+    elView.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const dir = e.deltaY > 0 ? -1 : 1;
+        zoomAt(e.clientX, e.clientY, dir * 0.08);
+    }, { passive: false });
+
+    function zoomAt(cx, cy, delta) {
+        const before = clientToCanvas(cx, cy);
+        const newScale = Math.max(0.4, Math.min(1.8, state.viewport.scale + delta));
+        state.viewport.scale = newScale;
+        const after = clientToCanvas(cx, cy);
+        state.viewport.x += (after.x - before.x) * newScale;
+        state.viewport.y += (after.y - before.y) * newScale;
+        applyTransform();
+    }
+
+    function applyTransform() {
+        elStage.style.transform = `translate(${state.viewport.x}px, ${state.viewport.y}px) scale(${state.viewport.scale})`;
+    }
+
+    function clientToCanvas(clientX, clientY) {
+        const rect = elView.getBoundingClientRect();
+        return {
+            x: (clientX - rect.left - state.viewport.x) / state.viewport.scale,
+            y: (clientY - rect.top - state.viewport.y) / state.viewport.scale,
+        };
+    }
+
+    function canvasToClient(x, y) {
+        const rect = elView.getBoundingClientRect();
+        return {
+            x: x * state.viewport.scale + state.viewport.x + rect.left,
+            y: y * state.viewport.scale + state.viewport.y + rect.top,
+        };
+    }
+
+    document.getElementById('fb-zoom-in').onclick = () => zoomAt(window.innerWidth/2, window.innerHeight/2, 0.1);
+    document.getElementById('fb-zoom-out').onclick = () => zoomAt(window.innerWidth/2, window.innerHeight/2, -0.1);
+    document.getElementById('fb-zoom-fit').onclick = () => {
+        state.viewport = { x: 80, y: 100, scale: 1 };
+        applyTransform();
+    };
+
+    // ───────── Add / Select Nodes ─────────
+    function addNode(type, x, y) {
+        const id = uid();
+        const node = { id, type, x, y, data: Object.assign({}, BLOCKS[type].defaults || {}) };
+        state.nodes.set(id, node);
+        state.selection = { node: id, edge: null };
+        state.dirty = true;
+        renderAll();
+        return node;
+    }
+
+    // ───────── Rendering Canvas ─────────
+    function renderAll() {
+        renderNodes();
+        renderEdges();
+        renderInspector();
+    }
+
+    function renderNodes() {
+        elNodes.innerHTML = '';
+        state.nodes.forEach(node => {
+            const block = BLOCKS[node.type];
+            if (!block) return;
+            const card = document.createElement('div');
+            card.className = 'fb-node';
+            card.dataset.id = node.id;
+            card.dataset.type = node.type;
+            card.style.left = node.x + 'px';
+            card.style.top = node.y + 'px';
+            if (state.selection.node === node.id) card.classList.add('is-selected');
+
+            card.innerHTML = `
+                <div class="fb-node-header">
+                    <div class="fb-node-title-group">
+                        <span class="fb-node-icon">${block.icon}</span>
+                        <span class="fb-node-title">${block.label}</span>
+                    </div>
+                </div>
+                <div class="fb-node-body">
+                    ${block.render(node.data).replace(/DYNAMIC_ID/g, node.id)}
+                </div>
+            `;
+            elNodes.appendChild(card);
+        });
+    }
+
+    function renderEdges() {
+        elEdges.innerHTML = '';
+        state.edges.forEach(edge => {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const start = portPos(edge.source, 'out', edge.sourceHandle);
+            const end = portPos(edge.target, 'in', edge.targetHandle);
+            if (!start || !end) return;
+
+            path.setAttribute('d', bezier(start.x + 10000, start.y + 10000, end.x + 10000, end.y + 10000));
+            path.dataset.id = edge.id;
+            if (state.selection.edge === edge.id) path.classList.add('is-selected');
+
+            path.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                state.selection = { node: null, edge: edge.id };
+                renderAll();
+            });
+            elEdges.appendChild(path);
+        });
+    }
+
+    function portPos(nodeId, role, portId) {
+        const node = state.nodes.get(nodeId);
+        if (!node) return null;
+        if (role === 'in') {
+            return { x: node.x, y: node.y + 36 };
+        } else {
+            // Out port
+            const nodeEl = elNodes.querySelector(`.fb-node[data-id="${nodeId}"]`);
+            if (nodeEl) {
+                // Approximate heights
+                const portsCount = nodeEl.querySelectorAll('.fb-port.is-out').length;
+                return { x: node.x + 240, y: node.y + 70 };
+            }
+            return { x: node.x + 240, y: node.y + 60 };
+        }
+    }
+
+    function bezier(x1, y1, x2, y2) {
+        const dx = Math.abs(x2 - x1) * 0.5;
+        return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+    }
+
+    // ───────── Inspector Panel ─────────
+    function renderInspector() {
+        const nodeId = state.selection.node;
+        if (!nodeId) {
+            elInspectorTitle.textContent = 'Block Properties';
+            elInspectorType.textContent = 'No block selected';
+            elInspectorBody.innerHTML = `
+                <div style="text-align: center; color: var(--fb-text-muted); padding: 40px 10px;">
+                    <div style="font-size: 32px; margin-bottom: 10px; opacity: 0.5;">👆</div>
+                    Select a card block on the canvas to configure its settings.
+                </div>
+            `;
+            return;
+        }
+
+        const node = state.nodes.get(nodeId);
+        const block = BLOCKS[node.type];
+        elInspectorTitle.textContent = block.label;
+        elInspectorType.textContent = 'Block ID: ' + node.id;
+        elInspectorBody.innerHTML = '';
+
+        const forms = block.inspector(node.data, (updatedData) => {
+            node.data = Object.assign({}, node.data, updatedData);
+            state.dirty = true;
+            renderNodes();
+            renderEdges();
+        });
+        elInspectorBody.appendChild(forms);
+    }
+
+    // ───────── Drag Nodes & Draw Connections ─────────
+    let dragNode = null;
+    let connect = null;
+
+    elNodes.addEventListener('mousedown', (e) => {
+        const portEl = e.target.closest('.fb-port');
+        if (portEl) {
+            if (portEl.dataset.role !== 'out') return;
+            e.stopPropagation();
+            const node = state.nodes.get(portEl.dataset.nodeId);
+            const portId = portEl.dataset.portId;
+            const start = portPos(node.id, 'out', portId);
+            connect = {
+                fromId: node.id,
+                fromPortId: portId,
+                startX: start.x - 10000,
+                startY: start.y - 10000,
+                curX: start.x - 10000,
+                curY: start.y - 10000,
+            };
+            elView.classList.add('is-connecting');
+            highlightInputPorts(true);
+            renderTempEdge();
+            return;
+        }
+
+        const nodeEl = e.target.closest('.fb-node');
+        if (!nodeEl) return;
+        e.stopPropagation();
+        const node = state.nodes.get(nodeEl.dataset.id);
+        if (!node) return;
+        state.selection = { node: node.id, edge: null };
+        renderAll();
+        const start = clientToCanvas(e.clientX, e.clientY);
+        dragNode = { id: node.id, dx: start.x - node.x, dy: start.y - node.y };
+        nodeEl.classList.add('is-dragging');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (dragNode) {
+            const p = clientToCanvas(e.clientX, e.clientY);
+            const node = state.nodes.get(dragNode.id);
+            if (node) {
+                node.x = p.x - dragNode.dx;
+                node.y = p.y - dragNode.dy;
+                state.dirty = true;
+                renderNodes();
+                renderEdges();
+            }
+        }
+        if (connect) {
+            const p = clientToCanvas(e.clientX, e.clientY);
+            connect.curX = p.x;
+            connect.curY = p.y;
+            renderTempEdge();
+        }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+        if (dragNode) {
+            document.querySelectorAll('.fb-node.is-dragging').forEach(n => n.classList.remove('is-dragging'));
+            dragNode = null;
+        }
+        if (connect) {
+            const port = document.elementFromPoint(e.clientX, e.clientY)?.closest('.fb-port.is-in');
+            if (port) {
+                const targetId = port.dataset.nodeId;
+                const targetPortId = port.dataset.portId || 'in';
+                if (targetId !== connect.fromId) {
+                    state.edges = state.edges.filter(ed => !(ed.source === connect.fromId && ed.sourceHandle === connect.fromPortId));
+                    state.edges.push({
+                        id: 'e_' + Math.random().toString(36).slice(2, 8),
+                        source: connect.fromId,
+                        sourceHandle: connect.fromPortId,
+                        target: targetId,
+                        targetHandle: targetPortId,
+                    });
+                    state.dirty = true;
+                }
+                connect = null;
+                elView.classList.remove('is-connecting');
+                highlightInputPorts(false);
+                removeTempEdge();
+                renderEdges();
+            } else {
+                const pos = clientToCanvas(e.clientX, e.clientY);
+                openContextMenu(e.clientX, e.clientY, connect.fromId, connect.fromPortId, pos.x, pos.y);
+                connect = null;
+                elView.classList.remove('is-connecting');
+                highlightInputPorts(false);
+                removeTempEdge();
+            }
+        }
+    });
+
+    function highlightInputPorts(on) {
+        document.querySelectorAll('.fb-port.is-in').forEach(p => {
+            p.style.boxShadow = on ? '0 0 10px var(--fb-secondary-accent)' : 'none';
+        });
+    }
+
+    function renderTempEdge() {
+        if (!connect) return;
+        let path = elEdges.querySelector('path.is-temp');
+        if (!path) {
+            path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.classList.add('is-temp');
+            elEdges.appendChild(path);
+        }
+        path.setAttribute('d', bezier(
+            connect.startX + 10000, connect.startY + 10000,
+            connect.curX + 10000, connect.curY + 10000
+        ));
+    }
+    function removeTempEdge() {
+        elEdges.querySelectorAll('path.is-temp').forEach(p => p.remove());
+    }
+
+    // Keyboard backspace/delete node
+    window.addEventListener('keydown', (e) => {
+        if (e.target.matches('input, textarea, select')) return;
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (state.selection.node) {
+                const id = state.selection.node;
+                const node = state.nodes.get(id);
+                if (node && node.type !== 'start' && node.type !== 'sequence_campaign') {
+                    state.nodes.delete(id);
+                    state.edges = state.edges.filter(ed => ed.source !== id && ed.target !== id);
+                    state.selection = { node: null, edge: null };
+                    state.dirty = true;
+                    renderAll();
+                }
+            } else if (state.selection.edge) {
+                state.edges = state.edges.filter(ed => ed.id !== state.selection.edge);
+                state.selection = { node: null, edge: null };
+                state.dirty = true;
+                renderAll();
+            }
+        }
+    });
+
+    // ───────── Context Menu block list popup ─────────
+    const elCtxMenu = document.getElementById('fb-context-menu');
+    const elCtxSearch = document.getElementById('fb-ctx-search');
+    const elCtxList = document.getElementById('fb-ctx-list');
+
+    function openContextMenu(clientX, clientY, fromId, fromPortId, canvasX, canvasY) {
+        state.ctxMenuOrigin = { fromId, fromPortId, canvasX, canvasY };
+        renderContextMenuList('');
+        elCtxMenu.style.display = 'flex';
+        elCtxMenu.style.left = clientX + 'px';
+        elCtxMenu.style.top = clientY + 'px';
+        setTimeout(() => elCtxSearch.focus(), 50);
+    }
+
+    function closeContextMenu() {
+        elCtxMenu.style.display = 'none';
+        state.ctxMenuOrigin = null;
+    }
+
+    function renderContextMenuList(query) {
+        elCtxList.innerHTML = '';
+        const q = query.toLowerCase().trim();
+
+        Object.entries(BLOCKS).forEach(([type, block]) => {
+            if (type === 'start' || type === 'sequence_campaign') return;
+            if (q && !block.label.toLowerCase().includes(q)) return;
+
+            const item = document.createElement('div');
+            item.className = 'fb-ctx-item';
+            item.innerHTML = `
+                <div class="fb-ctx-icon" style="background:rgba(255,255,255,0.05);">${block.icon}</div>
+                <span>${escapeHtml(block.label)}</span>
+            `;
+            item.onclick = () => {
+                const newNode = addNode(type, state.ctxMenuOrigin.canvasX - 10, state.ctxMenuOrigin.canvasY - 30);
+                if (state.ctxMenuOrigin.fromId) {
+                    state.edges.push({
+                        id: 'e_' + Math.random().toString(36).slice(2, 8),
+                        source: state.ctxMenuOrigin.fromId,
+                        sourceHandle: state.ctxMenuOrigin.fromPortId,
+                        target: newNode.id,
+                        targetHandle: 'in'
+                    });
+                }
+                state.dirty = true;
+                closeContextMenu();
+                renderAll();
+            };
+            elCtxList.appendChild(item);
+        });
+    }
+
+    elCtxSearch.oninput = (e) => renderContextMenuList(e.target.value);
+
+    window.addEventListener('mousedown', (e) => {
+        if (elCtxMenu.style.display === 'flex' && !elCtxMenu.contains(e.target)) {
+            closeContextMenu();
+        }
+    });
+
+    // ───────── Save visual sequence campaign ─────────
+    document.getElementById('fb-save-flow').onclick = () => {
+        const campaignName = document.getElementById('seq-campaign-name').value.trim();
+        if (!campaignName) {
+            showToast('Sequence Campaign Name is required.', 'error');
+            return;
+        }
+
+        const payload = {
+            id: state.currentId || null,
+            name: campaignName,
+            preferredTime: document.getElementById('seq-delivery-time').value,
+            timezone: document.getElementById('seq-timezone').value,
+            messageTag: document.getElementById('seq-message-tag').value,
+            allowReentry: document.getElementById('seq-allow-reentry').checked,
+            connectionId: '{{ connection.id }}',
+            graph: {
+                nodes: Array.from(state.nodes.values()).map(n => ({
+                    id: n.id, type: n.type, x: Math.round(n.x), y: Math.round(n.y), data: n.data || {}
+                })),
+                edges: state.edges.map(e => ({
+                    id: e.id, source: e.source, sourceHandle: e.sourceHandle, target: e.target, targetHandle: e.targetHandle
+                })),
+                viewport: state.viewport
+            }
+        };
+
+        const btn = document.getElementById('fb-save-flow');
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+
+        fetch(SAVE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                showToast('Sequence saved successfully!', 'success');
+                state.dirty = false;
+                // Update the ID with the DB-assigned integer ID
+                if (res.sequence && res.sequence.id) {
+                    state.currentId = res.sequence.id;
+                    // Update URL so subsequent saves update the same entity
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.set('id', res.sequence.id);
+                    window.history.replaceState({}, '', newUrl);
+                }
+            } else {
+                showToast('Save failed: ' + (res.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => showToast('Save error: ' + err.message, 'error'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = '💾 Save Sequence Campaign';
+        });
+    };
+
+    // Helper functions
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function uid() { return 'n' + (state.nextId++) + '_' + Math.random().toString(36).slice(2, 7); }
+    function wrapField(label, input, help) {
+        const g = document.createElement('div');
+        g.className = 'fb-form-group';
+        const l = document.createElement('label');
+        l.textContent = label;
+        g.appendChild(l);
+        g.appendChild(input);
+        if (help) {
+            const h = document.createElement('div');
+            h.className = 'fb-help';
+            h.innerHTML = help;
+            g.appendChild(h);
+        }
+        return g;
+    }
+    function showToast(msg, kind) {
+        const t = document.getElementById('fb-toast');
+        t.textContent = msg;
+        t.className = 'fb-toast is-shown ' + (kind ? 'is-' + kind : '');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => { t.className = 'fb-toast'; }, 2400);
+    }
+
+    // ───────── Bootstrap Initialize ─────────
+    function init() {
+        if (initialGraph && Array.isArray(initialGraph.nodes) && initialGraph.nodes.length > 0) {
+            initialGraph.nodes.forEach(n => {
+                state.nodes.set(n.id, {
+                    id: n.id,
+                    type: n.type,
+                    x: n.x || 0,
+                    y: n.y || 0,
+                    data: n.data || {}
+                });
+                const m = /^n(\d+)/.exec(n.id || '');
+                if (m) state.nextId = Math.max(state.nextId, parseInt(m[1], 10) + 1);
+            });
+            (initialGraph.edges || []).forEach(e => {
+                state.edges.push({
+                    id: e.id || ('e_' + Math.random().toString(36).slice(2, 8)),
+                    source: e.source,
+                    sourceHandle: e.sourceHandle || 'out',
+                    target: e.target,
+                    targetHandle: e.targetHandle || 'in'
+                });
+            });
+            state.viewport = initialGraph.viewport || { x: 80, y: 100, scale: 1 };
+        } else {
+            // Seed defaults: Start Bot Flow -> New Sequence Campaign -> Send Message After
+            const startNode = addNode('start', 60, 200);
+            const campaignNode = addNode('sequence_campaign', 380, 200);
+            const delayNode = addNode('send_message_after', 700, 200);
+            
+            state.edges.push({
+                id: 'e_init_1',
+                source: startNode.id,
+                sourceHandle: 'subscribe_to_sequence',
+                target: campaignNode.id,
+                targetHandle: 'in'
+            });
+            state.edges.push({
+                id: 'e_init_2',
+                source: campaignNode.id,
+                sourceHandle: 'schedule_message',
+                target: delayNode.id,
+                targetHandle: 'in'
+            });
+            state.viewport = { x: 80, y: 100, scale: 1 };
+        }
+        applyTransform();
+        renderAll();
+    }
+
+    init();
+})();
+</script>
+{% endblock %}

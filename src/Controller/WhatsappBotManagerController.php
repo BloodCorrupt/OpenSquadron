@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\WhatsappBotFlow;
+use App\Entity\WhatsappDripSequence;
 use App\Entity\MessageTemplate;
 use App\Entity\AiSetting;
 use App\Entity\AiContext;
@@ -53,10 +54,7 @@ class WhatsappBotManagerController extends AbstractController
                 'position' => 'right',
                 'embedCode' => '<script src="https://opensquadron.io/js/whatsapp-widget.js" data-phone="+15550199"></script>'
             ],
-            'drip-sequences' => [
-                ['name' => 'Onboarding Drip', 'trigger' => 'NEW_SUBSCRIBER', 'stepsCount' => 3, 'isActive' => true],
-                ['name' => 'Re-engagement Sequence', 'trigger' => 'INACTIVE_30_DAYS', 'stepsCount' => 2, 'isActive' => false],
-            ],
+            'drip-sequences' => [],
             'structured-inputs' => [
                 ['fieldName' => 'lead_email', 'dataType' => 'EMAIL', 'prompt' => 'Please provide your email address for lead tracking:'],
                 ['fieldName' => 'lead_company', 'dataType' => 'TEXT', 'prompt' => 'What is your company name?'],
@@ -94,12 +92,19 @@ class WhatsappBotManagerController extends AbstractController
         ];
 
         $settings = $defaultSettings;
+        $sequences = [];
         if ($selectedConnection) {
             $dir = __DIR__ . '/../../var/whatsapp_bot_settings';
             $file = $dir . "/conn_{$selectedConnection->getId()}.json";
             if (file_exists($file)) {
                 $saved = json_decode(file_get_contents($file), true) ?: [];
                 $settings = $this->mergeSettings($defaultSettings, $saved);
+            }
+
+            // Load sequences from DB
+            $seqEntities = $em->getRepository(WhatsappDripSequence::class)->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'DESC']);
+            foreach ($seqEntities as $seq) {
+                $sequences[] = $seq->toArray();
             }
         }
 
@@ -111,6 +116,7 @@ class WhatsappBotManagerController extends AbstractController
             'connections' => $connections,
             'contexts' => $contexts,
             'settings' => $settings,
+            'sequences' => $sequences,
         ]);
     }
 
@@ -314,6 +320,136 @@ class WhatsappBotManagerController extends AbstractController
             'connection'  => $selectedConnection,
             'httpApis'    => $httpApis,
         ]);
+    }
+
+    #[Route('/whatsapp-bot-manager/sequence-builder', name: 'app_whatsapp_bot_sequence_builder', methods: ['GET'])]
+    public function sequenceBuilder(Request $request, EntityManagerInterface $em): Response
+    {
+        $connectionId = (int)$request->query->get('connectionId');
+        $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        if (!$connection) {
+            throw $this->createNotFoundException('Connection not found.');
+        }
+
+        $sequenceId = $request->query->get('id');
+        $sequence = null;
+
+        if ($sequenceId) {
+            $entity = $em->getRepository(WhatsappDripSequence::class)->find((int)$sequenceId);
+            if ($entity && $entity->getWhatsAppConnection()?->getId() === $connection->getId()) {
+                $sequence = $entity->toArray();
+            }
+        }
+
+        if (!$sequence) {
+            // Default for a brand-new sequence (not yet persisted)
+            $sequence = [
+                'id' => null,
+                'name' => 'New Sequence Campaign',
+                'trigger' => 'NEW_SUBSCRIBER',
+                'preferredTime' => 'anytime',
+                'timezone' => 'UTC',
+                'messageTag' => 'NON_PROMOTIONAL_SUBSCRIPTION',
+                'allowReentry' => false,
+                'isActive' => true,
+                'stepsCount' => 0,
+                'graph' => null
+            ];
+        }
+
+        $flows = $em->getRepository(WhatsappBotFlow::class)->findBy(['whatsAppConnection' => $connection], ['id' => 'DESC']);
+        $templates = $em->getRepository(MessageTemplate::class)->findBy([
+            'status' => 'APPROVED',
+            'whatsAppConnection' => $connection
+        ], ['id' => 'DESC']);
+        $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
+        $httpApis = $em->getRepository(\App\Entity\HttpApi::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
+
+        return $this->render('whatsapp_bot_manager/sequence_builder.html.twig', [
+            'connection' => $connection,
+            'sequence' => $sequence,
+            'flows' => $flows,
+            'templates' => $templates,
+            'contexts' => $contexts,
+            'httpApis' => $httpApis,
+        ]);
+    }
+
+    #[Route('/whatsapp-bot-manager/sequence-builder/save', name: 'app_whatsapp_bot_sequence_save', methods: ['POST'])]
+    public function saveSequence(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        $connectionId = (int)($payload['connectionId'] ?? 0);
+        $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
+        $sequenceId = $payload['id'] ?? null;
+        $entity = null;
+
+        if ($sequenceId) {
+            $entity = $em->getRepository(WhatsappDripSequence::class)->find((int)$sequenceId);
+            // Verify it belongs to the same connection
+            if ($entity && $entity->getWhatsAppConnection()?->getId() !== $connection->getId()) {
+                $entity = null;
+            }
+        }
+
+        if (!$entity) {
+            $entity = new WhatsappDripSequence();
+            $entity->setWhatsAppConnection($connection);
+            $entity->setOwner($this->getUser());
+        }
+
+        // Count how many "Send Message After" nodes we have in the graph
+        $stepsCount = 0;
+        if (isset($payload['graph']['nodes']) && is_array($payload['graph']['nodes'])) {
+            foreach ($payload['graph']['nodes'] as $node) {
+                if (($node['type'] ?? '') === 'send_message_after') {
+                    $stepsCount++;
+                }
+            }
+        }
+
+        $entity->setName(trim((string)($payload['name'] ?? 'Untitled Sequence')));
+        $entity->setTrigger(trim((string)($payload['trigger'] ?? 'NEW_SUBSCRIBER')));
+        $entity->setPreferredTime(trim((string)($payload['preferredTime'] ?? 'anytime')));
+        $entity->setTimezone(trim((string)($payload['timezone'] ?? 'UTC')));
+        $entity->setMessageTag(trim((string)($payload['messageTag'] ?? 'NON_PROMOTIONAL_SUBSCRIPTION')));
+        $entity->setAllowReentry((bool)($payload['allowReentry'] ?? false));
+        $entity->setActive((bool)($payload['isActive'] ?? true));
+        $entity->setStepsCount($stepsCount);
+        $entity->setGraphData($payload['graph'] ?? null);
+
+        $em->persist($entity);
+        $em->flush();
+
+        return new JsonResponse(['success' => true, 'sequence' => $entity->toArray()]);
+    }
+
+    #[Route('/whatsapp-bot-manager/sequence-builder/delete', name: 'app_whatsapp_bot_sequence_delete', methods: ['POST'])]
+    public function deleteSequence(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        $sequenceId = (int)($payload['sequenceId'] ?? 0);
+        $entity = $em->getRepository(WhatsappDripSequence::class)->find($sequenceId);
+        if (!$entity) {
+            return new JsonResponse(['success' => false, 'error' => 'Sequence not found.'], 404);
+        }
+
+        $em->remove($entity);
+        $em->flush();
+
+        return new JsonResponse(['success' => true]);
     }
 
     #[Route('/whatsapp-bot-manager/flows/save', name: 'app_whatsapp_bot_flows_save', methods: ['POST'])]

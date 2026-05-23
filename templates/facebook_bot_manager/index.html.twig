@@ -2146,12 +2146,12 @@
 
 
 
-        <div class="nav-item is-disabled" data-tab-target="sequences">
+        <div class="nav-item" data-tab-target="sequences">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             </span>
             <span>Drip Sequences & Delays</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
+            <span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">Active</span>
         </div>
 
         <div class="nav-item" data-tab-target="marketing-messages">
@@ -2340,17 +2340,16 @@
                     </div>
                 </div>
 
-                <!-- 6. Sequences (Currently disabled) -->
-                <div class="console-card is-disabled">
+                <!-- 6. Sequences -->
+                <div class="console-card" onclick="switchTab('sequences')">
                     <div class="console-card-header">
-                        <div class="console-icon-wrapper" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                        <div class="console-icon-wrapper" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </div>
                         <span class="console-card-title">Drip Sequences</span>
-                        <span class="console-card-status">Soon</span>
                     </div>
                     <p class="console-card-desc">Queue automated, delayed messages scheduled to run after custom user trigger dates.</p>
-                    <div class="console-card-action">
+                    <div class="console-card-action" style="color: #06b6d4;">
                         <span>Manage Sequences</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </div>
@@ -3088,31 +3087,37 @@
                     <thead>
                         <tr>
                             <th>Sequence Campaign Name</th>
-                            <th>Time Delay Interval</th>
+                            <th style="width: 140px;">Steps Count</th>
                             <th style="width: 100px; text-align: center;">Active Status</th>
-                            <th style="width: 80px;">Action</th>
+                            <th style="width: 110px; text-align: right;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in settings['sequences'] %}
-                        <tr class="sequence-row">
-                            <td><input type="text" class="glass-input seq-name" style="width:100%" value="{{ item.name }}"></td>
+                        {% for item in sequences %}
+                        {% set seqId = item.id %}
+                        <tr class="sequence-row" data-seq-id="{{ seqId }}">
                             <td>
-                                <select class="glass-input seq-delay" style="width:100%">
-                                    <option value="1 hour" {% if item.delay == '1 hour' %}selected{% endif %}>1 Hour Delay</option>
-                                    <option value="4 hours" {% if item.delay == '4 hours' %}selected{% endif %}>4 Hours Delay</option>
-                                    <option value="24 hours" {% if item.delay == '24 hours' %}selected{% endif %}>24 Hours (Next Day)</option>
-                                    <option value="72 hours" {% if item.delay == '72 hours' %}selected{% endif %}>72 Hours Delay</option>
-                                </select>
+                                <input type="hidden" class="seq-id" value="{{ seqId }}">
+                                <input type="text" class="glass-input seq-name" style="width:100%" value="{{ item.name }}">
                             </td>
-                            <td style="text-align: center;">
+                            <td style="font-family: monospace; color: var(--primary-accent); font-weight: 600; vertical-align: middle;">
+                                {{ item.stepsCount|default(0) }} steps
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;">
                                 <label class="switch-toggle">
                                     <input type="checkbox" class="seq-active" {% if item.isActive %}checked{% endif %}>
                                     <span class="slider-round"></span>
                                 </label>
                             </td>
                             <td>
-                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                                <div class="row-actions" style="justify-content: flex-end;">
+                                    <a href="{{ path('app_facebook_bot_sequence_builder') }}?id={{ seqId }}&connectionId={{ connection ? connection.id : '' }}" class="btn-row-action edit-action" title="Build Sequence Flow" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: var(--primary-accent); background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </a>
+                                    <button class="btn-row-action delete-action" onclick="deleteSequenceById('{{ seqId }}', this.closest('tr'))" title="Delete Sequence" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: #f87171; background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -4696,6 +4701,7 @@
     let postbacks = {{ settings['postbacks']|default([])|json_encode|raw }};
     let marketingMessages = {{ settings['marketing-messages']|default([])|json_encode|raw }};
     let globalApiConnectors = {{ settings['api-connectors']|default([])|json_encode|raw }};
+    let sequencesList = {{ sequences|json_encode|raw }};
     
     // Webhooks backward compatibility conversion
     let rawWebhooks = {{ settings['outbound-webhooks']|default([])|json_encode|raw }};
@@ -5762,39 +5768,124 @@
         const tr = document.createElement('tr');
         tr.className = 'sequence-row';
         tr.innerHTML = `
-            <td><input type="text" class="glass-input seq-name" style="width:100%"></td>
             <td>
-                <select class="glass-input seq-delay" style="width:100%">
-                    <option value="1 hour">1 Hour Delay</option>
-                    <option value="4 hours">4 Hours Delay</option>
-                    <option value="24 hours" selected>24 Hours (Next Day)</option>
-                    <option value="72 hours">72 Hours Delay</option>
-                </select>
+                <input type="hidden" class="seq-id" value="">
+                <input type="text" class="glass-input seq-name" style="width:100%" placeholder="e.g. Campaign Name">
             </td>
-            <td style="text-align: center;">
+            <td style="font-family: monospace; color: var(--primary-accent); font-weight: 600; vertical-align: middle;">
+                0 steps
+            </td>
+            <td style="text-align: center; vertical-align: middle;">
                 <label class="switch-toggle">
                     <input type="checkbox" class="seq-active" checked>
                     <span class="slider-round"></span>
                 </label>
             </td>
             <td>
-                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <div class="row-actions" style="justify-content: flex-end;">
+                    <span class="btn-row-action edit-action" title="Save first to build flow" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: var(--primary-accent); opacity: 0.4; cursor: not-allowed; background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </span>
+                    <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()" title="Delete Sequence" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: #f87171; background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
+                </div>
             </td>
         `;
         document.querySelector('#sequences-table tbody').appendChild(tr);
     }
 
-    function saveSequences() {
-        const rows = [];
-        document.querySelectorAll('.sequence-row').forEach(tr => {
-            const name = tr.querySelector('.seq-name').value.trim();
-            const delay = tr.querySelector('select.seq-delay').value;
-            const isActive = tr.querySelector('.seq-active').checked;
-            if (name !== '') {
-                rows.push({ name, delay, isActive });
+    function deleteSequenceById(seqId, rowEl) {
+        if (!seqId) {
+            rowEl.remove();
+            return;
+        }
+        if (!confirm('Are you sure you want to delete this sequence?')) return;
+        fetch('{{ path('app_facebook_bot_sequence_delete') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sequenceId: seqId })
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                rowEl.remove();
+                sequencesList = sequencesList.filter(s => s.id != seqId);
+                showToast('Sequence deleted successfully.', 'success');
+            } else {
+                showToast(data.error || 'Delete failed.', 'error');
             }
+        }).catch(() => showToast('Network error deleting sequence.', 'error'));
+    }
+
+    function saveSequences() {
+        const rows = document.querySelectorAll('.sequence-row');
+        let pending = 0;
+        let errors = 0;
+        rows.forEach(tr => {
+            const id = tr.querySelector('.seq-id').value;
+            const name = tr.querySelector('.seq-name').value.trim();
+            const isActive = tr.querySelector('.seq-active').checked;
+            if (name === '') return;
+
+            const existing = (sequencesList || []).find(s => String(s.id) === String(id));
+            const payload = {
+                connectionId: activeConnectionId,
+                id: id || null,
+                name: name,
+                preferredTime: existing ? existing.preferredTime : 'anytime',
+                timezone: existing ? existing.timezone : 'UTC',
+                messageTag: existing ? existing.messageTag : 'NON_PROMOTIONAL_SUBSCRIPTION',
+                allowReentry: existing ? existing.allowReentry : false,
+                isActive: isActive,
+                graph: existing ? existing.graph : null
+            };
+            pending++;
+            fetch('{{ path('app_facebook_bot_sequence_save') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(data => {
+                if (data.success && data.sequence) {
+                    // Update the hidden ID with the DB-assigned id
+                    tr.querySelector('.seq-id').value = data.sequence.id;
+                    // Update sequencesList cache
+                    const idx = sequencesList.findIndex(s => String(s.id) === String(data.sequence.id));
+                    if (idx >= 0) {
+                        sequencesList[idx] = data.sequence;
+                    } else {
+                        sequencesList.push(data.sequence);
+                    }
+                    // Refresh the edit link now that we have a DB id
+                    const actionsDiv = tr.querySelector('.row-actions');
+                    const editEl = actionsDiv.querySelector('.edit-action');
+                    if (editEl && editEl.tagName !== 'A') {
+                        const a = document.createElement('a');
+                        a.href = `{{ path('app_facebook_bot_sequence_builder') }}?id=${data.sequence.id}&connectionId=${activeConnectionId}`;
+                        a.className = editEl.className;
+                        a.title = 'Build Sequence Flow';
+                        a.style.cssText = editEl.style.cssText;
+                        a.style.opacity = '1';
+                        a.style.cursor = 'pointer';
+                        a.innerHTML = editEl.innerHTML;
+                        editEl.replaceWith(a);
+                    }
+                } else {
+                    errors++;
+                }
+                pending--;
+                if (pending === 0) {
+                    showToast(errors ? 'Some sequences failed to save.' : 'Sequences saved!', errors ? 'error' : 'success');
+                }
+            }).catch(() => {
+                errors++;
+                pending--;
+                if (pending === 0) {
+                    showToast('Network error saving sequences.', 'error');
+                }
+            });
         });
-        postSettingsSave('sequences', rows);
+        if (pending === 0) {
+            showToast('No sequences to save.', 'info');
+        }
     }
 
     // 7. Captured Forms & Inputs Saver
