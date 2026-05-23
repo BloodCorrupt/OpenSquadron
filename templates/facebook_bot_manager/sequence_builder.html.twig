@@ -983,16 +983,25 @@
     function portPos(nodeId, role, portId) {
         const node = state.nodes.get(nodeId);
         if (!node) return null;
+
+        const nodeEl = elNodes.querySelector(`.fb-node[data-id="${nodeId}"]`);
+        if (nodeEl) {
+            let selector = `.fb-port[data-role="${role}"]`;
+            if (portId) selector += `[data-port-id="${portId}"]`;
+            const portEl = nodeEl.querySelector(selector);
+            if (portEl) {
+                const portRect = portEl.getBoundingClientRect();
+                const nodeRect = nodeEl.getBoundingClientRect();
+                return {
+                    x: node.x + (portRect.left - nodeRect.left + portRect.width / 2) / state.viewport.scale,
+                    y: node.y + (portRect.top - nodeRect.top + portRect.height / 2) / state.viewport.scale
+                };
+            }
+        }
+
         if (role === 'in') {
             return { x: node.x, y: node.y + 36 };
         } else {
-            // Out port
-            const nodeEl = elNodes.querySelector(`.fb-node[data-id="${nodeId}"]`);
-            if (nodeEl) {
-                // Approximate heights
-                const portsCount = nodeEl.querySelectorAll('.fb-port.is-out').length;
-                return { x: node.x + 240, y: node.y + 70 };
-            }
             return { x: node.x + 240, y: node.y + 60 };
         }
     }
@@ -1047,10 +1056,10 @@
             connect = {
                 fromId: node.id,
                 fromPortId: portId,
-                startX: start.x - 10000,
-                startY: start.y - 10000,
-                curX: start.x - 10000,
-                curY: start.y - 10000,
+                startX: start.x,
+                startY: start.y,
+                curX: start.x,
+                curY: start.y,
             };
             elView.classList.add('is-connecting');
             highlightInputPorts(true);
