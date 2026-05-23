@@ -802,36 +802,183 @@
         color: #f8fafc !important;
     }
 
-    /* Modal Form styling */
+    /* Premium Glass Modal Form styling */
     .modal-overlay {
-        display: none;
         position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 1000;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(6px);
+        z-index: 10000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 20px;
     }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-        background: #0b1329;
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        width: 95%;
-        max-width: 600px;
-        padding: 30px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    .modal-overlay.is-active, .modal-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .modal-card {
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        width: 100%;
+        max-width: 900px;
         max-height: 90vh;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+    .modal-overlay.is-active .modal-card, .modal-overlay.open .modal-card {
+        transform: scale(1);
     }
     .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 24px;
+        padding: 16px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .modal-title { font-size: 20px; font-weight: 700; color: #fff; margin: 0; }
+    .modal-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+    }
+    .modal-close-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+    }
+    .modal-close-btn:hover {
+        color: #fff;
+    }
+    .modal-close-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(15, 23, 42, 0.2);
+    }
+    .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }
+    .switch-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    .switch-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 22px;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .3s;
+        border-radius: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #a0aec0;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: rgba(16, 185, 129, 0.2);
+        border-color: rgba(16, 185, 129, 0.4);
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+        background-color: #10b981;
+    }
+    .toggle-switch-blue input:checked + .toggle-slider {
+        background-color: rgba(6, 182, 212, 0.2);
+        border-color: rgba(6, 182, 212, 0.4);
+    }
+    .toggle-switch-blue input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+        background-color: var(--primary-accent);
+    }
+    .form-group-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .form-group-card {
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 14px;
+        background: rgba(15, 23, 42, 0.15);
+    }
+    .modal-input {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .modal-input:focus {
+        border-color: var(--primary-accent);
+        outline: none;
+    }
     .modal-close {
         background: rgba(255,255,255,0.08);
         border: none;
@@ -1208,12 +1355,11 @@
             <span>Captured Forms & Inputs</span>
         </div>
 
-        <div class="nav-item is-disabled" data-tab-target="dynamic-flows">
+        <div class="nav-item" data-tab-target="whatsapp-flows-form">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
             </span>
-            <span>In-App Dynamic Flows</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
+            <span>Whatsapp Flows Form</span>
         </div>
 
         <div class="nav-item" data-tab-target="action-buttons">
@@ -1233,12 +1379,11 @@
             <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
         </div>
 
-        <div class="nav-item is-disabled" data-tab-target="outbound-streams">
+        <div class="nav-item" data-tab-target="outbound-webhooks">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
             </span>
-            <span>Outbound Streams & Webhooks</span>
-            <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
+            <span>Outbound Webhooks</span>
         </div>
 
         <div class="nav-item is-disabled" data-tab-target="growth-widgets">
@@ -1367,15 +1512,15 @@
                     </div>
                 </div>
 
-                <!-- 7. In-App Dynamic Flows -->
-                <div class="console-card is-disabled">
+                <!-- 7. Whatsapp Flows Form -->
+                <div class="console-card" onclick="switchTab('whatsapp-flows-form')">
                     <div class="console-card-header">
                         <div class="console-icon-wrapper" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
                         </div>
-                        <span class="console-card-title">In-App Dynamic Flows</span>
+                        <span class="console-card-title">Whatsapp Flows Form</span>
                     </div>
-                    <p class="console-card-desc">Manage WhatsApp-native multi-step custom forms (surveys, booking requests) embedded directly inside chat threads.</p>
+                    <p class="console-card-desc">Create WhatsApp-native multi-step custom forms (surveys, booking requests) embedded directly inside chat threads.</p>
                     <div class="console-card-action" style="color: #f59e0b;">
                         <span>Manage Flows</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -1412,8 +1557,8 @@
                     </div>
                 </div>
 
-                <!-- 10. Outbound Streams & Webhooks -->
-                <div class="console-card is-disabled">
+                <!-- 10. Outbound Webhooks -->
+                <div class="console-card" onclick="switchTab('outbound-webhooks')">
                     <div class="console-card-header">
                         <div class="console-icon-wrapper" style="background: rgba(45, 212, 191, 0.1); color: #2dd4bf; border-color: rgba(45, 212, 191, 0.2);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
@@ -2004,52 +2149,143 @@
         </div>
     </div>
 
-    {# 7. In-App Dynamic Flows Content Pane #}
-    <div class="manager-content-pane" id="pane-dynamic-flows">
+    {# 7. Whatsapp Flows Form Content Pane #}
+    <div class="manager-content-pane" id="pane-whatsapp-flows-form">
         <div class="content-header">
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-                    <span>In-App Dynamic Flows</span>
+                    <span>Whatsapp Flows Form</span>
                 </h1>
-                <div class="content-subtitle">WhatsApp-native multi-step interactive forms inside chat threads.</div>
+                <div class="content-subtitle">Build WhatsApp-native multi-step interactive forms.</div>
             </div>
-            <button class="btn-action btn-create" onclick="addFlowRow()">Create Dynamic Flow</button>
         </div>
 
-        <div class="glass-form-card">
-            <div class="table-container">
-                <table class="custom-table" id="flows-grid-table">
-                    <thead>
-                        <tr>
-                            <th>Flow Name</th>
-                            <th>Flow ID Reference</th>
-                            <th>Status Badge</th>
-                            <th style="width: 80px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in settings['dynamic-flows'] %}
-                        <tr class="flow-grid-row">
-                            <td><input type="text" class="glass-input df-name" style="width:100%" value="{{ item.name }}"></td>
-                            <td><input type="text" class="glass-input df-id" style="width:100%; font-family:monospace;" value="{{ item.flowId }}"></td>
-                            <td>
-                                <select class="glass-input df-status" style="width:100%">
-                                    <option value="PUBLISHED" {% if item.status == 'PUBLISHED' %}selected{% endif %}>PUBLISHED</option>
-                                    <option value="DRAFT" {% if item.status == 'DRAFT' %}selected{% endif %}>DRAFT</option>
-                                </select>
-                            </td>
-                            <td>
-                                <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="glass-form-card" style="padding:0; overflow:hidden;">
+            <div style="display: flex; height: 75vh;">
+                <!-- Builder Canvas -->
+                <div style="flex: 1; padding: 20px; background: rgba(0,0,0,0.2); overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" style="display:block; margin-bottom:6px;">Flow Name</label>
+                        <input type="text" class="glass-input" placeholder="e.g. Feedback Form" style="width:100%;">
+                    </div>
+                    
+                    <div style="display:flex; gap:15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label class="form-label" style="display:block; margin-bottom:6px;">Flow Categories *</label>
+                            <div class="multi-select-container" style="position:relative;">
+                                <div class="multi-select-tags glass-input" style="width:100%; min-height: 40px; display:flex; flex-wrap:wrap; gap:4px; align-items:center; cursor:pointer;" onclick="toggleCategoryDropdown()">
+                                    <span style="color:var(--text-muted); padding:4px;">Select categories...</span>
+                                </div>
+                                <div class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; width:100%; background: #1e293b; border: 1px solid var(--glass-border); border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 10;">
+                                    <div class="ms-option" data-val="SIGN_UP">SIGN_UP</div>
+                                    <div class="ms-option" data-val="SIGN_IN">SIGN_IN</div>
+                                    <div class="ms-option" data-val="APPOINTMENT_BOOKING">APPOINTMENT_BOOKING</div>
+                                    <div class="ms-option" data-val="LEAD_GENERATION">LEAD_GENERATION</div>
+                                    <div class="ms-option" data-val="CONTACT_US">CONTACT_US</div>
+                                    <div class="ms-option" data-val="CUSTOMER_SUPPORT">CUSTOMER_SUPPORT</div>
+                                    <div class="ms-option" data-val="SURVEY">SURVEY</div>
+                                    <div class="ms-option" data-val="OTHER">OTHER</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="flow-categories-hidden" value="">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label class="form-label" style="display:block; margin-bottom:6px;">Screen Unique Name</label>
+                            <input type="text" class="glass-input" placeholder="e.g. screen_1" style="width:100%;">
+                        </div>
+                    </div>
 
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn-action btn-create" onclick="saveDynamicFlows()">Save Dynamic Flows</button>
+                    <div class="form-group">
+                        <label class="form-label" style="display:block; margin-bottom:6px;">Form Title</label>
+                        <input type="text" class="glass-input" placeholder="Form Title" style="width:100%;">
+                    </div>
+
+                    <!-- Builder Canvas or Template JSON -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label class="form-label" style="display:block; margin:0;">Form Layout</label>
+                            <div style="display:flex; gap:10px;">
+                                <label style="font-size:12px; color:rgba(255,255,255,0.7); cursor:pointer;">
+                                    <input type="radio" name="flow_mode" value="builder" checked onchange="toggleFlowMode(this.value)"> Visual Builder
+                                </label>
+                                <label style="font-size:12px; color:rgba(255,255,255,0.7); cursor:pointer;">
+                                    <input type="radio" name="flow_mode" value="json" onchange="toggleFlowMode(this.value)"> Meta Template JSON
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Drag and Drop Canvas -->
+                        <div id="wa-form-builder-canvas" style="flex: 1; min-height: 200px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="text-align: center; color: rgba(255,255,255,0.3); font-style: italic; margin-top: 50px;" id="wa-form-builder-placeholder">
+                                Click elements on the right to add them to your form.
+                            </div>
+                        </div>
+
+                        <!-- Meta Template JSON Editor -->
+                        <div id="wa-form-json-editor" style="display:none; flex: 1; min-height: 200px;">
+                            <textarea class="glass-input" style="width:100%; height:100%; font-family:monospace; font-size:12px; resize:none;" placeholder="{&#10;  &quot;version&quot;: &quot;3.1&quot;,&#10;  &quot;data_api_version&quot;: &quot;3.0&quot;,&#10;  &quot;routing_model&quot;: { ... }&#10;}"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label class="form-label" style="display:block; margin-bottom:6px;">Reply after Submit</label>
+                            <select class="glass-input" style="width:100%;">
+                                <option>Thank you message</option>
+                                <option>Trigger another flow</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label class="form-label" style="display:block; margin-bottom:6px;">Select HTTP API for send data</label>
+                            <select class="glass-input" style="width:100%;">
+                                <option>None</option>
+                                <option>Webhook 1</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Element Palette -->
+                <div style="width: 250px; background: rgba(255,255,255,0.03); border-left: 1px solid var(--glass-border); padding: 20px; overflow-y: auto;">
+                    <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 15px; color: #fff;">Form Elements</h3>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button class="btn-action btn-secondary" onclick="addFormElement('text')" style="width:100%; text-align:left; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                            Text Input
+                        </button>
+                        <button class="btn-action btn-secondary" onclick="addFormElement('number')" style="width:100%; text-align:left; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                            Number Input
+                        </button>
+                        <button class="btn-action btn-secondary" onclick="addFormElement('email')" style="width:100%; text-align:left; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            Email Input
+                        </button>
+                        <button class="btn-action btn-secondary" onclick="addFormElement('radio')" style="width:100%; text-align:left; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+                            Radio Group
+                        </button>
+                        <button class="btn-action btn-secondary" onclick="addFormElement('checkbox')" style="width:100%; text-align:left; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                            Checkbox Group
+                        </button>
+                        <button class="btn-action btn-secondary" onclick="addFormElement('dropdown')" style="width:100%; text-align:left; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><polyline points="8 10 12 14 16 10"></polyline></svg>
+                            Dropdown
+                        </button>
+                        <button class="btn-action btn-secondary" onclick="addFormElement('date')" style="width:100%; text-align:left; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:8px;vertical-align:middle;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            Date Picker
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn-cancel" onclick="clearFormBuilder()" style="width:100%;">Clear Canvas</button>
+                        <button class="btn-action btn-secondary" onclick="previewMetaFlow()" style="width:100%; background: #3b82f6; border-color: #3b82f6; color: #fff;">Preview from Meta</button>
+                        <button class="btn-action btn-create" onclick="saveWhatsappFlow()" style="width:100%;">Sync & Save to Meta</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2290,51 +2526,34 @@
         </div>
     </div>
 
-    {# 10. Outbound Streams & Webhooks Content Pane #}
-    <div class="manager-content-pane" id="pane-outbound-streams">
+    {# 10. Outbound Webhooks Content Pane #}
+    <div class="manager-content-pane" id="pane-outbound-webhooks">
         <div class="content-header">
             <div>
                 <h1 class="content-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><circle cx="12" cy="19" r="2"></circle></svg>
-                    <span>Outbound Streams & Webhooks</span>
+                    <span>Outbound Webhooks</span>
                 </h1>
-                <div class="content-subtitle">Publish unified real-time conversation message payloads securely to your target external CRMs.</div>
+                <div class="content-subtitle">Publish unified real-time conversation message payloads securely to your target external webhooks.</div>
             </div>
+            <button class="btn-action btn-create" onclick="openOutboundWebhookModal()">Create Webhook</button>
         </div>
 
-        <div class="glass-form-card" style="max-width: 680px;">
-            <div class="form-group">
-                <label class="form-label" for="webhook-url">Target Stream Endpoint URL</label>
-                <div class="form-helper" style="margin-bottom: 6px;">The server address where OpenSquadron will publish real-time HTTP POST JSON event updates.</div>
-                <input type="url" id="webhook-url" class="glass-input" style="font-family:monospace;" placeholder="https://api.yourcrm.com/v1/webhook" value="{{ settings['outbound-streams'].webhookUrl }}">
-            </div>
-
-            <div class="form-group" style="margin-top:10px;">
-                <label class="form-label">Subscribed Stream Events</label>
-                <div class="form-helper" style="margin-bottom: 12px;">Toggle which event payloads are pushed to the target webhook stream.</div>
-                
-                <div style="display:flex; flex-direction:column; gap:12px; background:rgba(0,0,0,0.15); border-radius:8px; padding:15px; border:1px solid var(--glass-border);">
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="message_received" {% if 'message_received' in settings['outbound-streams'].activeEvents %}checked{% endif %} style="accent-color: var(--wa-primary);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Received (Incoming customer messages)</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="message_sent" {% if 'message_sent' in settings['outbound-streams'].activeEvents %}checked{% endif %} style="accent-color: var(--wa-primary);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Message Sent (Bot response updates)</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="opt_in" {% if 'opt_in' in settings['outbound-streams'].activeEvents %}checked{% endif %} style="accent-color: var(--wa-primary);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Opt In Triggered (Subscriber opt-ins)</span>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" class="webhook-event-cb" value="opt_out" {% if 'opt_out' in settings['outbound-streams'].activeEvents %}checked{% endif %} style="accent-color: var(--wa-primary);">
-                        <span style="font-size:13px; color:#fff; font-weight:600;">Opt Out Triggered (Subscriber unsubscribes)</span>
-                    </label>
-                </div>
-            </div>
-
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn-action btn-create" onclick="saveOutboundStreams()">Save Webhook Stream</button>
+        <div class="glass-form-card">
+            <div class="table-container">
+                <table class="custom-table" id="outbound-webhooks-table">
+                    <thead>
+                        <tr>
+                            <th>Webhook Name</th>
+                            <th>Outbound Webhook URL</th>
+                            <th>Triggers</th>
+                            <th style="width: 100px; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rendered dynamically by renderOutboundWebhooksTable() -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -2417,7 +2636,7 @@
 
 {# ───────── Create Template Modal Overlay ───────── #}
 <div class="modal-overlay" id="createTemplateModal">
-    <div class="modal-box">
+    <div class="modal-card">
         <div class="modal-header">
             <h2 class="modal-title">Create Message Template</h2>
             <button class="modal-close" onclick="closeTemplateModal()">&times;</button>
@@ -2503,11 +2722,141 @@
     </div>
 </div>
 
+<!-- Out-bound Webhook Modal -->
+<div id="outbound-webhook-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 750px;">
+        <div class="modal-header">
+            <div class="modal-title" id="outbound-webhook-modal-title">Out-bound Webhook</div>
+            <button class="modal-close-btn" onclick="closeOutboundWebhookModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body" style="gap: 16px;">
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Webhook Name *</label>
+                <input type="text" id="outbound-webhook-name" class="modal-input" placeholder="Enter webhook name">
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Out-bound Webhook URL *</label>
+                <input type="url" id="outbound-webhook-url" class="modal-input" placeholder="Enter outbound webhook URL">
+            </div>
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Choose Events to Trigger Webhook *</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-trigger-cb" value="POSTBACK">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">POSTBACK</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-trigger-cb" value="USER_INPUT_FLOW">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">USER INPUT FLOW</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Select Payload Data Attributes *</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="SUBSCRIBER_ID">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">SUBSCRIBER ID</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="LOCATION">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">LOCATION</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="SUBSCRIBER_NAME">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">SUBSCRIBER NAME</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="LABELS">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">LABELS</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="PHONE_NUMBER">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">PHONE NUMBER</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="POSTBACK_ID">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">POSTBACK ID</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="DATE_OF_BIRTH">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">DATE OF BIRTH</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="toggle-switch toggle-switch-blue">
+                            <input type="checkbox" class="outbound-webhook-send-cb" value="INPUT_FLOW_DATA">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size: 12px; font-weight: 600; color: #fff;">INPUT FLOW DATA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #fff;" onclick="saveOutboundWebhookModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>Save</span>
+            </button>
+            <button class="btn-action btn-secondary" onclick="closeOutboundWebhookModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <span>Close</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="toast" class="fb-toast">Message</div>
 
 <script>
     const activeConnectionId = '{{ connection ? connection.id : "" }}';
     let sequencesList = {{ sequences|json_encode|raw }};
+
+    // Webhooks compatibility
+    let rawWebhooks = {{ settings['outbound-webhooks']|default([])|json_encode|raw }};
+    let globalOutboundWebhooks = [];
+    if (rawWebhooks) {
+        if (Array.isArray(rawWebhooks)) {
+            globalOutboundWebhooks = rawWebhooks;
+        } else if (typeof rawWebhooks === 'object' && rawWebhooks.url) {
+            globalOutboundWebhooks = [{
+                name: 'Default Webhook',
+                url: rawWebhooks.url,
+                triggers: rawWebhooks.events || [],
+                sendData: ['SUBSCRIBER_ID', 'SUBSCRIBER_NAME']
+            }];
+        }
+    }
 
     function showToast(msg, type = 'success') {
         const el = document.getElementById('toast');
@@ -2982,6 +3331,7 @@
     // Initialize mock preview on document load
     document.addEventListener('DOMContentLoaded', () => {
         updateButtonsPreview();
+        renderOutboundWebhooksTable();
     });
 
     // 9. eCommerce Automations Saver
@@ -2994,14 +3344,128 @@
         postSettingsSave('ecommerce-automations', { abandonedCartActive, abandonedCartDelay, abandonedCartTemplate, orderConfirmationActive, orderConfirmationTemplate });
     }
 
-    // 10. Outbound Streams Saver
-    function saveOutboundStreams() {
-        const webhookUrl = document.getElementById('webhook-url').value.trim();
-        const activeEvents = [];
-        document.querySelectorAll('.webhook-event-cb:checked').forEach(cb => {
-            activeEvents.push(cb.value);
+    // 10. Outbound Webhooks CRUD
+    let editingWebhookIndex = null;
+
+    function renderOutboundWebhooksTable() {
+        const tbody = document.querySelector('#outbound-webhooks-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (!globalOutboundWebhooks || globalOutboundWebhooks.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No Out-bound Webhooks configured.</td></tr>`;
+            return;
+        }
+
+        globalOutboundWebhooks.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'webhook-row';
+
+            const triggers = item.triggers || [];
+            let triggersHtml = '';
+            if (triggers.length === 0) {
+                triggersHtml = '<span style="color:var(--text-muted); font-size:12px;">None</span>';
+            } else {
+                triggersHtml = triggers.map(t => `<span class="nav-item-status" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); display: inline-block; margin-right: 4px; padding: 2px 6px; font-size: 10px; border-radius: 4px; font-weight: 600;">${t}</span>`).join(' ');
+            }
+
+            tr.innerHTML = `
+                <td style="font-weight:600; color:#fff;">${escapeHtml(item.name)}</td>
+                <td style="font-family:monospace; font-size:12px; color:var(--text-muted);">${escapeHtml(item.url)}</td>
+                <td>${triggersHtml}</td>
+                <td>
+                    <div class="row-actions" style="justify-content: flex-end;">
+                        <button class="btn-row-action edit-action" onclick="openOutboundWebhookModal(${index})" title="Edit Webhook">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="btn-row-action delete-action" onclick="deleteOutboundWebhook(${index})" title="Delete Webhook">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
-        postSettingsSave('outbound-streams', { webhookUrl, activeEvents });
+    }
+
+    function openOutboundWebhookModal(index = null) {
+        editingWebhookIndex = index;
+        const nameInput = document.getElementById('outbound-webhook-name');
+        const urlInput = document.getElementById('outbound-webhook-url');
+        const titleEl = document.getElementById('outbound-webhook-modal-title');
+
+        document.querySelectorAll('.outbound-webhook-trigger-cb').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.outbound-webhook-send-cb').forEach(cb => cb.checked = false);
+
+        if (index !== null) {
+            const item = globalOutboundWebhooks[index];
+            titleEl.textContent = 'Edit Out-bound Webhook';
+            nameInput.value = item.name || '';
+            urlInput.value = item.url || '';
+
+            if (item.triggers) {
+                item.triggers.forEach(val => {
+                    const cb = document.querySelector(`.outbound-webhook-trigger-cb[value="${val}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+            if (item.sendData) {
+                item.sendData.forEach(val => {
+                    const cb = document.querySelector(`.outbound-webhook-send-cb[value="${val}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+        } else {
+            titleEl.textContent = 'Out-bound Webhook';
+            nameInput.value = '';
+            urlInput.value = '';
+        }
+
+        document.getElementById('outbound-webhook-modal').classList.add('open');
+    }
+
+    function closeOutboundWebhookModal() {
+        document.getElementById('outbound-webhook-modal').classList.remove('open');
+    }
+
+    function saveOutboundWebhookModal() {
+        const name = document.getElementById('outbound-webhook-name').value.trim();
+        const url = document.getElementById('outbound-webhook-url').value.trim();
+
+        if (!name || !url) {
+            showToast('Please provide a name and outbound webhook URL.', 'error');
+            return;
+        }
+
+        const triggers = [];
+        document.querySelectorAll('.outbound-webhook-trigger-cb:checked').forEach(cb => {
+            triggers.push(cb.value);
+        });
+
+        const sendData = [];
+        document.querySelectorAll('.outbound-webhook-send-cb:checked').forEach(cb => {
+            sendData.push(cb.value);
+        });
+
+        const webhookData = { name, url, triggers, sendData };
+
+        if (editingWebhookIndex !== null) {
+            globalOutboundWebhooks[editingWebhookIndex] = webhookData;
+        } else {
+            globalOutboundWebhooks.push(webhookData);
+        }
+
+        closeOutboundWebhookModal();
+        postSettingsSave('outbound-webhooks', globalOutboundWebhooks);
+        renderOutboundWebhooksTable();
+    }
+
+    function deleteOutboundWebhook(index) {
+        if (confirm('Are you sure you want to delete this Out-bound Webhook?')) {
+            globalOutboundWebhooks.splice(index, 1);
+            postSettingsSave('outbound-webhooks', globalOutboundWebhooks);
+            renderOutboundWebhooksTable();
+        }
     }
 
     // 11. Growth Widget Previewer & Saver
@@ -3722,6 +4186,10 @@
         if (e.target === this) closeTemplateModal();
     });
 
+    document.getElementById('outbound-webhook-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeOutboundWebhookModal();
+    });
+
     // ───────── AI Agent Saver ─────────
     function saveAiAgentSettings() {
         const aiActive = document.getElementById('ai-agent-active').checked;
@@ -3834,6 +4302,195 @@
         const url = new URL(window.location);
         url.searchParams.set('connectionId', connectionId);
         window.location.href = url.toString();
+    }
+
+    // 7. Whatsapp Flows Form Builder Logic
+    function addFormElement(type) {
+        const canvas = document.getElementById('wa-form-builder-canvas');
+        const placeholder = document.getElementById('wa-form-builder-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+
+        const elId = 'elem_' + Math.random().toString(36).substr(2, 9);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'wa-form-element';
+        wrapper.id = elId;
+        wrapper.style.cssText = 'background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; position: relative; cursor: grab;';
+        
+        let contentHtml = '';
+        if (type === 'text') {
+            contentHtml = `
+                <div style="font-weight:600; margin-bottom:10px; color:#fff;">Text Input</div>
+                <input type="text" class="glass-input" placeholder="Field Label" style="width:100%; margin-bottom:8px;">
+                <input type="text" class="glass-input" placeholder="Placeholder text" style="width:100%; font-size:12px; color:rgba(255,255,255,0.5);">
+            `;
+        } else if (type === 'number') {
+            contentHtml = `
+                <div style="font-weight:600; margin-bottom:10px; color:#fff;">Number Input</div>
+                <input type="text" class="glass-input" placeholder="Field Label" style="width:100%; margin-bottom:8px;">
+                <input type="text" class="glass-input" placeholder="Placeholder text" style="width:100%; font-size:12px; color:rgba(255,255,255,0.5);">
+            `;
+        } else if (type === 'email') {
+            contentHtml = `
+                <div style="font-weight:600; margin-bottom:10px; color:#fff;">Email Input</div>
+                <input type="text" class="glass-input" placeholder="Field Label" style="width:100%; margin-bottom:8px;">
+            `;
+        } else if (type === 'radio') {
+            contentHtml = `
+                <div style="font-weight:600; margin-bottom:10px; color:#fff;">Radio Group</div>
+                <input type="text" class="glass-input" placeholder="Field Label" style="width:100%; margin-bottom:8px;">
+                <textarea class="glass-input" placeholder="Options (one per line)" style="width:100%; min-height:60px; font-size:12px; color:rgba(255,255,255,0.8);"></textarea>
+            `;
+        } else if (type === 'checkbox') {
+            contentHtml = `
+                <div style="font-weight:600; margin-bottom:10px; color:#fff;">Checkbox Group</div>
+                <input type="text" class="glass-input" placeholder="Field Label" style="width:100%; margin-bottom:8px;">
+                <textarea class="glass-input" placeholder="Options (one per line)" style="width:100%; min-height:60px; font-size:12px; color:rgba(255,255,255,0.8);"></textarea>
+            `;
+        } else if (type === 'dropdown') {
+            contentHtml = `
+                <div style="font-weight:600; margin-bottom:10px; color:#fff;">Dropdown</div>
+                <input type="text" class="glass-input" placeholder="Field Label" style="width:100%; margin-bottom:8px;">
+                <textarea class="glass-input" placeholder="Options (one per line)" style="width:100%; min-height:60px; font-size:12px; color:rgba(255,255,255,0.8);"></textarea>
+            `;
+        } else if (type === 'date') {
+            contentHtml = `
+                <div style="font-weight:600; margin-bottom:10px; color:#fff;">Date Picker</div>
+                <input type="text" class="glass-input" placeholder="Field Label" style="width:100%;">
+            `;
+        }
+
+        wrapper.innerHTML = `
+            <div style="position:absolute; top:10px; right:10px; cursor:pointer; color:rgba(255,255,255,0.5);" onclick="this.parentElement.remove(); checkEmptyBuilder();">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+            ${contentHtml}
+            <div style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+                <label class="switch-toggle" style="margin:0;">
+                    <input type="checkbox">
+                    <span class="slider-round"></span>
+                </label>
+                <span style="font-size:12px; color:rgba(255,255,255,0.6);">Required field</span>
+            </div>
+        `;
+        canvas.appendChild(wrapper);
+    }
+
+    function checkEmptyBuilder() {
+        const canvas = document.getElementById('wa-form-builder-canvas');
+        if (canvas.querySelectorAll('.wa-form-element').length === 0) {
+            const placeholder = document.getElementById('wa-form-builder-placeholder');
+            if (placeholder) placeholder.style.display = 'block';
+        }
+    }
+
+    function clearFormBuilder() {
+        if(confirm('Are you sure you want to clear the form canvas?')) {
+            const canvas = document.getElementById('wa-form-builder-canvas');
+            canvas.querySelectorAll('.wa-form-element').forEach(el => el.remove());
+            checkEmptyBuilder();
+        }
+    }
+
+    function saveWhatsappFlow() {
+        fetch('/whatsapp-bot-manager/meta-flows/sync', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                categories: selectedCategories,
+                // json_template: document.querySelector('#wa-form-json-editor textarea').value
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'WhatsApp Flow synced and saved to Meta successfully!', 'success');
+            } else {
+                showToast(data.error || 'Failed to sync flow', 'error');
+            }
+        });
+    }
+
+    function previewMetaFlow() {
+        showToast('Fetching Flow Preview from Meta...', 'info');
+        fetch('/whatsapp-bot-manager/meta-flows/preview', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ categories: selectedCategories })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.preview_url) {
+                // In a real app, open a modal with an iframe to the preview URL. Here we'll open a new tab as fallback
+                window.open(data.preview_url, '_blank');
+                showToast('Preview opened!', 'success');
+            } else {
+                showToast(data.error || 'Failed to fetch preview', 'error');
+            }
+        });
+    }
+
+    // Categories Multi-select Logic
+    let selectedCategories = [];
+    function toggleCategoryDropdown() {
+        const dropdown = document.querySelector('.multi-select-dropdown');
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    }
+    
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.multi-select-container')) {
+            const dropdown = document.querySelector('.multi-select-dropdown');
+            if(dropdown) dropdown.style.display = 'none';
+        }
+    });
+
+    document.querySelectorAll('.ms-option').forEach(opt => {
+        opt.addEventListener('click', function() {
+            const val = this.dataset.val;
+            if (!selectedCategories.includes(val)) {
+                selectedCategories.push(val);
+                updateCategoryTags();
+            }
+            document.querySelector('.multi-select-dropdown').style.display = 'none';
+        });
+    });
+
+    function updateCategoryTags() {
+        const tagsContainer = document.querySelector('.multi-select-tags');
+        document.getElementById('flow-categories-hidden').value = JSON.stringify(selectedCategories);
+        
+        if (selectedCategories.length === 0) {
+            tagsContainer.innerHTML = '<span style="color:var(--text-muted); padding:4px;">Select categories...</span>';
+            return;
+        }
+
+        tagsContainer.innerHTML = '';
+        selectedCategories.forEach(cat => {
+            const tag = document.createElement('div');
+            tag.style.cssText = 'background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.5); color: #60a5fa; padding: 2px 8px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 6px;';
+            tag.innerHTML = `
+                <span>${cat}</span>
+                <span style="cursor:pointer; font-weight:bold; font-size:14px; margin-left:4px;" onclick="removeCategory('${cat}', event)">&times;</span>
+            `;
+            tagsContainer.appendChild(tag);
+        });
+    }
+
+    function removeCategory(cat, event) {
+        event.stopPropagation();
+        selectedCategories = selectedCategories.filter(c => c !== cat);
+        updateCategoryTags();
+    }
+
+    function toggleFlowMode(mode) {
+        if (mode === 'builder') {
+            document.getElementById('wa-form-builder-canvas').style.display = 'flex';
+            document.getElementById('wa-form-json-editor').style.display = 'none';
+        } else {
+            document.getElementById('wa-form-builder-canvas').style.display = 'none';
+            document.getElementById('wa-form-json-editor').style.display = 'block';
+        }
     }
 </script>
 {% endblock %}

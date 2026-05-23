@@ -1862,6 +1862,8 @@
         display: inline-block;
         width: 44px;
         height: 22px;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
     }
     .toggle-switch input {
         opacity: 0;
@@ -2069,10 +2071,6 @@
         line-height: 1.4 !important;
         word-wrap: break-word !important;
         white-space: normal !important;
-    }
-    .toggle-switch {
-        flex-shrink: 0 !important;
-    }
 </style>
 {% endblock %}
 
@@ -4205,7 +4203,7 @@
 <div id="comment-automation-modal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
-            <div class="modal-title" id="comment-modal-title">Please give the following information for page response</div>
+            <div class="modal-title" id="comment-modal-title">Configure Page-Level Comment Auto-Responder</div>
             <button class="modal-close-btn" onclick="closeCommentAutomationModal()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
@@ -4216,19 +4214,19 @@
             <div class="form-group-card">
                 <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: #ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
-                    <span>Offensive Comments Moderation</span>
+                    <span>Abusive Comment Moderation Filter</span>
                 </div>
                 
                 <div class="form-group-grid" style="margin-bottom: 14px;">
                     <div class="switch-row">
-                        <span class="switch-label">HIDE offensive comments</span>
+                        <span class="switch-label">Automatically hide abusive comments</span>
                         <label class="toggle-switch">
                             <input type="checkbox" id="modal-offensive-hide" checked>
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
                     <div class="switch-row">
-                        <span class="switch-label">DELETE offensive comments</span>
+                        <span class="switch-label">Automatically delete abusive comments</span>
                         <label class="toggle-switch">
                             <input type="checkbox" id="modal-offensive-delete">
                             <span class="toggle-slider"></span>
@@ -4238,17 +4236,17 @@
 
                 <div style="margin-bottom: 14px;">
                     <label class="switch-label" style="display: block; margin-bottom: 6px;">
-                        Write down the offensive keywords in comma separated
+                        Comma-separated blocked/abusive keywords
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; color:var(--primary-accent); cursor:help;" title="e.g. spam, scam, fake"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                     </label>
                     <textarea id="modal-offensive-keywords" class="modal-textarea" placeholder="Type keywords here in comma separated (keyword1,keyword2)...Keep it blank for no actions"></textarea>
                 </div>
 
                 <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply after deleting/hiding offensive comment</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Private direct message to send after deleting/hiding</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <select id="modal-offensive-private-reply-flow-id" class="modal-input" style="flex: 1;">
-                            <option value="">Please select a message template</option>
+                            <option value="">Choose a DM sequence</option>
                             {% for flow in flows %}
                                 <option value="{{ flow.id }}">{{ flow.name }}</option>
                             {% endfor %}
@@ -4267,14 +4265,14 @@
                 </div>
                 <div class="form-group-grid">
                     <div class="switch-row">
-                        <span class="switch-label">Do you want to send reply message to a user multiple times?</span>
+                        <span class="switch-label">Allow repeat auto-replies to the same user?</span>
                         <label class="toggle-switch">
                             <input type="checkbox" id="modal-send-multiple-times">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
                     <div class="switch-row">
-                        <span class="switch-label">Do you want to enable comment reply?</span>
+                        <span class="switch-label">Enable automated comment replies</span>
                         <label class="toggle-switch">
                             <input type="checkbox" id="modal-enable-comment-reply" checked>
                             <span class="toggle-slider"></span>
@@ -4282,7 +4280,7 @@
                     </div>
                 </div>
                 <div class="switch-row" style="margin-top: 14px;">
-                    <span class="switch-label">Do you want to hide comments after comment reply?</span>
+                    <span class="switch-label">Hide user's comment immediately after replying?</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="modal-hide-comment-after-reply">
                         <span class="toggle-slider"></span>
@@ -4292,20 +4290,20 @@
 
             <!-- Automation Modes Selector -->
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <span class="switch-label" style="font-weight: 700;">Select Comment Automation Mode</span>
+                <span class="switch-label" style="font-weight: 700;">Select Auto-Responder Mode</span>
                 
                 <div class="mode-options-bar">
                     <div class="mode-option-btn" id="mode-btn-ai" onclick="switchAutomationMode('ai')">
                         <div class="mode-option-radio"></div>
-                        <span class="mode-option-text">Automated Reply by AI</span>
+                        <span class="mode-option-text">AI-Powered Response</span>
                     </div>
                     <div class="mode-option-btn" id="mode-btn-generic" onclick="switchAutomationMode('generic')">
                         <div class="mode-option-radio"></div>
-                        <span class="mode-option-text">Generic Message for All</span>
+                        <span class="mode-option-text">Static Universal Reply</span>
                     </div>
                     <div class="mode-option-btn" id="mode-btn-filter" onclick="switchAutomationMode('filter')">
                         <div class="mode-option-radio"></div>
-                        <span class="mode-option-text">Send Message by Filtering Word/Sentence</span>
+                        <span class="mode-option-text">Keyword/Phrase Triggered Reply</span>
                     </div>
                 </div>
             </div>
@@ -4314,12 +4312,12 @@
             
             <!-- Panel 1: AI reply -->
             <div id="panel-mode-ai" class="form-group-card" style="display: none;">
-                <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">AI Assistant Settings</div>
+                <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">AI Assistant Rules</div>
                 
                 <div style="margin-bottom: 14px;">
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">AI Context / Training Data *</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">AI Persona & Context Data *</label>
                     <select id="modal-ai-context-id" class="modal-input">
-                        <option value="">Select Saved AI Context</option>
+                        <option value="">Select AI Persona</option>
                         {% for ctx in contexts %}
                             <option value="{{ ctx.id }}">{{ ctx.name }}</option>
                         {% endfor %}
@@ -4328,9 +4326,9 @@
                 </div>
 
                 <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply [Maximum two reply message is supported.]</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Private direct message template to send to the commenter</label>
                     <select id="modal-ai-private-reply-flow-id" class="modal-input">
-                        <option value="">Please select a message template</option>
+                        <option value="">Choose a DM sequence</option>
                         {% for flow in flows %}
                             <option value="{{ flow.id }}">{{ flow.name }}</option>
                         {% endfor %}
@@ -4340,11 +4338,11 @@
 
             <!-- Panel 2: Generic reply -->
             <div id="panel-mode-generic" class="form-group-card" style="display: none;">
-                <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">Generic Comment Reply settings</div>
+                <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px;">Universal Reply Config</div>
                 
                 <div style="margin-bottom: 14px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <label class="switch-label">Message for comment reply *</label>
+                        <label class="switch-label">Public comment reply text *</label>
                         <div style="display: flex; gap: 6px;">
                             <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-comment-reply-text', '{first_name}')">First name</button>
                             <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-comment-reply-text', '{last_name}')">Last name</button>
@@ -4355,25 +4353,25 @@
 
                 <div class="form-group-grid" style="margin-bottom: 14px;">
                     <div>
-                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Image for comment reply</label>
+                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional image URL for the reply</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="modal-image-reply-url" class="modal-input" placeholder="Put your image URL here">
+                            <input type="text" id="modal-image-reply-url" class="modal-input" placeholder="Paste image URL">
                             <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
                         </div>
                     </div>
                     <div>
-                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Video for comment reply [MP4 preferred]</label>
+                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional video URL (MP4) for the reply</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="modal-video-reply-url" class="modal-input" placeholder="Put your video URL here">
+                            <input type="text" id="modal-video-reply-url" class="modal-input" placeholder="Paste video URL">
                             <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply [Maximum two reply message is supported.]</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Private direct message template to send to the commenter</label>
                     <select id="modal-generic-private-reply-flow-id" class="modal-input">
-                        <option value="">Please select a message template</option>
+                        <option value="">Choose a DM sequence</option>
                         {% for flow in flows %}
                             <option value="{{ flow.id }}">{{ flow.name }}</option>
                         {% endfor %}
@@ -4398,12 +4396,12 @@
                 <div class="form-group-card" style="border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.01); padding: 18px; border-radius: 10px;">
                     <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--primary-accent);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                        <span>Comment reply if no matching found</span>
+                        <span>Fallback Configuration</span>
                     </div>
                     
                     <div style="margin-bottom: 14px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <label class="switch-label">Message for comment reply if no matching found</label>
+                            <label class="switch-label">Fallback Public Reply (If no keywords match)</label>
                             <div style="display: flex; gap: 6px;">
                                 <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-fallback-comment-reply-text', '{first_name}')">First name</button>
                                 <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertPlaceholder('modal-fallback-comment-reply-text', '{last_name}')">Last name</button>
@@ -4414,14 +4412,14 @@
 
                     <div class="form-group-grid" style="margin-bottom: 14px;">
                         <div>
-                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Image for comment reply</label>
+                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional image URL for fallback reply</label>
                             <div style="display: flex; gap: 8px;">
                                 <input type="text" id="modal-fallback-image-reply-url" class="modal-input" placeholder="Put your image URL here">
                                 <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
                             </div>
                         </div>
                         <div>
-                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Video for comment reply [MP4 preferred]</label>
+                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional video URL (MP4) for fallback reply</label>
                             <div style="display: flex; gap: 8px;">
                                 <input type="text" id="modal-fallback-video-reply-url" class="modal-input" placeholder="Put your video URL here">
                                 <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
@@ -4430,9 +4428,9 @@
                     </div>
 
                     <div>
-                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply if no matching found [Maximum two reply message is supported.]</label>
+                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Fallback Private DM Template (If no keywords match)</label>
                         <select id="modal-fallback-private-reply-flow-id" class="modal-input">
-                            <option value="">Please select a message template</option>
+                            <option value="">Choose a DM sequence</option>
                             {% for flow in flows %}
                                 <option value="{{ flow.id }}">{{ flow.name }}</option>
                             {% endfor %}
@@ -4651,9 +4649,8 @@
                 <label class="switch-label" style="display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Out-bound Webhook URL *</label>
                 <input type="url" id="outbound-webhook-url" class="modal-input" placeholder="Enter outbound webhook URL">
             </div>
-
             <div class="form-group">
-                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Select Actions That Will Trigger The Webhook? *</label>
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Choose Events to Trigger Webhook *</label>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label class="toggle-switch toggle-switch-blue">
@@ -4673,7 +4670,7 @@
             </div>
 
             <div class="form-group">
-                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Select Data Fields That Will Be Sent? *</label>
+                <label class="switch-label" style="display: block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted);">Select Payload Data Attributes *</label>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 14px; border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <label class="toggle-switch toggle-switch-blue">
@@ -5070,19 +5067,19 @@
 
             <div class="form-group-grid" style="margin-bottom: 12px;">
                 <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Filter Word / Sentence (comma separated) *</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Trigger Keywords or Phrases (comma-separated) *</label>
                     <input type="text" class="modal-input rule-filter-words" placeholder="e.g. price, info, cost" value="${data.filterWords || ''}">
                 </div>
                 <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Match Type</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Keyword Matching Strategy</label>
                     <div style="display: flex; gap: 12px; align-items: center; height: 38px;">
                         <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-main); font-size: 13px;">
                             <input type="radio" name="match-type-${ruleId}" value="exact" ${(!data.filterMatchType || data.filterMatchType === 'exact') ? 'checked' : ''} class="rule-match-exact">
-                            <span>Exact Match</span>
+                            <span>Strict Match (Exact)</span>
                         </label>
                         <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-main); font-size: 13px;">
                             <input type="radio" name="match-type-${ruleId}" value="partial" ${(data.filterMatchType === 'partial') ? 'checked' : ''} class="rule-match-partial">
-                            <span>Partial Match</span>
+                            <span>Broad Match (Partial)</span>
                         </label>
                     </div>
                 </div>
@@ -5090,7 +5087,7 @@
 
             <div style="margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <label class="switch-label">Message for comment reply *</label>
+                    <label class="switch-label">Public reply message *</label>
                     <div style="display: flex; gap: 6px;">
                         <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertRulePlaceholder(this, '{first_name}')">First name</button>
                         <button type="button" class="btn-action" style="font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff;" onclick="insertRulePlaceholder(this, '{last_name}')">Last name</button>
@@ -5101,14 +5098,14 @@
 
             <div class="form-group-grid" style="margin-bottom: 12px;">
                 <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Image for comment reply</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional image URL for the reply</label>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" class="modal-input rule-image-reply-url" placeholder="Put your image URL here" value="${data.imageReplyUrl || ''}">
                         <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
                     </div>
                 </div>
                 <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Video for comment reply [MP4 preferred]</label>
+                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional video URL (MP4) for the reply</label>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" class="modal-input rule-video-reply-url" placeholder="Put your video URL here" value="${data.videoReplyUrl || ''}">
                         <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
@@ -5117,7 +5114,7 @@
             </div>
 
             <div>
-                <label class="switch-label" style="display: block; margin-bottom: 6px;">Select a message template for private reply [Maximum two reply message is supported.]</label>
+                <label class="switch-label" style="display: block; margin-bottom: 6px;">Private direct message template to send to the commenter</label>
                 <select class="modal-input rule-private-reply-flow-id">
                     ${optionsHtml}
                 </select>

@@ -270,6 +270,82 @@ class FacebookBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Settings target type is required.'], 400);
         }
 
+        $data = $request->request->get('data');
+        $decoded = \is_string($data) ? json_decode($data, true) : $data;
+        if (\is_string($data) && json_last_error() !== JSON_ERROR_NONE) {
+            $decoded = $data;
+        }
+
+        if ($type === 'comment-automation') {
+            $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+            if (!$connection) {
+                return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+            }
+
+            $automationRepo = $em->getRepository(\App\Entity\FacebookCommentAutomation::class);
+            $automation = $automationRepo->findOneBy([
+                'facebookConnection' => $connection,
+                'postId' => null
+            ]);
+
+            if (!$automation) {
+                $automation = new \App\Entity\FacebookCommentAutomation();
+                $automation->setFacebookConnection($connection);
+                $automation->setOwner($connection->getOwner());
+            }
+
+            if (is_array($decoded)) {
+                $automation->setCampaignName($decoded['campaignName'] ?? null);
+                $automation->setAutomationMode($decoded['automationMode'] ?? 'generic');
+                $automation->setEnableCommentReply((bool)($decoded['enableCommentReply'] ?? false));
+                $automation->setHideOrDelete($decoded['hideOrDelete'] ?? null);
+                $automation->setOffensiveKeywords($decoded['offensiveKeywords'] ?? null);
+                $automation->setOffensivePrivateReplyFlow($decoded['offensivePrivateReplyFlowId'] ?? null);
+                $automation->setSendReplyMultipleTimes((bool)($decoded['sendReplyMultipleTimes'] ?? false));
+                $automation->setHideCommentAfterReply((bool)($decoded['hideCommentAfterReply'] ?? false));
+                $automation->setAiContextId($decoded['aiContextId'] ?? null);
+                
+                $automation->setGenericCommentReply($decoded['commentReplyText'] ?? null);
+                $automation->setGenericPrivateReply($decoded['privateReplyFlowId'] ?? null);
+                $automation->setGenericImageUrl($decoded['imageReplyUrl'] ?? null);
+                $automation->setGenericVideoUrl($decoded['videoReplyUrl'] ?? null);
+
+                $fallback = $decoded['fallbackSettings'] ?? [];
+                $automation->setFallbackCommentReply($fallback['commentReplyText'] ?? null);
+                $automation->setFallbackPrivateReply($fallback['privateReplyFlowId'] ?? null);
+                $automation->setFallbackImageUrl($fallback['imageReplyUrl'] ?? null);
+                $automation->setFallbackVideoUrl($fallback['videoReplyUrl'] ?? null);
+
+                // Handle rules
+                foreach ($automation->getRules() as $existingRule) {
+                    $automation->removeRule($existingRule);
+                }
+
+                $rules = $decoded['filterRules'] ?? [];
+                if (is_array($rules)) {
+                    foreach ($rules as $ruleData) {
+                        $rule = new \App\Entity\FacebookCommentAutomationRule();
+                        $rule->setFilterWords($ruleData['filterWords'] ?? null);
+                        $rule->setFilterMatchType($ruleData['filterMatchType'] ?? 'exact');
+                        $rule->setCommentReplyText($ruleData['commentReplyText'] ?? null);
+                        $rule->setPrivateReplyFlowId($ruleData['privateReplyFlowId'] ?? null);
+                        $rule->setImageReplyUrl($ruleData['imageReplyUrl'] ?? null);
+                        $rule->setVideoReplyUrl($ruleData['videoReplyUrl'] ?? null);
+                        $automation->addRule($rule);
+                    }
+                }
+            }
+
+            $em->persist($automation);
+            $em->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Comment Automation settings saved successfully.',
+                'data'    => $decoded
+            ]);
+        }
+
         $dir = __DIR__ . '/../../var/facebook_bot_settings';
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
@@ -281,17 +357,7 @@ class FacebookBotManagerController extends AbstractController
             $currentSettings = json_decode(file_get_contents($file), true) ?: [];
         }
 
-        $data = $request->request->get('data');
-        if (\is_string($data)) {
-            $decoded = json_decode($data, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $currentSettings[$type] = $decoded;
-            } else {
-                $currentSettings[$type] = $data;
-            }
-        } else {
-            $currentSettings[$type] = $data;
-        }
+        $currentSettings[$type] = $decoded;
 
         if ($type === 'persistent-menu') {
             file_put_contents($dir . '/last_persistent_menu_payload.json', json_encode($currentSettings, JSON_PRETTY_PRINT));
@@ -432,13 +498,14 @@ class FacebookBotManagerController extends AbstractController
             ];
         }
 
-        // Read saved settings
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        $file = $dir . "/conn_{$connection->getId()}.json";
-        $saved = [];
-        if (file_exists($file)) {
-            $saved = json_decode(file_get_contents($file), true) ?: [];
-        }
+        // Fetch Full Page Comment Automation settings from Database
+        $automationRepo = $em->getRepository(\App\Entity\FacebookCommentAutomation::class);
+        $automation = $automationRepo->findOneBy([
+            'facebookConnection' => $connection,
+            'postId' => null
+        ]);
+        
+        $savedSettings = $automation ? $automation->getSettingsArray() : [];
         
         $defaultCommentSettings = [
             'hideOrDelete' => 'hide',
@@ -458,7 +525,7 @@ class FacebookBotManagerController extends AbstractController
             'filterWords' => ''
         ];
         
-        $commentSettings = array_replace($defaultCommentSettings, $saved['comment-automation'] ?? []);
+        $commentSettings = array_replace($defaultCommentSettings, $savedSettings ?? []);
 
         return new JsonResponse([
             'success' => true,
@@ -1005,6 +1072,37 @@ class FacebookBotManagerController extends AbstractController
             }
         }
 
+        // Attach DB-based comment automation settings to posts
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if ($connection) {
+            $automationRepo = $em->getRepository(\App\Entity\FacebookCommentAutomation::class);
+            // Fetch all automations for this connection that have a postId
+            $automations = $automationRepo->createQueryBuilder('a')
+                ->where('a.facebookConnection = :conn')
+                ->andWhere('a.postId IS NOT NULL')
+                ->setParameter('conn', $connection)
+                ->getQuery()
+                ->getResult();
+                
+            $settingsMap = [];
+            foreach ($automations as $automation) {
+                $settingsMap[$automation->getPostId()] = $automation->getSettingsArray();
+            }
+
+            foreach ($posts as $idx => $post) {
+                $pId = $post['id'] ?? null;
+                $fbId = $post['fbPostId'] ?? null;
+                
+                if ($fbId && isset($settingsMap[$fbId])) {
+                    $posts[$idx]['commentAutomationSettings'] = $settingsMap[$fbId];
+                } elseif ($pId && isset($settingsMap[$pId])) {
+                    $posts[$idx]['commentAutomationSettings'] = $settingsMap[$pId];
+                } else {
+                    $posts[$idx]['commentAutomationSettings'] = null;
+                }
+            }
+        }
+
         return new JsonResponse(['success' => true, 'posts' => $posts]);
     }
 
@@ -1221,7 +1319,7 @@ class FacebookBotManagerController extends AbstractController
     }
 
     #[Route('/facebook-bot-manager/posts/save-comment-settings', name: 'app_facebook_bot_posts_save_comment_settings', methods: ['POST'])]
-    public function savePostCommentSettings(Request $request): JsonResponse
+    public function savePostCommentSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $connectionId = (int)$request->request->get('connectionId');
         $postId = $request->request->get('postId');
@@ -1231,15 +1329,10 @@ class FacebookBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Connection ID and Post ID are required.'], 400);
         }
 
-        $dir = __DIR__ . '/../../var/facebook_posts';
-        $file = $dir . "/conn_{$connectionId}.json";
-
-        if (!file_exists($file)) {
-            return new JsonResponse(['success' => false, 'error' => 'Post log not found.'], 404);
+        $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
         }
-
-        $posts = json_decode(file_get_contents($file), true) ?: [];
-        $found = false;
 
         $settings = null;
         if (\is_string($settingsRaw)) {
@@ -1248,19 +1341,22 @@ class FacebookBotManagerController extends AbstractController
             $settings = $settingsRaw;
         }
 
-        foreach ($posts as $idx => $post) {
-            if ($post['id'] === $postId || ($post['fbPostId'] ?? '') === $postId) {
-                $posts[$idx]['commentAutomationSettings'] = $settings;
-                $found = true;
-                break;
-            }
+        $automationRepo = $em->getRepository(\App\Entity\FacebookCommentAutomation::class);
+        $automation = $automationRepo->findOneBy([
+            'facebookConnection' => $connection,
+            'postId' => $postId
+        ]);
+
+        if (!$automation) {
+            $automation = new \App\Entity\FacebookCommentAutomation();
+            $automation->setFacebookConnection($connection);
+            $automation->setPostId($postId);
+            $automation->setOwner($connection->getOwner());
         }
 
-        if (!$found) {
-            return new JsonResponse(['success' => false, 'error' => 'Post not found in log.'], 404);
-        }
-
-        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+        $automation->populateFromSettingsArray(is_array($settings) ? $settings : []);
+        $em->persist($automation);
+        $em->flush();
 
         return new JsonResponse(['success' => true]);
     }

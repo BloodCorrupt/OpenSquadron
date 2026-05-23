@@ -114,8 +114,8 @@ class FacebookWebhookController extends AbstractController
                             if (($value['item'] ?? '') === 'comment' && ($value['verb'] ?? '') === 'add') {
                                 try {
                                     $this->handleCommentAddition($value, $resolvedConnection);
-                                } catch (\Exception $e) {
-                                    file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error handling comment: " . $e->getMessage() . PHP_EOL, FILE_APPEND);
+                                } catch (\Throwable $e) {
+                                    file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error handling comment: " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
                                 }
                             }
                         }
@@ -476,25 +476,48 @@ class FacebookWebhookController extends AbstractController
         }
 
         // 1. Fetch settings (post-specific first, then page-specific, fallback to defaults)
+        $automationRepo = $this->entityManager->getRepository(\App\Entity\FacebookCommentAutomation::class);
         $projectDir = $this->getParameter('kernel.project_dir');
-        $postsFile = $projectDir . "/var/facebook_posts/conn_" . $connection->getId() . ".json";
+
+        // Note: the webhook $postId can sometimes be in format "pageId_postId", so we need to match carefully
+        $qb = $automationRepo->createQueryBuilder('a')
+            ->where('a.facebookConnection = :conn')
+            ->andWhere('a.postId IS NOT NULL')
+            ->setParameter('conn', $connection);
+            
+        $postAutomations = $qb->getQuery()->getResult();
         $postSettings = null;
+
+        // Try to find the internal post ID mapped to this fbPostId
+        $internalPostId = null;
+        $postsFile = $projectDir . "/var/facebook_posts/conn_" . $connection->getId() . ".json";
         if (file_exists($postsFile)) {
             $posts = json_decode(file_get_contents($postsFile), true) ?: [];
-            foreach ($posts as $post) {
-                $fbPostId = $post['fbPostId'] ?? '';
-                if ($fbPostId !== '' && ($fbPostId === $postId || str_ends_with($postId, $fbPostId) || str_ends_with($fbPostId, $postId))) {
-                    $postSettings = $post['commentAutomationSettings'] ?? null;
+            foreach ($posts as $p) {
+                if (($p['fbPostId'] ?? '') === $postId || ($p['id'] ?? '') === $postId) {
+                    $internalPostId = $p['id'] ?? null;
                     break;
                 }
             }
         }
+        
+        foreach ($postAutomations as $auto) {
+            $dbPostId = $auto->getPostId();
+            if ($dbPostId === $postId || ($internalPostId && $dbPostId === $internalPostId) || str_ends_with($postId, '_' . $dbPostId) || str_ends_with($dbPostId, '_' . $postId)) {
+                $postSettings = $auto->getSettingsArray();
+                break;
+            }
+        }
 
-        $settingsFile = $projectDir . "/var/facebook_bot_settings/conn_" . $connection->getId() . ".json";
         $pageSettings = null;
-        if (file_exists($settingsFile)) {
-            $saved = json_decode(file_get_contents($settingsFile), true) ?: [];
-            $pageSettings = $saved['comment-automation'] ?? null;
+        if (!$postSettings) {
+            $pageAutomation = $automationRepo->findOneBy([
+                'facebookConnection' => $connection,
+                'postId' => null
+            ]);
+            if ($pageAutomation) {
+                $pageSettings = $pageAutomation->getSettingsArray();
+            }
         }
 
         $defaultCommentSettings = [
@@ -516,6 +539,7 @@ class FacebookWebhookController extends AbstractController
         ];
 
         $settings = array_merge($defaultCommentSettings, $postSettings ?? $pageSettings ?? []);
+        file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Computed Settings: " . json_encode($settings) . PHP_EOL, FILE_APPEND);
 
         // 2. Offensive comment moderation
         $isOffensive = false;

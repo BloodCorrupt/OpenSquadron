@@ -280,6 +280,47 @@ CREATE TABLE IF NOT EXISTS `facebook_connection` (
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;
 
+-- ───── Facebook Comment Automation ─────
+CREATE TABLE IF NOT EXISTS `facebook_comment_automation` (
+    id INT AUTO_INCREMENT NOT NULL,
+    owner_id INT NOT NULL,
+    facebook_connection_id INT NOT NULL,
+    post_id VARCHAR(255) DEFAULT NULL,
+    campaign_name VARCHAR(255) DEFAULT NULL,
+    automation_mode VARCHAR(50) DEFAULT 'generic',
+    enable_comment_reply TINYINT(1) DEFAULT 0,
+    hide_or_delete VARCHAR(50) DEFAULT NULL,
+    offensive_keywords LONGTEXT DEFAULT NULL,
+    offensive_private_reply_flow VARCHAR(255) DEFAULT NULL,
+    send_reply_multiple_times TINYINT(1) DEFAULT 0,
+    hide_comment_after_reply TINYINT(1) DEFAULT 0,
+    ai_context_id VARCHAR(255) DEFAULT NULL,
+    generic_comment_reply LONGTEXT DEFAULT NULL,
+    generic_private_reply VARCHAR(255) DEFAULT NULL,
+    generic_image_url VARCHAR(255) DEFAULT NULL,
+    generic_video_url VARCHAR(255) DEFAULT NULL,
+    fallback_comment_reply LONGTEXT DEFAULT NULL,
+    fallback_private_reply VARCHAR(255) DEFAULT NULL,
+    fallback_image_url VARCHAR(255) DEFAULT NULL,
+    fallback_video_url VARCHAR(255) DEFAULT NULL,
+    INDEX IDX_FB_COMMENT_AUTO_OWNER (owner_id),
+    INDEX IDX_FB_COMMENT_AUTO_CONN (facebook_connection_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `facebook_comment_automation_rule` (
+    id INT AUTO_INCREMENT NOT NULL,
+    automation_campaign_id INT NOT NULL,
+    filter_words LONGTEXT DEFAULT NULL,
+    filter_match_type VARCHAR(50) DEFAULT 'exact',
+    comment_reply_text LONGTEXT DEFAULT NULL,
+    private_reply_flow_id VARCHAR(255) DEFAULT NULL,
+    image_reply_url VARCHAR(255) DEFAULT NULL,
+    video_reply_url VARCHAR(255) DEFAULT NULL,
+    INDEX IDX_FB_COMMENT_AUTO_RULE_CAMP (automation_campaign_id),
+    PRIMARY KEY (id)
+) DEFAULT CHARACTER SET utf8mb4;
+
 -- ───── Doctrine Migrations Tracking ─────
 CREATE TABLE IF NOT EXISTS `doctrine_migration_versions` (
     version VARCHAR(191) NOT NULL,
@@ -322,6 +363,13 @@ ALTER TABLE `facebook_action_button`
 ALTER TABLE `whatsapp_action_button`
     ADD CONSTRAINT FK_33826A586381BF43 FOREIGN KEY (whats_app_connection_id) REFERENCES whatsapp_connection (id) ON DELETE CASCADE,
     ADD CONSTRAINT FK_33826A58B2B4395F FOREIGN KEY (whats_app_bot_flow_id) REFERENCES whatsapp_bot_flow (id) ON DELETE SET NULL;
+
+ALTER TABLE `facebook_comment_automation`
+    ADD CONSTRAINT FK_FB_COMMENT_AUTO_OWNER FOREIGN KEY (owner_id) REFERENCES `admin` (id) ON DELETE CASCADE,
+    ADD CONSTRAINT FK_FB_COMMENT_AUTO_CONN FOREIGN KEY (facebook_connection_id) REFERENCES facebook_connection (id) ON DELETE CASCADE;
+
+ALTER TABLE `facebook_comment_automation_rule`
+    ADD CONSTRAINT FK_FB_COMMENT_AUTO_RULE_CAMP FOREIGN KEY (automation_campaign_id) REFERENCES facebook_comment_automation (id) ON DELETE CASCADE;
 
 -- ───── Workspace Owner Constraints ─────
 ALTER TABLE `ai_context`

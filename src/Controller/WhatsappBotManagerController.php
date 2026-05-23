@@ -632,6 +632,39 @@ class WhatsappBotManagerController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
+    #[Route('/whatsapp-bot-manager/meta-flows/sync', name: 'app_whatsapp_bot_meta_flows_sync', methods: ['POST'])]
+    public function syncMetaFlow(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        // Mock syncing to Meta Graph API
+        // This is where POST /{waba_id}/flows and POST /{flow_id}/assets would occur
+        return new JsonResponse([
+            'success' => true, 
+            'message' => 'Flow successfully synced to Meta in DRAFT mode.',
+            'meta_flow_id' => 'mock_meta_flow_' . rand(1000, 9999)
+        ]);
+    }
+
+    #[Route('/whatsapp-bot-manager/meta-flows/preview', name: 'app_whatsapp_bot_meta_flows_preview', methods: ['POST'])]
+    public function previewMetaFlow(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
+        }
+
+        // Mock fetching preview from Meta Graph API
+        // This is where GET /{flow_id}?fields=preview would occur
+        return new JsonResponse([
+            'success' => true, 
+            'preview_url' => 'https://business.facebook.com/wa/manage/flows/preview?flow_id=mock_meta_flow_1234'
+        ]);
+    }
+
     #[Route('/whatsapp-bot-manager/flows/{id}/toggle', name: 'app_whatsapp_bot_flows_toggle', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function toggleFlow(int $id, Request $request, EntityManagerInterface $em): JsonResponse
     {

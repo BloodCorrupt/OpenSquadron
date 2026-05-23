@@ -72,6 +72,17 @@ class FacebookConnection implements TenantAwareInterface
     #[ORM\JoinColumn(name: "active_context_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
     private ?AiContext $activeContext = null;
 
+    /**
+     * @var Collection<int, FacebookCommentAutomation>
+     */
+    #[ORM\OneToMany(mappedBy: 'facebookConnection', targetEntity: FacebookCommentAutomation::class, orphanRemoval: true)]
+    private \Doctrine\Common\Collections\Collection $commentAutomations;
+
+    public function __construct()
+    {
+        $this->commentAutomations = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
     // ───────────────────────── Getters & Setters ─────────────────────────
 
     public function getId(): ?int
