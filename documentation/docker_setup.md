@@ -30,6 +30,14 @@ App is at `http://<server-ip>:6969`.
 phpMyAdmin is at `http://<server-ip>:8081`.
 Scale with `docker compose -f docker-compose.haproxy.yml up --scale app=3 -d`.
 
+**Option C — Cloudflare Tunnel (No Public IP/Open Ports Needed):**
+```bash
+docker compose -f docker-compose.cf.yml up -d
+```
+The app port is NOT exposed to the host for security. 
+Cloudflared routes traffic directly from your Cloudflare Zero Trust dashboard to the container.
+phpMyAdmin is available locally at `http://<server-ip>:8081` or `http://localhost:8081`.
+
 ---
 
 ## What Happens Automatically
@@ -65,6 +73,7 @@ Just double-click the included script or run it in your terminal:
 | `DB_PASSWORD`      | Database user's password                     |
 | `DB_ROOT_PASSWORD` | Database root password (used by phpMyAdmin)  |
 | `PMA_PORT`         | Port to expose phpMyAdmin on (Default: 8081) |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Token for Cloudflared (CF variant only) |
 
 ---
 

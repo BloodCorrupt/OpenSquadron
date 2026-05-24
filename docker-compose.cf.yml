@@ -1,0 +1,74 @@
+version: '3.8'
+
+# ┌──────────────────────────────────────────────────┐
+# │  OpenSquadron — Cloudflare Tunnel Variant        │
+# │                                                  │
+# │  1. cp .env.example .env                         │
+# │  2. Edit .env with your secrets & Tunnel Token   │
+# │  3. docker compose -f docker-compose.cf.yml up -d│
+# └──────────────────────────────────────────────────┘
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    restart: unless-stopped
+    # Ports are NOT exposed to the host to keep it secure.
+    # Cloudflared will route traffic directly to this container.
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+      - share_data:/var/www/html/var/share
+    environment:
+      APP_ENV: ${APP_ENV:-prod}
+      APP_SECRET: ${APP_SECRET}
+      DATABASE_URL: "mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
+      MAILER_DSN: "null://null"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./skeleton.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    ports:
+      - "${PMA_PORT:-8081}:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 300M
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  share_data:
+  db_data:
