@@ -13,7 +13,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Security\Voter\TeamPermissionVoter;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted(TeamPermissionVoter::PERM_DASHBOARD_VIEW)]
 class DashboardController extends AbstractController
 {
     #[Route('/', name: 'app_dashboard')]

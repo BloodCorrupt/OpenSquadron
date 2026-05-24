@@ -16,7 +16,10 @@ use App\Entity\Subscriber;
 use App\Entity\Message;
 use App\Entity\WhatsAppConnection;
 use App\Entity\WhatsappActionButton;
+use App\Security\Voter\TeamPermissionVoter;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted(TeamPermissionVoter::PERM_WHATSAPP_MANAGE)]
 class WhatsAppController extends AbstractController
 {
     private string $envVerifyToken;

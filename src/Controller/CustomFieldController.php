@@ -9,9 +9,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Security\Voter\TeamPermissionVoter;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('ROLE_ADMIN')]
+#[IsGranted(TeamPermissionVoter::PERM_API_INTEGRATIONS)]
 class CustomFieldController extends AbstractController
 {
     #[Route('/settings/custom-fields', name: 'app_custom_field_index', methods: ['GET'])]

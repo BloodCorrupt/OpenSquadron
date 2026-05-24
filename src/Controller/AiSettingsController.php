@@ -5,13 +5,16 @@ namespace App\Controller;
 use App\Entity\AiContext;
 use App\Entity\AiSetting;
 use App\Service\AiAgentService;
+use App\Security\Voter\TeamPermissionVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted(TeamPermissionVoter::PERM_AI_MANAGE)]
 class AiSettingsController extends AbstractController
 {
     #[Route('/ai-settings', name: 'app_ai_settings')]

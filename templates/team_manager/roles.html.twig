@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Team Roles - OpenSquadron{% endblock %}
+
+{% block body %}
+<div class="content-container" style="padding: 20px;">
+    <div class="content-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+        <h1 class="content-title" style="margin:0; font-size:24px; color:white;">
+            Team Roles
+        </h1>
+        <button onclick="openRoleModal()" style="border:none; padding:10px 20px; border-radius:8px; cursor:pointer; color:white; background:#10b981; font-weight:bold;">
+            Create New Role
+        </button>
+    </div>
+
+    <div class="table-container" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">
+        <table class="custom-table" style="width: 100%; border-collapse: collapse; color: #fff;">
+            <thead>
+                <tr>
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);">Role Name</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);">Permissions Count</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.1);">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in roles %}
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">{{ role.name }}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">{{ role.permissions|length }}</td>
+                    <td style="padding: 12px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <button onclick="editRole({{ role.id }}, '{{ role.name|escape('js') }}', {{ role.permissions|json_encode() }})" style="background:transparent; border:1px solid #3b82f6; color:#3b82f6; padding:4px 10px; border-radius:4px; cursor:pointer;">Edit</button>
+                        <button onclick="deleteRole({{ role.id }})" style="background:transparent; border:1px solid #ef4444; color:#ef4444; padding:4px 10px; border-radius:4px; cursor:pointer; margin-left:8px;">Delete</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="padding: 20px; text-align: center; color: #aaa;">No roles created yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="roleModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #1e293b; padding: 30px; border-radius: 12px; width: 500px; max-width: 90%; color: white; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 style="margin-top:0; font-size: 20px;">Role Details</h2>
+        
+        <input type="hidden" id="roleId">
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; margin-bottom:8px; font-size:14px; color:#cbd5e1;">Role Name</label>
+            <input type="text" id="roleName" style="width:100%; padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.2); color:white; box-sizing:border-box;">
+        </div>
+
+        <div style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
+            <label style="display:block; margin-bottom:8px; font-size:14px; color:#cbd5e1;">Permissions</label>
+            {% for key, label in availablePermissions %}
+            <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                <input type="checkbox" id="perm_{{ key }}" value="{{ key }}" class="perm-checkbox" style="margin-right: 10px; cursor:pointer;">
+                <label for="perm_{{ key }}" style="cursor:pointer; font-size: 14px;">{{ label }}</label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button onclick="closeRoleModal()" style="padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; cursor: pointer;">Cancel</button>
+            <button onclick="saveRole()" style="padding: 8px 16px; border-radius: 6px; border: none; background: #10b981; color: white; font-weight:bold; cursor: pointer;">Save Role</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openRoleModal() {
+    document.getElementById('roleId').value = '';
+    document.getElementById('roleName').value = '';
+    document.querySelectorAll('.perm-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('roleModal').style.display = 'flex';
+}
+
+function closeRoleModal() {
+    document.getElementById('roleModal').style.display = 'none';
+}
+
+function editRole(id, name, permissions) {
+    document.getElementById('roleId').value = id;
+    document.getElementById('roleName').value = name;
+    
+    document.querySelectorAll('.perm-checkbox').forEach(cb => {
+        cb.checked = permissions.includes(cb.value);
+    });
+    
+    document.getElementById('roleModal').style.display = 'flex';
+}
+
+function saveRole() {
+    const id = document.getElementById('roleId').value;
+    const name = document.getElementById('roleName').value;
+    const permissions = Array.from(document.querySelectorAll('.perm-checkbox:checked')).map(cb => cb.value);
+    
+    fetch('{{ path("app_team_roles_save") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name, permissions })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to save role');
+        }
+    });
+}
+
+function deleteRole(id) {
+    if (!confirm('Are you sure you want to delete this role?')) return;
+    
+    fetch('{{ path("app_team_roles_delete") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to delete role');
+        }
+    });
+}
+</script>
+{% endblock %}

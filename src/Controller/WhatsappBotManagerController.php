@@ -17,7 +17,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Security\Voter\TeamPermissionVoter;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted(TeamPermissionVoter::PERM_WHATSAPP_MANAGE)]
 class WhatsappBotManagerController extends AbstractController
 {
     #[Route('/whatsapp-bot-manager', name: 'app_whatsapp_bot_manager')]

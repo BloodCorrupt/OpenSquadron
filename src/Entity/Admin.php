@@ -23,6 +23,14 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
     private ?Admin $parent = null;
 
+    #[ORM\ManyToOne(targetEntity: TeamRole::class)]
+    #[ORM\JoinColumn(name: 'team_role_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
+    private ?TeamRole $teamRole = null;
+
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
+    private ?Admin $createdBy = null;
+
     #[ORM\OneToMany(mappedBy: 'parent', targetEntity: self::class)]
     private Collection $children;
 
@@ -39,7 +47,7 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 20, options: ['default' => 'admin'])]
-    private string $accountType = 'admin'; // 'admin', 'user', 'team'
+    private string $accountType = 'admin'; // 'super_admin', 'admin', 'user', 'team'
 
     #[ORM\Column(options: ['default' => false])]
     private bool $teamEnabled = false;
@@ -137,12 +145,35 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getTeamRole(): ?TeamRole
+    {
+        return $this->teamRole;
+    }
+
+    public function setTeamRole(?TeamRole $teamRole): static
+    {
+        $this->teamRole = $teamRole;
+        return $this;
+    }
+
     /**
      * @return Collection<int, self>
      */
     public function getChildren(): Collection
     {
         return $this->children;
+    }
+
+    public function getCreatedBy(): ?self
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?self $createdBy): static
+    {
+        $this->createdBy = $createdBy;
+
+        return $this;
     }
 
     public function getAccountType(): string

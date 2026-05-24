@@ -151,7 +151,7 @@
         <span>Account Provisioning Portal</span>
     </div>
 
-    <form action="{{ path('app_accounts_new') }}" method="POST" autocomplete="off">
+    <form action="{{ path('app_reseller_clients_new') }}" method="POST" autocomplete="off">
         {# Email Field #}
         <div class="form-group">
             <label for="email">Email Address</label>
@@ -165,11 +165,14 @@
         </div>
 
         {# Account Type & Extra configurations (Only for System Admins) #}
-        {% if currentUser.accountType == 'admin' %}
+        {% if currentUser.accountType in ['super_admin', 'admin'] %}
             <div class="form-group">
                 <label for="account_type">Account Type</label>
                 <select id="account_type" name="account_type" class="form-control" style="background-color: #0c111d; color: #fff; cursor: pointer;">
-                    <option value="admin">Admin Account (Standalone Workspace)</option>
+                    {% if currentUser.accountType == 'super_admin' %}
+                        <option value="super_admin">Super Admin (Server Root)</option>
+                        <option value="admin">Reseller Admin (Standalone Workspace)</option>
+                    {% endif %}
                     <option value="user">User Account (Standalone Workspace)</option>
                     <option value="team" selected>Team Account (Sub-account of Owner)</option>
                 </select>
@@ -191,11 +194,11 @@
 
             {# Parent Selection Field (Only applicable if 'Team' is selected) #}
             <div id="parent_owner_field" class="form-group conditional-field visible">
-                <label for="parent_id">Workspace Parent Owner</label>
+                <label for="parent_id">Assign to Workspace</label>
                 <select id="parent_id" name="parent_id" class="form-control" style="background-color: #0c111d; color: #fff; cursor: pointer;">
                     {% for owner in owners %}
                         <option value="{{ owner.id }}" {% if owner.id == currentUser.id %}selected{% endif %}>
-                            {{ owner.email }} ({% if owner.accountType == 'admin' %}Admin{% else %}User{% endif %})
+                            {{ owner.email }} ({% if owner.accountType == 'super_admin' %}Super Admin{% elseif owner.accountType == 'admin' %}Reseller Admin{% else %}User{% endif %})
                         </option>
                     {% else %}
                         <option value="">No parent owners available - defaulting to yourself</option>
@@ -210,7 +213,7 @@
 
         {# Action Buttons #}
         <div class="form-actions">
-            <a href="{{ path('app_accounts_index') }}" class="btn-secondary">Cancel</a>
+            <a href="{{ path('app_reseller_clients_index') }}" class="btn-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">Create Account</button>
         </div>
     </form>

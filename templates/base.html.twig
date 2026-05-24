@@ -1137,16 +1137,37 @@
                                 <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                             </span> HTTP API
                         </a>
-                        <a href="{{ path('app_facebook_settings') }}" class="dropdown-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') or 'facebook_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                        <a href="{{ path('app_facebook_settings') }}" class="dropdown-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                             </span> Facebook Settings
                         </a>
-                        {% if app.user and app.user.parent is null and (app.user.accountType == 'admin' or (app.user.accountType == 'user' and app.user.teamEnabled)) %}
-                            <a href="{{ path('app_accounts_index') }}" class="dropdown-item {% if 'accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                        {% if app.user.accountType == 'super_admin' %}
+                            <a href="{{ path('app_server_accounts_index') }}" class="dropdown-item {% if 'server_accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
                                 <span class="nav-icon">
-                                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                </span> {% if app.user.accountType == 'admin' %}Account Management{% else %}Team Management{% endif %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </span> Server Accounts
+                            </a>
+                        {% endif %}
+                        
+                        {% if app.user.accountType == 'admin' %}
+                            <a href="{{ path('app_reseller_clients_index') }}" class="dropdown-item {% if 'reseller_clients' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </span> Client Management
+                            </a>
+                        {% endif %}
+                        
+                        {% if is_granted('PERM_TEAM_MANAGE') %}
+                            <a href="{{ path('app_team_roles') }}" class="dropdown-item {% if 'team_roles' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                </span> Team Roles
+                            </a>
+                            <a href="{{ path('app_team_members') }}" class="dropdown-item {% if 'team_members' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                                </span> Team Members
                             </a>
                         {% endif %}
                     </div>

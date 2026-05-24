@@ -15,7 +15,10 @@ use Symfony\Component\Routing\Attribute\Route;
 
 use App\Entity\AiContext;
 use App\Service\FacebookService;
+use App\Security\Voter\TeamPermissionVoter;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted(TeamPermissionVoter::PERM_FACEBOOK_MANAGE)]
 class FacebookBotManagerController extends AbstractController
 {
     #[Route('/facebook-bot-manager', name: 'app_facebook_bot_manager')]

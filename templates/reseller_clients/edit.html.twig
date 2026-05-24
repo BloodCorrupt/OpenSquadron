@@ -163,6 +163,11 @@
         color: #f59e0b;
         border-color: rgba(245, 158, 11, 0.2);
     }
+    .role-badge.super-admin {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+        border-color: rgba(139, 92, 246, 0.2);
+    }
 </style>
 
 <div class="header">
@@ -178,8 +183,10 @@
                 <span>Edit Profile</span>
             </div>
             <div>
-                {% if account.accountType == 'admin' %}
-                    <span class="role-badge admin">Admin</span>
+                {% if account.accountType == 'super_admin' %}
+                    <span class="role-badge super-admin">Super Admin</span>
+                {% elseif account.accountType == 'admin' %}
+                    <span class="role-badge admin">Reseller Admin</span>
                 {% elseif account.accountType == 'user' %}
                     <span class="role-badge user">User</span>
                 {% else %}
@@ -189,7 +196,7 @@
         </div>
     </div>
 
-    <form action="{% if account.id == currentUser.id %}{{ path('app_accounts_edit_self') }}{% else %}{{ path('app_accounts_edit', {id: account.id}) }}{% endif %}" method="POST" autocomplete="off" enctype="multipart/form-data">
+    <form action="{% if account.id == currentUser.id %}{{ path('app_accounts_edit_self') }}{% else %}{{ path('app_reseller_clients_edit', {id: account.id}) }}{% endif %}" method="POST" autocomplete="off" enctype="multipart/form-data">
         {# Full Name Field #}
         <div class="form-group">
             <label for="name">Full Name</label>
@@ -266,11 +273,14 @@
         </div>
 
         {# Only Admins editing other accounts can modify roles/types #}
-        {% if currentUser.accountType == 'admin' and account.id != currentUser.id %}
+        {% if currentUser.accountType in ['super_admin', 'admin'] and account.id != currentUser.id %}
             <div class="form-group">
                 <label for="account_type">Account Type</label>
                 <select id="account_type" name="account_type" class="form-control" style="background-color: #0c111d; color: #fff; cursor: pointer;">
-                    <option value="admin" {% if account.accountType == 'admin' %}selected{% endif %}>Admin Account (Standalone Workspace)</option>
+                    {% if currentUser.accountType == 'super_admin' %}
+                        <option value="super_admin" {% if account.accountType == 'super_admin' %}selected{% endif %}>Super Admin (Server Root)</option>
+                        <option value="admin" {% if account.accountType == 'admin' %}selected{% endif %}>Reseller Admin (Standalone Workspace)</option>
+                    {% endif %}
                     <option value="user" {% if account.accountType == 'user' %}selected{% endif %}>User Account (Standalone Workspace)</option>
                     <option value="team" {% if account.accountType == 'team' %}selected{% endif %}>Team Account (Sub-account of Owner)</option>
                 </select>
@@ -292,11 +302,11 @@
 
             {# Parent Selection Field (Only applicable if 'Team' is selected) #}
             <div id="parent_owner_field" class="form-group conditional-field">
-                <label for="parent_id">Workspace Parent Owner</label>
+                <label for="parent_id">Assign to Workspace</label>
                 <select id="parent_id" name="parent_id" class="form-control" style="background-color: #0c111d; color: #fff; cursor: pointer;">
                     {% for owner in owners %}
                         <option value="{{ owner.id }}" {% if account.parent and account.parent.id == owner.id %}selected{% endif %}>
-                            {{ owner.email }} ({% if owner.accountType == 'admin' %}Admin{% else %}User{% endif %})
+                            {{ owner.email }} ({% if owner.accountType == 'super_admin' %}Super Admin{% elseif owner.accountType == 'admin' %}Reseller Admin{% else %}User{% endif %})
                         </option>
                     {% else %}
                         <option value="">No parent owners available</option>
@@ -329,7 +339,7 @@
             {% if app.user.parent is not null %}
                 <a href="{{ path('app_dashboard') }}" class="btn-secondary">Cancel</a>
             {% else %}
-                <a href="{{ path('app_accounts_index') }}" class="btn-secondary">Cancel</a>
+                <a href="{{ path('app_reseller_clients_index') }}" class="btn-secondary">Cancel</a>
             {% endif %}
             <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>

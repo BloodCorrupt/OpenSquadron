@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\FacebookSetting;
 use App\Service\FacebookService;
+use App\Security\Voter\TeamPermissionVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,7 +12,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted(TeamPermissionVoter::PERM_FACEBOOK_MANAGE)]
 class FacebookConnectionController extends AbstractController
 {
     public function __construct(

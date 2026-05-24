@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Admin;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[IsGranted('IS_AUTHENTICATED_FULLY')]
+class ProfileController extends AbstractController
+{
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private UserPasswordHasherInterface $passwordHasher
+    ) {
+    }
+
+    #[Route('/profile', name: 'app_accounts_edit_self', methods: ['GET', 'POST'])]
+    public function editSelf(Request $request): Response
+    {
+        /** @var Admin $currentUser */
+        $currentUser = $this->getUser();
+        if (!$currentUser) {
+            throw $this->createAccessDeniedException('Access denied.');
+        }
+
+        if ($request->isMethod('POST')) {
+            $email = $request->request->get('email');
+            $plainPassword = $request->request->get('password');
+            $name = $request->request->get('name');
+            $avatarPreset = $request->request->get('avatar_preset');
+            $avatarFile = $request->files->get('avatar_file');
+
+            if (empty($email)) {
+                $this->addFlash('error', 'Email is required.');
+                return $this->render('profile/edit.html.twig', [
+                    'account' => $currentUser,
+                    'currentUser' => $currentUser,
+                ]);
+            }
+
+            $existing = $this->entityManager->getRepository(Admin::class)->findOneBy(['email' => $email]);
+            if ($existing && $existing->getId() !== $currentUser->getId()) {
+                $this->addFlash('error', 'Email already in use.');
+                return $this->render('profile/edit.html.twig', [
+                    'account' => $currentUser,
+                    'currentUser' => $currentUser,
+                ]);
+            }
+
+            $currentUser->setEmail($email);
+            $currentUser->setName($name);
+
+            if ($avatarFile) {
+                $originalFilename = pathinfo($avatarFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = preg_replace('/[^a-zA-Z0-9_]/', '', $originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$avatarFile->guessExtension();
+
+                try {
+                    $avatarFile->move(
+                        $this->getParameter('kernel.project_dir').'/public/uploads/avatars',
+                        $newFilename
+                    );
+                    $currentUser->setAvatar('uploads/avatars/'.$newFilename);
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Failed to upload avatar: '.$e->getMessage());
+                }
+            } elseif (!empty($avatarPreset)) {
+                if ($avatarPreset === 'clear') {
+                    $currentUser->setAvatar(null);
+                } else {
+                    $currentUser->setAvatar('preset:'.$avatarPreset);
+                }
+            }
+
+            if (!empty($plainPassword)) {
+                $currentUser->setPassword($this->passwordHasher->hashPassword($currentUser, $plainPassword));
+            }
+
+            // Normal users can toggle their own team_enabled switch if they want, but only if they are the owner
+            if ($currentUser->getAccountType() === 'user' && $currentUser->getParent() === null) {
+                $teamEnabled = $request->request->getBoolean('team_enabled', false);
+                $currentUser->setTeamEnabled($teamEnabled);
+            }
+
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Profile updated successfully.');
+
+            return $this->redirectToRoute('app_accounts_edit_self');
+        }
+
+        return $this->render('profile/edit.html.twig', [
+            'account' => $currentUser,
+            'currentUser' => $currentUser,
+            'owners' => [], // Not used for self edit
+        ]);
+    }
+}

@@ -14,9 +14,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Security\Voter\TeamPermissionVoter;
 
 #[Route('/settings/http-api')]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted(TeamPermissionVoter::PERM_API_INTEGRATIONS)]
 class HttpApiController extends AbstractController
 {
     #[Route('', name: 'app_http_api_index', methods: ['GET'])]

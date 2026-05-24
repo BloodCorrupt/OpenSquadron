@@ -12,10 +12,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Security\Voter\TeamPermissionVoter;
 
 use App\Entity\WhatsAppConnection;
 use App\Entity\FacebookConnection;
 
+#[IsGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_VIEW)]
 class LiveChatController extends AbstractController
 {
     #[Route('/inbox', name: 'app_inbox', methods: ['GET'])]
@@ -170,6 +173,7 @@ class LiveChatController extends AbstractController
     #[Route('/inbox/api/send', name: 'app_inbox_send', methods: ['POST'])]
     public function send(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService, FacebookService $facebookService): JsonResponse
     {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $subscriberId = $request->request->get('subscriber_id');
         $content = $request->request->get('content', '');
         $file = $request->files->get('media');
@@ -288,6 +292,7 @@ class LiveChatController extends AbstractController
     #[Route('/inbox/api/send-template', name: 'app_inbox_send_template', methods: ['POST'])]
     public function sendTemplate(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService): JsonResponse
     {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $subscriberId = $request->request->get('subscriber_id');
         $templateName = $request->request->get('template_name');
         $languageCode = $request->request->get('language_code');
@@ -357,6 +362,7 @@ class LiveChatController extends AbstractController
     #[Route('/inbox/api/subscriber/{id}/assign-operator', name: 'app_inbox_api_assign_operator', methods: ['POST'])]
     public function assignOperator(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $operatorId = $request->request->get('operator_id');
         if (empty($operatorId)) {
             $subscriber->setAssignedOperator(null);
@@ -385,6 +391,7 @@ class LiveChatController extends AbstractController
     #[Route('/inbox/api/subscriber/{id}/tags', name: 'app_inbox_api_tags', methods: ['POST'])]
     public function updateTags(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $tagsData = $request->request->all('tags') ?: [];
         $subscriber->setTags(array_values(array_unique(array_filter(array_map('trim', $tagsData)))));
         $em->flush();
@@ -394,6 +401,7 @@ class LiveChatController extends AbstractController
     #[Route('/inbox/api/subscriber/{id}/assign-flow', name: 'app_inbox_api_assign_flow', methods: ['POST'])]
     public function assignFlow(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $flowId = $request->request->get('flow_id');
         if (empty($flowId)) {
             $subscriber->setAssignedWhatsappFlow(null);
@@ -423,6 +431,7 @@ class LiveChatController extends AbstractController
     #[Route('/inbox/api/subscriber/{id}/attribute', name: 'app_inbox_api_attribute', methods: ['POST'])]
     public function updateAttribute(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $key = trim((string)$request->request->get('key'));
         $value = trim((string)$request->request->get('value'));
         $delete = $request->request->getBoolean('delete', false);
@@ -446,6 +455,7 @@ class LiveChatController extends AbstractController
     #[Route('/inbox/api/subscriber/{id}/notes', name: 'app_inbox_api_notes', methods: ['POST'])]
     public function addNote(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $text = trim((string)$request->request->get('text'));
         if (empty($text)) {
             return new JsonResponse(['success' => false, 'error' => 'Note text is required'], 400);
