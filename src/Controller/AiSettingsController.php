@@ -18,14 +18,25 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AiSettingsController extends AbstractController
 {
     #[Route('/ai-settings', name: 'app_ai_settings')]
-    public function aiSettings(EntityManagerInterface $em): Response
+    public function aiSettings(EntityManagerInterface $em, AiAgentService $aiAgentService): Response
     {
-        $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]) ?? new AiSetting();
+        $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]);
+        $globalSetting = $aiAgentService->getGlobalSetting();
+
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
 
+        // Since AiSetting isn't easily accessible from AiAgentService directly without the superAdmin check above
+        // we'll just check if the current setting has an API key or is ollama
+        $isUsingCustom = false;
+        if ($aiSetting && ($aiSetting->getApiKey() || in_array($aiSetting->getProvider(), ['ollama', 'lmstudio']))) {
+            $isUsingCustom = true;
+        }
+
         return $this->render('ai_settings/index.html.twig', [
-            'aiSetting' => $aiSetting,
+            'aiSetting' => $aiSetting ?? new AiSetting(),
             'contexts' => $contexts,
+            'hasGlobalSetting' => $globalSetting && ($globalSetting->getApiKey() || in_array($globalSetting->getProvider(), ['ollama', 'lmstudio'])),
+            'isUsingCustom' => $isUsingCustom,
         ]);
     }
 
@@ -35,7 +46,22 @@ class AiSettingsController extends AbstractController
         $configType = $request->request->get('configType', 'all');
 
         if ($configType === 'all' || $configType === 'api') {
+            $useCustom = filter_var($request->request->get('useCustom', 'false'), FILTER_VALIDATE_BOOLEAN);
             $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]);
+
+            if (!$useCustom) {
+                if ($aiSetting) {
+                    $aiSetting->setProvider('openai');
+                    $aiSetting->setApiKey(null);
+                    $aiSetting->setApiEndpoint(null);
+                    $em->flush();
+                }
+                return new JsonResponse([
+                    'success' => true,
+                    'message' => 'Now using Global Server AI Settings.',
+                ]);
+            }
+
             if (!$aiSetting) {
                 $aiSetting = new AiSetting();
                 $em->persist($aiSetting);
@@ -106,7 +132,7 @@ class AiSettingsController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'No context data provided.'], 400);
         }
 
-        $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]);
+        $aiSetting = $aiAgentService->getEffectiveSetting($em->getRepository(AiSetting::class)->findOneBy([]));
         if (!$aiSetting) {
             return new JsonResponse(['success' => false, 'error' => 'Global AI Configuration is not set up.'], 400);
         }

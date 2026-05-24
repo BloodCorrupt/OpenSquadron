@@ -44,16 +44,22 @@ class SmtpMailerService
         $transport = Transport::fromDsn($dsn);
         $mailer = new Mailer($transport);
 
+        $brandName = 'OpenSquadron';
+        if ($creator->getBranding() && $creator->getBranding()->getBrandName()) {
+            $brandName = $creator->getBranding()->getBrandName();
+        }
+
         $html = $this->twig->render('emails/welcome.html.twig', [
             'user' => $newUser,
             'plainPassword' => $plainPassword,
             'creator' => $creator,
+            'brandName' => $brandName,
         ]);
 
         $email = (new Email())
             ->from(new \Symfony\Component\Mime\Address($smtpSettings->getFromEmail(), $smtpSettings->getFromName()))
             ->to($newUser->getEmail())
-            ->subject('Welcome to ' . $creator->getName() . ' Workspace - Action Required')
+            ->subject('Welcome to ' . $brandName . ' - Action Required')
             ->html($html);
 
         $mailer->send($email);

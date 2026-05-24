@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\AiSetting;
+use App\Entity\Admin;
 use App\Entity\WhatsAppConnection;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -12,8 +13,68 @@ class AiAgentService
     public function __construct(
         private HttpClientInterface $httpClient,
         private LoggerInterface $logger,
-        private \Doctrine\ORM\EntityManagerInterface $em
+        private \Doctrine\ORM\EntityManagerInterface $em,
+        private ?\App\Service\TenantContext $tenantContext = null
     ) {}
+
+    public function getSetting(): ?AiSetting
+    {
+        return $this->em->getRepository(AiSetting::class)->findOneBy([]);
+    }
+
+    public function getGlobalSetting(): ?AiSetting
+    {
+        $isTenantFilterEnabled = false;
+        
+        if ($this->tenantContext) {
+            $filters = $this->em->getFilters();
+            $isTenantFilterEnabled = $filters->has('tenant_filter') && $filters->isEnabled('tenant_filter');
+            if ($isTenantFilterEnabled) {
+                $this->tenantContext->disableTenantFilter();
+            }
+        } else {
+            // Fallback if TenantContext wasn't injected
+            $filters = $this->em->getFilters();
+            $isTenantFilterEnabled = $filters->has('tenant_filter') && $filters->isEnabled('tenant_filter');
+            if ($isTenantFilterEnabled) {
+                $filters->disable('tenant_filter');
+            }
+        }
+
+        $superAdmin = $this->em->getRepository(Admin::class)->findOneBy(['accountType' => 'super_admin']);
+        $globalSetting = null;
+        if ($superAdmin) {
+            $globalSetting = $this->em->getRepository(AiSetting::class)->findOneBy(['owner' => $superAdmin]);
+        }
+
+        if ($isTenantFilterEnabled) {
+            if ($this->tenantContext && $this->tenantContext->getCurrentOwner()) {
+                $this->tenantContext->enableTenantFilter($this->tenantContext->getCurrentOwner()->getId());
+            } else {
+                $filters->enable('tenant_filter');
+            }
+        }
+
+        return $globalSetting;
+    }
+
+    public function getEffectiveSetting(?AiSetting $setting = null): ?AiSetting
+    {
+        if (!$setting) {
+            $setting = $this->getSetting();
+        }
+
+        if ($setting && $setting->getApiKey()) {
+            return $setting;
+        }
+
+        // Ollama doesn't require API key, but requires endpoint
+        if ($setting && ($setting->getProvider() === 'ollama' || $setting->getProvider() === 'lmstudio')) {
+            return $setting;
+        }
+
+        return $this->getGlobalSetting();
+    }
 
     public function fetchAvailableModels(string $provider, string $apiKey, ?string $apiEndpoint = null): array
     {

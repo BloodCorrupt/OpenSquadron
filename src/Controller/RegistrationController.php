@@ -87,6 +87,7 @@ class RegistrationController extends AbstractController
             $user->setParent(null); // Direct client of the creator
             
             $user->setVerificationCode(str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT));
+            $user->setVerificationExpiresAt((new \DateTime())->modify('+5 minutes'));
             $user->setIsVerified(false);
             
             // Allow team if they want to pay for it later, or default to false. Default to false for now.

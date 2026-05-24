@@ -55,7 +55,7 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $name = null;
 
-    #[ORM\OneToMany(targetEntity: FacebookConnection::class, mappedBy: 'admin', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: FacebookConnection::class, mappedBy: 'owner', cascade: ['remove'])]
     private Collection $facebookConnections;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
@@ -63,6 +63,9 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $verificationCode = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $verificationExpiresAt = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $registrationEnabled = false;
@@ -275,6 +278,19 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     public function setVerificationCode(?string $verificationCode): static
     {
         $this->verificationCode = $verificationCode;
+
+        return $this;
+    }
+
+    public function getVerificationExpiresAt(): ?\DateTimeInterface
+    {
+        return $this->verificationExpiresAt;
+    }
+
+    public function setVerificationExpiresAt(?\DateTimeInterface $verificationExpiresAt): static
+    {
+        $this->verificationExpiresAt = $verificationExpiresAt;
+
         return $this;
     }
 

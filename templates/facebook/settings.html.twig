@@ -156,6 +156,55 @@
         margin: 4px 0 0 0;
     }
 
+    /* Switch toggle component */
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        min-width: 44px;
+        height: 24px;
+        max-height: 24px;
+        flex-shrink: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .switch-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider-round {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .3s;
+        border-radius: 24px;
+        border: 1px solid var(--glass-border);
+    }
+    .slider-round:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        top: 0;
+        bottom: 0;
+        margin: auto 0;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    .switch-toggle input:checked + .slider-round {
+        background-color: var(--primary-accent);
+    }
+    .switch-toggle input:checked + .slider-round:before {
+        transform: translateX(20px);
+    }
+
     /* Eye toggle btn */
     .password-container {
         position: relative;
@@ -375,7 +424,32 @@
                     <input type="text" name="fake_username" style="display:none" aria-hidden="true" autocomplete="off" />
                     <input type="password" name="fake_password" style="display:none" aria-hidden="true" autocomplete="off" />
 
-                    <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                    {% if app.user and app.user.accountType != 'super_admin' %}
+                        <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0 0 4px 0;">Use Custom Meta App Credentials</h3>
+                                    <p style="font-size: 12px; color: #94a3b8; margin: 0;">If disabled, the system will use the default server global settings.</p>
+                                </div>
+                                <label class="switch-toggle" style="margin: 0;">
+                                    <input type="checkbox" name="useCustom" id="useCustomToggle" onchange="toggleCustomSettings()" {% if isUsingCustom %}checked{% endif %}>
+                                    <span class="slider-round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="global-settings-notice" style="display: {% if isUsingCustom %}none{% else %}block{% endif %}; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #e2e8f0; line-height: 1.5;">
+                            {% if hasGlobalSetting %}
+                                <strong style="color: #10b981;">Using Global Server Settings:</strong> The global Meta App credentials are fully configured and ready for your workspace to use. You do not need to configure your own unless you wish to white-label the integration.
+                            {% else %}
+                                <strong style="color: #ef4444;">No Global Server Settings:</strong> The global Meta App credentials are not configured yet. Please configure your own custom credentials below to connect your pages.
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <input type="hidden" name="useCustom" value="true">
+                    {% endif %}
+
+                    <div id="custom-credentials-section" style="{% if app.user and app.user.accountType != 'super_admin' and not isUsingCustom %}display: none;{% endif %} background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                         <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0 0 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
                             Meta App Credentials
                         </h3>
@@ -635,5 +709,32 @@
             showToast("Failed to copy text.", "error");
         });
     }
+
+    function toggleCustomSettings() {
+        const isChecked = document.getElementById('useCustomToggle').checked;
+        const customSection = document.getElementById('custom-credentials-section');
+        const globalNotice = document.getElementById('global-settings-notice');
+        const appIdInput = document.getElementById('appId');
+        
+        if (isChecked) {
+            customSection.style.display = 'flex';
+            if(globalNotice) globalNotice.style.display = 'none';
+            appIdInput.required = true;
+        } else {
+            customSection.style.display = 'none';
+            if(globalNotice) globalNotice.style.display = 'block';
+            appIdInput.required = false;
+            // Optionally clear out values when disabling custom
+            // appIdInput.value = '';
+        }
+    }
+    
+    // Check initial state on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const useCustomToggle = document.getElementById('useCustomToggle');
+        if (useCustomToggle) {
+            toggleCustomSettings();
+        }
+    });
 </script>
 {% endblock %}

@@ -25,16 +25,35 @@ class FacebookConnectionController extends AbstractController
     #[Route('/settings/facebook', name: 'app_facebook_settings', methods: ['GET'])]
     public function facebookSettings(): Response
     {
-        $setting = $this->facebookService->getSetting() ?? new FacebookSetting();
+        $setting = $this->facebookService->getSetting();
+        $globalSetting = $this->facebookService->getGlobalSetting();
 
         return $this->render('facebook/settings.html.twig', [
-            'setting' => $setting,
+            'setting' => $setting ?? new FacebookSetting(),
+            'hasGlobalSetting' => $globalSetting && $globalSetting->getAppId() ? true : false,
+            'isUsingCustom' => $setting && $setting->getAppId() ? true : false,
         ]);
     }
 
     #[Route('/settings/facebook/save', name: 'app_facebook_settings_save', methods: ['POST'])]
     public function saveFacebookSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $useCustom = filter_var($request->request->get('useCustom', 'false'), FILTER_VALIDATE_BOOLEAN);
+        $setting = $this->facebookService->getSetting();
+
+        if (!$useCustom) {
+            if ($setting) {
+                $setting->setAppId('');
+                $setting->setEncryptedAppSecret('');
+                $em->flush();
+            }
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Now using Global Server Settings.',
+                'verifyToken' => $setting ? $setting->getVerifyToken() : '',
+            ]);
+        }
+
         $appId = trim($request->request->get('appId', ''));
         $appSecret = trim($request->request->get('appSecret', ''));
 
@@ -42,7 +61,6 @@ class FacebookConnectionController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'App ID is required.'], 400);
         }
 
-        $setting = $this->facebookService->getSetting();
         if (!$setting) {
             $setting = new FacebookSetting();
             $setting->setVerifyToken($this->facebookService->generateVerifyToken());
@@ -70,7 +88,7 @@ class FacebookConnectionController extends AbstractController
     public function show(): Response
     {
         $connections = $this->facebookService->getAllConnections();
-        $setting = $this->facebookService->getSetting();
+        $setting = $this->facebookService->getEffectiveSetting();
 
         return $this->render('facebook/connect.html.twig', [
             'connections' => $connections,
@@ -81,7 +99,7 @@ class FacebookConnectionController extends AbstractController
     #[Route('/facebook/connect', name: 'facebook_connect', methods: ['POST'])]
     public function connect(Request $request): Response
     {
-        $setting = $this->facebookService->getSetting();
+        $setting = $this->facebookService->getEffectiveSetting();
 
         if (!$setting || empty($setting->getAppId()) || empty($setting->getEncryptedAppSecret())) {
             $this->addFlash('error', 'Facebook Settings (App ID and App Secret) must be configured under Settings > Facebook Settings first.');
@@ -133,7 +151,7 @@ class FacebookConnectionController extends AbstractController
         $session = $request->getSession();
 
         $savedState = $session->get('fb_connect_state');
-        $setting = $this->facebookService->getSetting();
+        $setting = $this->facebookService->getEffectiveSetting();
         $appId = $session->get('fb_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
         $appSecret = $session->get('fb_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
 
@@ -184,7 +202,7 @@ class FacebookConnectionController extends AbstractController
         $session = $request->getSession();
 
         $pagesSession = $session->get('fb_pages_list', []);
-        $setting = $this->facebookService->getSetting();
+        $setting = $this->facebookService->getEffectiveSetting();
         $appId = $session->get('fb_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
         $appSecret = $session->get('fb_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
         $label = $session->get('fb_connect_label');
@@ -252,7 +270,7 @@ class FacebookConnectionController extends AbstractController
         }
 
         $connections = $this->facebookService->getAllConnections();
-        $setting = $this->facebookService->getSetting();
+        $setting = $this->facebookService->getEffectiveSetting();
 
         return $this->render('facebook/connect.html.twig', [
             'connections' => $connections,

@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\FacebookConnection;
 use App\Entity\FacebookSetting;
+use App\Entity\Admin;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -16,6 +17,7 @@ class FacebookService
 
     public function __construct(
         private EntityManagerInterface $entityManager,
+        private ?\App\Service\TenantContext $tenantContext,
         private HttpClientInterface $httpClient,
         private RouterInterface $router,
         #[Autowire(env: 'APP_SECRET')]
@@ -33,6 +35,59 @@ class FacebookService
         return $this->entityManager
             ->getRepository(FacebookSetting::class)
             ->findOneBy([]);
+    }
+
+    /**
+     * Get the global FacebookSetting from the super_admin.
+     */
+    public function getGlobalSetting(): ?FacebookSetting
+    {
+        $em = $this->entityManager;
+        $isTenantFilterEnabled = false;
+        
+        if ($this->tenantContext) {
+            $filters = $em->getFilters();
+            $isTenantFilterEnabled = $filters->has('tenant_filter') && $filters->isEnabled('tenant_filter');
+            if ($isTenantFilterEnabled) {
+                $this->tenantContext->disableTenantFilter();
+            }
+        } else {
+            // Fallback if TenantContext wasn't injected
+            $filters = $em->getFilters();
+            $isTenantFilterEnabled = $filters->has('tenant_filter') && $filters->isEnabled('tenant_filter');
+            if ($isTenantFilterEnabled) {
+                $filters->disable('tenant_filter');
+            }
+        }
+
+        $superAdmin = $em->getRepository(Admin::class)->findOneBy(['accountType' => 'super_admin']);
+        $globalSetting = null;
+        if ($superAdmin) {
+            $globalSetting = $em->getRepository(FacebookSetting::class)->findOneBy(['owner' => $superAdmin]);
+        }
+
+        if ($isTenantFilterEnabled) {
+            if ($this->tenantContext && $this->tenantContext->getCurrentOwner()) {
+                $this->tenantContext->enableTenantFilter($this->tenantContext->getCurrentOwner()->getId());
+            } else {
+                $filters->enable('tenant_filter');
+            }
+        }
+
+        return $globalSetting;
+    }
+
+    /**
+     * Get the effective FacebookSetting (Tenant's if configured, otherwise Global).
+     */
+    public function getEffectiveSetting(): ?FacebookSetting
+    {
+        $setting = $this->getSetting();
+        if ($setting && $setting->getAppId() && $setting->getEncryptedAppSecret()) {
+            return $setting;
+        }
+
+        return $this->getGlobalSetting();
     }
 
     /**

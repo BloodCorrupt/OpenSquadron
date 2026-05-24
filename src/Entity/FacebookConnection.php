@@ -19,8 +19,8 @@ class FacebookConnection implements TenantAwareInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Admin::class)]
-    #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    #[ORM\ManyToOne(targetEntity: Admin::class, inversedBy: 'facebookConnections')]
+    #[ORM\JoinColumn(name: 'owner_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Admin $owner = null;
 
     #[ORM\Column(length: 255)]

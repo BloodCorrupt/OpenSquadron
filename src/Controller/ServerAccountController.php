@@ -111,6 +111,7 @@ class ServerAccountController extends AbstractController
             }
 
             $newAccount->setVerificationCode(str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT));
+            $newAccount->setVerificationExpiresAt((new \DateTime())->modify('+5 minutes'));
             $newAccount->setIsVerified(false);
 
             $this->entityManager->persist($newAccount);

@@ -163,6 +163,24 @@
 
             <button type="submit" class="btn">Verify & Activate</button>
         </form>
+
+        <form action="{{ path('app_verify_resend') }}" method="POST" id="resend-form" style="margin-top: 15px;">
+            <input type="hidden" name="email" id="resend-email-input">
+            <p style="margin: 0; font-size: 13px;">Didn't receive the code? <button type="button" onclick="submitResend()" style="background: none; border: none; color: var(--primary-accent); cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; text-decoration: underline;">Resend Email</button></p>
+        </form>
+
+        <script>
+            function submitResend() {
+                var emailVal = document.getElementById('email').value;
+                if (!emailVal) {
+                    alert('Please enter your email address first to resend the code.');
+                    document.getElementById('email').focus();
+                    return;
+                }
+                document.getElementById('resend-email-input').value = emailVal;
+                document.getElementById('resend-form').submit();
+            }
+        </script>
     </div>
 </body>
 </html>

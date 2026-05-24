@@ -47,7 +47,7 @@ class ResellerBranding
         return $this->owner;
     }
 
-    public function setOwner(Admin $owner): static
+    public function setOwner(?Admin $owner): static
     {
         $this->owner = $owner;
         return $this;
