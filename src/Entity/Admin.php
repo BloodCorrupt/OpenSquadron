@@ -88,6 +88,19 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(mappedBy: 'owner', targetEntity: CloudflareSettings::class, cascade: ['persist', 'remove'])]
     private ?CloudflareSettings $cloudflareSettings = null;
 
+    #[ORM\ManyToOne(targetEntity: SubscriptionPackage::class)]
+    #[ORM\JoinColumn(name: 'subscription_package_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
+    private ?SubscriptionPackage $subscriptionPackage = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $subscriptionExpiresAt = null;
+
+    #[ORM\Column(options: ['default' => 0])]
+    private int $monthlyMessageCount = 0;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $lastMessageResetDate = null;
+
     public function __construct()
     {
         $this->children = new ArrayCollection();
@@ -391,5 +404,71 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
         $this->cloudflareSettings = $cloudflareSettings;
 
         return $this;
+    }
+
+    public function getSubscriptionPackage(): ?SubscriptionPackage
+    {
+        return $this->subscriptionPackage;
+    }
+
+    public function setSubscriptionPackage(?SubscriptionPackage $subscriptionPackage): static
+    {
+        $this->subscriptionPackage = $subscriptionPackage;
+
+        return $this;
+    }
+
+    public function getSubscriptionExpiresAt(): ?\DateTimeInterface
+    {
+        return $this->subscriptionExpiresAt;
+    }
+
+    public function setSubscriptionExpiresAt(?\DateTimeInterface $subscriptionExpiresAt): static
+    {
+        $this->subscriptionExpiresAt = $subscriptionExpiresAt;
+
+        return $this;
+    }
+
+    public function getMonthlyMessageCount(): int
+    {
+        return $this->monthlyMessageCount;
+    }
+
+    public function setMonthlyMessageCount(int $count): static
+    {
+        $this->monthlyMessageCount = $count;
+
+        return $this;
+    }
+
+    public function getLastMessageResetDate(): ?\DateTimeInterface
+    {
+        return $this->lastMessageResetDate;
+    }
+
+    public function setLastMessageResetDate(?\DateTimeInterface $date): static
+    {
+        $this->lastMessageResetDate = $date;
+
+        return $this;
+    }
+
+    /**
+     * Helper: check if user's subscription package grants access to the given module.
+     * Module keys: 'whatsapp', 'facebook', 'ai_copilot', 'ecommerce'
+     */
+    public function hasModuleAccess(string $module): bool
+    {
+        $package = $this->subscriptionPackage;
+        if (!$package) {
+            return true; // No package = unrestricted
+        }
+        $features = $package->getFeatures();
+        $modules = $features['modules'] ?? null;
+        if ($modules === null) {
+            return true; // No module restrictions configured
+        }
+        return in_array($module, $modules, true);
     }
 }

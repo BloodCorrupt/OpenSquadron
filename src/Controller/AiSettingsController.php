@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\Entity\AiContext;
 use App\Entity\AiSetting;
+use App\Entity\Admin;
 use App\Service\AiAgentService;
+use App\Service\SubscriptionUsageService;
 use App\Security\Voter\TeamPermissionVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,9 +19,17 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(TeamPermissionVoter::PERM_AI_MANAGE)]
 class AiSettingsController extends AbstractController
 {
+    public function __construct(private SubscriptionUsageService $usageService) {}
     #[Route('/ai-settings', name: 'app_ai_settings')]
     public function aiSettings(EntityManagerInterface $em, AiAgentService $aiAgentService): Response
     {
+        /** @var Admin $user */
+        $user = $this->getUser();
+        if (!$this->usageService->hasModuleAccess($user, 'ai_copilot')) {
+            $this->addFlash('error', 'Your subscription plan does not include access to AI Copilot settings.');
+            return $this->redirectToRoute('app_dashboard');
+        }
+
         $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]);
         $globalSetting = $aiAgentService->getGlobalSetting();
 

@@ -10,7 +10,9 @@ use App\Entity\AiSetting;
 use App\Entity\AiContext;
 use App\Entity\BroadcastCampaign;
 use App\Entity\Subscriber;
+use App\Entity\Admin;
 use App\Service\WhatsAppConnectionService;
+use App\Service\SubscriptionUsageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,9 +25,17 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(TeamPermissionVoter::PERM_WHATSAPP_MANAGE)]
 class WhatsappBotManagerController extends AbstractController
 {
+    public function __construct(private SubscriptionUsageService $usageService) {}
     #[Route('/whatsapp-bot-manager', name: 'app_whatsapp_bot_manager')]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
+        /** @var Admin $user */
+        $user = $this->getUser();
+        if (!$this->usageService->hasModuleAccess($user, 'whatsapp')) {
+            $this->addFlash('error', 'Your subscription plan does not include access to WhatsApp Bot Manager.');
+            return $this->redirectToRoute('app_dashboard');
+        }
+
         $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
         
         $selectedConnectionId = $request->query->get('connectionId');

@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\Admin;
 use App\Entity\FacebookSetting;
 use App\Service\FacebookService;
+use App\Service\SubscriptionUsageService;
 use App\Security\Voter\TeamPermissionVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,7 +20,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class FacebookConnectionController extends AbstractController
 {
     public function __construct(
-        private FacebookService $facebookService
+        private FacebookService $facebookService,
+        private SubscriptionUsageService $usageService
     ) {
     }
 
@@ -209,6 +212,19 @@ class FacebookConnectionController extends AbstractController
 
         if (!$pageId || !isset($pagesSession[$pageId]) || !$appId || !$appSecret) {
             $this->addFlash('error', 'Session expired or invalid page selection. Please try again.');
+            return $this->redirectToRoute('facebook_connect_show');
+        }
+
+        // Check bot connection limit before saving
+        /** @var Admin $user */
+        $user = $this->getUser();
+        if (!$this->usageService->canAddBot($user)) {
+            $usage = $this->usageService->getBotUsage($user);
+            $this->addFlash('error', sprintf(
+                'Bot connection limit reached (%d/%d). Upgrade your subscription to connect more bots.',
+                $usage['current'],
+                $usage['limit']
+            ));
             return $this->redirectToRoute('facebook_connect_show');
         }
 

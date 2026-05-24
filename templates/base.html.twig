@@ -1072,6 +1072,7 @@
                         <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     </span> Shared Inbox
                 </a>
+                {% if app.user.hasModuleAccess('whatsapp') or app.user.hasModuleAccess('facebook') %}
                 <div class="nav-dropdown">
                     <div class="nav-item {% if app.request.attributes.get('_route')|default('') in ['whatsapp_connect_show', 'facebook_connect_show'] %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
@@ -1079,18 +1080,24 @@
                         </span> Connect Bot <span class="dropdown-caret">▼</span>
                     </div>
                     <div class="dropdown-menu">
+                        {% if app.user.hasModuleAccess('whatsapp') %}
                         <a href="{{ path('whatsapp_connect_show') }}" class="dropdown-item {% if app.request.attributes.get('_route')|default('') == 'whatsapp_connect_show' %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9"></path><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1"></path></svg>
                             </span> Connect WhatsApp
                         </a>
+                        {% endif %}
+                        {% if app.user.hasModuleAccess('facebook') %}
                         <a href="{{ path('facebook_connect_show') }}" class="dropdown-item {% if app.request.attributes.get('_route')|default('') == 'facebook_connect_show' %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                             </span> Connect Facebook <span style="font-size: 9px; background: #ef4444; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 8px; font-weight: 700;">BETA</span>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
+                {% endif %}
+                {% if app.user.hasModuleAccess('whatsapp') or app.user.hasModuleAccess('facebook') %}
                 <div class="nav-dropdown">
                     <div class="nav-item {% if app.request.attributes.get('_route')|default('') starts with 'app_whatsapp_bot_' or app.request.attributes.get('_route')|default('') starts with 'app_facebook_bot_' %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
@@ -1098,22 +1105,27 @@
                         </span> Bot Manager <span class="dropdown-caret">▼</span>
                     </div>
                     <div class="dropdown-menu">
+                        {% if app.user.hasModuleAccess('whatsapp') %}
                         <a href="{{ path('app_whatsapp_bot_manager') }}" class="dropdown-item {% if app.request.attributes.get('_route')|default('') starts with 'app_whatsapp_bot_' %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9"></path><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1"></path></svg>
                             </span> WhatsApp Bots
                         </a>
+                        {% endif %}
+                        {% if app.user.hasModuleAccess('facebook') %}
                         <a href="{{ path('app_facebook_bot_manager') }}" class="dropdown-item {% if app.request.attributes.get('_route')|default('') starts with 'app_facebook_bot_' %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                             </span> Facebook Bots <span style="font-size: 9px; background: #ef4444; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 8px; font-weight: 700;">BETA</span>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
+                {% endif %}
                 <div class="nav-dropdown">
-                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'custom_field' in app.request.attributes.get('_route')|default('') or 'accounts' in app.request.attributes.get('_route')|default('') or 'facebook_settings' in app.request.attributes.get('_route')|default('') or 'cloudflare_settings' in app.request.attributes.get('_route')|default('') or 'http_api' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
+                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'custom_field' in app.request.attributes.get('_route')|default('') or 'http_api' in app.request.attributes.get('_route')|default('') or 'team_members' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </span> Settings <span class="dropdown-caret">▼</span>
                     </div>
                     <div class="dropdown-menu">
@@ -1122,67 +1134,24 @@
                                 <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                             </span> Subscribers
                         </a>
+                        {% if app.user.hasModuleAccess('ai_copilot') %}
                         <a href="{{ path('app_ai_settings') }}" class="dropdown-item {% if 'ai_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                             </span> AI Settings
                         </a>
+                        {% endif %}
                         <a href="{{ path('app_custom_field_index') }}" class="dropdown-item {% if 'custom_field' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                             </span> Custom Fields
                         </a>
-                        <a href="{{ path('app_facebook_settings') }}" class="dropdown-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                            </span> Facebook Settings
-                        </a>
-                        {% if app.user.accountType in ['super_admin', 'admin'] %}
-                        <a href="{{ path('app_smtp_settings') }}" class="dropdown-item {% if 'smtp_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                            </span> SMTP Settings
-                        </a>
-                        <a href="{{ path('app_branding_settings') }}" class="dropdown-item {% if 'branding_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                            </span> Branding & Domains
-                        </a>
-                        {% if app.user.accountType == 'super_admin' %}
-                        <a href="{{ path('app_cloudflare_settings') }}" class="dropdown-item {% if 'cloudflare_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
-                            </span> Cloudflare Settings
-                        </a>
-                        {% endif %}
-                        {% endif %}
                         <a href="{{ path('app_http_api_index') }}" class="dropdown-item {% if 'http_api' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                             </span> HTTP API
                         </a>
-                        {% if app.user.accountType == 'super_admin' %}
-                            <a href="{{ path('app_server_accounts_index') }}" class="dropdown-item {% if 'server_accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
-                                <span class="nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                </span> Server Accounts
-                            </a>
-                        {% endif %}
-                        
-                        {% if app.user.accountType == 'admin' %}
-                            <a href="{{ path('app_reseller_clients_index') }}" class="dropdown-item {% if 'reseller_clients' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
-                                <span class="nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                </span> Client Management
-                            </a>
-                        {% endif %}
-                        
                         {% if is_granted('PERM_TEAM_MANAGE') %}
-                            <a href="{{ path('app_team_roles') }}" class="dropdown-item {% if 'team_roles' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
-                                <span class="nav-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                </span> Team Roles
-                            </a>
                             <a href="{{ path('app_team_members') }}" class="dropdown-item {% if 'team_members' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
                                 <span class="nav-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
@@ -1191,6 +1160,65 @@
                         {% endif %}
                     </div>
                 </div>
+
+                {# ── Admin Panel (super_admin + reseller/admin only) ── #}
+                {% if app.user.accountType in ['super_admin', 'admin'] %}
+                <div class="nav-dropdown">
+                    <div class="nav-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') or 'smtp_settings' in app.request.attributes.get('_route')|default('') or 'branding_settings' in app.request.attributes.get('_route')|default('') or 'cloudflare_settings' in app.request.attributes.get('_route')|default('') or 'server_accounts' in app.request.attributes.get('_route')|default('') or 'reseller_clients' in app.request.attributes.get('_route')|default('') or 'subscription_packages' in app.request.attributes.get('_route')|default('') or 'team_roles' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+                        </span> Admin Panel <span class="dropdown-caret">▼</span>
+                    </div>
+                    <div class="dropdown-menu">
+                        <a href="{{ path('app_facebook_settings') }}" class="dropdown-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                            </span> Facebook Settings
+                        </a>
+                        <a href="{{ path('app_smtp_settings') }}" class="dropdown-item {% if 'smtp_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            </span> SMTP Settings
+                        </a>
+                        <a href="{{ path('app_branding_settings') }}" class="dropdown-item {% if 'branding_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            </span> Branding &amp; Domains
+                        </a>
+                        {% if app.user.accountType == 'super_admin' %}
+                        <a href="{{ path('app_cloudflare_settings') }}" class="dropdown-item {% if 'cloudflare_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+                            </span> Cloudflare Settings
+                        </a>
+                        <a href="{{ path('app_server_accounts_index') }}" class="dropdown-item {% if 'server_accounts' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </span> Server Accounts
+                        </a>
+                        {% endif %}
+                        {% if app.user.accountType == 'admin' %}
+                        <a href="{{ path('app_reseller_clients_index') }}" class="dropdown-item {% if 'reseller_clients' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </span> Client Management
+                        </a>
+                        {% endif %}
+                        <a href="{{ path('app_subscription_packages_index') }}" class="dropdown-item {% if 'subscription_packages' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            </span> Subscription Packages
+                        </a>
+                        {% if is_granted('PERM_TEAM_MANAGE') %}
+                        <a href="{{ path('app_team_roles') }}" class="dropdown-item {% if 'team_roles' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            </span> Team Roles
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <div class="topbar-right" style="gap: 15px;">

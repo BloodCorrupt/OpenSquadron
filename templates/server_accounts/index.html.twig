@@ -253,6 +253,7 @@
                 <tr>
                     <th>Email Address</th>
                     <th>Account Type</th>
+                    <th>Subscription</th>
                     <th>Team Support</th>
                     <th>Parent Owner</th>
                     {% if user.accountType == 'super_admin' %}
@@ -274,6 +275,22 @@
                                 <span class="role-badge user">User</span>
                             {% else %}
                                 <span class="role-badge team">Team</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if acc.subscriptionPackage %}
+                                <span style="font-weight: 600; color: var(--primary-accent);">{{ acc.subscriptionPackage.name }}</span>
+                                {% if acc.subscriptionExpiresAt %}
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                                        Expires: {{ acc.subscriptionExpiresAt|date('M d, Y') }}
+                                    </div>
+                                {% else %}
+                                    <div style="font-size: 11px; color: var(--secondary-accent); margin-top: 2px;">
+                                        Permanent
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <span style="opacity: 0.3;">None (Free)</span>
                             {% endif %}
                         </td>
                         <td>
@@ -321,7 +338,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px 0;">No accounts found. Click "Add New Account" to populate this workspace.</td>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px 0;">No accounts found. Click "Add New Account" to populate this workspace.</td>
                     </tr>
                 {% endfor %}
             </tbody>

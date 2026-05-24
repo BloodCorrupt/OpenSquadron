@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Service\WhatsAppConnectionService;
+use App\Service\SubscriptionUsageService;
+use App\Entity\Admin;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +16,7 @@ class ConnectionSetupController extends AbstractController
 {
     public function __construct(
         private WhatsAppConnectionService $whatsappService,
+        private SubscriptionUsageService $usageService,
         #[Autowire('%env(WHATSAPP_VERIFY_TOKEN)%')]
         private string $envVerifyToken
     ) {
@@ -38,6 +41,20 @@ class ConnectionSetupController extends AbstractController
         $phoneNumberId = trim($request->request->get('phoneNumberId', ''));
         $label = trim($request->request->get('label', ''));
         $phoneNumber = trim($request->request->get('phoneNumber', ''));
+
+        /** @var Admin $user */
+        $user = $this->getUser();
+
+        // Check bot limit
+        if (!$this->usageService->canAddBot($user)) {
+            $usage = $this->usageService->getBotUsage($user);
+            $this->addFlash('error', sprintf(
+                'Bot connection limit reached (%d/%d). Upgrade your subscription to connect more bots.',
+                $usage['current'],
+                $usage['limit']
+            ));
+            return $this->redirectToRoute('whatsapp_connect_show');
+        }
 
         if (empty($businessAccountId) || empty($accessToken) || empty($phoneNumberId)) {
             $this->addFlash('error', 'Business Account ID, Access Token, and Phone Number ID are required.');

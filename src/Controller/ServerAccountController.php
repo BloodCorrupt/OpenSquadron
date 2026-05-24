@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Admin;
+use App\Entity\SubscriptionPackage;
 use App\Service\TenantDatabaseService;
 use App\Service\SmtpMailerService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -56,6 +57,7 @@ class ServerAccountController extends AbstractController
         $newAccount = new Admin();
         
         $owners = $this->entityManager->getRepository(Admin::class)->findBy(['parent' => null]);
+        $packages = $this->entityManager->getRepository(SubscriptionPackage::class)->findBy(['owner' => $currentUser]);
 
         if ($request->isMethod('POST')) {
             $email = $request->request->get('email');
@@ -63,6 +65,8 @@ class ServerAccountController extends AbstractController
             $accountType = $request->request->get('account_type', 'team');
             $teamEnabled = $request->request->getBoolean('team_enabled', false);
             $parentId = $request->request->get('parent_id');
+            $packageId = $request->request->get('subscription_package_id');
+            $manualExpiryDateStr = $request->request->get('manual_expiry_date');
 
             if (empty($plainPassword)) {
                 $plainPassword = bin2hex(random_bytes(6));
@@ -72,6 +76,7 @@ class ServerAccountController extends AbstractController
                 $this->addFlash('error', 'Email is required.');
                 return $this->render('server_accounts/new.html.twig', [
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -82,6 +87,7 @@ class ServerAccountController extends AbstractController
                 $this->addFlash('error', 'An account with this email already exists.');
                 return $this->render('server_accounts/new.html.twig', [
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -110,6 +116,28 @@ class ServerAccountController extends AbstractController
                 }
             }
 
+            if ($packageId) {
+                $package = $this->entityManager->getRepository(SubscriptionPackage::class)->find($packageId);
+                if ($package && $package->getOwner() === $currentUser) {
+                    $newAccount->setSubscriptionPackage($package);
+                    
+                    if (!empty($manualExpiryDateStr)) {
+                        $newAccount->setSubscriptionExpiresAt(new \DateTime($manualExpiryDateStr));
+                    } elseif ($package->isLifetime()) {
+                        $newAccount->setSubscriptionExpiresAt(null);
+                    } else {
+                        $newAccount->setSubscriptionExpiresAt((new \DateTime())->modify('+' . $package->getValidityDays() . ' days'));
+                    }
+                    
+                    if ($package->isResellerPackage()) {
+                        $newAccount->setAccountType('admin');
+                        $newAccount->setRoles(['ROLE_ADMIN']);
+                        $newAccount->setParent(null);
+                        $newAccount->setTeamEnabled(true);
+                    }
+                }
+            }
+
             $newAccount->setVerificationCode(str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT));
             $newAccount->setVerificationExpiresAt((new \DateTime())->modify('+5 minutes'));
             $newAccount->setIsVerified(false);
@@ -129,6 +157,7 @@ class ServerAccountController extends AbstractController
 
         return $this->render('server_accounts/new.html.twig', [
             'owners' => $owners,
+            'packages' => $packages,
             'currentUser' => $currentUser,
         ]);
     }
@@ -149,6 +178,7 @@ class ServerAccountController extends AbstractController
         }
 
         $owners = $this->entityManager->getRepository(Admin::class)->findBy(['parent' => null]);
+        $packages = $this->entityManager->getRepository(SubscriptionPackage::class)->findBy(['owner' => $currentUser]);
 
         if ($request->isMethod('POST')) {
             $email = $request->request->get('email');
@@ -156,6 +186,8 @@ class ServerAccountController extends AbstractController
             $teamEnabled = $request->request->getBoolean('team_enabled', false);
             $parentId = $request->request->get('parent_id');
             $accountType = $request->request->get('account_type');
+            $packageId = $request->request->get('subscription_package_id');
+            $manualExpiryDateStr = $request->request->get('manual_expiry_date');
 
             $name = $request->request->get('name');
             $avatarPreset = $request->request->get('avatar_preset');
@@ -166,6 +198,7 @@ class ServerAccountController extends AbstractController
                 return $this->render('server_accounts/edit.html.twig', [
                     'account' => $account,
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -176,6 +209,7 @@ class ServerAccountController extends AbstractController
                 return $this->render('server_accounts/edit.html.twig', [
                     'account' => $account,
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -232,6 +266,31 @@ class ServerAccountController extends AbstractController
                 $account->setTeamEnabled($teamEnabled);
             }
 
+            if ($packageId) {
+                $package = $this->entityManager->getRepository(SubscriptionPackage::class)->find($packageId);
+                if ($package && $package->getOwner() === $currentUser) {
+                    $account->setSubscriptionPackage($package);
+                    
+                    if (!empty($manualExpiryDateStr)) {
+                        $account->setSubscriptionExpiresAt(new \DateTime($manualExpiryDateStr));
+                    } elseif ($package->isLifetime()) {
+                        $account->setSubscriptionExpiresAt(null);
+                    } else {
+                        $account->setSubscriptionExpiresAt((new \DateTime())->modify('+' . $package->getValidityDays() . ' days'));
+                    }
+                    
+                    if ($package->isResellerPackage()) {
+                        $account->setAccountType('admin');
+                        $account->setRoles(['ROLE_ADMIN']);
+                        $account->setParent(null);
+                        $account->setTeamEnabled(true);
+                    }
+                }
+            } else if ($request->request->has('subscription_package_id') && empty($packageId)) {
+                $account->setSubscriptionPackage(null);
+                $account->setSubscriptionExpiresAt(null);
+            }
+
             $this->entityManager->flush();
             $this->addFlash('success', 'Account updated successfully.');
 
@@ -241,6 +300,7 @@ class ServerAccountController extends AbstractController
         return $this->render('server_accounts/edit.html.twig', [
             'account' => $account,
             'owners' => $owners,
+            'packages' => $packages,
             'currentUser' => $currentUser,
         ]);
     }

@@ -6,6 +6,7 @@ use App\Entity\FacebookBotFlow;
 use App\Entity\FacebookConnection;
 use App\Entity\FacebookDripSequence;
 use App\Entity\FacebookActionButton;
+use App\Entity\Admin;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,15 +16,24 @@ use Symfony\Component\Routing\Attribute\Route;
 
 use App\Entity\AiContext;
 use App\Service\FacebookService;
+use App\Service\SubscriptionUsageService;
 use App\Security\Voter\TeamPermissionVoter;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted(TeamPermissionVoter::PERM_FACEBOOK_MANAGE)]
 class FacebookBotManagerController extends AbstractController
 {
+    public function __construct(private SubscriptionUsageService $usageService) {}
     #[Route('/facebook-bot-manager', name: 'app_facebook_bot_manager')]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
+        /** @var Admin $user */
+        $user = $this->getUser();
+        if (!$this->usageService->hasModuleAccess($user, 'facebook')) {
+            $this->addFlash('error', 'Your subscription plan does not include access to Facebook Bot Manager.');
+            return $this->redirectToRoute('app_dashboard');
+        }
+
         $connections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
         
         $selectedConnectionId = $request->query->get('connectionId');

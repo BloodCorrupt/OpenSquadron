@@ -138,6 +138,17 @@
         opacity: 1;
         margin-bottom: 24px;
     }
+    
+    @media (min-width: 576px) {
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+    }
 </style>
 
 <div class="header">
@@ -210,6 +221,39 @@
             <input type="hidden" name="account_type" value="team">
             <input type="hidden" name="parent_id" value="{{ currentUser.id }}">
         {% endif %}
+        
+        {# Subscription Package Field #}
+        {% if packages|length > 0 %}
+            <div class="form-row" style="margin-top: 25px;">
+                <div class="form-group">
+                    <label for="subscription_package_id">Subscription Package</label>
+                    <select id="subscription_package_id" name="subscription_package_id" class="form-control" style="background-color: #0c111d; color: #fff; cursor: pointer;">
+                        <option value="">No Package (Free / Default limits)</option>
+                        {% for pkg in packages %}
+                            {% set features = pkg.features ?? {} %}
+                            {% set limits = features['limits'] ?? {} %}
+                            {% set teamLimit = limits['team'] ?? 0 %}
+                            <option value="{{ pkg.id }}" {% if pkg.isDefault %}selected{% endif %} data-reseller="{{ pkg.isResellerPackage ? '1' : '0' }}" data-team-limit="{{ teamLimit }}">
+                                {{ pkg.name }} - {% if pkg.price > 0 %}${{ pkg.price|number_format(2) }}{% else %}Free{% endif %} 
+                                ({% if pkg.isLifetime %}Permanent{% else %}{{ pkg.validityDays }} days{% endif %})
+                                {% if pkg.isResellerPackage %} [RESELLER]{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">
+                        Assigning a Reseller package will automatically upgrade this account to Reseller privileges.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="manual_expiry_date">Manual Expiry Override (Optional)</label>
+                    <input type="datetime-local" id="manual_expiry_date" name="manual_expiry_date" class="form-control">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">
+                        Leave blank to use package default duration.
+                    </div>
+                </div>
+            </div>
+        {% endif %}
 
         {# Action Buttons #}
         <div class="form-actions">
@@ -231,13 +275,33 @@
                 const selectedType = accountTypeSelect.value;
                 
                 // Reset visibilities
-                teamSupportField.classList.remove('visible');
-                parentOwnerField.classList.remove('visible');
+                if (teamSupportField) teamSupportField.classList.remove('visible');
+                if (parentOwnerField) parentOwnerField.classList.remove('visible');
 
                 if (selectedType === 'user') {
-                    teamSupportField.classList.add('visible');
+                    // Check if selected package has team support limit
+                    const packageSelect = document.getElementById('subscription_package_id');
+                    let hasTeamSupportFromPackage = false;
+                    if (packageSelect) {
+                        const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+                        if (selectedOption && selectedOption.value !== "") {
+                            const teamLimit = parseInt(selectedOption.getAttribute('data-team-limit') || '0', 10);
+                            const isReseller = selectedOption.getAttribute('data-reseller') === '1';
+                            if (teamLimit > 0 || isReseller) {
+                                hasTeamSupportFromPackage = true;
+                            }
+                        }
+                    }
+
+                    if (hasTeamSupportFromPackage) {
+                        const teamCheckbox = document.getElementById('team_enabled');
+                        if (teamCheckbox) teamCheckbox.checked = true;
+                        if (teamSupportField) teamSupportField.classList.remove('visible');
+                    } else {
+                        if (teamSupportField) teamSupportField.classList.add('visible');
+                    }
                 } else if (selectedType === 'team') {
-                    parentOwnerField.classList.add('visible');
+                    if (parentOwnerField) parentOwnerField.classList.add('visible');
                 }
             }
 
@@ -246,6 +310,23 @@
 
             // Setup change listener
             accountTypeSelect.addEventListener('change', updateFieldsVisibility);
+
+            // Reseller package auto-select visual trigger
+            const packageSelect = document.getElementById('subscription_package_id');
+            if (packageSelect) {
+                packageSelect.addEventListener('change', function() {
+                    const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+                    if (selectedOption) {
+                        const isReseller = selectedOption.getAttribute('data-reseller') === '1';
+                        if (isReseller) {
+                            accountTypeSelect.value = 'admin';
+                            accountTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        } else {
+                            updateFieldsVisibility();
+                        }
+                    }
+                });
+            }
         }
     });
 </script>

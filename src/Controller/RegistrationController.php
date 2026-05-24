@@ -93,6 +93,28 @@ class RegistrationController extends AbstractController
             // Allow team if they want to pay for it later, or default to false. Default to false for now.
             $user->setTeamEnabled(false);
 
+            // Assign default subscription package if exists for this creator
+            $defaultPackage = $entityManager->getRepository(\App\Entity\SubscriptionPackage::class)->findOneBy([
+                'owner' => $creator,
+                'isDefault' => true
+            ]);
+
+            if ($defaultPackage) {
+                $user->setSubscriptionPackage($defaultPackage);
+                if ($defaultPackage->isLifetime()) {
+                    $user->setSubscriptionExpiresAt(null);
+                } else {
+                    $user->setSubscriptionExpiresAt((new \DateTime())->modify('+' . $defaultPackage->getValidityDays() . ' days'));
+                }
+                
+                // If it's a reseller package, upgrade them instantly.
+                if ($defaultPackage->isResellerPackage()) {
+                    $user->setAccountType('admin');
+                    $user->setParent(null);
+                    $user->setTeamEnabled(true);
+                }
+            }
+
             $entityManager->persist($user);
             $entityManager->flush();
 

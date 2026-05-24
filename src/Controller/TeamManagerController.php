@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Admin;
 use App\Entity\TeamRole;
 use App\Security\Voter\TeamPermissionVoter;
+use App\Service\SubscriptionUsageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,6 +18,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(TeamPermissionVoter::PERM_TEAM_MANAGE)]
 class TeamManagerController extends AbstractController
 {
+    public function __construct(
+        private SubscriptionUsageService $usageService
+    ) {
+    }
     private function checkTeamEnabled(): void
     {
         /** @var Admin $user */
@@ -180,6 +185,19 @@ class TeamManagerController extends AbstractController
             $existing = $em->getRepository(Admin::class)->findOneBy(['email' => $email]);
             if ($existing) {
                 return new JsonResponse(['success' => false, 'error' => 'A user with this email already exists.'], 400);
+            }
+
+            // Check team member limit
+            if (!$this->usageService->canAddTeamMember($owner)) {
+                $usage = $this->usageService->getTeamUsage($owner);
+                return new JsonResponse([
+                    'success' => false,
+                    'error'   => sprintf(
+                        'Team member limit reached (%d/%d). Upgrade your subscription to add more team members.',
+                        $usage['current'],
+                        $usage['limit']
+                    ),
+                ], 403);
             }
 
             $member = new Admin();

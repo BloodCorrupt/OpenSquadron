@@ -60,6 +60,7 @@ class ResellerClientController extends AbstractController
         
         $createdUsers = $this->entityManager->getRepository(Admin::class)->findBy(['createdBy' => $currentUser]);
         $owners = array_merge([$currentUser], $createdUsers);
+        $packages = $this->entityManager->getRepository(\App\Entity\SubscriptionPackage::class)->findBy(['owner' => $currentUser]);
 
         if ($request->isMethod('POST')) {
             $email = $request->request->get('email');
@@ -67,6 +68,8 @@ class ResellerClientController extends AbstractController
             $accountType = $request->request->get('account_type', 'team');
             $teamEnabled = $request->request->getBoolean('team_enabled', false);
             $parentId = $request->request->get('parent_id');
+            $packageId = $request->request->get('subscription_package_id');
+            $manualExpiryDateStr = $request->request->get('manual_expiry_date');
 
             if (empty($plainPassword)) {
                 $plainPassword = bin2hex(random_bytes(6));
@@ -76,6 +79,7 @@ class ResellerClientController extends AbstractController
                 $this->addFlash('error', 'Email is required.');
                 return $this->render('reseller_clients/new.html.twig', [
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -85,6 +89,7 @@ class ResellerClientController extends AbstractController
                 $this->addFlash('error', 'An account with this email already exists.');
                 return $this->render('reseller_clients/new.html.twig', [
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -114,6 +119,27 @@ class ResellerClientController extends AbstractController
                 }
             }
 
+            if ($packageId) {
+                $package = $this->entityManager->getRepository(\App\Entity\SubscriptionPackage::class)->find($packageId);
+                if ($package && $package->getOwner() === $currentUser) {
+                    $newAccount->setSubscriptionPackage($package);
+                    
+                    if (!empty($manualExpiryDateStr)) {
+                        $newAccount->setSubscriptionExpiresAt(new \DateTime($manualExpiryDateStr));
+                    } elseif ($package->isLifetime()) {
+                        $newAccount->setSubscriptionExpiresAt(null);
+                    } else {
+                        $newAccount->setSubscriptionExpiresAt((new \DateTime())->modify('+' . $package->getValidityDays() . ' days'));
+                    }
+                    
+                    if ($package->isResellerPackage()) {
+                        $newAccount->setAccountType('admin'); // 'admin' acts as Reseller in OpenSquadron
+                        $newAccount->setParent(null);
+                        $newAccount->setTeamEnabled(true);
+                    }
+                }
+            }
+
             $newAccount->setVerificationCode(str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT));
             $newAccount->setVerificationExpiresAt((new \DateTime())->modify('+5 minutes'));
             $newAccount->setIsVerified(false);
@@ -133,6 +159,7 @@ class ResellerClientController extends AbstractController
 
         return $this->render('reseller_clients/new.html.twig', [
             'owners' => $owners,
+            'packages' => $packages,
             'currentUser' => $currentUser,
         ]);
     }
@@ -167,6 +194,7 @@ class ResellerClientController extends AbstractController
 
         $createdUsers = $this->entityManager->getRepository(Admin::class)->findBy(['createdBy' => $currentUser]);
         $owners = array_merge([$currentUser], $createdUsers);
+        $packages = $this->entityManager->getRepository(\App\Entity\SubscriptionPackage::class)->findBy(['owner' => $currentUser]);
 
         if ($request->isMethod('POST')) {
             $email = $request->request->get('email');
@@ -174,6 +202,8 @@ class ResellerClientController extends AbstractController
             $teamEnabled = $request->request->getBoolean('team_enabled', false);
             $parentId = $request->request->get('parent_id');
             $accountType = $request->request->get('account_type');
+            $packageId = $request->request->get('subscription_package_id');
+            $manualExpiryDateStr = $request->request->get('manual_expiry_date');
 
             $name = $request->request->get('name');
             $avatarPreset = $request->request->get('avatar_preset');
@@ -184,6 +214,7 @@ class ResellerClientController extends AbstractController
                 return $this->render('reseller_clients/edit.html.twig', [
                     'account' => $account,
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -194,6 +225,7 @@ class ResellerClientController extends AbstractController
                 return $this->render('reseller_clients/edit.html.twig', [
                     'account' => $account,
                     'owners' => $owners,
+                    'packages' => $packages,
                     'currentUser' => $currentUser,
                 ]);
             }
@@ -247,6 +279,30 @@ class ResellerClientController extends AbstractController
                 $account->setTeamEnabled($teamEnabled);
             }
 
+            if ($packageId) {
+                $package = $this->entityManager->getRepository(\App\Entity\SubscriptionPackage::class)->find($packageId);
+                if ($package && $package->getOwner() === $currentUser) {
+                    $account->setSubscriptionPackage($package);
+                    
+                    if (!empty($manualExpiryDateStr)) {
+                        $account->setSubscriptionExpiresAt(new \DateTime($manualExpiryDateStr));
+                    } elseif ($package->isLifetime()) {
+                        $account->setSubscriptionExpiresAt(null);
+                    } else {
+                        $account->setSubscriptionExpiresAt((new \DateTime())->modify('+' . $package->getValidityDays() . ' days'));
+                    }
+                    
+                    if ($package->isResellerPackage()) {
+                        $account->setAccountType('admin');
+                        $account->setParent(null);
+                        $account->setTeamEnabled(true);
+                    }
+                }
+            } else if ($request->request->has('subscription_package_id') && empty($packageId)) {
+                $account->setSubscriptionPackage(null);
+                $account->setSubscriptionExpiresAt(null);
+            }
+
             $this->entityManager->flush();
             $this->addFlash('success', 'Client updated successfully.');
 
@@ -256,6 +312,7 @@ class ResellerClientController extends AbstractController
         return $this->render('reseller_clients/edit.html.twig', [
             'account' => $account,
             'owners' => $owners,
+            'packages' => $packages,
             'currentUser' => $currentUser,
         ]);
     }

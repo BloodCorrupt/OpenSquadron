@@ -1,0 +1,184 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Subscription Packages - OpenSquadron{% endblock %}
+
+{% block body %}
+<style>
+    .accounts-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        margin-top: 20px;
+    }
+    .card-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .account-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .account-table th {
+        text-align: left;
+        padding: 16px 20px;
+        font-size: 13px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        border-bottom: 1px solid var(--glass-border);
+    }
+    .account-table td {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text-main);
+        font-size: 15px;
+        vertical-align: middle;
+    }
+    .account-table tr:last-child td {
+        border-bottom: none;
+    }
+    .account-table tr:hover td {
+        background-color: rgba(255, 255, 255, 0.01);
+    }
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .role-badge.super-admin {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+        border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .btn-action:hover {
+        background: rgba(6, 182, 212, 0.1);
+        color: var(--primary-accent);
+        border-color: var(--primary-accent);
+        transform: scale(1.05);
+    }
+    .btn-action.delete:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error-color);
+        border-color: var(--error-color);
+    }
+</style>
+
+<div class="header">
+    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+    <h1>Subscription Packages</h1>
+</div>
+
+<div class="accounts-card">
+    <div class="card-header-row">
+        <div style="font-size: 18px; font-weight: 600;">Package Directory</div>
+        <a href="{{ path('app_subscription_packages_new') }}" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px; text-decoration: none; display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Create New Package
+        </a>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="account-table">
+            <thead>
+                <tr>
+                    <th>Package Name</th>
+                    <th>Price</th>
+                    <th>Validity</th>
+                    <th>Features</th>
+                    {% if user.accountType == 'super_admin' %}
+                        <th>Type</th>
+                    {% endif %}
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for package in packages %}
+                    <tr>
+                        <td style="font-weight: 600; color: #fff;">{{ package.name }}</td>
+                        <td>
+                            {% if package.price > 0 %}
+                                ${{ package.price|number_format(2) }}
+                            {% else %}
+                                Free
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if package.isLifetime %}
+                                Permanent
+                            {% else %}
+                                {{ package.validityDays }} Days
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set features = package.features ?? [] %}
+                            {% set modules = features['modules'] ?? [] %}
+                            {% if modules is empty %}
+                                <span style="opacity: 0.5;">No special modules</span>
+                            {% else %}
+                                {% for mod in modules %}
+                                    <span style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-right: 4px;">{{ mod|capitalize }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                        {% if user.accountType == 'super_admin' %}
+                        <td>
+                            {% if package.isResellerPackage %}
+                                <span class="role-badge super-admin">Reseller Package</span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 14px;">Standard</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <td class="actions-cell">
+                            <a href="{{ path('app_subscription_packages_edit', {id: package.id}) }}" class="btn-action" title="Edit Package">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            </a>
+                            
+                            <form action="{{ path('app_subscription_packages_delete', {id: package.id}) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this package?');">
+                                <button type="submit" class="btn-action delete" title="Delete Package" style="outline: none;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1-2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px 0;">No packages found. Click "Create New Package" to start monetizing.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
