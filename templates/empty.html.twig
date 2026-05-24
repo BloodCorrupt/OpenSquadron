@@ -27,6 +27,39 @@
             --select-option-hover: rgba(56, 189, 248, 0.12);
             --select-option-selected: rgba(56, 189, 248, 0.2);
         }
+
+        /* ─── Builder Custom Select Box Styling (Dark Mode Default) ─── */
+        .fb-shell .custom-glass-select-trigger {
+            border-radius: 8px !important;
+            background: rgba(0, 0, 0, 0.35) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: var(--fb-text-main) !important;
+            box-shadow: none !important;
+        }
+        .fb-shell .custom-glass-select-trigger:hover {
+            border-color: var(--fb-active-border) !important;
+        }
+        .fb-shell .custom-glass-select-options {
+            border-radius: 8px !important;
+            background: #0b1329 !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+        }
+        .fb-shell .custom-glass-select-option {
+            color: var(--fb-text-main) !important;
+            opacity: 0.8 !important;
+        }
+        .fb-shell .custom-glass-select-option:hover {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #ffffff !important;
+            opacity: 1 !important;
+        }
+        .fb-shell .custom-glass-select-option.is-selected {
+            background: rgba(6, 182, 212, 0.15) !important;
+            color: var(--fb-active-border) !important;
+            opacity: 1 !important;
+        }
+
         body[data-theme="light"] {
             --bg-gradient-start: #f8fafc;
             --bg-gradient-end: #e2e8f0;
@@ -48,6 +81,15 @@
             --select-text: #1e293b;
             --select-option-hover: rgba(8, 145, 178, 0.08);
             --select-option-selected: rgba(8, 145, 178, 0.15);
+
+            /* Builder Theme Overrides */
+            --fb-bg: #f8fafc;
+            --fb-border: rgba(15, 23, 42, 0.08);
+            --fb-text-main: #1e293b;
+            --fb-text-muted: #64748b;
+            --fb-card-bg: rgba(255, 255, 255, 0.8);
+            --fb-active-border: #0891b2;
+            --fb-secondary-accent: #059669;
         }
         /* ─── Visually Hidden Native Select ─── */
         .hidden-native-select {
@@ -437,6 +479,366 @@
         body[data-theme="light"] [style*="color: #ffffff"] {
             color: var(--text-header) !important;
         }
+
+        /* Button border and background overrides for Light Mode */
+        body[data-theme="light"] .btn-primary,
+        body[data-theme="light"] .btn-create {
+            background: linear-gradient(135deg, #0891b2, #0e7490) !important;
+            border: 1px solid #0891b2 !important;
+            color: #ffffff !important;
+        }
+        body[data-theme="light"] .btn-secondary,
+        body[data-theme="light"] .btn-secondary-action {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        body[data-theme="light"] .btn-secondary:hover,
+        body[data-theme="light"] .btn-secondary-action:hover {
+            background: #f8fafc !important;
+            border-color: #94a3b8 !important;
+        }
+        body[data-theme="light"] .btn-danger,
+        body[data-theme="light"] .btn-danger-action {
+            background: #fef2f2 !important;
+            border: 1px solid #fca5a5 !important;
+            color: #b91c1c !important;
+        }
+        body[data-theme="light"] .btn-danger:hover,
+        body[data-theme="light"] .btn-danger-action:hover {
+            background: #fee2e2 !important;
+            border-color: #f87171 !important;
+        }
+
+        /* ─── Light Mode Overrides for Flow & Sequence Builders ─── */
+        body[data-theme="light"] .fb-shell {
+            background: #f8fafc !important;
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-sidebar,
+        body[data-theme="light"] .fb-inspector {
+            background: #ffffff !important;
+            border-color: #e2e8f0 !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+        }
+        body[data-theme="light"] .fb-sidebar-header,
+        body[data-theme="light"] .fb-inspector-header,
+        body[data-theme="light"] .fb-modal-header,
+        body[data-theme="light"] .fb-sidebar-flows {
+            border-bottom-color: #e2e8f0 !important;
+            background: transparent !important;
+        }
+        body[data-theme="light"] .fb-sidebar-flows {
+            background: #f8fafc !important;
+        }
+        body[data-theme="light"] .fb-search-box input,
+        body[data-theme="light"] .fb-flow-dropdown,
+        body[data-theme="light"] .fb-input,
+        body[data-theme="light"] .fb-textarea,
+        body[data-theme="light"] .fb-select {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border-color: #cbd5e1 !important;
+        }
+        body[data-theme="light"] .fb-search-box input:focus,
+        body[data-theme="light"] .fb-flow-dropdown:focus,
+        body[data-theme="light"] .fb-input:focus,
+        body[data-theme="light"] .fb-textarea:focus,
+        body[data-theme="light"] .fb-select:focus {
+            border-color: var(--primary-accent) !important;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15) !important;
+        }
+        body[data-theme="light"] .fb-palette-item {
+            background: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-palette-item:hover {
+            background: #ffffff !important;
+            border-color: var(--primary-accent) !important;
+            box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1) !important;
+        }
+        body[data-theme="light"] .pi-messages { background: rgba(30, 64, 175, 0.08) !important; color: #1d4ed8 !important; }
+        body[data-theme="light"] .pi-collection { background: rgba(22, 101, 52, 0.08) !important; color: #15803d !important; }
+        body[data-theme="light"] .pi-interactive { background: rgba(107, 33, 168, 0.08) !important; color: #7e22ce !important; }
+        body[data-theme="light"] .pi-control { background: rgba(15, 23, 42, 0.08) !important; color: #c2410c !important; }
+        
+        body[data-theme="light"] .fb-canvas-container {
+            background-color: #f1f5f9 !important;
+            background-image: 
+                radial-gradient(rgba(15, 23, 42, 0.05) 1.5px, transparent 1.5px),
+                radial-gradient(rgba(15, 23, 42, 0.05) 1.5px, transparent 1.5px) !important;
+        }
+        body[data-theme="light"] .fb-floating-back {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+        }
+        body[data-theme="light"] .fb-floating-back:hover {
+            background: #f8fafc !important;
+            border-color: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-top-actions > span,
+        body[data-theme="light"] .fb-phone-badge {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+        }
+        body[data-theme="light"] .fb-control-btn {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04) !important;
+        }
+        body[data-theme="light"] .fb-control-btn:hover {
+            background: #f8fafc !important;
+            border-color: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-node {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04) !important;
+        }
+        body[data-theme="light"] .fb-node-header {
+            border-bottom-color: #f1f5f9 !important;
+        }
+        body[data-theme="light"] .fb-node-body {
+            color: #64748b !important;
+        }
+        body[data-theme="light"] .fb-node-preview {
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-node-meta-box {
+            background: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        body[data-theme="light"] .fb-node-set-btn {
+            background: rgba(8, 145, 178, 0.08) !important;
+            border-color: rgba(8, 145, 178, 0.2) !important;
+            color: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-node-set-btn:hover {
+            background: rgba(8, 145, 178, 0.15) !important;
+        }
+        body[data-theme="light"] .fb-node-stats {
+            background: #f8fafc !important;
+            border-bottom-color: #cbd5e1 !important;
+            border-top-color: #cbd5e1 !important;
+        }
+        body[data-theme="light"] .stat-item {
+            border-right-color: #cbd5e1 !important;
+        }
+        body[data-theme="light"] .stat-val {
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .stat-lbl {
+            color: #64748b !important;
+        }
+        body[data-theme="light"] .fb-node-btn {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-node-btn:hover {
+            background: #f8fafc !important;
+        }
+        body[data-theme="light"] .fb-port {
+            background: #ffffff !important;
+            border-color: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-port:hover {
+            background: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-port.is-in {
+            border-color: var(--fb-secondary-accent) !important;
+        }
+        body[data-theme="light"] .fb-port.is-in:hover {
+            background: var(--fb-secondary-accent) !important;
+        }
+        body[data-theme="light"] .fb-action-buttons {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+        }
+        body[data-theme="light"] .fb-action-btn {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        body[data-theme="light"] .fb-action-btn:hover {
+            background: #f1f5f9 !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        body[data-theme="light"] .fb-action-btn.primary {
+            background: var(--fb-secondary-accent) !important;
+            border-color: transparent !important;
+            color: #ffffff !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        body[data-theme="light"] .fb-action-btn.primary:hover {
+            background: var(--fb-active-border) !important;
+            color: #ffffff !important;
+        }
+        body[data-theme="light"] .fb-control-btn {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+        }
+        body[data-theme="light"] .fb-control-btn:hover {
+            background: #f8fafc !important;
+            border-color: var(--primary-accent) !important;
+            color: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-settings-modal {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.06) !important;
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-modal-header {
+            border-bottom-color: #cbd5e1 !important;
+        }
+        body[data-theme="light"] .fb-modal-footer {
+            background: #f8fafc !important;
+            border-top-color: #cbd5e1 !important;
+        }
+        body[data-theme="light"] .fb-ctx-menu {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08) !important;
+        }
+        body[data-theme="light"] .fb-ctx-search {
+            border-bottom-color: #cbd5e1 !important;
+            background: #f8fafc !important;
+        }
+        body[data-theme="light"] .fb-ctx-item {
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-ctx-item:hover {
+            background: rgba(0, 0, 0, 0.02) !important;
+        }
+        body[data-theme="light"] .fb-ctx-item.is-cancel {
+            border-top-color: #cbd5e1 !important;
+            color: #dc2626 !important;
+        }
+        body[data-theme="light"] .fb-sidebar-body::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* ─── Light Mode Overrides for Flow Builder Context Menu & Minimap ─── */
+        body[data-theme="light"] .fb-minimap {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        }
+        body[data-theme="light"] .fb-context-menu,
+        body[data-theme="light"] .fb-node-context-menu {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        }
+        body[data-theme="light"] .fb-context-menu-search {
+            border-bottom-color: #cbd5e1 !important;
+            background: #f8fafc !important;
+        }
+        body[data-theme="light"] .fb-context-menu-search input {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border-color: #cbd5e1 !important;
+        }
+        body[data-theme="light"] .fb-context-menu-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15) !important;
+        }
+        body[data-theme="light"] .fb-node-ctx-item {
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-node-ctx-item:hover {
+            background: rgba(0, 0, 0, 0.04) !important;
+        }
+        body[data-theme="light"] .fb-node-ctx-item.is-danger {
+            color: #ef4444 !important;
+        }
+        body[data-theme="light"] .fb-node-ctx-item.is-danger:hover {
+            background: rgba(239, 68, 68, 0.05) !important;
+        }
+        body[data-theme="light"] .fb-node-ctx-divider {
+            background: #cbd5e1 !important;
+        }
+
+        body[data-theme="light"] .fb-sidebar-header a {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #64748b !important;
+        }
+        body[data-theme="light"] .fb-sidebar-header a:hover {
+            background: #f8fafc !important;
+            border-color: var(--primary-accent) !important;
+            color: var(--primary-accent) !important;
+        }
+
+        /* ─── Light Mode Row Action Buttons Overrides ─── */
+        body[data-theme="light"] .btn-row-action {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #64748b !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        body[data-theme="light"] .btn-row-action:hover {
+            background: #f8fafc !important;
+            border-color: #94a3b8 !important;
+        }
+        body[data-theme="light"] .btn-row-action.edit-action {
+            border-color: #cbd5e1 !important;
+            background: #ffffff !important;
+        }
+        body[data-theme="light"] .btn-row-action.edit-action:hover {
+            background: rgba(8, 145, 178, 0.08) !important;
+            border-color: currentColor !important;
+            color: currentColor !important;
+        }
+        body[data-theme="light"] .btn-row-action.delete-action {
+            color: #b91c1c !important;
+            border-color: #fca5a5 !important;
+            background: #fef2f2 !important;
+        }
+        body[data-theme="light"] .btn-row-action.delete-action:hover {
+            background: #fee2e2 !important;
+            border-color: #b91c1c !important;
+            color: #b91c1c !important;
+        }
+
+        /* ─── Builder Custom Select Box Styling (Light Mode) ─── */
+        body[data-theme="light"] .fb-shell .custom-glass-select-trigger {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-shell .custom-glass-select-trigger:hover {
+            border-color: var(--primary-accent) !important;
+        }
+        body[data-theme="light"] .fb-shell .custom-glass-select-options {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        }
+        body[data-theme="light"] .fb-shell .custom-glass-select-option {
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-shell .custom-glass-select-option:hover {
+            background: rgba(0, 0, 0, 0.03) !important;
+            color: #1e293b !important;
+        }
+        body[data-theme="light"] .fb-shell .custom-glass-select-option.is-selected {
+            background: rgba(8, 145, 178, 0.08) !important;
+            color: var(--primary-accent) !important;
+        }
     </style>
     {% block stylesheets %}{% endblock %}
     {% set custom_css = get_custom_css() %}
@@ -477,6 +879,7 @@
                     cls !== 'hidden-native-select' && 
                     cls !== 'glass-input' && 
                     cls !== 'glass-select' &&
+                    cls !== 'fb-select' &&
                     cls !== 'sidebar-select' &&
                     cls !== 'toolbar-select' &&
                     cls !== 'sidebar-filter-select' &&

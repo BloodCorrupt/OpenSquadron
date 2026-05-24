@@ -628,6 +628,373 @@
             min-width: 0 !important; /* Allow the input to shrink below default browser sizes */
         }
     }
+
+    /* Template Modal Styles */
+    .template-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    }
+    .template-modal-content {
+        background: var(--bg-gradient-end);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .template-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .template-modal-title {
+        margin: 0;
+        color: #fff;
+        font-size: 18px;
+    }
+    .template-modal-close {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 20px;
+    }
+    .template-modal-body {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .template-item {
+        background: rgba(0,0,0,0.2);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        border: 1px solid var(--glass-border);
+        transition: background 0.2s;
+    }
+    .template-item:hover {
+        background: rgba(255,255,255,0.05);
+    }
+    .template-item-name {
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .template-item-lang {
+        font-size: 11px;
+        background: rgba(16,185,129,0.2);
+        color: var(--secondary-accent);
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+    .template-item-body-text {
+        color: #aaa;
+        font-size: 13px;
+    }
+
+    /* Sidebar Buttons */
+    .btn-sidebar-accent {
+        background: rgba(6, 182, 212, 0.2);
+        border: 1px solid rgba(6, 182, 212, 0.4);
+        color: #22d3ee;
+        border-radius: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        outline: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        transition: all 0.2s;
+    }
+    .btn-sidebar-accent:hover {
+        background: rgba(6, 182, 212, 0.3);
+    }
+    .btn-sidebar-primary {
+        background: linear-gradient(135deg, var(--primary-accent), #0284c7);
+        border: none;
+        color: #fff;
+        border-radius: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(6, 182, 212, 0.2);
+        outline: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-sidebar-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+    }
+
+    .mobile-sidebar-close-btn {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--glass-border);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        outline: none;
+    }
+
+    .sidebar-filter-select option,
+    .sidebar-filter-select optgroup {
+        background: #111 !important;
+        color: #fff;
+    }
+    .sidebar-filter-select optgroup {
+        color: var(--text-muted);
+    }
+
+    /* ─── Light Theme Overrides for Shared Inbox ─── */
+    body[data-theme="light"] .inbox-container {
+        background: #f8fafc !important;
+    }
+    
+    body[data-theme="light"] .inbox-sidebar {
+        background: #f1f5f9 !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    body[data-theme="light"] .inbox-right-sidebar {
+        background: #f1f5f9 !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .inbox-header {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        color: var(--text-header) !important;
+    }
+    
+    body[data-theme="light"] .subscriber-item {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .subscriber-item:hover {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02) !important;
+    }
+    
+    body[data-theme="light"] .subscriber-item.active {
+        background: rgba(8, 145, 178, 0.08) !important;
+        border-color: var(--primary-accent) !important;
+        border-left-color: var(--primary-accent) !important;
+        box-shadow: none !important;
+    }
+    
+    body[data-theme="light"] .subscriber-name {
+        color: var(--text-header) !important;
+    }
+    
+    body[data-theme="light"] .sidebar-filters {
+        background: #f8fafc !important;
+        border-bottom-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .sidebar-filter-select,
+    body[data-theme="light"] .sidebar-search-input {
+        background: #ffffff !important;
+        color: var(--text-main) !important;
+        border-color: #cbd5e1 !important;
+    }
+    
+    body[data-theme="light"] .sidebar-filter-select option,
+    body[data-theme="light"] .sidebar-filter-select optgroup {
+        background: #ffffff !important;
+        color: var(--text-main) !important;
+    }
+    body[data-theme="light"] .sidebar-filter-select optgroup {
+        color: var(--text-muted) !important;
+    }
+    
+    body[data-theme="light"] .sidebar-input-wrapper svg.left-icon,
+    body[data-theme="light"] .sidebar-input-wrapper svg.right-icon {
+        stroke: var(--text-muted) !important;
+    }
+    
+    body[data-theme="light"] .sidebar-input-wrapper:focus-within svg.left-icon {
+        stroke: var(--primary-accent) !important;
+    }
+    
+    body[data-theme="light"] .chat-header {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] #chat-header-name {
+        color: var(--text-header) !important;
+    }
+    
+    body[data-theme="light"] .mobile-back-btn {
+        color: var(--text-main) !important;
+    }
+    
+    body[data-theme="light"] .chat-messages::-webkit-scrollbar-thumb,
+    body[data-theme="light"] .subscriber-list::-webkit-scrollbar-thumb,
+    body[data-theme="light"] .inbox-right-sidebar::-webkit-scrollbar-thumb,
+    body[data-theme="light"] .notes-list::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body[data-theme="light"] .message-inbound {
+        background: #f1f5f9 !important;
+        color: #1e293b !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    body[data-theme="light"] .message-inbound .message-time {
+        color: #64748b !important;
+    }
+    
+    body[data-theme="light"] .message-outbound .message-time {
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+    
+    body[data-theme="light"] .chat-input-area {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .chat-input {
+        background: #ffffff !important;
+        color: var(--text-main) !important;
+        border-color: #cbd5e1 !important;
+    }
+    
+    body[data-theme="light"] .chat-input::placeholder {
+        color: var(--text-muted) !important;
+    }
+    
+    body[data-theme="light"] .attachment-btn {
+        background: #ffffff !important;
+        color: var(--text-muted) !important;
+        border-color: #cbd5e1 !important;
+    }
+    
+    body[data-theme="light"] .attachment-btn:hover {
+        background: #f8fafc !important;
+        color: var(--text-main) !important;
+    }
+    
+    body[data-theme="light"] #file-preview {
+        background: #f1f5f9 !important;
+        color: var(--text-main) !important;
+    }
+    
+    body[data-theme="light"] .sidebar-section {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    }
+    
+    body[data-theme="light"] .sidebar-input,
+    body[data-theme="light"] .sidebar-select {
+        background: #ffffff !important;
+        color: var(--text-main) !important;
+        border-color: #cbd5e1 !important;
+    }
+    
+    body[data-theme="light"] .sidebar-select option {
+        background: #ffffff !important;
+        color: var(--text-main) !important;
+    }
+    
+    body[data-theme="light"] .chat-tag {
+        background: rgba(8, 145, 178, 0.1) !important;
+        border-color: rgba(8, 145, 178, 0.3) !important;
+        color: #0891b2 !important;
+    }
+    
+    body[data-theme="light"] .attribute-item {
+        background: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .attribute-value {
+        color: var(--text-main) !important;
+    }
+    
+    body[data-theme="light"] .note-item {
+        background: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .note-text {
+        color: var(--text-main) !important;
+    }
+    
+    body[data-theme="light"] #chat-window-warning {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
+        color: #dc2626 !important;
+    }
+    
+    body[data-theme="light"] .mobile-sidebar-close-btn {
+        background: rgba(0, 0, 0, 0.05) !important;
+        color: var(--text-main) !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    /* ─── Light Mode Template Modal Overrides ─── */
+    body[data-theme="light"] .template-modal {
+        background: rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    body[data-theme="light"] .template-modal-content {
+        background: #ffffff !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .template-modal-title {
+        color: var(--text-header) !important;
+    }
+    
+    body[data-theme="light"] .template-modal-close {
+        color: var(--text-main) !important;
+    }
+    
+    body[data-theme="light"] .template-item {
+        background: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    body[data-theme="light"] .template-item:hover {
+        background: #f1f5f9 !important;
+    }
+    
+    body[data-theme="light"] .template-item-name {
+        color: var(--text-header) !important;
+    }
+    
+    body[data-theme="light"] .template-item-body-text {
+        color: var(--text-muted) !important;
+    }
 </style>
 {% endblock %}
 
@@ -645,18 +1012,18 @@
                 <!-- Connected Channel Link Icon -->
                 <svg class="left-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                 <select id="connectionFilter" onchange="filterSubscribers()" class="sidebar-filter-select">
-                    <option value="" style="background: #111;">All Connected Accounts</option>
+                    <option value="">All Connected Accounts</option>
                     {% if whatsappConnections is not empty %}
-                        <optgroup label="WhatsApp" style="background: #111; color: var(--text-muted);">
+                        <optgroup label="WhatsApp">
                             {% for conn in whatsappConnections %}
-                                <option value="whatsapp-{{ conn.id }}" style="background: #111;">{{ conn.label ?: conn.phoneNumber }}</option>
+                                <option value="whatsapp-{{ conn.id }}">{{ conn.label ?: conn.phoneNumber }}</option>
                             {% endfor %}
                         </optgroup>
                     {% endif %}
                     {% if facebookConnections is not empty %}
-                        <optgroup label="Facebook (Beta)" style="background: #111; color: var(--text-muted);">
+                        <optgroup label="Facebook (Beta)">
                             {% for conn in facebookConnections %}
-                                <option value="facebook-{{ conn.id }}" style="background: #111;">{{ conn.label ?: conn.pageName ?: conn.pageId }}</option>
+                                <option value="facebook-{{ conn.id }}">{{ conn.label ?: conn.pageName ?: conn.pageId }}</option>
                             {% endfor %}
                         </optgroup>
                     {% endif %}
@@ -822,7 +1189,7 @@
     <div class="inbox-right-sidebar" id="inbox-right-sidebar" style="{% if activeSubscriber %}display: flex;{% else %}display: none;{% endif %}">
         <!-- Mobile Sidebar Close Row -->
         <div class="mobile-sidebar-close-row" style="display: none; justify-content: flex-end; width: 100%;">
-            <button onclick="toggleRightSidebar()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; outline: none;">
+            <button onclick="toggleRightSidebar()" class="mobile-sidebar-close-btn">
                 Close &times;
             </button>
         </div>
@@ -853,7 +1220,7 @@
             <label class="sidebar-field-label">Conversation Tags</label>
             <div class="sidebar-flex-row">
                 <input type="text" id="newTagInput" class="sidebar-input" placeholder="Add tag..." onkeypress="if(event.keyCode == 13) addTag()" style="padding: 6px 10px;">
-                <button onclick="addTag()" style="background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); color: #22d3ee; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; outline: none; display: flex; align-items: center; justify-content: center; height: 32px;">Add</button>
+                <button onclick="addTag()" class="btn-sidebar-accent">Add</button>
             </div>
             <div class="tag-container" id="tagContainer">
                 {% if activeSubscriber %}
@@ -896,7 +1263,7 @@
                 <input type="text" id="newAttrKey" class="sidebar-input" placeholder="Property name..." style="padding: 6px 10px;">
                 <div class="sidebar-flex-row">
                     <input type="text" id="newAttrVal" class="sidebar-input" placeholder="Value..." style="padding: 6px 10px;">
-                    <button onclick="addAttribute()" style="background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); color: #22d3ee; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; outline: none; height: 32px; display: flex; align-items: center; justify-content: center;">Set</button>
+                    <button onclick="addAttribute()" class="btn-sidebar-accent">Set</button>
                 </div>
             </div>
         </div>
@@ -919,27 +1286,27 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; border-top: 1px solid var(--glass-border); padding-top: 10px;">
                 <textarea id="newNoteText" class="sidebar-input" placeholder="Write staff note..." rows="2" style="resize: none; font-family: inherit;"></textarea>
-                <button onclick="addNote()" style="background: linear-gradient(135deg, var(--primary-accent), #0284c7); border: none; color: #fff; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; box-shadow: 0 2px 10px rgba(6, 182, 212, 0.2); outline: none;">Add Note</button>
+                <button onclick="addNote()" class="btn-sidebar-primary">Add Note</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Template Modal -->
-<div id="templateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-    <div style="background: var(--bg-gradient-end); border: 1px solid var(--glass-border); border-radius: 16px; width: 90%; max-width: 500px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: #fff; font-size: 18px;">Send Message Template</h3>
-            <button onclick="closeTemplateModal()" style="background: none; border: none; color: #fff; cursor: pointer;">&times;</button>
+<div id="templateModal" class="template-modal">
+    <div class="template-modal-content">
+        <div class="template-modal-header">
+            <h3 class="template-modal-title">Send Message Template</h3>
+            <button onclick="closeTemplateModal()" class="template-modal-close">&times;</button>
         </div>
         
-        <div style="max-height: 400px; overflow-y: auto;">
+        <div class="template-modal-body">
             {% for template in templates|default([]) %}
-                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; border: 1px solid var(--glass-border);"
-                     onclick="sendTemplate('{{ template.name }}', '{{ template.language }}')"
-                     onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                     onmouseout="this.style.background='rgba(0,0,0,0.2)'">
-                    <div style="color: #fff; font-weight: 600; margin-bottom: 5px;">{{ template.name }} <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: var(--secondary-accent); padding: 2px 6px; border-radius: 4px;">{{ template.language }}</span></div>
+                <div class="template-item" onclick="sendTemplate('{{ template.name }}', '{{ template.language }}')">
+                    <div class="template-item-name">
+                        {{ template.name }} 
+                        <span class="template-item-lang">{{ template.language }}</span>
+                    </div>
                     
                     {% set bodyText = '' %}
                     {% for comp in template.components %}
@@ -947,7 +1314,7 @@
                             {% set bodyText = comp.text %}
                         {% endif %}
                     {% endfor %}
-                    <div style="color: #aaa; font-size: 13px;">{{ bodyText }}</div>
+                    <div class="template-item-body-text">{{ bodyText }}</div>
                 </div>
             {% else %}
                 <div style="color: #888; text-align: center; padding: 20px;">No approved templates available.</div>

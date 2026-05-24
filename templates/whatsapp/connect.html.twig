@@ -310,6 +310,68 @@
     .edit-banner a:hover {
         color: #fff;
     }
+
+    /* ─── Light Mode Theme Style Overrides ─── */
+    body[data-theme="light"] .page-header h1,
+    body[data-theme="light"] .section-title,
+    body[data-theme="light"] .conn-label,
+    body[data-theme="light"] .conn-phone-display,
+    body[data-theme="light"] .step-title {
+        color: #0f172a !important;
+    }
+    body[data-theme="light"] .conn-card {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    }
+    body[data-theme="light"] .conn-card:hover {
+        background: #f8fafc !important;
+        border-color: #94a3b8 !important;
+    }
+    body[data-theme="light"] .conn-detail-value {
+        color: var(--primary-accent) !important;
+    }
+    body[data-theme="light"] .conn-detail-value[style*="color: var(--text-muted)"],
+    body[data-theme="light"] .conn-detail-value[style*="color:var(--text-muted)"] {
+        color: #475569 !important;
+    }
+    body[data-theme="light"] .conn-action-btn {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        color: #475569 !important;
+    }
+    body[data-theme="light"] .conn-action-btn:hover {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+    }
+    body[data-theme="light"] .conn-action-btn.edit-btn:hover {
+        border-color: var(--primary-accent) !important;
+        color: var(--primary-accent) !important;
+        background: rgba(6, 182, 212, 0.05) !important;
+    }
+    body[data-theme="light"] .conn-action-btn.delete-btn:hover {
+        border-color: #ef4444 !important;
+        color: #ef4444 !important;
+        background: rgba(239, 68, 68, 0.05) !important;
+    }
+    body[data-theme="light"] .wizard-step {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+    body[data-theme="light"] .endpoint-item {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+    }
+    body[data-theme="light"] .endpoint-item:hover {
+        background: #f8fafc !important;
+    }
+    body[data-theme="light"] .empty-connections {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+    body[data-theme="light"] .empty-connections h3 {
+        color: #0f172a !important;
+    }
 </style>
 {% endblock %}
 

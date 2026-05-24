@@ -46,9 +46,19 @@
                 --dropdown-bg: rgba(255, 255, 255, 0.98);
                 --select-bg: rgba(255, 255, 255, 0.8);
                 --select-options-bg: rgba(255, 255, 255, 0.98);
+                --text-main: #1e293b;
                 --select-text: #1e293b;
                 --select-option-hover: rgba(8, 145, 178, 0.08);
                 --select-option-selected: rgba(8, 145, 178, 0.15);
+
+                /* Builder Theme Overrides */
+                --fb-bg: #f8fafc;
+                --fb-border: rgba(15, 23, 42, 0.08);
+                --fb-text-main: #1e293b;
+                --fb-text-muted: #64748b;
+                --fb-card-bg: rgba(255, 255, 255, 0.8);
+                --fb-active-border: #0891b2;
+                --fb-secondary-accent: #059669;
             }
             body {
                 font-family: 'Inter', sans-serif;
@@ -1314,6 +1324,79 @@
             body[data-theme="light"] [style*="color: #ffffff"] {
                 color: var(--text-header) !important;
             }
+
+            /* Button border and background overrides for Light Mode */
+            body[data-theme="light"] .btn-primary,
+            body[data-theme="light"] .btn-create {
+                background: linear-gradient(135deg, #0891b2, #0e7490) !important;
+                border: 1px solid #0891b2 !important;
+                color: #ffffff !important;
+            }
+            body[data-theme="light"] .btn-secondary,
+            body[data-theme="light"] .btn-secondary-action {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #1e293b !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            }
+            body[data-theme="light"] .btn-secondary:hover,
+            body[data-theme="light"] .btn-secondary-action:hover {
+                background: #f8fafc !important;
+                border-color: #94a3b8 !important;
+            }
+            body[data-theme="light"] .btn-danger,
+            body[data-theme="light"] .btn-danger-action {
+                background: #fef2f2 !important;
+                border: 1px solid #fca5a5 !important;
+                color: #b91c1c !important;
+            }
+            body[data-theme="light"] .btn-danger:hover,
+            body[data-theme="light"] .btn-danger-action:hover {
+                background: #fee2e2 !important;
+                border-color: #f87171 !important;
+            }
+
+            /* ─── Light Mode Row Action Buttons Overrides ─── */
+            body[data-theme="light"] .btn-row-action {
+                background: #ffffff !important;
+                border-color: #cbd5e1 !important;
+                color: #64748b !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            }
+            body[data-theme="light"] .btn-row-action:hover {
+                background: #f8fafc !important;
+                border-color: #94a3b8 !important;
+                color: #1e293b !important;
+            }
+            body[data-theme="light"] .btn-row-action.edit-action {
+                color: var(--primary-accent) !important;
+                border-color: #cbd5e1 !important;
+                background: #ffffff !important;
+            }
+            body[data-theme="light"] .btn-row-action.edit-action:hover {
+                background: rgba(8, 145, 178, 0.08) !important;
+                border-color: var(--primary-accent) !important;
+                color: var(--primary-accent) !important;
+            }
+            /* Specifically for WhatsApp Bot Manager (where wa-primary inline style is used) */
+            body[data-theme="light"] .btn-row-action.edit-action[style*="wa-primary"] {
+                color: #059669 !important;
+            }
+            body[data-theme="light"] .btn-row-action.edit-action[style*="wa-primary"]:hover {
+                background: rgba(5, 150, 105, 0.08) !important;
+                border-color: #059669 !important;
+                color: #059669 !important;
+            }
+            body[data-theme="light"] .btn-row-action.delete-action {
+                color: #b91c1c !important;
+                border-color: #fca5a5 !important;
+                background: #fef2f2 !important;
+            }
+            body[data-theme="light"] .btn-row-action.delete-action:hover {
+                background: #fee2e2 !important;
+                border-color: #b91c1c !important;
+                color: #b91c1c !important;
+            }
         </style>
         {% block stylesheets %}{% endblock %}
         {% set custom_css = get_custom_css() %}
@@ -1713,6 +1796,7 @@
                         cls !== 'hidden-native-select' && 
                         cls !== 'glass-input' && 
                         cls !== 'glass-select' &&
+                        cls !== 'fb-select' &&
                         cls !== 'sidebar-select' &&
                         cls !== 'toolbar-select' &&
                         cls !== 'sidebar-filter-select' &&
