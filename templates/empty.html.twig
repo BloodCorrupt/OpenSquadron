@@ -423,6 +423,20 @@
         body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 0, 0, 0.18) !important;
         }
+
+        /* Extra overrides for inline styles & info boxes */
+        body[data-theme="light"] .info-box {
+            color: #0369a1 !important;
+            background: rgba(6, 182, 212, 0.08) !important;
+            border-color: rgba(6, 182, 212, 0.2) !important;
+        }
+
+        body[data-theme="light"] [style*="color:#fff"],
+        body[data-theme="light"] [style*="color: #fff"],
+        body[data-theme="light"] [style*="color:#ffffff"],
+        body[data-theme="light"] [style*="color: #ffffff"] {
+            color: var(--text-header) !important;
+        }
     </style>
     {% block stylesheets %}{% endblock %}
     {% set custom_css = get_custom_css() %}
