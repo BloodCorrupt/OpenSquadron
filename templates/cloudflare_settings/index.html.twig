@@ -1,0 +1,113 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Cloudflare Settings - OpenSquadron{% endblock %}
+
+{% block body %}
+<style>
+    .form-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 35px;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    .form-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 15px;
+    }
+    .form-title svg {
+        width: 24px;
+        height: 24px;
+        stroke: var(--primary-accent);
+    }
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 35px;
+        border-top: 1px solid var(--glass-border);
+        padding-top: 20px;
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .info-box {
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: #e0f2fe;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+</style>
+
+<div class="header">
+    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+    <h1>Super Admin Configuration</h1>
+</div>
+
+<div class="form-card">
+    <div class="form-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+        Cloudflare Proxy Settings
+    </div>
+
+    <div class="info-box">
+        Define your global Helper Domain here. This is the domain (e.g. <code>proxy.yourdomain.com</code>) that Resellers will point their CNAME records to in order to route traffic to this server through Cloudflare.
+    </div>
+
+    <form action="{{ path('app_cloudflare_settings') }}" method="POST" autocomplete="off">
+        
+        <div class="form-group">
+            <label for="helperDomain">Helper Domain (For Reseller CNAMEs)</label>
+            <input type="text" id="helperDomain" name="helperDomain" class="form-control" value="{{ settings.helperDomain }}" placeholder="e.g. proxy.yourdomain.com">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Leave blank if you do not have a proxy domain configured yet.</div>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="apiToken">Cloudflare API Token</label>
+            <input type="password" id="apiToken" name="apiToken" class="form-control" value="{{ settings.apiToken }}" placeholder="Enter your Cloudflare API Token">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Must have permissions: Zone Settings (Edit), SSL and Certificates (Edit), Custom Hostnames (Edit)</div>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="zoneId">Cloudflare Zone ID</label>
+            <input type="text" id="zoneId" name="zoneId" class="form-control" value="{{ settings.zoneId }}" placeholder="e.g. 023e105f4ecef8ad9ca31a8372d0c353">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">The Zone ID of your helper domain on Cloudflare.</div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ path('app_dashboard') }}" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

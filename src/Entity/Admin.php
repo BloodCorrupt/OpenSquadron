@@ -55,12 +55,40 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $name = null;
 
+    #[ORM\OneToMany(targetEntity: FacebookConnection::class, mappedBy: 'admin', cascade: ['remove'])]
+    private Collection $facebookConnections;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isVerified = false;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $verificationCode = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $registrationEnabled = false;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $resetToken = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $resetTokenExpiresAt = null;
+
+    #[ORM\OneToOne(mappedBy: 'owner', targetEntity: SmtpSettings::class, cascade: ['persist', 'remove'])]
+    private ?SmtpSettings $smtpSettings = null;
+
+    #[ORM\OneToOne(mappedBy: 'owner', targetEntity: ResellerBranding::class, cascade: ['persist', 'remove'])]
+    private ?ResellerBranding $branding = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $avatar = null;
+
+    #[ORM\OneToOne(mappedBy: 'owner', targetEntity: CloudflareSettings::class, cascade: ['persist', 'remove'])]
+    private ?CloudflareSettings $cloudflareSettings = null;
 
     public function __construct()
     {
         $this->children = new ArrayCollection();
+        $this->facebookConnections = new ArrayCollection();
     }
 
 
@@ -222,5 +250,130 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
         $this->avatar = $avatar;
         return $this;
     }
-}
 
+    public function getFacebookConnections(): Collection
+    {
+        return $this->facebookConnections;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): static
+    {
+        $this->isVerified = $isVerified;
+        return $this;
+    }
+
+    public function getVerificationCode(): ?string
+    {
+        return $this->verificationCode;
+    }
+
+    public function setVerificationCode(?string $verificationCode): static
+    {
+        $this->verificationCode = $verificationCode;
+        return $this;
+    }
+
+    public function getSmtpSettings(): ?SmtpSettings
+    {
+        return $this->smtpSettings;
+    }
+
+    public function setSmtpSettings(?SmtpSettings $smtpSettings): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($smtpSettings === null && $this->smtpSettings !== null) {
+            $this->smtpSettings->setOwner(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($smtpSettings !== null && $smtpSettings->getOwner() !== $this) {
+            $smtpSettings->setOwner($this);
+        }
+
+        $this->smtpSettings = $smtpSettings;
+
+        return $this;
+    }
+
+    public function isRegistrationEnabled(): bool
+    {
+        return $this->registrationEnabled;
+    }
+
+    public function setRegistrationEnabled(bool $registrationEnabled): static
+    {
+        $this->registrationEnabled = $registrationEnabled;
+        return $this;
+    }
+
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): static
+    {
+        $this->resetToken = $resetToken;
+        return $this;
+    }
+
+    public function getResetTokenExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->resetTokenExpiresAt;
+    }
+
+    public function setResetTokenExpiresAt(?\DateTimeImmutable $resetTokenExpiresAt): static
+    {
+        $this->resetTokenExpiresAt = $resetTokenExpiresAt;
+        return $this;
+    }
+
+    public function getBranding(): ?ResellerBranding
+    {
+        return $this->branding;
+    }
+
+    public function setBranding(?ResellerBranding $branding): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($branding === null && $this->branding !== null) {
+            $this->branding->setOwner(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($branding !== null && $branding->getOwner() !== $this) {
+            $branding->setOwner($this);
+        }
+
+        $this->branding = $branding;
+
+        return $this;
+    }
+
+    public function getCloudflareSettings(): ?CloudflareSettings
+    {
+        return $this->cloudflareSettings;
+    }
+
+    public function setCloudflareSettings(?CloudflareSettings $cloudflareSettings): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($cloudflareSettings === null && $this->cloudflareSettings !== null) {
+            $this->cloudflareSettings->setOwner(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($cloudflareSettings !== null && $cloudflareSettings->getOwner() !== $this) {
+            $cloudflareSettings->setOwner($this);
+        }
+
+        $this->cloudflareSettings = $cloudflareSettings;
+
+        return $this;
+    }
+}

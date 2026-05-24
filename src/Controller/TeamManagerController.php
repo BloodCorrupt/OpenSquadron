@@ -21,6 +21,10 @@ class TeamManagerController extends AbstractController
     {
         /** @var Admin $user */
         $user = $this->getUser();
+        // Super admins and admins can always manage teams
+        if (in_array($user->getAccountType(), ['super_admin', 'admin'])) {
+            return;
+        }
         if (!$user->isTeamEnabled()) {
             throw $this->createAccessDeniedException('Team management is not enabled for your account.');
         }

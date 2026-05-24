@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Admin;
 use App\Service\TenantDatabaseService;
+use App\Service\SmtpMailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,7 +20,8 @@ class ServerAccountController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private TenantDatabaseService $tenantDbService,
-        private UserPasswordHasherInterface $passwordHasher
+        private UserPasswordHasherInterface $passwordHasher,
+        private SmtpMailerService $smtpMailer
     ) {
     }
 
@@ -62,8 +64,12 @@ class ServerAccountController extends AbstractController
             $teamEnabled = $request->request->getBoolean('team_enabled', false);
             $parentId = $request->request->get('parent_id');
 
-            if (empty($email) || empty($plainPassword)) {
-                $this->addFlash('error', 'Email and password are required.');
+            if (empty($plainPassword)) {
+                $plainPassword = bin2hex(random_bytes(6));
+            }
+
+            if (empty($email)) {
+                $this->addFlash('error', 'Email is required.');
                 return $this->render('server_accounts/new.html.twig', [
                     'owners' => $owners,
                     'currentUser' => $currentUser,
@@ -104,10 +110,18 @@ class ServerAccountController extends AbstractController
                 }
             }
 
+            $newAccount->setVerificationCode(str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT));
+            $newAccount->setIsVerified(false);
+
             $this->entityManager->persist($newAccount);
             $this->entityManager->flush();
 
-            $this->addFlash('success', 'Account created successfully.');
+            try {
+                $this->smtpMailer->sendWelcomeEmail($currentUser, $newAccount, $plainPassword);
+                $this->addFlash('success', 'Account created and welcome email sent successfully.');
+            } catch (\Exception $e) {
+                $this->addFlash('warning', 'Account created, but failed to send email: ' . $e->getMessage());
+            }
 
             return $this->redirectToRoute('app_server_accounts_index');
         }

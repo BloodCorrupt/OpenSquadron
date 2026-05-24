@@ -15,6 +15,7 @@ security:
         main:
             lazy: true
             provider: app_admin_provider
+            user_checker: App\Security\UserChecker
             form_login:
                 login_path: app_login
                 check_path: app_login
@@ -26,6 +27,10 @@ security:
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/verify, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/webhook/whatsapp, roles: PUBLIC_ACCESS }
         - { path: ^/webhook/facebook, roles: PUBLIC_ACCESS }
         - { path: ^/whatsapp/test, roles: PUBLIC_ACCESS }

@@ -1,0 +1,179 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Branding & Domains - OpenSquadron{% endblock %}
+
+{% block body %}
+<style>
+    .form-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 35px;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    .form-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 15px;
+    }
+    .form-title svg {
+        width: 24px;
+        height: 24px;
+        stroke: var(--primary-accent);
+    }
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 35px;
+        border-top: 1px solid var(--glass-border);
+        padding-top: 20px;
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .info-box {
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: #e0f2fe;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .current-logo {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 1px solid var(--glass-border);
+        background: #fff;
+        margin-bottom: 15px;
+    }
+</style>
+
+<div class="header">
+    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+    <h1>Branding & Domains</h1>
+</div>
+
+<div class="form-card">
+    <div class="form-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        White-Label Configuration
+    </div>
+
+    <div class="info-box">
+        Customize the platform to reflect your own brand identity. Configure a custom domain to fully white-label the login and registration pages for your clients.
+        <br><br>
+        <strong>Important:</strong> You must configure a valid Custom Domain before you can enable Public Registration.
+    </div>
+
+    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="margin-top: 0; color: #fff; font-size: 18px; margin-bottom: 20px;">Setup Whitelabel Reseller Domain</h3>
+        
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;"><strong>Step 1:</strong> Put your domain or subdomain name in the "Custom Domain" input field below.</p>
+
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;"><strong>Step 2:</strong> Save your domain below. The system will automatically generate a unique validation string for you to prove ownership.</p>
+
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;"><strong>Step 3:</strong> Go to your domain's DNS settings (GoDaddy, Namecheap, Cloudflare, etc.) and add these two CNAME records:</p>
+
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding-bottom: 10px; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.1); width: 15%;">Type</th>
+                        <th style="text-align: left; padding-bottom: 10px; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.1); width: 35%;">Name</th>
+                        <th style="text-align: left; padding-bottom: 10px; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.1);">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding-top: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #f59e0b; font-weight: 500;">CNAME<br><span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(SSL Validation)</span></td>
+                        <td style="padding-top: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: var(--text-muted);">
+                            {% if branding.sslValidationName %}
+                                <span style="color: #fff;">{{ branding.sslValidationName }}</span>
+                            {% else %}
+                                _acme-challenge.<span style="color: var(--primary-accent);">[subdomain]</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding-top: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: monospace; color: var(--text-muted);">
+                            {% if branding.sslValidationValue %}
+                                <span style="color: #fff;">{{ branding.sslValidationValue }}</span>
+                            {% else %}
+                                <span style="color: rgba(255,255,255,0.3);">[Save domain to generate]</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-top: 15px; color: #f59e0b; font-weight: 500;">CNAME<br><span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(Traffic Routing)</span></td>
+                        <td style="padding-top: 15px; font-family: monospace; color: var(--primary-accent);">{% if branding.customDomain %}{{ branding.customDomain }}{% else %}[subdomain]{% endif %}</td>
+                        <td style="padding-top: 15px; font-family: monospace; color: var(--text-main);">{{ get_helper_domain() }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 0;"><strong>Step 4:</strong> Once you add these records, Cloudflare will automatically activate your SSL certificate within a few hours. Your white-label domain will then be completely active! {% if branding.sslStatus %} <span style="color: #fff; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px;">Status: {{ branding.sslStatus|upper }}</span>{% endif %}</p>
+    </div>
+
+    <form action="{{ path('app_branding_settings') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
+        
+        <div class="form-group">
+            <label for="brandName">Brand Name</label>
+            <input type="text" id="brandName" name="brandName" class="form-control" value="{{ branding.brandName }}" placeholder="e.g. My Agency" required>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">This will replace the "OpenSquadron" name across the platform for your users.</div>
+        </div>
+
+        <div class="form-group" style="margin-top: 25px;">
+            <label for="customDomain">Custom Domain</label>
+            <input type="text" id="customDomain" name="customDomain" class="form-control" value="{{ branding.customDomain }}" placeholder="e.g. clients.myagency.com">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">
+                Create a CNAME record for this domain pointing to our helper domain: <strong style="color: #fff;">{{ get_helper_domain() }}</strong>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 25px;">
+            <label>Brand Logo</label>
+            {% if branding.logoUrl %}
+                <div>
+                    <img src="/{{ branding.logoUrl }}" alt="Current Logo" class="current-logo">
+                </div>
+            {% endif %}
+            <input type="file" id="logoFile" name="logoFile" class="form-control" accept="image/png, image/jpeg, image/svg+xml" style="padding: 9px 15px;">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Upload a square PNG, JPG, or SVG image. Max 2MB.</div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ path('app_dashboard') }}" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
