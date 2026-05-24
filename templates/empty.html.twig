@@ -15,9 +15,39 @@
             --secondary-accent: #10b981; /* Emerald */
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --text-header: #ffffff;
             --menu-hover-bg: rgba(255, 255, 255, 0.05);
             --menu-active-color: var(--primary-accent);
             --error-color: #ef4444;
+
+            --dropdown-bg: rgba(15, 23, 42, 0.95);
+            --select-bg: rgba(15, 23, 42, 0.6);
+            --select-options-bg: rgba(11, 19, 41, 0.95);
+            --select-text: #ffffff;
+            --select-option-hover: rgba(56, 189, 248, 0.12);
+            --select-option-selected: rgba(56, 189, 248, 0.2);
+        }
+        body[data-theme="light"] {
+            --bg-gradient-start: #f8fafc;
+            --bg-gradient-end: #e2e8f0;
+            --topbar-bg: rgba(255, 255, 255, 0.75);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(15, 23, 42, 0.08);
+            --primary-accent: #0891b2;
+            --secondary-accent: #059669;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --text-header: #0f172a;
+            --menu-hover-bg: rgba(15, 23, 42, 0.05);
+            --menu-active-color: var(--primary-accent);
+            --error-color: #ef4444;
+
+            --dropdown-bg: rgba(255, 255, 255, 0.98);
+            --select-bg: rgba(255, 255, 255, 0.8);
+            --select-options-bg: rgba(255, 255, 255, 0.98);
+            --select-text: #1e293b;
+            --select-option-hover: rgba(8, 145, 178, 0.08);
+            --select-option-selected: rgba(8, 145, 178, 0.15);
         }
         /* ─── Visually Hidden Native Select ─── */
         .hidden-native-select {
@@ -51,11 +81,11 @@
             min-height: 42px;
             padding: 10px 14px;
             border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            background-color: var(--select-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            color: #ffffff;
+            color: var(--select-text);
             font-size: 14px;
             cursor: pointer;
             box-sizing: border-box;
@@ -64,14 +94,14 @@
             user-select: none;
         }
         .custom-glass-select-trigger:hover {
-            background-color: rgba(15, 23, 42, 0.8);
-            border-color: rgba(56, 189, 248, 0.4);
-            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            background-color: var(--select-bg);
+            border-color: var(--primary-accent);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         .custom-glass-select-trigger:focus,
         .custom-glass-select-wrapper.is-active .custom-glass-select-trigger {
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.2);
             outline: none;
         }
         .custom-glass-select-label {
@@ -87,7 +117,7 @@
             align-items: center !important;
             justify-content: center !important;
             transition: transform 0.25s ease;
-            color: #38bdf8;
+            color: var(--primary-accent);
             margin-left: 10px;
         }
         .custom-glass-select-wrapper.is-active .custom-glass-select-chevron {
@@ -100,12 +130,12 @@
             width: 100%;
             max-height: 260px;
             overflow-y: auto;
-            background: rgba(11, 19, 41, 0.95) !important;
+            background: var(--select-options-bg) !important;
             backdrop-filter: blur(24px) !important;
             -webkit-backdrop-filter: blur(24px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border: 1px solid var(--glass-border) !important;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.15) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 182, 212, 0.15) !important;
             z-index: 999999 !important;
             box-sizing: border-box;
             opacity: 0;
@@ -121,7 +151,8 @@
         .custom-glass-select-option {
             padding: 11px 16px;
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--select-text);
+            opacity: 0.8;
             cursor: pointer;
             transition: all 0.15s ease;
             border-left: 3px solid transparent;
@@ -129,16 +160,18 @@
             text-align: left;
         }
         .custom-glass-select-option:hover {
-            background: rgba(56, 189, 248, 0.12) !important;
-            color: #ffffff !important;
-            border-left-color: #38bdf8 !important;
+            background: var(--select-option-hover) !important;
+            color: var(--select-text) !important;
+            opacity: 1 !important;
+            border-left-color: var(--primary-accent) !important;
             padding-left: 19px;
         }
         .custom-glass-select-option.is-selected {
-            background: rgba(56, 189, 248, 0.2) !important;
-            color: #38bdf8 !important;
+            background: var(--select-option-selected) !important;
+            color: var(--primary-accent) !important;
+            opacity: 1 !important;
             font-weight: 600;
-            border-left-color: #38bdf8 !important;
+            border-left-color: var(--primary-accent) !important;
         }
         .custom-glass-select-group-label {
             padding: 8px 12px 4px 12px;
@@ -165,10 +198,241 @@
         .custom-glass-select-options::-webkit-scrollbar-thumb:hover {
             background: rgba(56, 189, 248, 0.5);
         }
+
+        /* ─── Light Mode Global Overrides ─── */
+        body[data-theme="light"] h1,
+        body[data-theme="light"] h2,
+        body[data-theme="light"] h3,
+        body[data-theme="light"] h4,
+        body[data-theme="light"] h5,
+        body[data-theme="light"] h6,
+        body[data-theme="light"] .content-title,
+        body[data-theme="light"] .card-title,
+        body[data-theme="light"] .section-title,
+        body[data-theme="light"] .welcome-content h1,
+        body[data-theme="light"] .metric-card-value,
+        body[data-theme="light"] .stat-value,
+        body[data-theme="light"] .switch-title,
+        body[data-theme="light"] .form-title,
+        body[data-theme="light"] .dialog-card h3,
+        body[data-theme="light"] .indicator-label,
+        body[data-theme="light"] .form-label,
+        body[data-theme="light"] .console-card-title,
+        body[data-theme="light"] .form-group label,
+        body[data-theme="light"] .card-heading,
+        body[data-theme="light"] .chart-heading,
+        body[data-theme="light"] .channel-name,
+        body[data-theme="light"] .matrix-value,
+        body[data-theme="light"] .donut-center-val,
+        body[data-theme="light"] .legend-counts,
+        body[data-theme="light"] .queue-title,
+        body[data-theme="light"] .activity-name,
+        body[data-theme="light"] .activity-avatar,
+        body[data-theme="light"] .welcome-panel h1,
+        body[data-theme="light"] .welcome-panel p {
+            color: var(--text-header) !important;
+            background: none !important;
+            -webkit-text-fill-color: var(--text-header) !important;
+        }
+
+        body[data-theme="light"] .welcome-content p {
+            color: var(--text-muted) !important;
+        }
+
+        body[data-theme="light"] .card,
+        body[data-theme="light"] .form-card,
+        body[data-theme="light"] .manager-nav,
+        body[data-theme="light"] .manager-content-pane,
+        body[data-theme="light"] .stats-card,
+        body[data-theme="light"] .channel-summary-card,
+        body[data-theme="light"] .welcome-panel,
+        body[data-theme="light"] .compact-metric-card,
+        body[data-theme="light"] .console-card,
+        body[data-theme="light"] .glass-form-card,
+        body[data-theme="light"] .modal-content,
+        body[data-theme="light"] .table-container {
+            background: var(--glass-bg) !important;
+            border-color: var(--glass-border) !important;
+            color: var(--text-main) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+        }
+
+        body[data-theme="light"] .channel-summary-card:hover,
+        body[data-theme="light"] .compact-metric-card:hover,
+        body[data-theme="light"] .console-card:hover,
+        body[data-theme="light"] .queue-card:hover {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-color: var(--primary-accent) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06) !important;
+        }
+
+        body[data-theme="light"] .channel-setup-matrix,
+        body[data-theme="light"] .chart-legends,
+        body[data-theme="light"] .activity-row {
+            background: rgba(0, 0, 0, 0.02) !important;
+            border-color: var(--glass-border) !important;
+        }
+
+        body[data-theme="light"] .activity-row:hover {
+            background: rgba(0, 0, 0, 0.04) !important;
+            border-color: var(--glass-border) !important;
+        }
+
+        body[data-theme="light"] .form-control,
+        body[data-theme="light"] .glass-input,
+        body[data-theme="light"] .glass-textarea,
+        body[data-theme="light"] .toolbar-select,
+        body[data-theme="light"] select,
+        body[data-theme="light"] input,
+        body[data-theme="light"] textarea {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.12) !important;
+            color: var(--text-main) !important;
+        }
+
+        body[data-theme="light"] .form-control:focus,
+        body[data-theme="light"] .glass-input:focus,
+        body[data-theme="light"] .glass-textarea:focus,
+        body[data-theme="light"] input:focus,
+        body[data-theme="light"] textarea:focus {
+            border-color: var(--primary-accent) !important;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15) !important;
+        }
+
+        body[data-theme="light"] .form-control::placeholder,
+        body[data-theme="light"] .glass-input::placeholder,
+        body[data-theme="light"] .glass-textarea::placeholder,
+        body[data-theme="light"] input::placeholder,
+        body[data-theme="light"] textarea::placeholder {
+            color: var(--text-muted) !important;
+            opacity: 0.8 !important;
+        }
+
+        body[data-theme="light"] select option,
+        body[data-theme="light"] .toolbar-select option {
+            background-color: #ffffff !important;
+            color: var(--text-main) !important;
+        }
+
+        body[data-theme="light"] .custom-glass-select-trigger {
+            background-color: #ffffff !important;
+            color: var(--text-main) !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        body[data-theme="light"] .custom-glass-select-options {
+            background: #ffffff !important;
+            border-color: rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        body[data-theme="light"] .custom-glass-select-option {
+            color: var(--text-main) !important;
+        }
+
+        body[data-theme="light"] .custom-glass-select-option:hover {
+            background: rgba(0, 0, 0, 0.03) !important;
+        }
+
+        body[data-theme="light"] .custom-glass-select-option.is-selected {
+            background: rgba(8, 145, 178, 0.08) !important;
+            color: var(--primary-accent) !important;
+        }
+
+        body[data-theme="light"] .custom-table th {
+            background: rgba(0, 0, 0, 0.02) !important;
+            color: var(--text-muted) !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+        }
+
+        body[data-theme="light"] .custom-table td {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+            color: var(--text-main) !important;
+        }
+
+        body[data-theme="light"] .custom-table tr:hover td {
+            background: rgba(0, 0, 0, 0.01) !important;
+        }
+
+        body[data-theme="light"] .toolbar-search .search-icon {
+            stroke: var(--text-muted) !important;
+        }
+
+        body[data-theme="light"] .toolbar-search input {
+            background: #ffffff !important;
+            color: var(--text-main) !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+        }
+
+        body[data-theme="light"] .apexcharts-text,
+        body[data-theme="light"] .apexcharts-legend-text,
+        body[data-theme="light"] .apexcharts-title-text {
+            fill: var(--text-main) !important;
+            color: var(--text-main) !important;
+        }
+
+        body[data-theme="light"] .system-status-indicator,
+        body[data-theme="light"] .metric-card-icon {
+            background: rgba(0, 0, 0, 0.03) !important;
+            border-color: var(--glass-border) !important;
+        }
+
+        body[data-theme="light"] .system-status-text {
+            color: var(--text-main) !important;
+        }
+
+        body[data-theme="light"] .slider-round {
+            background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+
+        body[data-theme="light"] .manager-nav .nav-item:hover {
+            background: rgba(0, 0, 0, 0.03) !important;
+        }
+
+        body[data-theme="light"] .manager-nav .nav-item-status {
+            background: rgba(0, 0, 0, 0.05) !important;
+            color: var(--text-muted) !important;
+        }
+
+        body[data-theme="light"] .manager-nav .nav-item.is-active .nav-item-status {
+            background: rgba(16, 185, 129, 0.15) !important;
+            color: var(--wa-primary) !important;
+        }
+
+        body[data-theme="light"] .system-pill-item {
+            background: rgba(0, 0, 0, 0.03) !important;
+            color: var(--text-muted) !important;
+        }
+        
+        body[data-theme="light"] .activity-time,
+        body[data-theme="light"] .queue-schedule,
+        body[data-theme="light"] .stat-label,
+        body[data-theme="light"] .channel-subtitle,
+        body[data-theme="light"] .matrix-label {
+            color: var(--text-muted) !important;
+        }
+
+        body[data-theme="light"] ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02) !important;
+        }
+        body[data-theme="light"] ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1) !important;
+            border-color: rgba(0, 0, 0, 0.02) !important;
+        }
+        body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.18) !important;
+        }
     </style>
     {% block stylesheets %}{% endblock %}
+    {% set custom_css = get_custom_css() %}
+    {% if custom_css %}
+        <style>
+            {{ custom_css|raw }}
+        </style>
+    {% endif %}
 </head>
-<body class="is-embedded" style="background: transparent; margin: 0; padding: 0; overflow: hidden; height: 100vh;">
+<body class="is-embedded" style="background: transparent; margin: 0; padding: 0; overflow: hidden; height: 100vh;" {% if app.user and app.user.theme == 'light' %}data-theme="light"{% endif %}>
     {% block body %}{% endblock %}
     
     <script>

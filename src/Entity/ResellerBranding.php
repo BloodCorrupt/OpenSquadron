@@ -37,6 +37,9 @@ class ResellerBranding
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $sslStatus = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $customCss = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -131,6 +134,18 @@ class ResellerBranding
     public function setSslStatus(?string $sslStatus): static
     {
         $this->sslStatus = $sslStatus;
+
+        return $this;
+    }
+
+    public function getCustomCss(): ?string
+    {
+        return $this->customCss;
+    }
+
+    public function setCustomCss(?string $customCss): static
+    {
+        $this->customCss = $customCss;
 
         return $this;
     }

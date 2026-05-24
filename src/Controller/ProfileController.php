@@ -100,4 +100,26 @@ class ProfileController extends AbstractController
             'owners' => [], // Not used for self edit
         ]);
     }
+
+    #[Route('/settings/theme-toggle', name: 'app_theme_toggle', methods: ['POST'])]
+    public function toggleTheme(Request $request): Response
+    {
+        /** @var Admin $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Not authenticated'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $theme = $data['theme'] ?? 'dark';
+
+        if (!in_array($theme, ['dark', 'light'])) {
+            return $this->json(['success' => false, 'error' => 'Invalid theme'], 400);
+        }
+
+        $user->setTheme($theme);
+        $this->entityManager->flush();
+
+        return $this->json(['success' => true]);
+    }
 }

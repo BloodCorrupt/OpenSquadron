@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS `admin` (
     subscription_expires_at DATETIME DEFAULT NULL,
     monthly_message_count INT NOT NULL DEFAULT 0,
     last_message_reset_date DATETIME DEFAULT NULL,
+    theme VARCHAR(20) NOT NULL DEFAULT 'dark',
     UNIQUE INDEX UNIQ_880E0D76E7927C74 (email),
     INDEX IDX_880E0D76727ACA70 (parent_id),
     INDEX IDX_880E0D76C4A80F6B (team_role_id),
@@ -71,6 +72,7 @@ CREATE TABLE IF NOT EXISTS `reseller_branding` (
     brand_logo VARCHAR(255) DEFAULT NULL,
     primary_color VARCHAR(20) DEFAULT NULL,
     custom_domain VARCHAR(255) DEFAULT NULL,
+    custom_css LONGTEXT DEFAULT NULL,
     UNIQUE INDEX UNIQ_BRANDING_OWNER (owner_id),
     PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4;

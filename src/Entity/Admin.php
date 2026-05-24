@@ -101,6 +101,9 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastMessageResetDate = null;
 
+    #[ORM\Column(length: 20, options: ['default' => 'dark'])]
+    private string $theme = 'dark';
+
     public function __construct()
     {
         $this->children = new ArrayCollection();
@@ -451,6 +454,17 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->lastMessageResetDate = $date;
 
+        return $this;
+    }
+
+    public function getTheme(): string
+    {
+        return $this->theme;
+    }
+
+    public function setTheme(string $theme): static
+    {
+        $this->theme = $theme;
         return $this;
     }
 

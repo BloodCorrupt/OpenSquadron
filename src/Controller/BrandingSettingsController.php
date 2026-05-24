@@ -93,6 +93,9 @@ class BrandingSettingsController extends AbstractController
             $branding->setCustomDomain($customDomain);
             $branding->setBrandName($brandName);
             
+            $customCss = $request->request->get('customCss');
+            $branding->setCustomCss($customCss);
+            
             // Handle logo upload
             $logoFile = $request->files->get('logoFile');
             if ($logoFile) {

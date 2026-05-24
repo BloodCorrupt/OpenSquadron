@@ -155,6 +155,12 @@
             text-decoration: underline;
         }
     </style>
+    {% set custom_css = get_custom_css() %}
+    {% if custom_css %}
+        <style>
+            {{ custom_css|raw }}
+        </style>
+    {% endif %}
 </head>
 <body>
     <div class="auth-container">

@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Branding & Domains - OpenSquadron{% endblock %}
+{% block title %}Branding &amp; Custom CSS - OpenSquadron{% endblock %}
 
 {% block body %}
 <style>
@@ -80,7 +80,7 @@
 
 <div class="header">
     <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-    <h1>Branding & Domains</h1>
+    <h1>Branding &amp; Custom CSS</h1>
 </div>
 
 <div class="form-card">
@@ -168,6 +168,12 @@
             {% endif %}
             <input type="file" id="logoFile" name="logoFile" class="form-control" accept="image/png, image/jpeg, image/svg+xml" style="padding: 9px 15px;">
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Upload a square PNG, JPG, or SVG image. Max 2MB.</div>
+        </div>
+
+        <div class="form-group" style="margin-top: 25px;">
+            <label for="customCss">Custom CSS Customization</label>
+            <textarea id="customCss" name="customCss" class="form-control" rows="8" placeholder="/* Enter your custom CSS code here */" style="font-family: monospace; font-size: 14px; background: rgba(0, 0, 0, 0.2); color: #10b981; border: 1px solid var(--glass-border); padding: 15px; border-radius: 8px; resize: vertical;">{{ branding.customCss }}</textarea>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Inject custom CSS globally on all pages for your platform users.</div>
         </div>
 
         <div class="form-actions">

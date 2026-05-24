@@ -9,12 +9,14 @@ use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class BrandingExtension extends AbstractExtension
 {
     public function __construct(
         private RequestStack $requestStack,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private TokenStorageInterface $tokenStorage
     ) {
     }
 
@@ -25,6 +27,7 @@ class BrandingExtension extends AbstractExtension
             new TwigFunction('get_brand_logo', [$this, 'getBrandLogo']),
             new TwigFunction('get_reseller_owner', [$this, 'getResellerOwner']),
             new TwigFunction('get_helper_domain', [$this, 'getHelperDomain']),
+            new TwigFunction('get_custom_css', [$this, 'getCustomCss']),
         ];
     }
 
@@ -32,8 +35,23 @@ class BrandingExtension extends AbstractExtension
     {
         $request = $this->requestStack->getCurrentRequest();
         if ($request) {
-            return $request->attributes->get('_reseller_branding');
+            $branding = $request->attributes->get('_reseller_branding');
+            if ($branding) {
+                return $branding;
+            }
         }
+
+        // Fallback to logged-in user context if token exists
+        $token = $this->tokenStorage->getToken();
+        $user = $token?->getUser();
+        if ($user instanceof Admin) {
+            $owner = $user;
+            if (in_array($user->getAccountType(), ['team', 'user']) && $user->getParent() !== null) {
+                $owner = $user->getParent();
+            }
+            return $owner->getBranding();
+        }
+
         return null;
     }
 
@@ -59,8 +77,23 @@ class BrandingExtension extends AbstractExtension
     {
         $request = $this->requestStack->getCurrentRequest();
         if ($request) {
-            return $request->attributes->get('_reseller_owner');
+            $owner = $request->attributes->get('_reseller_owner');
+            if ($owner) {
+                return $owner;
+            }
         }
+
+        // Fallback to logged-in user context if token exists
+        $token = $this->tokenStorage->getToken();
+        $user = $token?->getUser();
+        if ($user instanceof Admin) {
+            $owner = $user;
+            if (in_array($user->getAccountType(), ['team', 'user']) && $user->getParent() !== null) {
+                $owner = $user->getParent();
+            }
+            return $owner;
+        }
+
         return null;
     }
 
@@ -73,5 +106,14 @@ class BrandingExtension extends AbstractExtension
         }
         
         return '[pending-cloudflare-helper-domain]';
+    }
+
+    public function getCustomCss(): ?string
+    {
+        $branding = $this->getBranding();
+        if ($branding) {
+            return $branding->getCustomCss();
+        }
+        return null;
     }
 }
