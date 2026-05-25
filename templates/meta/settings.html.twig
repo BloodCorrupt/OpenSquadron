@@ -289,35 +289,7 @@
         box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
     }
 
-    /* Toast component */
-    .fb-toast {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 9999;
-        padding: 14px 20px;
-        border-radius: 12px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #fff;
-        display: none;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes toastSlideIn {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    .fb-toast.toast-success {
-        background: rgba(16, 185, 129, 0.9);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-    .fb-toast.toast-error {
-        background: rgba(239, 68, 68, 0.9);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-    }
+
 
     /* Buttons */
     .btn-action {
@@ -592,20 +564,10 @@
     </div>
 </div>
 
-<div class="fb-toast" id="fb-toast"></div>
 {% endblock %}
 
 {% block javascripts %}
 <script>
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('fb-toast');
-        toast.className = 'fb-toast ' + (type === 'success' ? 'toast-success' : 'toast-error');
-        toast.textContent = message;
-        toast.style.display = 'flex';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 4000);
-    }
 
     // ───────── Facebook Sub-Tab Switcher Logic ─────────
     function switchFbSubtab(subtabId) {
