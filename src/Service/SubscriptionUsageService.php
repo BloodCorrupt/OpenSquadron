@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Admin;
 use App\Entity\WhatsAppConnection;
 use App\Entity\FacebookConnection;
+use App\Entity\InstagramConnection;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -135,7 +136,8 @@ class SubscriptionUsageService
         // Count all bot connections for this owner
         $whatsappCount = $this->em->getRepository(WhatsAppConnection::class)->count(['owner' => $owner]);
         $facebookCount = $this->em->getRepository(FacebookConnection::class)->count(['owner' => $owner]);
-        $totalBots = $whatsappCount + $facebookCount;
+        $instagramCount = $this->em->getRepository(InstagramConnection::class)->count(['owner' => $owner]);
+        $totalBots = $whatsappCount + $facebookCount + $instagramCount;
 
         return $totalBots < $limit;
     }
@@ -152,9 +154,10 @@ class SubscriptionUsageService
 
         $whatsappCount = $this->em->getRepository(WhatsAppConnection::class)->count(['owner' => $owner]);
         $facebookCount = $this->em->getRepository(FacebookConnection::class)->count(['owner' => $owner]);
+        $instagramCount = $this->em->getRepository(InstagramConnection::class)->count(['owner' => $owner]);
 
         return [
-            'current' => $whatsappCount + $facebookCount,
+            'current' => $whatsappCount + $facebookCount + $instagramCount,
             'limit'   => $limit,
         ];
     }
