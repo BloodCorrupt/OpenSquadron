@@ -10,9 +10,11 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
+
 #[ORM\Entity(repositoryClass: AdminRepository::class)]
 #[ORM\Table(name: '`admin`')]
-class Admin implements UserInterface, PasswordAuthenticatedUserInterface
+class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -106,6 +108,12 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 20, options: ['default' => 'dark'])]
     private string $theme = 'dark';
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $totpSecret = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isTotpAuthenticationEnabled = false;
 
     public function __construct()
     {
@@ -493,5 +501,41 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
             return true; // No module restrictions configured
         }
         return in_array($module, $modules, true);
+    }
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return $this->totpSecret && $this->isTotpAuthenticationEnabled;
+    }
+
+    public function setIsTotpAuthenticationEnabled(bool $isTotpAuthenticationEnabled): self
+    {
+        $this->isTotpAuthenticationEnabled = $isTotpAuthenticationEnabled;
+        return $this;
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return $this->email;
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?\Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface
+    {
+        if (!$this->totpSecret) {
+            return null;
+        }
+
+        return new \Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration($this->totpSecret, \Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration::ALGORITHM_SHA1, 30, 6);
+    }
+
+    public function getTotpSecret(): ?string
+    {
+        return $this->totpSecret;
+    }
+
+    public function setTotpSecret(?string $totpSecret): self
+    {
+        $this->totpSecret = $totpSecret;
+        return $this;
     }
 }

@@ -84,6 +84,28 @@ class FacebookWebhookController extends AbstractController
             return new JsonResponse(['status' => 'invalid payload'], 400);
         }
 
+        // If this is not the internal async request, we queue it and return 200 OK instantly.
+        if ($request->headers->get('X-Internal-Async') !== 'true') {
+            $ch = curl_init('http://127.0.0.1' . $request->getRequestUri());
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'X-Internal-Async: true',
+                'Host: ' . $request->getHost()
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, 100);
+            curl_exec($ch);
+            curl_close($ch);
+
+            return new JsonResponse(['status' => 'success'], 200);
+        }
+
+        // We are now inside the internal async request, allow it to run in the background
+        ignore_user_abort(true);
+        set_time_limit(0);
+
         // Facebook Messenger sends the data with object = 'page'
         if (isset($content['object']) && $content['object'] === 'page') {
             $this->tenantContext->disableTenantFilter();
@@ -176,6 +198,14 @@ class FacebookWebhookController extends AbstractController
                     }
 
                     $metaMessageId = $messagingEvent['message']['mid'] ?? $messagingEvent['postback']['mid'] ?? ('pb_' . uniqid());
+
+                    // Prevent processing the exact same webhook message event twice (e.g. if Meta retries)
+                    if (!str_starts_with($metaMessageId, 'pb_')) {
+                        $existingMsg = $this->entityManager->getRepository(Message::class)->findOneBy(['metaMessageId' => $metaMessageId]);
+                        if ($existingMsg) {
+                            continue; // Skip processing this duplicate webhook event
+                        }
+                    }
 
                     if ($msgBody !== '' || $mediaUrl !== null) {
                         // Find or create subscriber

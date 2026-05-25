@@ -1691,13 +1691,28 @@
         <script>
             function copyToClipboard(elementId) {
                 var copyText = document.getElementById(elementId);
-                copyText.select();
-                copyText.setSelectionRange(0, 99999);
-                navigator.clipboard.writeText(copyText.value).then(function() {
-                    alert("Copied: " + copyText.value);
-                }, function(err) {
-                    console.error('Async: Could not copy text: ', err);
-                });
+                var textToCopy = copyText.value || copyText.innerText;
+                
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(textToCopy).then(function() {
+                        alert("Copied: " + textToCopy);
+                    }, function(err) {
+                        console.error('Async: Could not copy text: ', err);
+                    });
+                } else {
+                    // Fallback for non-secure contexts or older browsers
+                    var tempInput = document.createElement("input");
+                    tempInput.value = textToCopy;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    try {
+                        document.execCommand("copy");
+                        alert("Copied: " + textToCopy);
+                    } catch (err) {
+                        console.error('Fallback: Oops, unable to copy', err);
+                    }
+                    document.body.removeChild(tempInput);
+                }
             }
 
             // Dropdown click-to-open and click-to-close behavior

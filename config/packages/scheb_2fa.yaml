@@ -1,0 +1,10 @@
+scheb_two_factor:
+    security_tokens:
+        - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
+        - Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken
+    totp:
+        enabled: true
+        server_name: OpenSquadron
+        issuer: OpenSquadron
+        leeway: 1
+        template: security/2fa_form.html.twig

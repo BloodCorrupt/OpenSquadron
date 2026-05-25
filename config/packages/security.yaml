@@ -21,12 +21,16 @@ security:
                 check_path: app_login
                 enable_csrf: true
                 default_target_path: app_dashboard
+            two_factor:
+                auth_form_path: 2fa_login
+                check_path: 2fa_login_check
             logout:
                 path: app_logout
                 target: app_login
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/2fa, role: IS_AUTHENTICATED_2FA_IN_PROGRESS }
         - { path: ^/verify, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
