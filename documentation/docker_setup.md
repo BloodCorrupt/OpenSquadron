@@ -44,9 +44,36 @@ phpMyAdmin is available locally at `http://<server-ip>:8081` or `http://localhos
 
 1. **Dockerfile builds** Apache + PHP 8.2 with all required extensions
 2. **Composer installs** dependencies (production optimized)
-3. **MariaDB starts** and auto-imports `skeleton.sql` on first boot
+3. **MariaDB starts** with an empty database
 4. **Apache serves** the app with mod_rewrite enabled
 5. **phpMyAdmin connects** automatically using the root password in `.env`
+
+---
+
+## Deploying the Database
+
+Since this architecture doesn't rely on static SQL dumps, you need to create the database schema and seed the initial Super Admin dynamically. 
+
+Run the deployment script once your containers are up:
+- Windows (Docker): `docker_deploy_db.bat`
+- Mac/Linux (Docker): `./docker_deploy_db.sh`
+
+*(Note: If you are running locally without Docker on XAMPP, use `deploy_db.bat` instead).*
+
+This will:
+1. Create the database if it doesn't exist.
+2. Run all Doctrine migrations.
+3. Seed the `admin@opensquadron.local` account (Password: `admin123`).
+
+## Force-Syncing Database Schema
+
+If you have made code changes to your entities in a dev environment and want to forcefully update your database schema to perfectly match the code (including dropping extra columns/tables that shouldn't be there anymore), you can use the sync utility.
+
+- Windows (Docker): `docker_sync_db.bat`
+- Mac/Linux (Docker): `./docker_sync_db.sh`
+- Local XAMPP: `sync_db.bat`
+
+This runs `doctrine:schema:update --force --complete`. Use with caution on production as it drops unmatched tables!
 
 ---
 

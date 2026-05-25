@@ -34,7 +34,6 @@ services:
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/mysql
-      - ./skeleton.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
