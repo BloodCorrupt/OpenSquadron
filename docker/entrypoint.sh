@@ -79,6 +79,9 @@ php bin/console cache:warmup
 echo "Running database migrations..."
 php bin/console doctrine:migrations:migrate -n --allow-no-migration || true
 
+echo "Synchronizing missing database schema..."
+php bin/console doctrine:schema:update --force || true
+
 echo "Seeding initial database data..."
 # INSERT IGNORE ensures this only runs once and never overwrites an existing admin
 php bin/console doctrine:query:sql "INSERT IGNORE INTO admin (email, roles, password, account_type, team_enabled, is_verified, registration_enabled) VALUES ('admin@opensquadron.local', '[\"ROLE_ADMIN\"]', '\$2y\$13\$dCqXfD9w9XB/Dxr2r4DD5u3ihrcsCgpBLq2LOnyfyHWM8pj2Hc4Ty', 'super_admin', 0, 1, 1);" || true
