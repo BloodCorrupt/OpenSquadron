@@ -22,16 +22,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(TeamPermissionVoter::PERM_WHATSAPP_MANAGE)]
 class WhatsAppController extends AbstractController
 {
-    private string $envVerifyToken;
-    private string $envAccessToken;
-    private string $phoneNumberId;
     private HttpClientInterface $httpClient;
     private WhatsAppConnectionService $whatsappService;
 
     public function __construct(
-        #[Autowire('%env(WHATSAPP_VERIFY_TOKEN)%')] string $verifyToken,
-        #[Autowire('%env(WHATSAPP_ACCESS_TOKEN)%')] string $accessToken,
-        #[Autowire('%env(WHATSAPP_PHONE_NUMBER_ID)%')] string $phoneNumberId,
         HttpClientInterface $httpClient,
         WhatsAppConnectionService $whatsappService,
         private EntityManagerInterface $entityManager,
@@ -40,9 +34,6 @@ class WhatsAppController extends AbstractController
         private \App\Service\TenantDatabaseService $tenantDbService,
         private \App\Service\TenantContext $tenantContext
     ) {
-        $this->envVerifyToken = $verifyToken;
-        $this->envAccessToken = $accessToken;
-        $this->phoneNumberId = $phoneNumberId;
         $this->httpClient = $httpClient;
         $this->whatsappService = $whatsappService;
     }
@@ -54,7 +45,7 @@ class WhatsAppController extends AbstractController
         if ($connection && $connection->getVerifyToken()) {
             return $connection->getVerifyToken();
         }
-        return $this->envVerifyToken;
+        return '';
     }
 
     #[Route('/webhook/whatsapp', name: 'whatsapp_webhook_verify', methods: ['GET'])]

@@ -16,9 +16,7 @@ class ConnectionSetupController extends AbstractController
 {
     public function __construct(
         private WhatsAppConnectionService $whatsappService,
-        private SubscriptionUsageService $usageService,
-        #[Autowire('%env(WHATSAPP_VERIFY_TOKEN)%')]
-        private string $envVerifyToken
+        private SubscriptionUsageService $usageService
     ) {
     }
 
@@ -29,7 +27,6 @@ class ConnectionSetupController extends AbstractController
 
         return $this->render('whatsapp/connect.html.twig', [
             'connections' => $connections,
-            'fallbackVerifyToken' => $this->envVerifyToken,
         ]);
     }
 
@@ -99,7 +96,6 @@ class ConnectionSetupController extends AbstractController
         return $this->render('whatsapp/connect.html.twig', [
             'connections' => $connections,
             'editConnection' => $connection,
-            'fallbackVerifyToken' => $this->envVerifyToken,
         ]);
     }
 

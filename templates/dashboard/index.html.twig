@@ -266,6 +266,12 @@
         border-color: rgba(59, 130, 246, 0.15);
     }
 
+    .instagram-style .channel-logo-box {
+        background: rgba(225, 48, 108, 0.08);
+        color: #e1306c;
+        border-color: rgba(225, 48, 108, 0.15);
+    }
+
     .channel-title-meta {
         display: flex;
         flex-direction: column;
@@ -381,6 +387,12 @@
         color: #60a5fa;
         background: rgba(59, 130, 246, 0.05);
         border-color: rgba(59, 130, 246, 0.15);
+    }
+
+    .instagram-style .system-pill-item.active {
+        color: #f472b6;
+        background: rgba(225, 48, 108, 0.05);
+        border-color: rgba(225, 48, 108, 0.15);
     }
 
     .channel-link-btn {
@@ -527,6 +539,7 @@
 
     .legend-bullet.wa-bullet { background: var(--secondary-accent); box-shadow: 0 0 6px var(--secondary-accent); }
     .legend-bullet.fb-bullet { background: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
+    .legend-bullet.ig-bullet { background: #e1306c; box-shadow: 0 0 6px #e1306c; }
 
     .legend-name {
         color: var(--text-muted);
@@ -663,6 +676,7 @@
 
     .queue-channel-tag.whatsapp { background: rgba(16, 185, 129, 0.1); color: var(--secondary-accent); }
     .queue-channel-tag.facebook { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+    .queue-channel-tag.instagram { background: rgba(225, 48, 108, 0.1); color: #f472b6; }
 
     .queue-right-action {
         font-size: 11px;
@@ -825,7 +839,9 @@
                 <div class="metric-card-footer">
                     <span>{{ wa_flow_count }} WA</span>
                     <span>•</span>
-                    <span>{{ fb_flow_count }} FB Flows</span>
+                    <span>{{ fb_flow_count }} FB</span>
+                    <span>•</span>
+                    <span>{{ ig_flow_count }} IG</span>
                 </div>
             </div>
 
@@ -962,6 +978,57 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Instagram Setup Summary (Pink/Purple Accent) -->
+            <div class="channel-summary-card instagram-style">
+                <div class="channel-card-header">
+                    <div class="channel-logo-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:20px; height:20px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </div>
+                    <div class="channel-title-meta">
+                        <span class="channel-name">Instagram Messaging</span>
+                        <span class="channel-subtitle">Official Meta Page Integration</span>
+                    </div>
+                    {% if ig_conn_count > 0 %}
+                        <span class="channel-badge connected">Connected</span>
+                    {% else %}
+                        <span class="channel-badge disconnected">Disconnected</span>
+                    {% endif %}
+                </div>
+
+                <!-- Setup statistics mirroring botsailor Summary cards -->
+                <div class="channel-setup-matrix">
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ ig_conn_count }}</span>
+                        <span class="matrix-label">Accounts</span>
+                    </div>
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ ig_flow_count }}</span>
+                        <span class="matrix-label">Dialog Flows</span>
+                    </div>
+                    <div class="matrix-item">
+                        <!-- Standard sequences for Instagram -->
+                        <span class="matrix-value">{% if ig_conn_count > 0 %}1{% else %}0{% endif %}</span>
+                        <span class="matrix-label">Sequences</span>
+                    </div>
+                    <div class="matrix-item">
+                        <span class="matrix-value">{{ sub_instagram_count }}</span>
+                        <span class="matrix-label">Forms</span>
+                    </div>
+                </div>
+
+                <div class="channel-action-row">
+                    <div class="channel-system-pill">
+                        <span class="system-pill-item active">Account Sync</span>
+                        <span class="system-pill-item active">Flows</span>
+                        <span class="system-pill-item">Broadcaster</span>
+                    </div>
+                    <a href="{{ path('app_instagram_bot_manager') }}" class="channel-link-btn">
+                        <span>Instagram Panel</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -987,6 +1054,9 @@
                         <!-- Facebook Slice (Blue) -->
                         <circle id="fb-donut-slice" cx="21" cy="21" r="15.915" fill="transparent" stroke="#3b82f6" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="25" style="transition: stroke-dasharray 0.8s ease-in-out; filter: drop-shadow(0 0 3px rgba(59,130,246,0.3));"></circle>
                         
+                        <!-- Instagram Slice (Pink) -->
+                        <circle id="ig-donut-slice" cx="21" cy="21" r="15.915" fill="transparent" stroke="#e1306c" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="25" style="transition: stroke-dasharray 0.8s ease-in-out; filter: drop-shadow(0 0 3px rgba(225,48,108,0.3));"></circle>
+                        
                         <!-- WhatsApp Slice (Green) -->
                         <circle id="wa-donut-slice" cx="21" cy="21" r="15.915" fill="transparent" stroke="var(--secondary-accent)" stroke-width="4.2" stroke-dasharray="0 100" stroke-dashoffset="25" style="transition: stroke-dasharray 0.8s ease-in-out; filter: drop-shadow(0 0 3px rgba(16,185,129,0.3));"></circle>
                     </svg>
@@ -1011,6 +1081,13 @@
                             <span class="legend-name">Facebook</span>
                         </div>
                         <span class="legend-counts" id="fb-legend-val">{{ sub_facebook_count }}</span>
+                    </div>
+                    <div class="legend-row">
+                        <div class="legend-label-box">
+                            <span class="legend-bullet ig-bullet"></span>
+                            <span class="legend-name">Instagram</span>
+                        </div>
+                        <span class="legend-counts" id="ig-legend-val">{{ sub_instagram_count }}</span>
                     </div>
                 </div>
             </div>
@@ -1159,6 +1236,8 @@
                                     <div class="activity-platform-icon">
                                         {% if sub.channel == 'facebook' %}
                                             <svg viewBox="0 0 24 24" fill="#3b82f6"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.914 1.448 5.518 3.7 7.23v3.747c0 .248.243.414.474.32l4.168-1.706a13.3 13.3 0 0 0 1.658.11c5.523 0 10-4.146 10-9.259C22 6.145 17.523 2 12 2zm1.085 12.148l-2.483-2.656-4.838 2.656 5.322-5.656 2.548 2.656 4.774-2.656-5.323 5.656z"/></svg>
+                                        {% elseif sub.channel == 'instagram' %}
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="#e1306c" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                                         {% else %}
                                             <svg viewBox="0 0 24 24" fill="#10b981"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.18 1.449 4.825 1.451 5.436 0 9.859-4.42 9.863-9.864.002-2.637-1.023-5.116-2.887-6.98C16.576 1.897 14.1 1.872 11.472 1.87c-5.439 0-9.863 4.422-9.867 9.867-.001 1.77.462 3.5 1.342 5.012l-1.005 3.666 3.766-.988c1.472.8 3.03 1.22 4.939 1.22z"/></svg>
                                         {% endif %}
@@ -1185,29 +1264,39 @@
         const totalCount = parseInt("{{ sub_total_count }}") || 0;
         const waCount = parseInt("{{ sub_whatsapp_count }}") || 0;
         const fbCount = parseInt("{{ sub_facebook_count }}") || 0;
+        const igCount = parseInt("{{ sub_instagram_count }}") || 0;
 
         const waSlice = document.getElementById("wa-donut-slice");
         const fbSlice = document.getElementById("fb-donut-slice");
+        const igSlice = document.getElementById("ig-donut-slice");
 
         if (totalCount === 0) {
-            // Draw clean 50/50 default mock status when database is empty
-            if (waSlice) waSlice.setAttribute("stroke-dasharray", "50 100");
+            // Draw clean equal default mock status when database is empty
+            if (waSlice) waSlice.setAttribute("stroke-dasharray", "33.3 100");
             if (fbSlice) {
-                fbSlice.setAttribute("stroke-dasharray", "50 100");
-                fbSlice.setAttribute("stroke-dashoffset", "75");
+                fbSlice.setAttribute("stroke-dasharray", "33.3 100");
+                fbSlice.setAttribute("stroke-dashoffset", `${100 - 33.3 + 25}`);
+            }
+            if (igSlice) {
+                igSlice.setAttribute("stroke-dasharray", "33.3 100");
+                igSlice.setAttribute("stroke-dashoffset", `${100 - 66.6 + 25}`);
             }
         } else {
             // Calculate dynamic percentages
-            const waPercentage = Math.round((waCount / totalCount) * 100);
-            const fbPercentage = 100 - waPercentage;
+            const waPercentage = (waCount / totalCount) * 100;
+            const fbPercentage = (fbCount / totalCount) * 100;
+            const igPercentage = (igCount / totalCount) * 100;
 
             if (waSlice) {
                 waSlice.setAttribute("stroke-dasharray", `${waPercentage} 100`);
             }
             if (fbSlice) {
                 fbSlice.setAttribute("stroke-dasharray", `${fbPercentage} 100`);
-                // Offset by the WhatsApp slice percentage + standard 25 offset
-                fbSlice.setAttribute("stroke-dashoffset", `${25 - waPercentage}`);
+                fbSlice.setAttribute("stroke-dashoffset", `${100 - waPercentage + 25}`);
+            }
+            if (igSlice) {
+                igSlice.setAttribute("stroke-dasharray", `${igPercentage} 100`);
+                igSlice.setAttribute("stroke-dashoffset", `${100 - (waPercentage + fbPercentage) + 25}`);
             }
         }
     });

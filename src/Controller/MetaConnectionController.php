@@ -3,8 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Admin;
-use App\Entity\FacebookSetting;
+use App\Entity\MetaSetting;
 use App\Service\FacebookService;
+use App\Service\InstagramService;
 use App\Service\SubscriptionUsageService;
 use App\Security\Voter\TeamPermissionVoter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,29 +18,30 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted(TeamPermissionVoter::PERM_FACEBOOK_MANAGE)]
-class FacebookConnectionController extends AbstractController
+class MetaConnectionController extends AbstractController
 {
     public function __construct(
         private FacebookService $facebookService,
+        private InstagramService $instagramService,
         private SubscriptionUsageService $usageService
     ) {
     }
 
-    #[Route('/settings/facebook', name: 'app_facebook_settings', methods: ['GET'])]
-    public function facebookSettings(): Response
+    #[Route('/settings/meta', name: 'app_meta_settings', methods: ['GET'])]
+    public function metaSettings(): Response
     {
         $setting = $this->facebookService->getSetting();
         $globalSetting = $this->facebookService->getGlobalSetting();
 
-        return $this->render('facebook/settings.html.twig', [
-            'setting' => $setting ?? new FacebookSetting(),
+        return $this->render('meta/settings.html.twig', [
+            'setting' => $setting ?? new MetaSetting(),
             'hasGlobalSetting' => $globalSetting && $globalSetting->getAppId() ? true : false,
             'isUsingCustom' => $setting && $setting->getAppId() ? true : false,
         ]);
     }
 
-    #[Route('/settings/facebook/save', name: 'app_facebook_settings_save', methods: ['POST'])]
-    public function saveFacebookSettings(Request $request, EntityManagerInterface $em): JsonResponse
+    #[Route('/settings/meta/save', name: 'app_meta_settings_save', methods: ['POST'])]
+    public function savemetaSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $useCustom = filter_var($request->request->get('useCustom', 'false'), FILTER_VALIDATE_BOOLEAN);
         $setting = $this->facebookService->getSetting();
@@ -65,7 +67,7 @@ class FacebookConnectionController extends AbstractController
         }
 
         if (!$setting) {
-            $setting = new FacebookSetting();
+            $setting = new MetaSetting();
             $setting->setVerifyToken($this->facebookService->generateVerifyToken());
             $em->persist($setting);
         }
@@ -88,7 +90,7 @@ class FacebookConnectionController extends AbstractController
     }
 
     #[Route('/facebook/connect', name: 'facebook_connect_show', methods: ['GET'])]
-    public function show(): Response
+    public function facebookShow(): Response
     {
         $connections = $this->facebookService->getAllConnections();
         $setting = $this->facebookService->getEffectiveSetting();
@@ -99,14 +101,37 @@ class FacebookConnectionController extends AbstractController
         ]);
     }
 
+    #[Route('/instagram/connect', name: 'instagram_connect_show', methods: ['GET'])]
+    public function instagramShow(): Response
+    {
+        $connections = $this->instagramService->getAllConnections();
+        $setting = $this->facebookService->getEffectiveSetting();
+
+        return $this->render('instagram/connect.html.twig', [
+            'connections' => $connections,
+            'setting' => $setting,
+        ]);
+    }
+
     #[Route('/facebook/connect', name: 'facebook_connect', methods: ['POST'])]
-    public function connect(Request $request): Response
+    public function connectFacebook(Request $request): Response
+    {
+        return $this->initiateConnect($request, 'facebook');
+    }
+
+    #[Route('/instagram/connect', name: 'instagram_connect', methods: ['POST'])]
+    public function connectInstagram(Request $request): Response
+    {
+        return $this->initiateConnect($request, 'instagram');
+    }
+
+    private function initiateConnect(Request $request, string $target): Response
     {
         $setting = $this->facebookService->getEffectiveSetting();
 
         if (!$setting || empty($setting->getAppId()) || empty($setting->getEncryptedAppSecret())) {
-            $this->addFlash('error', 'Facebook Settings (App ID and App Secret) must be configured under Settings > Facebook Settings first.');
-            return $this->redirectToRoute('facebook_connect_show');
+            $this->addFlash('error', 'Meta App Settings (App ID and App Secret) must be configured under Admin Panel > Meta App Settings first.');
+            return $this->redirectToRoute($target . '_connect_show');
         }
 
         $appId = $setting->getAppId();
@@ -114,17 +139,18 @@ class FacebookConnectionController extends AbstractController
         $label = trim($request->request->get('label', ''));
 
         $session = $request->getSession();
-        $session->set('fb_connect_app_id', $appId);
-        $session->set('fb_connect_app_secret', $appSecret);
-        $session->set('fb_connect_label', $label);
+        $session->set('meta_connect_app_id', $appId);
+        $session->set('meta_connect_app_secret', $appSecret);
+        $session->set('meta_connect_label', $label);
+        $session->set('meta_connect_target', $target);
 
         $state = bin2hex(random_bytes(16));
-        $session->set('fb_connect_state', $state);
+        $session->set('meta_connect_state', $state);
 
         $redirectUri = $this->generateUrl('facebook_connect_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
         $redirectUri = str_replace('http://', 'https://', $redirectUri);
 
-        // Scopes allowing both Messaging and future full Page/Post Automation
+        // Scopes allowing both Messaging and future full Page/Post Automation for FB & IG
         $scopes = [
             'pages_show_list',
             'pages_read_engagement',
@@ -132,7 +158,12 @@ class FacebookConnectionController extends AbstractController
             'pages_manage_metadata',
             'pages_messaging',
             'pages_manage_posts',
-            'pages_read_user_content'
+            'pages_read_user_content',
+            'instagram_basic',
+            'instagram_manage_messages',
+            'instagram_manage_comments',
+            'instagram_content_publish',
+            'business_management'
         ];
 
         $fbAuthUrl = sprintf(
@@ -147,20 +178,24 @@ class FacebookConnectionController extends AbstractController
     }
 
     #[Route('/facebook/callback', name: 'facebook_connect_callback', methods: ['GET'])]
+    #[Route('/instagram/callback', name: 'instagram_connect_callback', methods: ['GET'])]
     public function callback(Request $request): Response
     {
         $code = $request->query->get('code');
         $state = $request->query->get('state');
         $session = $request->getSession();
 
-        $savedState = $session->get('fb_connect_state');
+        $savedState = $session->get('meta_connect_state');
+        $target = $session->get('meta_connect_target', 'facebook');
+        $redirectRouteShow = $target . '_connect_show';
+        
         $setting = $this->facebookService->getEffectiveSetting();
-        $appId = $session->get('fb_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
-        $appSecret = $session->get('fb_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
+        $appId = $session->get('meta_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
+        $appSecret = $session->get('meta_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
 
         if (!$code || !$state || $state !== $savedState || !$appId || !$appSecret) {
             $this->addFlash('error', 'Invalid request or session expired. Please try connecting again.');
-            return $this->redirectToRoute('facebook_connect_show');
+            return $this->redirectToRoute($redirectRouteShow);
         }
 
         $redirectUri = $this->generateUrl('facebook_connect_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -176,8 +211,10 @@ class FacebookConnectionController extends AbstractController
             // 3. Fetch list of user's Facebook pages with their page access tokens
             $pages = $this->facebookService->getUserPages($longLivedToken);
 
-            // 4. Store pages in session securely to avoid passing tokens in the query/form
+            // 4. Store pages and instagram accounts in session securely
             $pagesSession = [];
+            $igAccountsSession = [];
+            
             foreach ($pages as $page) {
                 $pagesSession[$page['id']] = [
                     'id' => $page['id'],
@@ -185,16 +222,34 @@ class FacebookConnectionController extends AbstractController
                     'access_token' => $page['access_token'],
                     'category' => $page['category'] ?? '',
                 ];
+                
+                if (isset($page['instagram_business_account']) && !empty($page['instagram_business_account']['id'])) {
+                    $igAccountsSession[$page['instagram_business_account']['id']] = [
+                        'id' => $page['instagram_business_account']['id'],
+                        'name' => $page['instagram_business_account']['name'] ?? $page['instagram_business_account']['username'],
+                        'username' => $page['instagram_business_account']['username'],
+                        'profile_picture_url' => $page['instagram_business_account']['profile_picture_url'] ?? null,
+                        'page_id' => $page['id'],
+                        'page_access_token' => $page['access_token'],
+                    ];
+                }
             }
             $session->set('fb_pages_list', $pagesSession);
+            $session->set('ig_accounts_list', $igAccountsSession);
+
+            if ($target === 'instagram') {
+                return $this->render('instagram/select_pages.html.twig', [
+                    'igAccounts' => $igAccountsSession,
+                ]);
+            }
 
             return $this->render('facebook/select_pages.html.twig', [
-                'pages' => $pages,
+                'pages' => $pagesSession,
             ]);
 
         } catch (\Exception $e) {
-            $this->addFlash('error', 'Facebook connection failed: ' . $e->getMessage());
-            return $this->redirectToRoute('facebook_connect_show');
+            $this->addFlash('error', 'Connection failed: ' . $e->getMessage());
+            return $this->redirectToRoute($redirectRouteShow);
         }
     }
 
@@ -206,9 +261,9 @@ class FacebookConnectionController extends AbstractController
 
         $pagesSession = $session->get('fb_pages_list', []);
         $setting = $this->facebookService->getEffectiveSetting();
-        $appId = $session->get('fb_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
-        $appSecret = $session->get('fb_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
-        $label = $session->get('fb_connect_label');
+        $appId = $session->get('meta_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
+        $appSecret = $session->get('meta_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
+        $label = $session->get('meta_connect_label');
 
         if (!$pageId || !isset($pagesSession[$pageId]) || !$appId || !$appSecret) {
             $this->addFlash('error', 'Session expired or invalid page selection. Please try again.');
@@ -257,10 +312,12 @@ class FacebookConnectionController extends AbstractController
 
             // Clear connection session data
             $session->remove('fb_pages_list');
-            $session->remove('fb_connect_app_id');
-            $session->remove('fb_connect_app_secret');
-            $session->remove('fb_connect_label');
-            $session->remove('fb_connect_state');
+            $session->remove('ig_accounts_list');
+            $session->remove('meta_connect_app_id');
+            $session->remove('meta_connect_app_secret');
+            $session->remove('meta_connect_label');
+            $session->remove('meta_connect_state');
+            $session->remove('meta_connect_target');
 
             // Subscribe Page to App Webhooks
             $subResult = $this->facebookService->subscribePage($pageData['id'], $pageData['access_token']);
@@ -276,19 +333,93 @@ class FacebookConnectionController extends AbstractController
         return $this->redirectToRoute('facebook_connect_show');
     }
 
-    #[Route('/facebook/connect/{id}/edit', name: 'facebook_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function edit(int $id): Response
+    #[Route('/instagram/connect-account', name: 'instagram_connect_instagram_submit', methods: ['POST'])]
+    public function connectInstagramAccount(Request $request): Response
     {
-        $connection = $this->facebookService->getConnectionById($id);
-        if (!$connection) {
-            $this->addFlash('error', 'Connection not found.');
-            return $this->redirectToRoute('facebook_connect_show');
+        $accountId = $request->request->get('accountId');
+        $session = $request->getSession();
+
+        $igAccountsSession = $session->get('ig_accounts_list', []);
+        $setting = $this->facebookService->getEffectiveSetting();
+        $appId = $session->get('meta_connect_app_id') ?: ($setting ? $setting->getAppId() : null);
+        $appSecret = $session->get('meta_connect_app_secret') ?: ($setting ? $this->facebookService->decryptToken($setting->getEncryptedAppSecret()) : null);
+        $label = $session->get('meta_connect_label');
+
+        if (!$accountId || !isset($igAccountsSession[$accountId]) || !$appId || !$appSecret) {
+            $this->addFlash('error', 'Session expired or invalid Instagram account selection. Please try again.');
+            return $this->redirectToRoute('instagram_connect_show');
         }
 
-        $connections = $this->facebookService->getAllConnections();
+        // Check bot connection limit before saving
+        /** @var Admin $user */
+        $user = $this->getUser();
+        if (!$this->usageService->canAddBot($user)) {
+            $usage = $this->usageService->getBotUsage($user);
+            $this->addFlash('error', sprintf(
+                'Bot connection limit reached (%d/%d). Upgrade your subscription to connect more bots.',
+                $usage['current'],
+                $usage['limit']
+            ));
+            return $this->redirectToRoute('instagram_connect_show');
+        }
+
+        $accountData = $igAccountsSession[$accountId];
+
+        try {
+            // Save the connection (which encrypts the tokens)
+            $connection = $this->instagramService->saveConnection(
+                $accountData['id'],
+                $accountData['page_access_token'],
+                $appId,
+                $appSecret,
+                $accountData['username'],
+                $label ?: null,
+                null, // existingId
+                $accountData['page_id'] // linkedFacebookPageId
+            );
+
+            // Clear connection session data
+            $session->remove('fb_pages_list');
+            $session->remove('ig_accounts_list');
+            $session->remove('meta_connect_app_id');
+            $session->remove('meta_connect_app_secret');
+            $session->remove('meta_connect_label');
+            $session->remove('meta_connect_state');
+            $session->remove('meta_connect_target');
+
+            // Subscribe Page to App Webhooks
+            $subResult = $this->instagramService->subscribePage($accountData['page_id'], $accountData['page_access_token']);
+            if (isset($subResult['success']) && $subResult['success']) {
+                $this->addFlash('success', sprintf('Successfully connected Instagram Account and subscribed webhooks: %s!', $accountData['username']));
+            } else {
+                $this->addFlash('warning', sprintf('Connected Instagram Account %s, but failed to subscribe webhooks: %s', $accountData['username'], $subResult['error'] ?? 'Unknown error'));
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Failed to connect Instagram account: ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('instagram_connect_show');
+    }
+
+    #[Route('/facebook/connect/{id}/edit', name: 'facebook_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/instagram/connect/{id}/edit', name: 'instagram_connect_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function edit(int $id, Request $request): Response
+    {
+        $isInstagram = $request->attributes->get('_route') === 'instagram_connect_edit';
+        $service = $isInstagram ? $this->instagramService : $this->facebookService;
+
+        $connection = $service->getConnectionById($id);
+        if (!$connection) {
+            $this->addFlash('error', 'Connection not found.');
+            return $this->redirectToRoute($isInstagram ? 'instagram_connect_show' : 'facebook_connect_show');
+        }
+
+        $connections = $service->getAllConnections();
         $setting = $this->facebookService->getEffectiveSetting();
 
-        return $this->render('facebook/connect.html.twig', [
+        $template = $isInstagram ? 'instagram/connect.html.twig' : 'facebook/connect.html.twig';
+
+        return $this->render($template, [
             'connections' => $connections,
             'editConnection' => $connection,
             'setting' => $setting,
@@ -296,27 +427,31 @@ class FacebookConnectionController extends AbstractController
     }
 
     #[Route('/facebook/connect/{id}/update', name: 'facebook_connect_update', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/instagram/connect/{id}/update', name: 'instagram_connect_update', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function update(int $id, Request $request): Response
     {
+        $isInstagram = $request->attributes->get('_route') === 'instagram_connect_update';
+        $service = $isInstagram ? $this->instagramService : $this->facebookService;
         $label = trim($request->request->get('label', ''));
 
         try {
-            $connection = $this->facebookService->getConnectionById($id);
+            $connection = $service->getConnectionById($id);
             if (!$connection) {
                 $this->addFlash('error', 'Connection not found.');
-                return $this->redirectToRoute('facebook_connect_show');
+                return $this->redirectToRoute($isInstagram ? 'instagram_connect_show' : 'facebook_connect_show');
             }
 
             if ($label !== '') {
                 $connection->setLabel($label);
-                $this->facebookService->saveConnection(
+                $service->saveConnection(
                     $connection->getPageId(),
-                    $this->facebookService->decryptToken($connection->getEncryptedPageAccessToken()),
+                    $service->decryptToken($connection->getEncryptedPageAccessToken()),
                     $connection->getAppId(),
-                    $this->facebookService->decryptToken($connection->getEncryptedAppSecret()),
+                    $service->decryptToken($connection->getEncryptedAppSecret()),
                     $connection->getPageName(),
                     $label,
-                    $id
+                    $id,
+                    $isInstagram && method_exists($connection, 'getLinkedFacebookPageId') ? $connection->getLinkedFacebookPageId() : null
                 );
                 $this->addFlash('success', 'Connection label updated successfully!');
             }
@@ -324,44 +459,58 @@ class FacebookConnectionController extends AbstractController
             $this->addFlash('error', 'Failed to update connection: ' . $e->getMessage());
         }
 
-        return $this->redirectToRoute('facebook_connect_show');
+        return $this->redirectToRoute($isInstagram ? 'instagram_connect_show' : 'facebook_connect_show');
     }
 
     #[Route('/facebook/connect/{id}/delete', name: 'facebook_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function delete(int $id): JsonResponse
+    #[Route('/instagram/connect/{id}/delete', name: 'instagram_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function delete(int $id, Request $request): JsonResponse
     {
-        $success = $this->facebookService->deleteConnection($id);
+        $isInstagram = $request->attributes->get('_route') === 'instagram_connect_delete';
+        $service = $isInstagram ? $this->instagramService : $this->facebookService;
+        $success = $service->deleteConnection($id);
         return new JsonResponse(['success' => $success]);
     }
 
     #[Route('/facebook/connect/{id}/subscribe', name: 'facebook_connect_subscribe', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function subscribe(int $id): Response
+    #[Route('/instagram/connect/{id}/subscribe', name: 'instagram_connect_subscribe', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function subscribe(int $id, Request $request): Response
     {
+        $isInstagram = $request->attributes->get('_route') === 'instagram_connect_subscribe';
+        $redirectRoute = $isInstagram ? 'instagram_connect_show' : 'facebook_connect_show';
+        $service = $isInstagram ? $this->instagramService : $this->facebookService;
+
         try {
-            $connection = $this->facebookService->getConnectionById($id);
+            $connection = $service->getConnectionById($id);
             if (!$connection) {
                 $this->addFlash('error', 'Connection not found.');
-                return $this->redirectToRoute('facebook_connect_show');
+                return $this->redirectToRoute($redirectRoute);
             }
 
-            $pageId = $connection->getPageId();
-            $pageAccessToken = $this->facebookService->decryptToken($connection->getEncryptedPageAccessToken());
+            if ($isInstagram && method_exists($connection, 'getLinkedFacebookPageId') && $connection->getLinkedFacebookPageId()) {
+                $pageId = $connection->getLinkedFacebookPageId();
+            } else {
+                $pageId = $connection->getPageId();
+            }
+            $linkedId = method_exists($connection, 'getLinkedFacebookPageId') ? $connection->getLinkedFacebookPageId() : null;
+            error_log(sprintf('SUBSCRIBE CALLED - isIG: %d, ID: %d, getLinked: %s, pageId: %s', $isInstagram, $id, $linkedId ?? 'NULL', $pageId));
+            $pageAccessToken = $service->decryptToken($connection->getEncryptedPageAccessToken());
 
-            $subResult = $this->facebookService->subscribePage($pageId, $pageAccessToken);
+            $subResult = $service->subscribePage($pageId, $pageAccessToken);
 
             if (isset($subResult['success']) && $subResult['success']) {
-                $this->addFlash('success', sprintf('Successfully subscribed webhooks for Facebook Page: %s!', $connection->getPageName()));
+                $this->addFlash('success', sprintf('Successfully subscribed webhooks for Page/Account: %s!', $connection->getPageName()));
             } else {
-                $this->addFlash('error', sprintf('Failed to subscribe webhooks for Facebook Page: %s. Error: %s', $connection->getPageName(), $subResult['error'] ?? 'Unknown error'));
+                $this->addFlash('error', sprintf('Failed to subscribe webhooks for Page/Account: %s. Error: %s', $connection->getPageName(), $subResult['error'] ?? 'Unknown error'));
             }
         } catch (\Exception $e) {
             $this->addFlash('error', 'An error occurred during webhook subscription: ' . $e->getMessage());
         }
 
-        return $this->redirectToRoute('facebook_connect_show');
+        return $this->redirectToRoute($redirectRoute);
     }
 
-    #[Route('/facebook/data-deletion', name: 'facebook_data_deletion', methods: ['POST'])]
+    #[Route('/meta/data-deletion', name: 'meta_data_deletion', methods: ['POST'])]
     public function dataDeletion(Request $request): JsonResponse
     {
         $signedRequest = $request->request->get('signed_request');
@@ -379,7 +528,7 @@ class FacebookConnectionController extends AbstractController
         $confirmationCode = 'del_' . substr(hash('sha256', $userId . time() . uniqid('', true)), 0, 16);
 
         // Generate absolute status check URL, enforcing HTTPS
-        $statusUrl = $this->generateUrl('facebook_deletion_status', ['code' => $confirmationCode], UrlGeneratorInterface::ABSOLUTE_URL);
+        $statusUrl = $this->generateUrl('meta_deletion_status', ['code' => $confirmationCode], UrlGeneratorInterface::ABSOLUTE_URL);
         $statusUrl = str_replace('http://', 'https://', $statusUrl);
 
         return new JsonResponse([
@@ -388,7 +537,7 @@ class FacebookConnectionController extends AbstractController
         ]);
     }
 
-    #[Route('/facebook/deletion-status', name: 'facebook_deletion_status', methods: ['GET'])]
+    #[Route('/meta/deletion-status', name: 'meta_deletion_status', methods: ['GET'])]
     public function deletionStatus(Request $request): Response
     {
         $code = $request->query->get('code', '');

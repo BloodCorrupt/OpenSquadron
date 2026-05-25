@@ -11,6 +11,7 @@ class TeamPermissionVoter extends Voter
     public const PERM_DASHBOARD_VIEW = 'PERM_DASHBOARD_VIEW';
     public const PERM_WHATSAPP_MANAGE = 'PERM_WHATSAPP_MANAGE';
     public const PERM_FACEBOOK_MANAGE = 'PERM_FACEBOOK_MANAGE';
+    public const PERM_INSTAGRAM_MANAGE = 'PERM_INSTAGRAM_MANAGE';
     public const PERM_AI_MANAGE = 'PERM_AI_MANAGE';
     public const PERM_SUBSCRIBERS_VIEW = 'PERM_SUBSCRIBERS_VIEW';
     public const PERM_SUBSCRIBERS_MANAGE = 'PERM_SUBSCRIBERS_MANAGE';
@@ -23,7 +24,8 @@ class TeamPermissionVoter extends Voter
         return [
             self::PERM_DASHBOARD_VIEW => 'View Dashboard & Analytics',
             self::PERM_WHATSAPP_MANAGE => 'Manage WhatsApp Bots & Templates',
-            self::PERM_FACEBOOK_MANAGE => 'Manage Facebook / Instagram Automations',
+            self::PERM_FACEBOOK_MANAGE => 'Manage Facebook Automations',
+            self::PERM_INSTAGRAM_MANAGE => 'Manage Instagram Automations',
             self::PERM_AI_MANAGE => 'Manage AI Agents & Contexts',
             self::PERM_SUBSCRIBERS_VIEW => 'View Subscribers & Live Chat',
             self::PERM_SUBSCRIBERS_MANAGE => 'Reply to Live Chat & Manage Subscribers',

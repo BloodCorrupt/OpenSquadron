@@ -180,38 +180,43 @@
 
     <div class="page-header">
         <h1>
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-            Select Meta Pages & Accounts
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            Select Instagram Accounts
         </h1>
-        <p>Choose the Facebook Page or Instagram Account you want to connect</p>
+        <p>Choose the Instagram Professional Account you want to connect</p>
     </div>
 
-    {% if pages is empty %}
+    {% if igAccounts is empty %}
         <div class="no-pages-warning">
             <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:48px; height:48px; display: inline-block; margin-bottom: 16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            <h3>No Facebook Pages Found</h3>
-            <p>We couldn't find any Facebook Pages associated with this login. Please make sure you are an administrator and have explicitly selected your Facebook Pages during the Meta authorization dialog.</p>
-            <a href="{{ path('facebook_connect_show') }}" class="cancel-link" style="display: inline-block; margin-top: 10px;">Back to Credentials</a>
+            <h3>No Instagram Accounts Found</h3>
+            <p>We couldn't find any Instagram Professional Accounts associated with this login. Please make sure you explicitly selected your Instagram Professional Account during the Meta authorization dialog, and that you have granted all permissions.</p>
+            <a href="{{ path('instagram_connect_show') }}" class="cancel-link" style="display: inline-block; margin-top: 10px;">Back to Credentials</a>
         </div>
     {% else %}
-        {% if pages is not empty %}
-            <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">Facebook Pages</h2>
+
+        {% if igAccounts is not empty %}
+            <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">Instagram Accounts</h2>
             <div class="pages-grid">
-                {% for page in pages %}
+                {% for account in igAccounts %}
                     <div class="page-card">
                         <div>
-                            <div class="page-avatar">
-                                {{ page.name|slice(0,1)|upper }}
+                            <div class="page-avatar" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #fff;">
+                                {% if account.profile_picture_url %}
+                                    <img src="{{ account.profile_picture_url }}" alt="{{ account.username }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+                                {% else %}
+                                    {{ account.username|slice(0,1)|upper }}
+                                {% endif %}
                             </div>
-                            <h3 class="page-title">{{ page.name }}</h3>
-                            {% if page.category is defined and page.category %}
-                                <span class="page-category">{{ page.category }}</span>
+                            <h3 class="page-title">{{ account.username }}</h3>
+                            {% if account.name %}
+                                <span class="page-category">{{ account.name }}</span>
                             {% endif %}
-                            <div class="page-meta">ID: {{ page.id }}</div>
+                            <div class="page-meta">ID: {{ account.id }}</div>
                         </div>
-                        <form method="post" action="{{ path('facebook_connect_page_submit') }}">
-                            <input type="hidden" name="pageId" value="{{ page.id }}">
-                            <button type="submit" class="select-btn">Connect Page</button>
+                        <form method="post" action="{{ path('instagram_connect_instagram_submit') }}">
+                            <input type="hidden" name="accountId" value="{{ account.id }}">
+                            <button type="submit" class="select-btn" style="background: rgba(220, 39, 67, 0.1); border-color: rgba(220, 39, 67, 0.3); color: #fff;">Connect Instagram</button>
                         </form>
                     </div>
                 {% endfor %}
@@ -219,7 +224,7 @@
         {% endif %}
 
         <div class="actions-bar">
-            <a href="{{ path('facebook_connect_show') }}" class="cancel-link">
+            <a href="{{ path('instagram_connect_show') }}" class="cancel-link">
                 Cancel & Start Over
             </a>
         </div>

@@ -9,9 +9,9 @@ use App\Entity\TenantAwareInterface;
 use App\Entity\Admin;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'facebook_setting')]
+#[ORM\Table(name: 'meta_setting')]
 #[ORM\HasLifecycleCallbacks]
-class FacebookSetting implements TenantAwareInterface
+class MetaSetting implements TenantAwareInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

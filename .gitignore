@@ -37,3 +37,4 @@ cloudflared.exe
 /test_ai_settings.php
 ###< Custom Ignores ###
 public/uploads
+meta_pages.json

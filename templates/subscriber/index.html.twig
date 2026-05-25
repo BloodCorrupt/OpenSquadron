@@ -420,10 +420,14 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                 <span>Facebook</span>
             </button>
+            <button onclick="changeChannel('instagram')" class="btn-action" style="flex: 1; justify-content: center; padding: 6px 12px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; transition: all 0.2s; background: {% if channel == 'instagram' %}rgba(6, 182, 212, 0.15){% else %}transparent{% endif %}; color: {% if channel == 'instagram' %}#fff{% else %}var(--text-muted){% endif %}; font-weight: {% if channel == 'instagram' %}700{% else %}600{% endif %}; gap: 4px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                <span>Instagram</span>
+            </button>
         </div>
 
         <div>
-            <div class="nav-header">{% if channel == 'facebook' %}Facebook Page{% else %}WhatsApp Account{% endif %}</div>
+            <div class="nav-header">{% if channel == 'facebook' %}Facebook Page{% elseif channel == 'instagram' %}Instagram Account{% else %}WhatsApp Account{% endif %}</div>
             <div style="padding: 0 10px;">
                 <select id="conn-selector" class="form-control" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 100%; height: 38px;" onchange="changeConnection(this.value)">
                     {% if connections is empty %}
@@ -433,6 +437,8 @@
                             <option value="{{ conn.id }}" {% if connection and connection.id == conn.id %}selected{% endif %}>
                                 {% if channel == 'facebook' %}
                                     {{ conn.label ?: conn.pageName ?: 'Unnamed Page (' ~ conn.id ~ ')' }}
+                                {% elseif channel == 'instagram' %}
+                                    {{ conn.label ?: conn.username ?: 'Unnamed Account (' ~ conn.id ~ ')' }}
                                 {% else %}
                                     {{ conn.label ?: conn.phoneNumber ?: 'Unnamed Connection (' ~ conn.id ~ ')' }}
                                 {% endif %}
@@ -451,6 +457,10 @@
                         <div><strong>Label:</strong> {{ connection.label ?: 'N/A' }}</div>
                         <div><strong>Page Name:</strong> {{ connection.pageName ?: 'N/A' }}</div>
                         <div><strong>Page ID:</strong> {{ connection.pageId ?: 'N/A' }}</div>
+                    {% elseif channel == 'instagram' %}
+                        <div><strong>Label:</strong> {{ connection.label ?: 'N/A' }}</div>
+                        <div><strong>Username:</strong> {{ connection.username ?: 'N/A' }}</div>
+                        <div><strong>Account ID:</strong> {{ connection.pageId ?: 'N/A' }}</div>
                     {% else %}
                         <div><strong>Label:</strong> {{ connection.label ?: 'N/A' }}</div>
                         <div><strong>Phone:</strong> {{ connection.phoneNumber ?: 'N/A' }}</div>
@@ -499,6 +509,10 @@
                     <h2>No Facebook Page Selected</h2>
                     <p>Please connect a Facebook Page first to manage subscribers.</p>
                     <a href="{{ path('facebook_connect_show') }}" class="btn btn-primary" style="text-decoration:none; display:inline-block; margin-top:15px;">Connect Facebook Page</a>
+                {% elseif channel == 'instagram' %}
+                    <h2>No Instagram Account Selected</h2>
+                    <p>Please connect an Instagram Professional Account first to manage subscribers.</p>
+                    <a href="{{ path('instagram_connect_show') }}" class="btn btn-primary" style="text-decoration:none; display:inline-block; margin-top:15px;">Connect Instagram</a>
                 {% else %}
                     <h2>No WhatsApp Account Selected</h2>
                     <p>Please connect a WhatsApp Business Account first to manage subscribers.</p>
@@ -512,7 +526,7 @@
                         <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                         <span>Subscriber Manager</span>
                     </h1>
-                    <div class="content-subtitle">Manage users connected to <strong>{% if channel == 'facebook' %}{{ connection.label ?: connection.pageName }}{% else %}{{ connection.label ?: connection.phoneNumber }}{% endif %}</strong>.</div>
+                    <div class="content-subtitle">Manage users connected to <strong>{% if channel == 'facebook' %}{{ connection.label ?: connection.pageName }}{% elseif channel == 'instagram' %}{{ connection.label ?: connection.username }}{% else %}{{ connection.label ?: connection.phoneNumber }}{% endif %}</strong>.</div>
                 </div>
                 
                 <button onclick="openCreateModal()" class="btn-action btn-create">
@@ -532,7 +546,7 @@
                     
                     <div class="toolbar-search">
                         <svg viewBox="0 0 24 24" fill="none" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="subscriber-search" placeholder="{% if channel == 'facebook' %}Search by name or PSID...{% else %}Search by name or phone number...{% endif %}" value="{{ search }}" onkeyup="handleSearchKey(event)">
+                        <input type="text" id="subscriber-search" placeholder="{% if channel == 'facebook' or channel == 'instagram' %}Search by name or PSID...{% else %}Search by name or phone number...{% endif %}" value="{{ search }}" onkeyup="handleSearchKey(event)">
                     </div>
                     
                     <button onclick="applyFilters()" class="btn-action" style="background: rgba(255, 255, 255, 0.05); color: #fff; height: 38px;">
@@ -553,7 +567,7 @@
                         <tr>
                             <th style="width: 60px;">#</th>
                             <th>Profile Name</th>
-                            <th>{% if channel == 'facebook' %}PSID (Facebook ID){% else %}Phone Number{% endif %}</th>
+                            <th>{% if channel == 'facebook' or channel == 'instagram' %}PSID (Platform-Scoped ID){% else %}Phone Number{% endif %}</th>
                             <th style="width: 140px;">Opt-In status</th>
                             <th style="width: 180px;">Joined Date</th>
                             <th style="width: 150px; text-align: right;">Actions</th>
@@ -572,7 +586,7 @@
                                         <div style="font-weight: 700; font-size: 14px;">{{ sub.name ?: 'Guest User' }}</div>
                                     </td>
                                     <td class="phone-number-cell">
-                                        {% if channel == 'facebook' %}
+                                        {% if channel == 'facebook' or channel == 'instagram' %}
                                             {{ sub.psid }}
                                         {% else %}
                                             {{ sub.phoneNumber }}
@@ -594,7 +608,7 @@
                                     </td>
                                     <td>
                                         <div class="row-actions" style="justify-content: flex-end;">
-                                            <button onclick="openEditModal({{ sub.id }}, '{{ sub.name|escape('js') }}', '{% if channel == 'facebook' %}{{ sub.psid|escape('js') }}{% else %}{{ sub.phoneNumber|escape('js') }}{% endif %}', '{{ sub.status|escape('js') }}')" class="btn-row-action edit-action" title="Edit details">
+                                            <button onclick="openEditModal({{ sub.id }}, '{{ sub.name|escape('js') }}', '{% if channel == 'facebook' or channel == 'instagram' %}{{ sub.psid|escape('js') }}{% else %}{{ sub.phoneNumber|escape('js') }}{% endif %}', '{{ sub.status|escape('js') }}')" class="btn-row-action edit-action" title="Edit details">
                                                 <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                             </button>
                                             <a href="{{ path('app_inbox_chat', {id: sub.id}) }}" class="btn-row-action chat-action" title="Live chat">
@@ -630,11 +644,11 @@
             <input type="hidden" id="sub-id" name="id">
             
             <div class="form-group">
-                <label for="sub-phone" id="modal-field-label">{% if channel == 'facebook' %}PSID (Facebook Page-Scoped ID)*{% else %}Phone Number (with country code)*{% endif %}</label>
-                <input type="text" id="sub-phone" class="form-control" placeholder="{% if channel == 'facebook' %}e.g. 562894012304895{% else %}e.g. +14155552671{% endif %}" required>
+                <label for="sub-phone" id="modal-field-label">{% if channel == 'facebook' %}PSID (Facebook Page-Scoped ID)*{% elseif channel == 'instagram' %}IGSID (Instagram Scoped ID)*{% else %}Phone Number (with country code)*{% endif %}</label>
+                <input type="text" id="sub-phone" class="form-control" placeholder="{% if channel == 'facebook' or channel == 'instagram' %}e.g. 562894012304895{% else %}e.g. +14155552671{% endif %}" required>
                 <small style="color:var(--text-muted); font-size:11px; margin-top:5px; display:block;" id="modal-field-hint">
-                    {% if channel == 'facebook' %}
-                        Page-Scoped ID of the user. Only numbers are allowed.
+                    {% if channel == 'facebook' or channel == 'instagram' %}
+                        Platform-Scoped ID of the user. Only numbers are allowed.
                     {% else %}
                         Include leading country code digits. Only numbers and + symbol are allowed.
                     {% endif %}
@@ -773,7 +787,7 @@
         const channel = '{{ channel }}';
 
         if (!phoneOrPsid) {
-            showModalError(channel === 'facebook' ? 'PSID is required.' : 'Phone number is required.');
+            showModalError((channel === 'facebook' || channel === 'instagram') ? 'PSID is required.' : 'Phone number is required.');
             return;
         }
 
@@ -783,7 +797,7 @@
 
         const formData = new FormData();
         if (id) formData.append('id', id);
-        if (channel === 'facebook') {
+        if (channel === 'facebook' || channel === 'instagram') {
             formData.append('psid', phoneOrPsid);
         } else {
             formData.append('phoneNumber', phoneOrPsid);

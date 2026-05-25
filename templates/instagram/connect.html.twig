@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Facebook Page Connection (Beta) - OpenSquadron{% endblock %}
+{% block title %}Instagram Account Connection (Beta) - OpenSquadron{% endblock %}
 
 {% block stylesheets %}
 <style>
@@ -336,18 +336,18 @@
 
     <div class="page-header">
         <h1>
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-            Facebook Messenger
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            Instagram Direct Messages
             <span class="beta-badge">Beta</span>
         </h1>
-        <p>Integrate Facebook Pages to receive, track and automate your customer messaging flows</p>
+        <p>Integrate Instagram Professional Accounts to receive, track and automate your customer messaging flows</p>
     </div>
 
     {# ───── Connected Pages Grid ───── #}
     <div class="connections-section">
         <div class="section-title">
             <span style="display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                 <span>Active Page Connections</span>
             </span>
             <span class="count-badge">{{ connections|length }}</span>
@@ -356,10 +356,10 @@
         {% if connections is empty %}
             <div class="empty-connections">
                 <span style="display: block; margin-bottom: 12px; opacity: 0.4; color: var(--text-muted); text-align: center;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px; height:48px; display: inline-block;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px; height:48px; display: inline-block;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                 </span>
-                <h3>No Facebook Pages Linked</h3>
-                <p>Configure Facebook settings and click connect to start routing Messenger conversations.</p>
+                <h3>No Instagram Accounts Linked</h3>
+                <p>Configure Meta App settings and click connect to start routing Instagram DM conversations.</p>
             </div>
         {% else %}
             <div class="conn-grid">
@@ -396,11 +396,11 @@
                         </div>
 
                         <div class="conn-actions">
-                            <a href="{{ path('facebook_connect_edit', {id: conn.id}) }}" class="conn-action-btn edit-btn">
+                            <a href="{{ path('instagram_connect_edit', {id: conn.id}) }}" class="conn-action-btn edit-btn">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 <span>Edit Label</span>
                             </a>
-                            <form method="post" action="{{ path('facebook_connect_subscribe', {id: conn.id}) }}" style="flex: 1; display: flex; margin: 0; padding: 0;">
+                            <form method="post" action="{{ path('instagram_connect_subscribe', {id: conn.id}) }}" style="flex: 1; display: flex; margin: 0; padding: 0;">
                                 <button type="submit" class="conn-action-btn edit-btn" style="width: 100%;">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                                     <span>Subscribe Webhook</span>
@@ -426,10 +426,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 <span>Modifying label for: {{ editConnection.label ?? ('Connection #' ~ editConnection.id) }}</span>
             </span>
-            <a href="{{ path('facebook_connect_show') }}">✕ Cancel</a>
+            <a href="{{ path('instagram_connect_show') }}">✕ Cancel</a>
         </div>
         
-        <form method="post" action="{{ path('facebook_connect_update', {id: editConnection.id}) }}" autocomplete="off" class="glass-card" style="max-width: 600px; margin: 0 auto;">
+        <form method="post" action="{{ path('instagram_connect_update', {id: editConnection.id}) }}" autocomplete="off" class="glass-card" style="max-width: 600px; margin: 0 auto;">
             <div class="form-group">
                 <label for="label">Connection Label / Friendly Name</label>
                 <input type="text" id="label" name="label" class="form-control"
@@ -442,7 +442,7 @@
                     <input type="text" class="form-control" value="{{ editConnection.pageName }}" disabled style="opacity: 0.6; cursor: not-allowed;">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
-                    <label>Facebook Page ID</label>
+                    <label>Instagram Account ID</label>
                     <input type="text" class="form-control" value="{{ editConnection.pageId }}" disabled style="opacity: 0.6; cursor: not-allowed;">
                 </div>
             </div>
@@ -453,24 +453,24 @@
         </form>
     {% else %}
         {% if setting and setting.appId and setting.encryptedAppSecret %}
-            <form method="post" action="{{ path('facebook_connect') }}" autocomplete="off">
+            <form method="post" action="{{ path('instagram_connect') }}" autocomplete="off">
                 <div class="glass-card" style="text-align: center; max-width: 550px; margin: 0 auto; padding: 45px 40px;">
                     <div style="margin-bottom: 24px;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; display: inline-block;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; display: inline-block;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                     </div>
-                    <h3 style="color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 12px;">Link Facebook Account</h3>
+                    <h3 style="color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 12px;">Link Instagram Account</h3>
                     <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 30px; line-height: 1.6;">
-                        Connect your Facebook Pages to route customer Messenger threads directly into your shared team inbox.
+                        Connect your Instagram Professional Accounts to route customer DMs directly into your shared team inbox.
                     </p>
 
                     <div class="form-group" style="text-align: left; margin-bottom: 28px;">
                         <label for="label">Connection Label / Friendly Name <span style="font-weight: normal; color: var(--text-muted); font-size: 12px;">(Optional)</span></label>
                         <input type="text" id="label" name="label" class="form-control" placeholder="e.g. Support Inbox, Bot Account..." autocomplete="off">
-                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Used to help distinguish multiple linked pages.</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Used to help distinguish multiple linked accounts.</div>
                     </div>
 
                     <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px 24px; border-radius: 30px;">
-                        Connect Facebook Account
+                        Connect Instagram Account
                     </button>
                 </div>
             </form>
@@ -481,10 +481,10 @@
                 </div>
                 <h3 style="color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 12px;">Configuration Required</h3>
                 <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 30px; line-height: 1.6;">
-                    To initiate a connection, you must configure your Facebook Developer App credentials (App ID & App Secret) in the global settings first.
+                    To initiate a connection, you must configure your Meta Developer App credentials (App ID & App Secret) in the global settings first.
                 </p>
                 <a href="{{ path('app_meta_settings') }}" class="btn btn-primary" style="display: inline-block; padding: 14px 28px; border-radius: 30px; text-decoration: none; text-transform: uppercase; font-size: 14px;">
-                    Configure Facebook Settings
+                    Configure Meta App Settings
                 </a>
             </div>
         {% endif %}
@@ -493,9 +493,9 @@
 
 <script>
 function deleteFbConnection(id) {
-    if (!confirm('Are you sure you want to remove this Facebook Page connection? This cannot be undone.')) return;
+    if (!confirm('Are you sure you want to remove this Instagram connection? This cannot be undone.')) return;
 
-    fetch('/facebook/connect/' + id + '/delete', { method: 'POST' })
+    fetch('/instagram/connect/' + id + '/delete', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (data.success) {

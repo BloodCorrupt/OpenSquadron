@@ -1027,6 +1027,13 @@
                             {% endfor %}
                         </optgroup>
                     {% endif %}
+                    {% if instagramConnections is defined and instagramConnections is not empty %}
+                        <optgroup label="Instagram">
+                            {% for conn in instagramConnections %}
+                                <option value="instagram-{{ conn.id }}">{{ conn.label ?: conn.pageName ?: conn.pageId }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
                 </select>
                 <svg class="right-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
@@ -1046,7 +1053,7 @@
                    data-id="{{ sub.id }}"
                    data-name="{{ name|lower }}"
                    data-phone="{{ phone|lower }}"
-                   data-connection-id="{% if sub.channel == 'facebook' %}{{ sub.facebookConnection ? 'facebook-' ~ sub.facebookConnection.id : '' }}{% else %}{{ sub.whatsAppConnection ? 'whatsapp-' ~ sub.whatsAppConnection.id : '' }}{% endif %}"
+                   data-connection-id="{% if sub.channel == 'facebook' %}{{ sub.facebookConnection ? 'facebook-' ~ sub.facebookConnection.id : '' }}{% elseif sub.channel == 'Instagram' %}{{ sub.instagramConnection ? 'instagram-' ~ sub.instagramConnection.id : '' }}{% else %}{{ sub.whatsAppConnection ? 'whatsapp-' ~ sub.whatsAppConnection.id : '' }}{% endif %}"
                    onclick="selectSubscriber(event, {{ sub.id }}, '{{ name|escape('js') }}', '{{ phone|escape('js') }}')">
                     <div class="subscriber-name" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <span>{{ name }}</span>
@@ -1054,6 +1061,11 @@
                             <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); flex-shrink: 0;">
                                 <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                                 FB
+                            </span>
+                        {% elseif sub.channel == 'Instagram' %}
+                            <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #e040fb; background: rgba(224, 64, 251, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(224, 64, 251, 0.25); flex-shrink: 0;">
+                                <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                IG
                             </span>
                         {% else %}
                             <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0;">
@@ -1112,6 +1124,11 @@
                                 <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); flex-shrink: 0;">
                                     <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                                     <span class="badge-text">Facebook (Beta)</span>
+                                </span>
+                            {% elseif activeSubscriber and activeSubscriber.channel == 'Instagram' %}
+                                <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #e040fb; background: rgba(224, 64, 251, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(224, 64, 251, 0.25); flex-shrink: 0;">
+                                    <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                    <span class="badge-text">Instagram</span>
                                 </span>
                             {% elseif activeSubscriber %}
                                 <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0;">
@@ -1334,6 +1351,11 @@
     ];
     const facebookFlows = [
         {% for f in facebookFlows|default([]) %}
+            { id: {{ f.id }}, name: "{{ f.name|escape('js') }}" },
+        {% endfor %}
+    ];
+    const instagramFlows = [
+        {% for f in instagramFlows|default([]) %}
             { id: {{ f.id }}, name: "{{ f.name|escape('js') }}" },
         {% endfor %}
     ];
@@ -1647,7 +1669,7 @@
             const channel = sub.channel || 'whatsapp';
             let name = sub.name;
             if (!name) {
-                name = channel === 'facebook' ? 'PSID: ' + sub.phoneNumber : sub.phoneNumber;
+                name = (channel === 'facebook' || channel === 'Instagram') ? 'PSID: ' + sub.phoneNumber : sub.phoneNumber;
             }
             const phone = sub.phoneNumber || '';
             
@@ -1683,6 +1705,13 @@
                     <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #3b82f6; background: rgba(59, 130, 246, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25); flex-shrink: 0;">
                         <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                         FB
+                    </span>
+                `;
+            } else if (channel === 'Instagram') {
+                badgeHtml = `
+                    <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #e040fb; background: rgba(224, 64, 251, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(224, 64, 251, 0.25); flex-shrink: 0;">
+                        <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        IG
                     </span>
                 `;
             } else {
@@ -1897,6 +1926,13 @@
                             <span class="badge-text">Facebook (Beta)</span>
                         </span>
                     `;
+                } else if (sub.channel === 'Instagram') {
+                    headerBadgeContainer.innerHTML = `
+                        <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #e040fb; background: rgba(224, 64, 251, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(224, 64, 251, 0.25); flex-shrink: 0;">
+                            <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            <span class="badge-text">Instagram</span>
+                        </span>
+                    `;
                 } else {
                     headerBadgeContainer.innerHTML = `
                         <span class="channel-badge-pill" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #10b981; background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0;">
@@ -1908,7 +1944,7 @@
             }
 
             // Fallback logic for name/phone details
-            const displayName = sub.name || (sub.channel === 'facebook' ? 'PSID: ' + sub.psid : sub.phoneNumber);
+            const displayName = sub.name || ((sub.channel === 'facebook' || sub.channel === 'Instagram') ? 'PSID: ' + sub.psid : sub.phoneNumber);
             const displayPhone = sub.phoneNumber || sub.psid || '';
             document.getElementById('chat-header-name').innerText = displayName;
             document.getElementById('chat-header-phone').innerText = displayPhone;
@@ -1920,7 +1956,7 @@
             // Rebuild flow options dynamically based on channel
             const flowSelect = document.getElementById('flowSelect');
             flowSelect.innerHTML = '<option value="">Select Action Flow</option>';
-            const targetFlows = sub.channel === 'facebook' ? facebookFlows : whatsappFlows;
+            const targetFlows = sub.channel === 'facebook' ? facebookFlows : (sub.channel === 'Instagram' ? instagramFlows : whatsappFlows);
             targetFlows.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f.id;

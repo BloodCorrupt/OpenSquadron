@@ -18,11 +18,7 @@ class WhatsAppConnectionService
         private HttpClientInterface $httpClient,
         private RouterInterface $router,
         #[Autowire(env: 'APP_SECRET')]
-        private string $appSecret,
-        #[Autowire('%env(WHATSAPP_PHONE_NUMBER_ID)%')]
-        private string $phoneNumberId,
-        #[Autowire('%env(WHATSAPP_ACCESS_TOKEN)%')]
-        private string $envAccessToken
+        private string $appSecret
     ) {
     }
 
@@ -297,10 +293,10 @@ class WhatsAppConnectionService
             try {
                 return $this->decryptToken($conn->getEncryptedAccessToken());
             } catch (\Exception $e) {
-                // Fallback to env
+                throw new \RuntimeException('Failed to decrypt WhatsApp access token from database.');
             }
         }
-        return $this->envAccessToken;
+        throw new \RuntimeException('No WhatsApp connection found in the database. Please connect a WhatsApp business account.');
     }
 
     /**
@@ -312,7 +308,7 @@ class WhatsAppConnectionService
         if ($conn && $conn->getPhoneNumberId()) {
             return $conn->getPhoneNumberId();
         }
-        return $this->phoneNumberId;
+        throw new \RuntimeException('No WhatsApp connection found. Cannot resolve phone number ID.');
     }
 
     public function sendMessage(string $to, string $text, ?WhatsAppConnection $connection = null): array

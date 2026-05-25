@@ -45,6 +45,10 @@ class Subscriber implements TenantAwareInterface
     #[ORM\JoinColumn(name: "facebook_connection_id", referencedColumnName: "id", onDelete: "CASCADE")]
     private ?FacebookConnection $facebookConnection = null;
 
+    #[ORM\ManyToOne(targetEntity: InstagramConnection::class)]
+    #[ORM\JoinColumn(name: "instagram_connection_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    private ?InstagramConnection $instagramConnection = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $name = null;
 
@@ -74,6 +78,10 @@ class Subscriber implements TenantAwareInterface
     #[ORM\ManyToOne(targetEntity: FacebookBotFlow::class)]
     #[ORM\JoinColumn(name: "assigned_facebook_flow_id", referencedColumnName: "id", onDelete: "SET NULL")]
     private ?FacebookBotFlow $assignedFacebookFlow = null;
+
+    #[ORM\ManyToOne(targetEntity: \App\Entity\InstagramBotFlow::class)]
+    #[ORM\JoinColumn(name: "assigned_instagram_flow_id", referencedColumnName: "id", onDelete: "SET NULL")]
+    private ?\App\Entity\InstagramBotFlow $assignedInstagramFlow = null;
 
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $customAttributes = [];
@@ -134,6 +142,17 @@ class Subscriber implements TenantAwareInterface
     public function setFacebookConnection(?FacebookConnection $facebookConnection): static
     {
         $this->facebookConnection = $facebookConnection;
+        return $this;
+    }
+
+    public function getInstagramConnection(): ?InstagramConnection
+    {
+        return $this->instagramConnection;
+    }
+
+    public function setInstagramConnection(?InstagramConnection $instagramConnection): static
+    {
+        $this->instagramConnection = $instagramConnection;
         return $this;
     }
 
@@ -293,6 +312,17 @@ class Subscriber implements TenantAwareInterface
     public function setAssignedFacebookFlow(?FacebookBotFlow $assignedFacebookFlow): static
     {
         $this->assignedFacebookFlow = $assignedFacebookFlow;
+        return $this;
+    }
+
+    public function getAssignedInstagramFlow(): ?\App\Entity\InstagramBotFlow
+    {
+        return $this->assignedInstagramFlow;
+    }
+
+    public function setAssignedInstagramFlow(?\App\Entity\InstagramBotFlow $assignedInstagramFlow): static
+    {
+        $this->assignedInstagramFlow = $assignedInstagramFlow;
         return $this;
     }
 

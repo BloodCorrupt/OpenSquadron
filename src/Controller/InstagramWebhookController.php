@@ -2,11 +2,11 @@
 
 namespace App\Controller;
 
-use App\Entity\FacebookConnection;
+use App\Entity\InstagramConnection;
 use App\Entity\Message;
 use App\Entity\Subscriber;
-use App\Service\FacebookService;
-use App\Service\FacebookBotFlowExecutor;
+use App\Service\InstagramService;
+use App\Service\InstagramBotFlowExecutor;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,19 +15,19 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class FacebookWebhookController extends AbstractController
+class InstagramWebhookController extends AbstractController
 {
     public function __construct(
-        private FacebookService $facebookService,
+        private InstagramService $InstagramService,
         private EntityManagerInterface $entityManager,
-        private FacebookBotFlowExecutor $WhatsappBotFlowExecutor,
+        private InstagramBotFlowExecutor $WhatsappBotFlowExecutor,
         private \App\Service\AiAgentService $aiAgentService,
         private \App\Service\TenantContext $tenantContext,
         private HttpClientInterface $httpClient
     ) {
     }
 
-    #[Route('/webhook/facebook', name: 'facebook_webhook_verify', methods: ['GET'])]
+    #[Route('/webhook/Instagram', name: 'instagram_webhook_verify', methods: ['GET'])]
     public function verifyWebhook(Request $request): Response
     {
         $mode = $request->query->get('hub_mode', $request->query->get('hub.mode'));
@@ -36,7 +36,7 @@ class FacebookWebhookController extends AbstractController
 
         if ($token) {
             $this->tenantContext->disableTenantFilter();
-            $connection = $this->entityManager->getRepository(FacebookConnection::class)->findOneBy(['verifyToken' => $token]);
+            $connection = $this->entityManager->getRepository(InstagramConnection::class)->findOneBy(['verifyToken' => $token]);
             if ($connection) {
                 $owner = $connection->getOwner();
                 if ($owner) {
@@ -56,7 +56,7 @@ class FacebookWebhookController extends AbstractController
         if ($mode && $token) {
             // Find a connection or setting with this verify token
             $this->tenantContext->disableTenantFilter();
-            $connection = $this->entityManager->getRepository(FacebookConnection::class)->findOneBy(['verifyToken' => $token]);
+            $connection = $this->entityManager->getRepository(InstagramConnection::class)->findOneBy(['verifyToken' => $token]);
             $setting = null;
             if (!$connection) {
                 $setting = $this->entityManager->getRepository(\App\Entity\MetaSetting::class)->findOneBy(['verifyToken' => $token]);
@@ -71,12 +71,12 @@ class FacebookWebhookController extends AbstractController
         return new Response('Bad Request', 400);
     }
 
-    #[Route('/webhook/facebook', name: 'facebook_webhook_handle', methods: ['POST'])]
-    public function handleWebhook(Request $request, \App\Controller\InstagramWebhookController $igWebhookController = null): JsonResponse
+    #[Route('/webhook/Instagram', name: 'instagram_webhook_handle', methods: ['POST'])]
+    public function handleWebhook(Request $request): JsonResponse
     {
         $payload = $request->getContent();
         // Log incoming payload for debugging
-        file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - " . $payload . PHP_EOL, FILE_APPEND);
+        file_put_contents($this->getParameter('kernel.project_dir') . '/var/Instagram_webhook.log', date('Y-m-d H:i:s') . " - " . $payload . PHP_EOL, FILE_APPEND);
 
         $content = json_decode($payload, true);
 
@@ -84,19 +84,27 @@ class FacebookWebhookController extends AbstractController
             return new JsonResponse(['status' => 'invalid payload'], 400);
         }
 
-        // Facebook Messenger sends the data with object = 'page'
-        if (isset($content['object']) && $content['object'] === 'page') {
+        // Instagram Messenger sends the data with object = 'page' or 'instagram'
+        if (isset($content['object']) && ($content['object'] === 'page' || $content['object'] === 'instagram')) {
             $this->tenantContext->disableTenantFilter();
 
             foreach ($content['entry'] as $entry) {
                 $pageId = $entry['id'] ?? null;
 
-                // Resolve the Facebook connection by Page ID
+                // Resolve the Instagram connection by Page ID or linked Facebook Page ID
                 $resolvedConnection = null;
                 if ($pageId) {
                     $resolvedConnection = $this->entityManager
-                        ->getRepository(FacebookConnection::class)
+                        ->getRepository(InstagramConnection::class)
                         ->findOneBy(['pageId' => $pageId]);
+
+                    // Fallback: if not found by pageId, try linkedFacebookPageId
+                    // (messages forwarded from FacebookWebhookController use the FB Page ID)
+                    if (!$resolvedConnection) {
+                        $resolvedConnection = $this->entityManager
+                            ->getRepository(InstagramConnection::class)
+                            ->findOneBy(['linkedFacebookPageId' => $pageId]);
+                    }
                 }
 
                 if ($resolvedConnection) {
@@ -115,7 +123,7 @@ class FacebookWebhookController extends AbstractController
                                 try {
                                     $this->handleCommentAddition($value, $resolvedConnection);
                                 } catch (\Throwable $e) {
-                                    file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error handling comment: " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
+                                    file_put_contents($this->getParameter('kernel.project_dir') . '/var/Instagram_webhook.log', date('Y-m-d H:i:s') . " - Error handling comment: " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
                                 }
                             }
                         }
@@ -156,7 +164,7 @@ class FacebookWebhookController extends AbstractController
                         $optinToken = $messagingEvent['optin']['notification_messages_token'] ?? null;
                         if ($optinToken) {
                             // Log the token capture for Marketing Messages
-                            file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Captured Marketing Message Token: " . $optinToken . " for payload " . $msgBody . PHP_EOL, FILE_APPEND);
+                            file_put_contents($this->getParameter('kernel.project_dir') . '/var/Instagram_webhook.log', date('Y-m-d H:i:s') . " - Captured Marketing Message Token: " . $optinToken . " for payload " . $msgBody . PHP_EOL, FILE_APPEND);
                             // TODO: Persist the token to the database or settings for future broadcasting.
                         }
                     }
@@ -181,22 +189,22 @@ class FacebookWebhookController extends AbstractController
                         // Find or create subscriber
                         $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
                             'psid' => $senderPsid,
-                            'facebookConnection' => $resolvedConnection,
+                            'instagramConnection' => $resolvedConnection,
                         ]);
 
                         if (!$subscriber) {
                             $subscriber = new Subscriber();
-                            $subscriber->setChannel('facebook');
+                            $subscriber->setChannel('Instagram');
                             $subscriber->setPsid($senderPsid);
-                            $subscriber->setFacebookConnection($resolvedConnection);
-                            // Try to fetch the user's name from Facebook profile
+                            $subscriber->setInstagramConnection($resolvedConnection);
+                            // Try to fetch the user's name from Instagram profile
                             $profileName = $this->fetchUserProfile($senderPsid, $resolvedConnection);
                             if ($profileName) {
                                 $subscriber->setName($profileName);
                             }
                             $this->entityManager->persist($subscriber);
                         } elseif (!$subscriber->getName() || $subscriber->getName() === $senderPsid) {
-                            // Subscriber exists but has no name — retry profile lookup
+                            // Subscriber exists but has no name Ã¢â‚¬â€ retry profile lookup
                             $profileName = $this->fetchUserProfile($senderPsid, $resolvedConnection);
                             if ($profileName) {
                                 $subscriber->setName($profileName);
@@ -213,7 +221,7 @@ class FacebookWebhookController extends AbstractController
                         $msg->setStatus('received');
 
                         $this->entityManager->persist($msg);
-                        // Check for Automations (Facebook Bot Flows) or waiting state interception.
+                        // Check for Automations (Instagram Bot Flows) or waiting state interception.
                         $isResumed = false;
                         
                         // Check for opt-out/opt-in first (Unsubscribe / Resubscribe action buttons)
@@ -226,14 +234,14 @@ class FacebookWebhookController extends AbstractController
                             $this->entityManager->persist($subscriber);
                             $this->entityManager->flush();
 
-                            $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                            $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                 ->findOneBy([
-                                    'facebookConnection' => $resolvedConnection,
+                                    'instagramConnection' => $resolvedConnection,
                                     'buttonKey' => 'unsubscribe',
                                     'isEnabled' => true
                                 ]);
                             if ($actionButton) {
-                                $this->executeFacebookActionButton($actionButton, $subscriber);
+                                $this->executeInstagramActionButton($actionButton, $subscriber);
                             }
                             $isResumed = true;
                         } elseif (in_array($msgBodyLower, $startWords)) {
@@ -241,14 +249,14 @@ class FacebookWebhookController extends AbstractController
                             $this->entityManager->persist($subscriber);
                             $this->entityManager->flush();
 
-                            $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                            $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                 ->findOneBy([
-                                    'facebookConnection' => $resolvedConnection,
+                                    'instagramConnection' => $resolvedConnection,
                                     'buttonKey' => 'resubscribe',
                                     'isEnabled' => true
                                 ]);
                             if ($actionButton) {
-                                $this->executeFacebookActionButton($actionButton, $subscriber);
+                                $this->executeInstagramActionButton($actionButton, $subscriber);
                             }
                             $isResumed = true;
                         }
@@ -265,7 +273,7 @@ class FacebookWebhookController extends AbstractController
                             $waitingFlowId = $attrs['_waiting_flow_id'] ?? null;
                             $waitingFlowType = $attrs['_waiting_flow_type'] ?? null;
 
-                            if (!empty($waitingForInput) && $waitingFlowType === 'facebook' && !empty($waitingFlowId)) {
+                            if (!empty($waitingForInput) && $waitingFlowType === 'Instagram' && !empty($waitingFlowId)) {
                                 // Save user response text in custom attributes under custom field key
                                 $attrs[$waitingForInput] = $msgBody;
                                 
@@ -275,7 +283,7 @@ class FacebookWebhookController extends AbstractController
                                 $this->entityManager->flush();
 
                                 // Find flow
-                                $flow = $this->entityManager->getRepository(\App\Entity\FacebookBotFlow::class)->find($waitingFlowId);
+                                $flow = $this->entityManager->getRepository(\App\Entity\InstagramBotFlow::class)->find($waitingFlowId);
                                 if ($flow && $flow->isActive()) {
                                     $nextNodeId = null;
                                     $flowData = $flow->getFlowData();
@@ -290,7 +298,7 @@ class FacebookWebhookController extends AbstractController
 
                                     if ($nextNodeId) {
                                         // Save the assigned flow
-                                        $subscriber->setAssignedFacebookFlow($flow);
+                                        $subscriber->setAssignedInstagramFlow($flow);
                                         $this->entityManager->persist($subscriber);
 
                                         // Resume the flow
@@ -305,14 +313,14 @@ class FacebookWebhookController extends AbstractController
                         if (!$isResumed && $msgType === 'text' && $msgBody !== '') {
                             // Check for get-started
                             if ($msgBody === 'WELCOME_GET_STARTED_TRIGGER') {
-                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'facebookConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'get-started',
                                         'isEnabled' => true
                                     ]);
                                 if ($actionButton) {
-                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                    $this->executeInstagramActionButton($actionButton, $subscriber);
                                     $isResumed = true;
                                 }
                             }
@@ -322,14 +330,14 @@ class FacebookWebhookController extends AbstractController
                                 $this->entityManager->persist($subscriber);
                                 $this->entityManager->flush();
 
-                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'facebookConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'chat-with-human',
                                         'isEnabled' => true
                                     ]);
                                 if ($actionButton) {
-                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                    $this->executeInstagramActionButton($actionButton, $subscriber);
                                     $isResumed = true;
                                 }
                             }
@@ -339,14 +347,14 @@ class FacebookWebhookController extends AbstractController
                                 $this->entityManager->persist($subscriber);
                                 $this->entityManager->flush();
 
-                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'facebookConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'chat-with-bot',
                                         'isEnabled' => true
                                     ]);
                                 if ($actionButton) {
-                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                    $this->executeInstagramActionButton($actionButton, $subscriber);
                                     $isResumed = true;
                                 }
                             }
@@ -354,14 +362,14 @@ class FacebookWebhookController extends AbstractController
 
                         // Check location reply
                         if (!$isResumed && $msgType === 'location') {
-                            $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                            $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                 ->findOneBy([
-                                    'facebookConnection' => $resolvedConnection,
+                                    'InstagramConnection' => $resolvedConnection,
                                     'buttonKey' => 'location-reply',
                                     'isEnabled' => true
                                 ]);
                             if ($actionButton) {
-                                $this->executeFacebookActionButton($actionButton, $subscriber);
+                                $this->executeInstagramActionButton($actionButton, $subscriber);
                                 $isResumed = true;
                             }
                         }
@@ -375,21 +383,21 @@ class FacebookWebhookController extends AbstractController
                             // Already handled
                         } elseif ($msgType === 'text' && $msgBody !== '' && $resolvedConnection) {
                             $flows = $this->entityManager
-                                ->getRepository(\App\Entity\FacebookBotFlow::class)
+                                ->getRepository(\App\Entity\InstagramBotFlow::class)
                                 ->findBy([
                                     'isActive' => true,
-                                    'facebookConnection' => $resolvedConnection,
+                                    'InstagramConnection' => $resolvedConnection,
                                 ]);
 
                             $matchedFlow = null;
                             if (str_starts_with($msgBody, 'FLOW_ID_')) {
                                 $flowId = (int)substr($msgBody, 8);
                                 $matchedFlow = $this->entityManager
-                                    ->getRepository(\App\Entity\FacebookBotFlow::class)
+                                    ->getRepository(\App\Entity\InstagramBotFlow::class)
                                     ->findOneBy([
                                         'id' => $flowId,
                                         'isActive' => true,
-                                        'facebookConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                     ]);
                             } else {
                                 foreach ($flows as $flow) {
@@ -402,25 +410,25 @@ class FacebookWebhookController extends AbstractController
 
                             if ($matchedFlow) {
                                 // Save the assigned flow
-                                $subscriber->setAssignedFacebookFlow($matchedFlow);
+                                $subscriber->setAssignedInstagramFlow($matchedFlow);
                                 $this->entityManager->persist($subscriber);
 
                                 // Execute the flow
                                 $this->WhatsappBotFlowExecutor->execute($matchedFlow, $subscriber);
                             } else {
                                 // No keyword match! Check if No Match is enabled and trigger it.
-                                $actionButton = $this->entityManager->getRepository(\App\Entity\FacebookActionButton::class)
+                                $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'facebookConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'no-match',
                                         'isEnabled' => true
                                     ]);
                                 if ($actionButton) {
-                                    $this->executeFacebookActionButton($actionButton, $subscriber);
+                                    $this->executeInstagramActionButton($actionButton, $subscriber);
                                 } else {
                                     // Clear if they say something else and no preset is configured
-                                    if ($subscriber->getAssignedFacebookFlow()) {
-                                        $subscriber->setAssignedFacebookFlow(null);
+                                    if ($subscriber->getAssignedInstagramFlow()) {
+                                        $subscriber->setAssignedInstagramFlow(null);
                                         $this->entityManager->persist($subscriber);
                                     }
                                 }
@@ -435,15 +443,6 @@ class FacebookWebhookController extends AbstractController
                 $this->entityManager->flush();
             }
 
-            // Forward to Instagram controller to handle IG events present in the same webhook
-            if ($igWebhookController) {
-                try {
-                    $igWebhookController->handleWebhook($request);
-                } catch (\Throwable $e) {
-                    file_put_contents($this->getParameter('kernel.project_dir') . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error forwarding to IG Webhook: " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
-                }
-            }
-
             // Always return 200 to acknowledge receipt
             return new JsonResponse(['status' => 'success'], 200);
         }
@@ -451,11 +450,11 @@ class FacebookWebhookController extends AbstractController
         return new JsonResponse(['status' => 'not found'], 404);
     }
 
-    private function handleCommentAddition(array $value, FacebookConnection $connection): void
+    private function handleCommentAddition(array $value, InstagramConnection $connection): void
     {
         $pageId = $connection->getPageId();
-        // Facebook sends sender info as from.id/from.name in real webhooks,
-        // but some documentation shows sender_id/sender_name — handle both.
+        // Instagram sends sender info as from.id/from.name in real webhooks,
+        // but some documentation shows sender_id/sender_name Ã¢â‚¬â€ handle both.
         $senderId = $value['sender_id'] ?? $value['from']['id'] ?? null;
         
         // Skip comments made by the page itself
@@ -476,7 +475,7 @@ class FacebookWebhookController extends AbstractController
         if ($senderId && !empty($senderName)) {
             $existingSubscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
                 'psid' => $senderId,
-                'facebookConnection' => $connection,
+                'InstagramConnection' => $connection,
             ]);
             if ($existingSubscriber && (!$existingSubscriber->getName() || $existingSubscriber->getName() === $senderId)) {
                 $existingSubscriber->setName($senderName);
@@ -485,12 +484,12 @@ class FacebookWebhookController extends AbstractController
         }
 
         // 1. Fetch settings (post-specific first, then page-specific, fallback to defaults)
-        $automationRepo = $this->entityManager->getRepository(\App\Entity\FacebookCommentAutomation::class);
+        $automationRepo = $this->entityManager->getRepository(\App\Entity\InstagramCommentAutomation::class);
         $projectDir = $this->getParameter('kernel.project_dir');
 
         // Note: the webhook $postId can sometimes be in format "pageId_postId", so we need to match carefully
         $qb = $automationRepo->createQueryBuilder('a')
-            ->where('a.facebookConnection = :conn')
+            ->where('a.InstagramConnection = :conn')
             ->andWhere('a.postId IS NOT NULL')
             ->setParameter('conn', $connection);
             
@@ -499,7 +498,7 @@ class FacebookWebhookController extends AbstractController
 
         // Try to find the internal post ID mapped to this fbPostId
         $internalPostId = null;
-        $postsFile = $projectDir . "/var/facebook_posts/conn_" . $connection->getId() . ".json";
+        $postsFile = $projectDir . "/var/Instagram_posts/conn_" . $connection->getId() . ".json";
         if (file_exists($postsFile)) {
             $posts = json_decode(file_get_contents($postsFile), true) ?: [];
             foreach ($posts as $p) {
@@ -521,7 +520,7 @@ class FacebookWebhookController extends AbstractController
         $pageSettings = null;
         if (!$postSettings) {
             $pageAutomation = $automationRepo->findOneBy([
-                'facebookConnection' => $connection,
+                'InstagramConnection' => $connection,
                 'postId' => null
             ]);
             if ($pageAutomation) {
@@ -548,7 +547,7 @@ class FacebookWebhookController extends AbstractController
         ];
 
         $settings = array_merge($defaultCommentSettings, $postSettings ?? $pageSettings ?? []);
-        file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Computed Settings: " . json_encode($settings) . PHP_EOL, FILE_APPEND);
+        file_put_contents($projectDir . '/var/Instagram_webhook.log', date('Y-m-d H:i:s') . " - Computed Settings: " . json_encode($settings) . PHP_EOL, FILE_APPEND);
 
         // 2. Offensive comment moderation
         $isOffensive = false;
@@ -566,16 +565,16 @@ class FacebookWebhookController extends AbstractController
         if ($isOffensive) {
             try {
                 if (($settings['hideOrDelete'] ?? 'hide') === 'delete') {
-                    $this->facebookService->deleteComment($commentId, $connection);
+                    $this->InstagramService->deleteComment($commentId, $connection);
                 } else {
-                    $this->facebookService->hideComment($commentId, $connection);
+                    $this->InstagramService->hideComment($commentId, $connection);
                 }
             } catch (\Exception $e) {
-                file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error moderating offensive comment " . $commentId . ": " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
+                file_put_contents($projectDir . '/var/Instagram_webhook.log', date('Y-m-d H:i:s') . " - Error moderating offensive comment " . $commentId . ": " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
             }
 
             if (!empty($settings['offensivePrivateReplyFlowId'])) {
-                $flow = $this->entityManager->getRepository(\App\Entity\FacebookBotFlow::class)->find($settings['offensivePrivateReplyFlowId']);
+                $flow = $this->entityManager->getRepository(\App\Entity\InstagramBotFlow::class)->find($settings['offensivePrivateReplyFlowId']);
                 if ($flow && $flow->isActive()) {
                     $subscriber = $this->getOrCreateSubscriber($senderId, $connection, $senderName);
                     $this->WhatsappBotFlowExecutor->execute($flow, $subscriber, null, $commentId);
@@ -585,7 +584,7 @@ class FacebookWebhookController extends AbstractController
         }
 
         // 3. Prevent multiple replies if sendReplyMultipleTimes is false
-        $repliedFile = $projectDir . "/var/facebook_bot_settings/replied_comments_" . $connection->getId() . ".json";
+        $repliedFile = $projectDir . "/var/Instagram_bot_settings/replied_comments_" . $connection->getId() . ".json";
         if (!is_dir(dirname($repliedFile))) {
             mkdir(dirname($repliedFile), 0777, true);
         }
@@ -743,10 +742,10 @@ class FacebookWebhookController extends AbstractController
                 $replySuccess = true;
                 if (!empty($replyText) || !empty($attachmentUrl)) {
                     try {
-                        $this->facebookService->replyToComment($commentId, $replyText, $attachmentUrl, $connection);
+                        $this->InstagramService->replyToComment($commentId, $replyText, $attachmentUrl, $connection);
                     } catch (\Exception $e) {
                         $replySuccess = false;
-                        file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error replying to comment " . $commentId . ": " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
+                        file_put_contents($projectDir . '/var/Instagram_webhook.log', date('Y-m-d H:i:s') . " - Error replying to comment " . $commentId . ": " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
                     }
                 }
 
@@ -758,7 +757,7 @@ class FacebookWebhookController extends AbstractController
                 // Send Private Reply message flow if configured
                 $flowId = $privateReplyFlowId;
                 if ($flowId) {
-                    $flow = $this->entityManager->getRepository(\App\Entity\FacebookBotFlow::class)->find($flowId);
+                    $flow = $this->entityManager->getRepository(\App\Entity\InstagramBotFlow::class)->find($flowId);
                     if ($flow && $flow->isActive()) {
                         $subscriber = $this->getOrCreateSubscriber($senderId, $connection, $senderName);
                         $this->WhatsappBotFlowExecutor->execute($flow, $subscriber, null, $commentId);
@@ -768,27 +767,27 @@ class FacebookWebhookController extends AbstractController
                 // Hide comment after reply if configured
                 if (!empty($settings['hideCommentAfterReply'])) {
                     try {
-                        $this->facebookService->hideComment($commentId, $connection);
+                        $this->InstagramService->hideComment($commentId, $connection);
                     } catch (\Exception $e) {
-                        file_put_contents($projectDir . '/var/facebook_webhook.log', date('Y-m-d H:i:s') . " - Error hiding comment " . $commentId . " after reply: " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
+                        file_put_contents($projectDir . '/var/Instagram_webhook.log', date('Y-m-d H:i:s') . " - Error hiding comment " . $commentId . " after reply: " . $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL, FILE_APPEND);
                     }
                 }
             }
         }
     }
 
-    private function getOrCreateSubscriber(string $psid, FacebookConnection $connection, string $senderName = ''): Subscriber
+    private function getOrCreateSubscriber(string $psid, InstagramConnection $connection, string $senderName = ''): Subscriber
     {
         $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
             'psid' => $psid,
-            'facebookConnection' => $connection,
+            'InstagramConnection' => $connection,
         ]);
 
         if (!$subscriber) {
             $subscriber = new Subscriber();
-            $subscriber->setChannel('facebook');
+            $subscriber->setChannel('Instagram');
             $subscriber->setPsid($psid);
-            $subscriber->setFacebookConnection($connection);
+            $subscriber->setInstagramConnection($connection);
             
             if (empty($senderName)) {
                 $senderName = $this->fetchUserProfile($psid, $connection) ?: '';
@@ -812,44 +811,51 @@ class FacebookWebhookController extends AbstractController
     }
 
     /**
-     * Fetch user profile name from Facebook Graph API.
+     * Fetch user profile name from Instagram Graph API.
      */
-    private function fetchUserProfile(string $psid, ?FacebookConnection $connection): ?string
+    private function fetchUserProfile(string $psid, ?InstagramConnection $connection): ?string
     {
         if (!$connection) {
             return null;
         }
 
         try {
-            $accessToken = $this->facebookService->decryptToken($connection->getEncryptedPageAccessToken());
+            $accessToken = $this->InstagramService->decryptToken($connection->getEncryptedPageAccessToken());
             $response = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$psid}", [
                 'query' => [
-                    'fields' => 'first_name,last_name,name',
+                    'fields' => 'name,username,profile_pic',
                     'access_token' => $accessToken,
                 ],
             ]);
 
             if ($response->getStatusCode() < 400) {
                 $data = $response->toArray();
-                $firstName = $data['first_name'] ?? '';
-                $lastName = $data['last_name'] ?? '';
-                $fullName = trim("{$firstName} {$lastName}");
-                // Fallback to 'name' field if first/last are empty
-                return $fullName ?: ($data['name'] ?? null);
+                $name = $data['name'] ?? '';
+                $username = $data['username'] ?? '';
+                
+                // For Instagram, username is usually the primary identifier people want to see.
+                // If we have a username, we'll return @username. If we have a name, we'll use that.
+                if (!empty($username) && !empty($name)) {
+                    return "{$name} (@{$username})";
+                } elseif (!empty($username)) {
+                    return "@{$username}";
+                } elseif (!empty($name)) {
+                    return $name;
+                }
             }
         } catch (\Exception $e) {
-            // Profile lookup can fail for some PSIDs — this is expected
+            // Profile lookup can fail for some PSIDs Ã¢â‚¬â€ this is expected
         }
 
         return null;
     }
 
-    private function executeFacebookActionButton(\App\Entity\FacebookActionButton $action, Subscriber $subscriber): void
+    private function executeInstagramActionButton(\App\Entity\InstagramActionButton $action, Subscriber $subscriber): void
     {
         if ($action->getReplyType() === 'flow') {
             $flow = $action->getBotFlow();
             if ($flow && $flow->isActive()) {
-                $subscriber->setAssignedFacebookFlow($flow);
+                $subscriber->setAssignedInstagramFlow($flow);
                 $this->entityManager->persist($subscriber);
                 $this->entityManager->flush();
                 $this->WhatsappBotFlowExecutor->execute($flow, $subscriber);
@@ -857,8 +863,9 @@ class FacebookWebhookController extends AbstractController
         } elseif ($action->getReplyType() === 'text') {
             $replyText = $action->getReplyText();
             if (!empty($replyText)) {
-                $this->facebookService->sendMessage($subscriber->getPsid(), $replyText, $action->getFacebookConnection());
+                $this->InstagramService->sendMessage($subscriber->getPsid(), $replyText, $action->getInstagramConnection());
             }
         }
     }
 }
+

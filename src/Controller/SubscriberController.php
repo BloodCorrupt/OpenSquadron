@@ -22,23 +22,28 @@ class SubscriberController extends AbstractController
     {
         $whatsappConnections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
         $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
+        $instagramConnections = $em->getRepository(\App\Entity\InstagramConnection::class)->findBy([], ['id' => 'DESC']);
 
         $channel = $request->query->get('channel');
         if (!$channel) {
             if (empty($whatsappConnections) && !empty($facebookConnections)) {
                 $channel = 'facebook';
+            } elseif (empty($whatsappConnections) && empty($facebookConnections) && !empty($instagramConnections)) {
+                $channel = 'instagram';
             } else {
                 $channel = 'whatsapp';
             }
         }
 
-        $connections = ($channel === 'facebook') ? $facebookConnections : $whatsappConnections;
+        $connections = ($channel === 'facebook') ? $facebookConnections : (($channel === 'instagram') ? $instagramConnections : $whatsappConnections);
 
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
         if ($selectedConnectionId) {
             if ($channel === 'facebook') {
                 $selectedConnection = $em->getRepository(FacebookConnection::class)->find($selectedConnectionId);
+            } elseif ($channel === 'instagram') {
+                $selectedConnection = $em->getRepository(\App\Entity\InstagramConnection::class)->find($selectedConnectionId);
             } else {
                 $selectedConnection = $em->getRepository(WhatsAppConnection::class)->find($selectedConnectionId);
             }
@@ -55,6 +60,14 @@ class SubscriberController extends AbstractController
             $qb = $em->getRepository(Subscriber::class)->createQueryBuilder('s');
             if ($channel === 'facebook') {
                 $qb->where('s.facebookConnection = :connection')
+                   ->setParameter('connection', $selectedConnection);
+
+                if ($search !== '') {
+                    $qb->andWhere('s.name LIKE :search OR s.psid LIKE :search')
+                       ->setParameter('search', '%' . $search . '%');
+                }
+            } elseif ($channel === 'instagram') {
+                $qb->where('s.instagramConnection = :connection')
                    ->setParameter('connection', $selectedConnection);
 
                 if ($search !== '') {
@@ -83,6 +96,7 @@ class SubscriberController extends AbstractController
         return $this->render('subscriber/index.html.twig', [
             'whatsappConnections' => $whatsappConnections,
             'facebookConnections' => $facebookConnections,
+            'instagramConnections' => $instagramConnections,
             'connections' => $connections,
             'connection' => $selectedConnection,
             'channel' => $channel,
@@ -116,6 +130,15 @@ class SubscriberController extends AbstractController
             if ($psid === '') {
                 return new JsonResponse(['success' => false, 'error' => 'PSID is required.'], 400);
             }
+        } elseif ($channel === 'instagram') {
+            $connection = $em->getRepository(\App\Entity\InstagramConnection::class)->find($connectionId);
+            if (!$connection) {
+                return new JsonResponse(['success' => false, 'error' => 'Instagram connection not found.'], 404);
+            }
+
+            if ($psid === '') {
+                return new JsonResponse(['success' => false, 'error' => 'IGSID is required.'], 400);
+            }
         } else {
             $connection = $em->getRepository(WhatsAppConnection::class)->find($connectionId);
             if (!$connection) {
@@ -141,6 +164,11 @@ class SubscriberController extends AbstractController
                     'psid' => $psid,
                     'facebookConnection' => $connection
                 ]);
+            } elseif ($channel === 'instagram') {
+                $existing = $em->getRepository(Subscriber::class)->findOneBy([
+                    'psid' => $psid,
+                    'instagramConnection' => $connection
+                ]);
             } else {
                 $existing = $em->getRepository(Subscriber::class)->findOneBy([
                     'phoneNumber' => $cleanPhone,
@@ -161,6 +189,11 @@ class SubscriberController extends AbstractController
                     'psid' => $psid,
                     'facebookConnection' => $connection
                 ]);
+            } elseif ($channel === 'instagram') {
+                $existing = $em->getRepository(Subscriber::class)->findOneBy([
+                    'psid' => $psid,
+                    'instagramConnection' => $connection
+                ]);
             } else {
                 $existing = $em->getRepository(Subscriber::class)->findOneBy([
                     'phoneNumber' => $cleanPhone,
@@ -179,12 +212,14 @@ class SubscriberController extends AbstractController
             $subscriber->setChannel($channel);
             if ($channel === 'facebook') {
                 $subscriber->setFacebookConnection($connection);
+            } elseif ($channel === 'instagram') {
+                $subscriber->setInstagramConnection($connection);
             } else {
                 $subscriber->setWhatsAppConnection($connection);
             }
         }
 
-        if ($channel === 'facebook') {
+        if ($channel === 'facebook' || $channel === 'instagram') {
             $subscriber->setPsid($psid);
         } else {
             $subscriber->setPhoneNumber($cleanPhone);

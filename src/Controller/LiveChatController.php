@@ -17,6 +17,7 @@ use App\Security\Voter\TeamPermissionVoter;
 
 use App\Entity\WhatsAppConnection;
 use App\Entity\FacebookConnection;
+use App\Entity\InstagramConnection;
 
 #[IsGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_VIEW)]
 class LiveChatController extends AbstractController
@@ -29,6 +30,7 @@ class LiveChatController extends AbstractController
         $templates = $em->getRepository(\App\Entity\MessageTemplate::class)->findAll();
         $whatsappConnections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['label' => 'ASC']);
         $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['label' => 'ASC']);
+        $instagramConnections = $em->getRepository(InstagramConnection::class)->findBy([], ['label' => 'ASC']);
 
         $currentUser = $this->getUser();
         $tenantOwner = $currentUser->getParent() ?: $currentUser;
@@ -43,6 +45,7 @@ class LiveChatController extends AbstractController
 
         $whatsappFlows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
         $facebookFlows = $em->getRepository(\App\Entity\FacebookBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $instagramFlows = $em->getRepository(\App\Entity\InstagramBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
 
         return $this->render('chat/inbox.html.twig', [
             'subscribers' => $subscribers,
@@ -51,9 +54,11 @@ class LiveChatController extends AbstractController
             'templates' => $templates,
             'whatsappConnections' => $whatsappConnections,
             'facebookConnections' => $facebookConnections,
+            'instagramConnections' => $instagramConnections,
             'operators' => $operators,
             'whatsappFlows' => $whatsappFlows,
             'facebookFlows' => $facebookFlows,
+            'instagramFlows' => $instagramFlows,
             'chatWindow' => [
                 'isOpen' => false,
                 'expiresAt' => null,
@@ -70,6 +75,7 @@ class LiveChatController extends AbstractController
         $templates = $em->getRepository(\App\Entity\MessageTemplate::class)->findAll();
         $whatsappConnections = $em->getRepository(WhatsAppConnection::class)->findBy([], ['label' => 'ASC']);
         $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['label' => 'ASC']);
+        $instagramConnections = $em->getRepository(InstagramConnection::class)->findBy([], ['label' => 'ASC']);
 
         $currentUser = $this->getUser();
         $tenantOwner = $currentUser->getParent() ?: $currentUser;
@@ -84,6 +90,7 @@ class LiveChatController extends AbstractController
 
         $whatsappFlows = $em->getRepository(\App\Entity\WhatsappBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
         $facebookFlows = $em->getRepository(\App\Entity\FacebookBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
+        $instagramFlows = $em->getRepository(\App\Entity\InstagramBotFlow::class)->findBy(['isActive' => true], ['name' => 'ASC']);
 
         $chatWindow = $this->getChatWindowStatus($subscriber, $em);
 
@@ -94,9 +101,11 @@ class LiveChatController extends AbstractController
             'templates' => $templates,
             'whatsappConnections' => $whatsappConnections,
             'facebookConnections' => $facebookConnections,
+            'instagramConnections' => $instagramConnections,
             'operators' => $operators,
             'whatsappFlows' => $whatsappFlows,
             'facebookFlows' => $facebookFlows,
+            'instagramFlows' => $instagramFlows,
             'chatWindow' => $chatWindow,
             'serverTimestamp' => time()
         ]);
@@ -125,9 +134,11 @@ class LiveChatController extends AbstractController
                 'name' => $sub->getName() ?: ($sub->getPhoneNumber() ?: $sub->getPsid()),
                 'phoneNumber' => $sub->getPhoneNumber() ?: $sub->getPsid(),
                 'channel' => $sub->getChannel() ?? 'whatsapp',
-                'connectionId' => $sub->getChannel() === 'facebook'
-                    ? ($sub->getFacebookConnection() ? 'facebook-' . $sub->getFacebookConnection()->getId() : null)
-                    : ($sub->getWhatsAppConnection() ? 'whatsapp-' . $sub->getWhatsAppConnection()->getId() : null),
+                'connectionId' => match($sub->getChannel()) {
+                    'facebook' => $sub->getFacebookConnection() ? 'facebook-' . $sub->getFacebookConnection()->getId() : null,
+                    'Instagram' => $sub->getInstagramConnection() ? 'instagram-' . $sub->getInstagramConnection()->getId() : null,
+                    default => $sub->getWhatsAppConnection() ? 'whatsapp-' . $sub->getWhatsAppConnection()->getId() : null,
+                },
                 'lastMessage' => $lastMessage,
             ];
         }
@@ -171,7 +182,7 @@ class LiveChatController extends AbstractController
     }
 
     #[Route('/inbox/api/send', name: 'app_inbox_send', methods: ['POST'])]
-    public function send(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService, FacebookService $facebookService): JsonResponse
+    public function send(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService, FacebookService $facebookService, \App\Service\InstagramService $instagramService): JsonResponse
     {
         $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $subscriberId = $request->request->get('subscriber_id');
@@ -199,6 +210,8 @@ class LiveChatController extends AbstractController
                 ], 403);
             }
         }
+
+        // Instagram service is now injected via method signature
 
         try {
             $msg = new Message();
@@ -255,6 +268,9 @@ class LiveChatController extends AbstractController
                 // Normal text message
                 if ($channel === 'facebook') {
                     $response = $facebookService->sendMessage($subscriber->getPsid(), $content, $subscriber->getFacebookConnection());
+                    $metaMessageId = $response['message_id'] ?? null;
+                } elseif ($channel === 'Instagram' && $instagramService) {
+                    $response = $instagramService->sendMessage($subscriber->getPsid(), $content, $subscriber->getInstagramConnection());
                     $metaMessageId = $response['message_id'] ?? null;
                 } else {
                     $response = $whatsappService->sendMessage($subscriber->getPhoneNumber(), $content, $subscriber->getWhatsAppConnection());
@@ -348,9 +364,11 @@ class LiveChatController extends AbstractController
             'psid' => $subscriber->getPsid(),
             'assignedOperatorId' => $subscriber->getAssignedOperator() ? $subscriber->getAssignedOperator()->getId() : null,
             'tags' => $subscriber->getTags(),
-            'assignedFlowId' => $subscriber->getChannel() === 'facebook'
-                ? ($subscriber->getAssignedFacebookFlow() ? $subscriber->getAssignedFacebookFlow()->getId() : null)
-                : ($subscriber->getAssignedWhatsappFlow() ? $subscriber->getAssignedWhatsappFlow()->getId() : null),
+            'assignedFlowId' => match($subscriber->getChannel()) {
+                'facebook' => $subscriber->getAssignedFacebookFlow() ? $subscriber->getAssignedFacebookFlow()->getId() : null,
+                'Instagram' => $subscriber->getAssignedInstagramFlow() ? $subscriber->getAssignedInstagramFlow()->getId() : null,
+                default => $subscriber->getAssignedWhatsappFlow() ? $subscriber->getAssignedWhatsappFlow()->getId() : null,
+            },
             'customAttributes' => $subscriber->getCustomAttributes(),
             'notes' => $subscriber->getNotes(),
             'channel' => $subscriber->getChannel() ?? 'whatsapp',
@@ -479,7 +497,7 @@ class LiveChatController extends AbstractController
         // Facebook Messenger uses the HUMAN_AGENT tag which allows a 7-day window.
         // For beta, we skip the lockdown entirely for Facebook subscribers.
         $channel = $subscriber->getChannel() ?? 'whatsapp';
-        if ($channel === 'facebook') {
+        if ($channel === 'facebook' || $channel === 'Instagram') {
             return [
                 'isOpen' => true,
                 'expiresAt' => null,

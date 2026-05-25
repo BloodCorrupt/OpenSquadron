@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Entity\FacebookConnection;
+use App\Entity\InstagramConnection;
 use App\Entity\MetaSetting;
 use App\Entity\Admin;
 use Doctrine\ORM\EntityManagerInterface;
@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class FacebookService
+class InstagramService
 {
     private const CIPHER_ALGO = 'aes-256-gcm';
 
@@ -44,7 +44,7 @@ class FacebookService
     {
         $em = $this->entityManager;
         $isTenantFilterEnabled = false;
-        
+
         if ($this->tenantContext) {
             $filters = $em->getFilters();
             $isTenantFilterEnabled = $filters->has('tenant_filter') && $filters->isEnabled('tenant_filter');
@@ -91,45 +91,45 @@ class FacebookService
     }
 
     /**
-     * Return ALL Facebook connections ordered newest-first.
-     * @return FacebookConnection[]
+     * Return ALL Instagram connections ordered newest-first.
+     * @return InstagramConnection[]
      */
     public function getAllConnections(): array
     {
         return $this->entityManager
-            ->getRepository(FacebookConnection::class)
+            ->getRepository(InstagramConnection::class)
             ->findBy([], ['id' => 'DESC']);
     }
 
     /**
-     * Return the default (first active) Facebook connection.
+     * Return the default (first active) Instagram connection.
      */
-    public function getDefaultConnection(): ?FacebookConnection
+    public function getDefaultConnection(): ?InstagramConnection
     {
         return $this->entityManager
-            ->getRepository(FacebookConnection::class)
+            ->getRepository(InstagramConnection::class)
             ->findOneBy(['status' => 'active'], ['id' => 'ASC']);
     }
 
-    public function getConnectionById(int $id): ?FacebookConnection
+    public function getConnectionById(int $id): ?InstagramConnection
     {
         return $this->entityManager
-            ->getRepository(FacebookConnection::class)
+            ->getRepository(InstagramConnection::class)
             ->find($id);
     }
 
     /**
-     * Lookup by Facebook Page ID — used for webhook routing.
+     * Lookup by Instagram Page ID — used for webhook routing.
      */
-    public function getConnectionByPageId(string $pageId): ?FacebookConnection
+    public function getConnectionByPageId(string $pageId): ?InstagramConnection
     {
         return $this->entityManager
-            ->getRepository(FacebookConnection::class)
+            ->getRepository(InstagramConnection::class)
             ->findOneBy(['pageId' => $pageId]);
     }
 
     /**
-     * Save a new Facebook connection or update an existing one.
+     * Save a new Instagram connection or update an existing one.
      */
     public function saveConnection(
         string $pageId,
@@ -138,8 +138,9 @@ class FacebookService
         string $plainAppSecret,
         ?string $pageName = null,
         ?string $label = null,
-        ?int $existingId = null
-    ): FacebookConnection {
+        ?int $existingId = null,
+        ?string $linkedFacebookPageId = null
+    ): InstagramConnection {
         if (empty($pageId) || empty($plainPageAccessToken) || empty($appId) || empty($plainAppSecret)) {
             throw new \InvalidArgumentException('Page ID, Page Access Token, App ID, and App Secret are required.');
         }
@@ -152,11 +153,11 @@ class FacebookService
         }
         if (!$connection) {
             $connection = $this->entityManager
-                ->getRepository(FacebookConnection::class)
+                ->getRepository(InstagramConnection::class)
                 ->findOneBy(['pageId' => $pageId]);
         }
         if (!$connection) {
-            $connection = new FacebookConnection();
+            $connection = new InstagramConnection();
         }
 
         $connection->setPageId($pageId);
@@ -169,6 +170,9 @@ class FacebookService
         }
         if ($label !== null) {
             $connection->setLabel($label);
+        }
+        if ($linkedFacebookPageId !== null) {
+            $connection->setLinkedFacebookPageId($linkedFacebookPageId);
         }
 
         if (!$connection->getVerifyToken()) {
@@ -188,7 +192,7 @@ class FacebookService
     }
 
     /**
-     * Update an existing Facebook connection.
+     * Update an existing Instagram connection.
      */
     public function updateConnection(
         int $id,
@@ -198,7 +202,7 @@ class FacebookService
         ?string $plainAppSecret,
         ?string $pageName,
         ?string $label
-    ): ?FacebookConnection {
+    ): ?InstagramConnection {
         if (empty($pageId) || empty($appId)) {
             throw new \InvalidArgumentException('Page ID and App ID are required.');
         }
@@ -250,7 +254,7 @@ class FacebookService
 
     public function buildWebhookUrl(): string
     {
-        return $this->router->generate('facebook_webhook_verify', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        return $this->router->generate('instagram_webhook_verify', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     public function encryptToken(string $plainToken): string
@@ -344,19 +348,19 @@ class FacebookService
     /**
      * Resolve the Page Access Token from a connection.
      */
-    private function getAccessToken(?FacebookConnection $connection = null): string
+    private function getAccessToken(?InstagramConnection $connection = null): string
     {
         $conn = $connection ?? $this->getDefaultConnection();
         if ($conn && $conn->getEncryptedPageAccessToken()) {
             return $this->decryptToken($conn->getEncryptedPageAccessToken());
         }
-        throw new \RuntimeException('No Facebook connection with a valid access token found.');
+        throw new \RuntimeException('No Instagram connection with a valid access token found.');
     }
 
     /**
-     * Send a text message to a user via the Facebook Send API.
+     * Send a text message to a user via the Instagram Send API.
      */
-    public function sendMessage(string $psid, string $text, ?FacebookConnection $connection = null): array
+    public function sendMessage(string $psid, string $text, ?InstagramConnection $connection = null): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/me/messages";
@@ -384,9 +388,9 @@ class FacebookService
     }
 
     /**
-     * Send an attachment (image/audio/file) to a user via the Facebook Send API.
+     * Send an attachment (image/audio/file) to a user via the Instagram Send API.
      */
-    public function sendMediaMessage(string $psid, string $type, string $fileUrl, ?FacebookConnection $connection = null): array
+    public function sendMediaMessage(string $psid, string $type, string $fileUrl, ?InstagramConnection $connection = null): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/me/messages";
@@ -461,35 +465,23 @@ class FacebookService
 
     public function getUserPages(string $userAccessToken): array
     {
-        $allPages = [];
-        $url = 'https://graph.facebook.com/v21.0/me/accounts';
-        $query = [
-            'access_token' => $userAccessToken,
-            'fields' => 'id,name,access_token,category,tasks,instagram_business_account{id,username,name,profile_picture_url}',
-            'limit' => 100,
-        ];
+        $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/accounts', [
+            'query' => [
+                'access_token' => $userAccessToken,
+                'fields' => 'id,name,access_token,category,tasks',
+            ]
+        ]);
 
-        do {
-            $response = $this->httpClient->request('GET', $url, [
-                'query' => $query
-            ]);
+        $data = $response->toArray(false);
+        if ($response->getStatusCode() >= 400 || !isset($data['data'])) {
+            throw new \RuntimeException($data['error']['message'] ?? 'Failed to retrieve Instagram pages.');
+        }
 
-            $data = $response->toArray(false);
-            if ($response->getStatusCode() >= 400 || !isset($data['data'])) {
-                throw new \RuntimeException($data['error']['message'] ?? 'Failed to retrieve Facebook pages.');
-            }
-
-            $allPages = array_merge($allPages, $data['data']);
-
-            $url = $data['paging']['next'] ?? null;
-            $query = []; // The next URL already contains all necessary query parameters
-        } while ($url);
-
-        return $allPages;
+        return $data['data'];
     }
 
     /**
-     * Subscribe the Facebook Page to the App's webhook events.
+     * Subscribe the Instagram Page to the App's webhook events.
      */
     public function subscribePage(string $pageId, string $pageAccessToken): array
     {
@@ -500,8 +492,8 @@ class FacebookService
                     'Authorization' => "Bearer {$pageAccessToken}",
                 ],
                 'query' => [
-                    'subscribed_fields' => 'messages,messaging_postbacks,feed',
-                ],
+                    'subscribed_fields' => 'messages',
+                ]
             ]);
 
             $statusCode = $response->getStatusCode();
@@ -522,7 +514,7 @@ class FacebookService
     }
 
     /**
-     * Parses and verifies Facebook's signed_request parameter.
+     * Parses and verifies Instagram's signed_request parameter.
      */
     public function parseSignedRequest(string $signedRequest): ?array
     {
@@ -567,7 +559,7 @@ class FacebookService
     /**
      * Publish a text or link post to the page's feed.
      */
-    public function publishFeedPost(FacebookConnection $connection, string $message, ?string $link = null): array
+    public function publishFeedPost(InstagramConnection $connection, string $message, ?string $link = null): array
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
@@ -597,7 +589,7 @@ class FacebookService
     /**
      * Publish a photo post to the page's photos.
      */
-    public function publishPhotoPost(FacebookConnection $connection, string $imageUrl, string $message): array
+    public function publishPhotoPost(InstagramConnection $connection, string $imageUrl, string $message): array
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
@@ -625,7 +617,7 @@ class FacebookService
     /**
      * Publish a video post to the page's videos.
      */
-    public function publishVideoPost(FacebookConnection $connection, string $videoUrl, string $message): array
+    public function publishVideoPost(InstagramConnection $connection, string $videoUrl, string $message): array
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
@@ -653,7 +645,7 @@ class FacebookService
     /**
      * Publish a post with a Call-To-Action (CTA) link.
      */
-    public function publishCtaPost(FacebookConnection $connection, string $message, string $link, string $ctaType): array
+    public function publishCtaPost(InstagramConnection $connection, string $message, string $link, string $ctaType): array
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
@@ -694,7 +686,7 @@ class FacebookService
     /**
      * Publish a carousel-style slide post using multi-photo attachments.
      */
-    public function publishCarouselPost(FacebookConnection $connection, string $message, array $slides): array
+    public function publishCarouselPost(InstagramConnection $connection, string $message, array $slides): array
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
@@ -755,9 +747,9 @@ class FacebookService
     }
 
     /**
-     * Fetch recent posts from the page's feed via the Facebook Graph API.
+     * Fetch recent posts from the page's feed via the Instagram Graph API.
      */
-    public function fetchPageFeed(FacebookConnection $connection, int $limit = 50): array
+    public function fetchPageFeed(InstagramConnection $connection, int $limit = 50): array
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
@@ -784,7 +776,7 @@ class FacebookService
     /**
      * Hide a comment.
      */
-    public function hideComment(string $commentId, ?FacebookConnection $connection = null): array
+    public function hideComment(string $commentId, ?InstagramConnection $connection = null): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/{$commentId}";
@@ -807,7 +799,7 @@ class FacebookService
     /**
      * Delete a comment.
      */
-    public function deleteComment(string $commentId, ?FacebookConnection $connection = null): array
+    public function deleteComment(string $commentId, ?InstagramConnection $connection = null): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/{$commentId}";
@@ -826,7 +818,7 @@ class FacebookService
     /**
      * Reply to a comment.
      */
-    public function replyToComment(string $commentId, string $message, ?string $attachmentUrl = null, ?FacebookConnection $connection = null): array
+    public function replyToComment(string $commentId, string $message, ?string $attachmentUrl = null, ?InstagramConnection $connection = null): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/{$commentId}/comments";
@@ -857,7 +849,7 @@ class FacebookService
     /**
      * Send a private reply to a comment.
      */
-    public function privateReplyToComment(string $commentId, string $message, ?FacebookConnection $connection = null): array
+    public function privateReplyToComment(string $commentId, string $message, ?InstagramConnection $connection = null): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/{$commentId}/private_replies";
@@ -881,9 +873,9 @@ class FacebookService
     }
 
     /**
-     * Retrieve the persistent menu from Facebook for a given page connection.
+     * Retrieve the persistent menu from Instagram for a given page connection.
      */
-    public function getPersistentMenu(FacebookConnection $connection): ?array
+    public function getPersistentMenu(InstagramConnection $connection): ?array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
@@ -899,7 +891,7 @@ class FacebookService
 
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to retrieve persistent menu from Facebook.');
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to retrieve persistent menu from Instagram.');
         }
 
         if (isset($content['data'][0]['persistent_menu'][0]['call_to_actions'])) {
@@ -910,9 +902,9 @@ class FacebookService
     }
 
     /**
-     * Update the persistent menu on Facebook for a given page connection.
+     * Update the persistent menu on Instagram for a given page connection.
      */
-    public function setPersistentMenu(FacebookConnection $connection, array $menuItems): array
+    public function setPersistentMenu(InstagramConnection $connection, array $menuItems): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
@@ -937,16 +929,16 @@ class FacebookService
 
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to update persistent menu on Facebook.');
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to update persistent menu on Instagram.');
         }
 
         return $content;
     }
 
     /**
-     * Delete the persistent menu on Facebook for a given page connection.
+     * Delete the persistent menu on Instagram for a given page connection.
      */
-    public function deletePersistentMenu(FacebookConnection $connection): array
+    public function deletePersistentMenu(InstagramConnection $connection): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
@@ -963,16 +955,16 @@ class FacebookService
 
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete persistent menu on Facebook.');
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete persistent menu on Instagram.');
         }
 
         return $content;
     }
 
     /**
-     * Sync the persistent menu from Facebook page messenger profile back to OpenSquadron connection settings.
+     * Sync the persistent menu from Instagram page messenger profile back to OpenSquadron connection settings.
      */
-    public function syncPersistentMenuFromFacebook(FacebookConnection $connection): array
+    public function syncPersistentMenuFromInstagram(InstagramConnection $connection): array
     {
         $fbMenu = $this->getPersistentMenu($connection);
         $menuItems = [];
@@ -992,7 +984,7 @@ class FacebookService
         }
 
         // Save menuItems to connection's settings file
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        $dir = __DIR__ . '/../../var/Instagram_bot_settings';
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
         }
@@ -1010,9 +1002,9 @@ class FacebookService
     }
 
     /**
-     * Retrieve the welcome screen (greeting and get started button) settings from Facebook.
+     * Retrieve the welcome screen (greeting and get started button) settings from Instagram.
      */
-    public function getWelcomeScreenSettings(FacebookConnection $connection): ?array
+    public function getWelcomeScreenSettings(InstagramConnection $connection): ?array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
@@ -1028,16 +1020,16 @@ class FacebookService
 
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to retrieve welcome screen settings from Facebook.');
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to retrieve welcome screen settings from Instagram.');
         }
 
         return $content['data'][0] ?? [];
     }
 
     /**
-     * Update the welcome screen settings on Facebook.
+     * Update the welcome screen settings on Instagram.
      */
-    public function setWelcomeScreenSettings(FacebookConnection $connection, array $settings): array
+    public function setWelcomeScreenSettings(InstagramConnection $connection, array $settings): array
     {
         $accessToken = $this->getAccessToken($connection);
         $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
@@ -1080,7 +1072,7 @@ class FacebookService
                 $faqPayload = trim($faq['payload'] ?? '');
                 if ($question !== '' && $faqPayload !== '') {
                     $ctas[] = [
-                        'question' => substr($question, 0, 80), // Facebook limit is 80 chars
+                        'question' => substr($question, 0, 80), // Instagram limit is 80 chars
                         'payload' => $faqPayload
                     ];
                 }
@@ -1113,7 +1105,7 @@ class FacebookService
             ]);
             $content = $response->toArray(false);
             if ($response->getStatusCode() >= 400) {
-                throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete welcome settings on Facebook.');
+                throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete welcome settings on Instagram.');
             }
             $results['delete'] = $content;
         }
@@ -1130,7 +1122,7 @@ class FacebookService
                     ]
                 ]);
             } catch (\Exception $e) {
-                // Silently ignore greeting deletion errors. Facebook Graph API sometimes
+                // Silently ignore greeting deletion errors. Instagram Graph API sometimes
                 // omits 'greeting' from the valid fields enum, causing an exception.
             }
         }
@@ -1145,7 +1137,7 @@ class FacebookService
             ]);
             $content = $response->toArray(false);
             if ($response->getStatusCode() >= 400) {
-                throw new \RuntimeException($content['error']['message'] ?? 'Failed to update welcome settings on Facebook.');
+                throw new \RuntimeException($content['error']['message'] ?? 'Failed to update welcome settings on Instagram.');
             }
             $results['post'] = $content;
         }
@@ -1154,14 +1146,14 @@ class FacebookService
     }
 
     /**
-     * Sync the welcome screen settings from Facebook page messenger profile back to OpenSquadron connection settings.
+     * Sync the welcome screen settings from Instagram page messenger profile back to OpenSquadron connection settings.
      */
-    public function syncWelcomeScreenFromFacebook(FacebookConnection $connection): array
+    public function syncWelcomeScreenFromInstagram(InstagramConnection $connection): array
     {
         $fbData = $this->getWelcomeScreenSettings($connection);
 
         // Load existing settings first to preserve custom/draft fields (e.g. disabled greeting text)
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
+        $dir = __DIR__ . '/../../var/Instagram_bot_settings';
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
         }
@@ -1185,16 +1177,16 @@ class FacebookService
                 $greetingText = $fbData['greeting'][0]['text'];
                 $showGreeting = true;
             } else {
-                $showGreeting = false; // Facebook explicitly doesn't have it
+                $showGreeting = false; // Instagram explicitly doesn't have it
             }
-            
+
             if (isset($fbData['get_started']['payload'])) {
                 $getStartedPayload = $fbData['get_started']['payload'];
                 $getStartedStatus = 'enabled';
             } else {
                 $getStartedStatus = 'disabled';
             }
-            
+
             if (isset($fbData['ice_breakers'][0]['call_to_actions'])) {
                 $iceBreakersStatus = 'enabled';
                 $iceBreakers = [];
@@ -1208,7 +1200,7 @@ class FacebookService
                 $iceBreakersStatus = 'disabled';
             }
         } else {
-            // Facebook returned totally empty profile, meaning nothing is active.
+            // Instagram returned totally empty profile, meaning nothing is active.
             // Disable all toggles but keep the draft text/payload variables intact.
             $showGreeting = false;
             $getStartedStatus = 'disabled';
@@ -1240,4 +1232,5 @@ class FacebookService
         return base64_decode(strtr($input, '-_', '+/'));
     }
 }
+
 

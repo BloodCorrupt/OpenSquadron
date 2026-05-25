@@ -6,6 +6,8 @@ use App\Entity\WhatsAppConnection;
 use App\Entity\FacebookConnection;
 use App\Entity\WhatsappBotFlow;
 use App\Entity\FacebookBotFlow;
+use App\Entity\InstagramConnection;
+use App\Entity\InstagramBotFlow;
 use App\Entity\Subscriber;
 use App\Entity\Message;
 use App\Entity\MessageTemplate;
@@ -24,15 +26,18 @@ class DashboardController extends AbstractController
     {
         $waConnCount = $em->getRepository(WhatsAppConnection::class)->count([]);
         $fbConnCount = $em->getRepository(FacebookConnection::class)->count([]);
+        $igConnCount = $em->getRepository(InstagramConnection::class)->count([]);
         
         $waFlowCount = $em->getRepository(WhatsappBotFlow::class)->count([]);
         $fbFlowCount = $em->getRepository(FacebookBotFlow::class)->count([]);
+        $igFlowCount = $em->getRepository(InstagramBotFlow::class)->count([]);
         
         $subTotalCount = $em->getRepository(Subscriber::class)->count([]);
         $subActiveCount = $em->getRepository(Subscriber::class)->count(['status' => 'active']);
         $subUnsubCount = $em->getRepository(Subscriber::class)->count(['status' => 'unsubscribed']);
         $subWhatsAppCount = $em->getRepository(Subscriber::class)->count(['channel' => 'whatsapp']);
         $subFacebookCount = $em->getRepository(Subscriber::class)->count(['channel' => 'facebook']);
+        $subInstagramCount = $em->getRepository(Subscriber::class)->count(['channel' => 'instagram']);
         
         $templateCount = $em->getRepository(MessageTemplate::class)->count([]);
         
@@ -96,13 +101,16 @@ class DashboardController extends AbstractController
         return $this->render('dashboard/index.html.twig', [
             'wa_conn_count' => $waConnCount,
             'fb_conn_count' => $fbConnCount,
+            'ig_conn_count' => $igConnCount,
             'wa_flow_count' => $waFlowCount,
             'fb_flow_count' => $fbFlowCount,
+            'ig_flow_count' => $igFlowCount,
             'sub_total_count' => $subTotalCount,
             'sub_active_count' => $subActiveCount,
             'sub_unsub_count' => $subUnsubCount,
             'sub_whatsapp_count' => $subWhatsAppCount,
             'sub_facebook_count' => $subFacebookCount,
+            'sub_instagram_count' => $subInstagramCount,
             'template_count' => $templateCount,
             'msg_count' => $msgCount,
             'recent_subscribers' => $recentSubscribers,

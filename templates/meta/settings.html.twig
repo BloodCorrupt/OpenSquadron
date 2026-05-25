@@ -494,7 +494,7 @@
                 <div class="endpoint-list">
                     <div class="endpoint-item">
                         <div class="endpoint-info">
-                            <div class="endpoint-label">Valid OAuth Redirect URI</div>
+                            <div class="endpoint-label">Facebook OAuth Redirect URI</div>
                             <div class="endpoint-value" id="oauth-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('facebook_connect_callback') }}</div>
                         </div>
                         <button type="button" class="copy-btn" onclick="copyToClipboardText('oauth-val')">
@@ -505,10 +505,32 @@
 
                     <div class="endpoint-item">
                         <div class="endpoint-info">
-                            <div class="endpoint-label">Webhook Callback URL</div>
+                            <div class="endpoint-label">Instagram OAuth Redirect URI</div>
+                            <div class="endpoint-value" id="ig-oauth-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('instagram_connect_callback') }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('ig-oauth-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Facebook Webhook Callback URL</div>
                             <div class="endpoint-value" id="webhook-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('facebook_webhook_verify') }}</div>
                         </div>
                         <button type="button" class="copy-btn" onclick="copyToClipboardText('webhook-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Instagram Webhook Callback URL</div>
+                            <div class="endpoint-value" id="ig-webhook-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('instagram_webhook_verify') }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('ig-webhook-val')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             Copy
                         </button>
@@ -534,7 +556,7 @@
                     <div class="endpoint-item">
                         <div class="endpoint-info">
                             <div class="endpoint-label">Data Deletion Callback URL</div>
-                            <div class="endpoint-value" id="deletion-callback-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('facebook_data_deletion') }}</div>
+                            <div class="endpoint-value" id="deletion-callback-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('meta_data_deletion') }}</div>
                         </div>
                         <button type="button" class="copy-btn" onclick="copyToClipboardText('deletion-callback-val')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -641,7 +663,7 @@
         const form = document.getElementById('fb-api-config-form');
         const formData = new FormData(form);
 
-        fetch('{{ path('app_facebook_settings_save') }}', {
+        fetch('{{ path('app_meta_settings_save') }}', {
             method: 'POST',
             body: formData
         })

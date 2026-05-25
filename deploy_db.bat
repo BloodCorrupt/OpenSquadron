@@ -3,6 +3,8 @@ echo ==============================================
 echo       OpenSquadron Deploy/Update Utility
 echo ==============================================
 
+set "DATABASE_URL=mysql://root:@127.0.0.1:3306/opensquadron?serverVersion=10.4.32-MariaDB&charset=utf8mb4"
+
 echo [1/3] Creating Database (if not exists)...
 C:\xampp\php\php.exe bin/console doctrine:database:create --if-not-exists
 

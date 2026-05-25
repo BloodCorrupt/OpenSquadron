@@ -58,6 +58,9 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: FacebookConnection::class, mappedBy: 'owner', cascade: ['remove'])]
     private Collection $facebookConnections;
 
+    #[ORM\OneToMany(targetEntity: InstagramConnection::class, mappedBy: 'owner', cascade: ['remove'])]
+    private Collection $instagramConnections;
+
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isVerified = false;
 
@@ -108,6 +111,7 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->children = new ArrayCollection();
         $this->facebookConnections = new ArrayCollection();
+        $this->instagramConnections = new ArrayCollection();
     }
 
 
@@ -273,6 +277,11 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface
     public function getFacebookConnections(): Collection
     {
         return $this->facebookConnections;
+    }
+
+    public function getInstagramConnections(): Collection
+    {
+        return $this->instagramConnections;
     }
 
     public function isVerified(): bool
