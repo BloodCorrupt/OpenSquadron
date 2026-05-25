@@ -79,6 +79,11 @@ You do **NOT** need to manually run `docker_deploy_db.bat` or SSH into the serve
 
 ## Accessing the App
 
+Once deployed, the database is automatically seeded with a default Super Admin account:
+- **Email:** `admin@opensquadron.local`
+- **Password:** `admin123`
+*(Make sure to change this immediately after your first login!)*
+
 - **App**: `http://<your-server-ip>:6969` (or whatever `APP_PORT` you set).
 - **phpMyAdmin**: `http://<your-server-ip>:8081`.
 

@@ -51,56 +51,25 @@ To easily host this on XAMPP using a local domain (`opensquadron.local`):
 
 ## 3. Database & Admin Initialization
 
-Choose **one** of the following methods to initialize your database:
+Initialize your database schema and create your first administrator account using Symfony's Doctrine Migrations. 
 
-### Option A: Clean Import from Skeleton (Recommended)
-This imports the complete up-to-date schema, seeds the initial tables, and marks the Doctrine migrations history as complete in a single step.
-
-#### Method 1: Using XAMPP Shell / Command Line (Fastest)
-1. **Open XAMPP Control Panel** and click the **Shell** button on the right side.
-2. **Create the database** by running:
-   ```bash
-   mysql -u root -e "CREATE DATABASE IF NOT EXISTS opensquadron CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-   ```
-3. **Import the skeleton database file**:
-   ```bash
-   mysql -u root opensquadron < skeleton.sql
-   ```
-   *(Note: XAMPP's default MySQL installation uses user `root` with no password. If you have set a custom password, append `-p` to the commands and enter your password when prompted)*.
-
-#### Method 2: Using phpMyAdmin (Web GUI)
-1. Open your web browser and go to `http://localhost/phpmyadmin/`.
-2. Click on **SQL** in the top navigation tab and run:
-   ```sql
-   CREATE DATABASE IF NOT EXISTS `opensquadron` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-3. Click on the newly created **opensquadron** database in the left-hand sidebar list.
-4. Click the **Import** tab at the top.
-5. Click **Choose File** and select the `skeleton.sql` file in the root of the project.
-6. Scroll down to the bottom of the page and click the **Import** (or **Go**) button.
-
-#### Default Admin Login:
-Once imported, you can log in to the application at `https://opensquadron.local/login` or `http://localhost/login` with:
-- **Email:** `admin@opensquadron.local`
-- **Password:** `admin123` *(change immediately after first login)*
-
----
-
-### Option B: Build Schema via Doctrine Migrations
-If you want to build the database step-by-step from code mappings and create a custom admin user:
+Open a terminal in your project root and run these commands:
 
 1. **Create the database**:
    ```bash
-   C:\xampp\php\php.exe bin/console doctrine:database:create
+   php bin/console doctrine:database:create
    ```
 2. **Execute migrations**:
    ```bash
-   C:\xampp\php\php.exe bin/console doctrine:migrations:migrate
+   php bin/console doctrine:migrations:migrate -n
    ```
 3. **Create your admin account**:
    ```bash
-   C:\xampp\php\php.exe bin/console app:create-admin admin@example.com password123
+   php bin/console app:create-admin admin@opensquadron.local admin123
    ```
+   *(You can change the email and password above to whatever you prefer).*
+
+You can now log in to the application at `https://opensquadron.local/login` or `http://localhost/login`.
 
 ## 4. Setting up the Cloudflare Tunnel
 
