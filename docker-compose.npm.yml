@@ -1,4 +1,5 @@
 version: '3.8'
+name: opensquadron
 
 # ┌──────────────────────────────────────────────────┐
 # │  OpenSquadron — Behind Nginx Proxy Manager       │
@@ -10,6 +11,7 @@ version: '3.8'
 
 services:
   app:
+    image: opensquadron-app:latest
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -17,13 +19,13 @@ services:
     ports:
       - "${APP_PORT:-6969}:80"
     volumes:
-      - .:/var/www/html
+      - ${APP_CODE_PATH:-.}:/var/www/html
       - /var/www/html/vendor
       - share_data:/var/www/html/var/share
     environment:
       APP_ENV: ${APP_ENV:-prod}
-      APP_SECRET: ${APP_SECRET}
-      DATABASE_URL: "mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
+      APP_SECRET: ${APP_SECRET:-ChangeThisToSomethingRandom}
+      DATABASE_URL: "mysql://${DB_USER:-opensquadron}:${DB_PASSWORD:-SecureDatabasePassword!}@db:3306/${DB_NAME:-opensquadron}?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
       MAILER_DSN: "null://null"
     depends_on:
       db:
@@ -35,10 +37,10 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-SecureRootPassword!}
+      MYSQL_DATABASE: ${DB_NAME:-opensquadron}
+      MYSQL_USER: ${DB_USER:-opensquadron}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-SecureDatabasePassword!}
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
@@ -53,7 +55,7 @@ services:
     environment:
       PMA_HOST: db
       PMA_USER: root
-      PMA_PASSWORD: ${DB_ROOT_PASSWORD}
+      PMA_PASSWORD: ${DB_ROOT_PASSWORD:-SecureRootPassword!}
       UPLOAD_LIMIT: 300M
     depends_on:
       db:

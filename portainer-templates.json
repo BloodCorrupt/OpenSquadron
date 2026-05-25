@@ -1,0 +1,71 @@
+{
+  "version": "2",
+  "templates": [
+    {
+      "type": 3,
+      "title": "OpenSquadron (NPM Proxy)",
+      "description": "OpenSquadron stack designed to run behind Nginx Proxy Manager.",
+      "categories": ["OpenSquadron", "Web"],
+      "platform": "linux",
+      "logo": "https://symfony.com/logos/symfony_black_03.png",
+      "repository": {
+        "url": "https://github.com/BloodCorrupt/OpenSquadron",
+        "stackfile": "docker-compose.npm.yml"
+      },
+      "env": [
+        { "name": "APP_ENV", "label": "Application Environment", "description": "prod or dev", "default": "prod" },
+        { "name": "APP_SECRET", "label": "App Secret", "description": "A secure random string", "default": "ChangeThisToSomethingRandom" },
+        { "name": "APP_PORT", "label": "Host Port", "description": "Port to expose the app on", "default": "6969" },
+        { "name": "DB_NAME", "label": "Database Name", "default": "opensquadron" },
+        { "name": "DB_USER", "label": "Database User", "default": "opensquadron" },
+        { "name": "DB_PASSWORD", "label": "Database Password", "default": "SecureDatabasePassword!" },
+        { "name": "DB_ROOT_PASSWORD", "label": "DB Root Password", "default": "SecureRootPassword!" },
+        { "name": "PMA_PORT", "label": "phpMyAdmin Port", "default": "8081" }
+      ]
+    },
+    {
+      "type": 3,
+      "title": "OpenSquadron (Cloudflare Tunnel)",
+      "description": "OpenSquadron stack secured behind a Cloudflare Tunnel.",
+      "categories": ["OpenSquadron", "Web", "Security"],
+      "platform": "linux",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/9/94/Cloudflare_Logo.png",
+      "repository": {
+        "url": "https://github.com/BloodCorrupt/OpenSquadron",
+        "stackfile": "docker-compose.cf.yml"
+      },
+      "env": [
+        { "name": "APP_ENV", "label": "Application Environment", "description": "prod or dev", "default": "prod" },
+        { "name": "APP_SECRET", "label": "App Secret", "description": "A secure random string", "default": "ChangeThisToSomethingRandom" },
+        { "name": "CLOUDFLARE_TUNNEL_TOKEN", "label": "Cloudflare Token", "description": "Your Zero Trust Tunnel Token", "default": "your_token_here" },
+        { "name": "DB_NAME", "label": "Database Name", "default": "opensquadron" },
+        { "name": "DB_USER", "label": "Database User", "default": "opensquadron" },
+        { "name": "DB_PASSWORD", "label": "Database Password", "default": "SecureDatabasePassword!" },
+        { "name": "DB_ROOT_PASSWORD", "label": "DB Root Password", "default": "SecureRootPassword!" },
+        { "name": "PMA_PORT", "label": "phpMyAdmin Port (Local Only)", "default": "8081" }
+      ]
+    },
+    {
+      "type": 3,
+      "title": "OpenSquadron (HAProxy Scalable)",
+      "description": "OpenSquadron stack with HAProxy for container scaling.",
+      "categories": ["OpenSquadron", "Web", "Scaling"],
+      "platform": "linux",
+      "logo": "https://www.haproxy.com/wp-content/uploads/2021/08/haproxy-logo-dark.png",
+      "repository": {
+        "url": "https://github.com/BloodCorrupt/OpenSquadron",
+        "stackfile": "docker-compose.haproxy.yml"
+      },
+      "env": [
+        { "name": "APP_ENV", "label": "Application Environment", "description": "prod or dev", "default": "prod" },
+        { "name": "APP_SECRET", "label": "App Secret", "description": "A secure random string", "default": "ChangeThisToSomethingRandom" },
+        { "name": "APP_PORT", "label": "HAProxy Port", "description": "Port to expose HAProxy on", "default": "6969" },
+        { "name": "DB_NAME", "label": "Database Name", "default": "opensquadron" },
+        { "name": "DB_USER", "label": "Database User", "default": "opensquadron" },
+        { "name": "DB_PASSWORD", "label": "Database Password", "default": "SecureDatabasePassword!" },
+        { "name": "DB_ROOT_PASSWORD", "label": "DB Root Password", "default": "SecureRootPassword!" },
+        { "name": "PMA_PORT", "label": "phpMyAdmin Port", "default": "8081" }
+      ]
+    }
+  ]
+}
