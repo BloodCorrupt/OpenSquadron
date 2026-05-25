@@ -241,7 +241,7 @@ class InstagramWebhookController extends AbstractController
 
                             $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                 ->findOneBy([
-                                    'instagramConnection' => $resolvedConnection,
+                                    'InstagramConnection' => $resolvedConnection,
                                     'buttonKey' => 'unsubscribe',
                                     'isEnabled' => true
                                 ]);
@@ -256,7 +256,7 @@ class InstagramWebhookController extends AbstractController
 
                             $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                 ->findOneBy([
-                                    'instagramConnection' => $resolvedConnection,
+                                    'InstagramConnection' => $resolvedConnection,
                                     'buttonKey' => 'resubscribe',
                                     'isEnabled' => true
                                 ]);
@@ -320,7 +320,7 @@ class InstagramWebhookController extends AbstractController
                             if ($msgBody === 'WELCOME_GET_STARTED_TRIGGER') {
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'instagramConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'get-started',
                                         'isEnabled' => true
                                     ]);
@@ -337,7 +337,7 @@ class InstagramWebhookController extends AbstractController
 
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'instagramConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'chat-with-human',
                                         'isEnabled' => true
                                     ]);
@@ -354,7 +354,7 @@ class InstagramWebhookController extends AbstractController
 
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'instagramConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'chat-with-bot',
                                         'isEnabled' => true
                                     ]);
@@ -369,7 +369,7 @@ class InstagramWebhookController extends AbstractController
                         if (!$isResumed && $msgType === 'location') {
                             $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                 ->findOneBy([
-                                    'instagramConnection' => $resolvedConnection,
+                                    'InstagramConnection' => $resolvedConnection,
                                     'buttonKey' => 'location-reply',
                                     'isEnabled' => true
                                 ]);
@@ -391,7 +391,7 @@ class InstagramWebhookController extends AbstractController
                                 ->getRepository(\App\Entity\InstagramBotFlow::class)
                                 ->findBy([
                                     'isActive' => true,
-                                    'instagramConnection' => $resolvedConnection,
+                                    'InstagramConnection' => $resolvedConnection,
                                 ]);
 
                             $matchedFlow = null;
@@ -402,7 +402,7 @@ class InstagramWebhookController extends AbstractController
                                     ->findOneBy([
                                         'id' => $flowId,
                                         'isActive' => true,
-                                        'instagramConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                     ]);
                             } else {
                                 foreach ($flows as $flow) {
@@ -424,7 +424,7 @@ class InstagramWebhookController extends AbstractController
                                 // No keyword match! Check if No Match is enabled and trigger it.
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'instagramConnection' => $resolvedConnection,
+                                        'InstagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'no-match',
                                         'isEnabled' => true
                                     ]);
@@ -525,7 +525,7 @@ class InstagramWebhookController extends AbstractController
         $pageSettings = null;
         if (!$postSettings) {
             $pageAutomation = $automationRepo->findOneBy([
-                'instagramConnection' => $connection,
+                'InstagramConnection' => $connection,
                 'postId' => null
             ]);
             if ($pageAutomation) {
