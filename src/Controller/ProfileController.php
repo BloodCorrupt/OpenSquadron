@@ -3,20 +3,24 @@
 namespace App\Controller;
 
 use App\Entity\Admin;
+use App\Repository\WebauthnCredentialRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Webauthn\PublicKeyCredentialUserEntity;
 
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class ProfileController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private UserPasswordHasherInterface $passwordHasher
+        private UserPasswordHasherInterface $passwordHasher,
+        private WebauthnCredentialRepository $webauthnRepository
     ) {
     }
 
@@ -41,6 +45,7 @@ class ProfileController extends AbstractController
                 return $this->render('profile/edit.html.twig', [
                     'account' => $currentUser,
                     'currentUser' => $currentUser,
+                    'passkeys' => $this->getPasskeysForUser($currentUser),
                 ]);
             }
 
@@ -50,6 +55,7 @@ class ProfileController extends AbstractController
                 return $this->render('profile/edit.html.twig', [
                     'account' => $currentUser,
                     'currentUser' => $currentUser,
+                    'passkeys' => $this->getPasskeysForUser($currentUser),
                 ]);
             }
 
@@ -86,6 +92,7 @@ class ProfileController extends AbstractController
                         'account' => $currentUser,
                         'currentUser' => $currentUser,
                         'owners' => [],
+                        'passkeys' => $this->getPasskeysForUser($currentUser),
                     ]);
                 }
                 $currentUser->setPassword($this->passwordHasher->hashPassword($currentUser, $plainPassword));
@@ -107,6 +114,7 @@ class ProfileController extends AbstractController
             'account' => $currentUser,
             'currentUser' => $currentUser,
             'owners' => [], // Not used for self edit
+            'passkeys' => $this->getPasskeysForUser($currentUser),
         ]);
     }
 
@@ -130,5 +138,40 @@ class ProfileController extends AbstractController
         $this->entityManager->flush();
 
         return $this->json(['success' => true]);
+    }
+
+    #[Route('/profile/passkey/{id}/delete', name: 'app_passkey_delete', methods: ['POST'])]
+    public function deletePasskey(string $id, Request $request): JsonResponse
+    {
+        /** @var Admin $currentUser */
+        $currentUser = $this->getUser();
+        if (!$currentUser) {
+            return $this->json(['success' => false, 'error' => 'Not authenticated'], 403);
+        }
+
+        $credential = $this->webauthnRepository->find($id);
+        if (!$credential) {
+            return $this->json(['success' => false, 'error' => 'Passkey not found'], 404);
+        }
+
+        // Verify the passkey belongs to the current user
+        if ($credential->userHandle !== (string) $currentUser->getId()) {
+            return $this->json(['success' => false, 'error' => 'Unauthorized'], 403);
+        }
+
+        $this->entityManager->remove($credential);
+        $this->entityManager->flush();
+
+        return $this->json(['success' => true]);
+    }
+
+    private function getPasskeysForUser(Admin $user): array
+    {
+        $userEntity = new PublicKeyCredentialUserEntity(
+            $user->getEmail(),
+            (string) $user->getId(),
+            $user->getName() ?? $user->getEmail()
+        );
+        return $this->webauthnRepository->findAllForUserEntity($userEntity);
     }
 }

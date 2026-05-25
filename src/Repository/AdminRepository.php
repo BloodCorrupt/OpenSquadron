@@ -19,7 +19,7 @@ use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
  * @method Admin[]    findAll()
  * @method Admin[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class AdminRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
+class AdminRepository extends ServiceEntityRepository implements PasswordUpgraderInterface, \Webauthn\Bundle\Repository\PublicKeyCredentialUserEntityRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -38,5 +38,34 @@ class AdminRepository extends ServiceEntityRepository implements PasswordUpgrade
         $user->setPassword($newHashedPassword);
         $this->getEntityManager()->persist($user);
         $this->getEntityManager()->flush();
+    }
+
+    public function findOneByUsername(string $username): ?\Webauthn\PublicKeyCredentialUserEntity
+    {
+        $admin = $this->findOneBy(['email' => $username]);
+        if (!$admin) {
+            return null;
+        }
+
+        return $this->createWebAuthnUserEntity($admin);
+    }
+
+    public function findOneByUserHandle(string $userHandle): ?\Webauthn\PublicKeyCredentialUserEntity
+    {
+        $admin = $this->find((int) $userHandle);
+        if (!$admin) {
+            return null;
+        }
+
+        return $this->createWebAuthnUserEntity($admin);
+    }
+
+    private function createWebAuthnUserEntity(Admin $admin): \Webauthn\PublicKeyCredentialUserEntity
+    {
+        return new \Webauthn\PublicKeyCredentialUserEntity(
+            $admin->getEmail(),           // name
+            (string) $admin->getId(),     // id (user handle)
+            $admin->getName() ?? $admin->getEmail() // display name
+        );
     }
 }

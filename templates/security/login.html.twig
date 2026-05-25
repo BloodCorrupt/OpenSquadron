@@ -191,6 +191,15 @@
                 <button class="btn-primary" type="submit">
                     Initialize Session
                 </button>
+                
+                <div style="margin: 20px 0; text-align: center; color: var(--text-muted); position: relative;">
+                    <hr style="border: 0; border-top: 1px solid var(--glass-border); position: absolute; width: 100%; top: 50%; transform: translateY(-50%); margin: 0; z-index: 1;">
+                    <span style="background: var(--bg-gradient-end); padding: 0 10px; position: relative; z-index: 2; font-size: 13px;">OR</span>
+                </div>
+                
+                <button type="button" id="login-passkey-btn" style="width: 100%; padding: 14px; border: 1px solid var(--primary-accent); border-radius: 8px; font-size: 16px; font-weight: 600; background: rgba(6, 182, 212, 0.1); color: var(--primary-accent); cursor: pointer; transition: all 0.2s;">
+                    Sign in with Passkey
+                </button>
 
                 <div style="margin-top: 25px; font-size: 14px; text-align: center; color: var(--text-muted);">
                     Don't have an account? <a href="{{ path('app_register') }}" style="color: var(--primary-accent); text-decoration: none; font-weight: 500;">Sign up</a>
@@ -198,5 +207,78 @@
             </form>
         </div>
     </div>
+    <script src="https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-global/webauthn-json.browser-global.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginPasskeyBtn = document.getElementById('login-passkey-btn');
+            const usernameInput = document.getElementById('username');
+            
+            if (loginPasskeyBtn) {
+                loginPasskeyBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    if (window.isWebAuthnActive) {
+                        console.log('WebAuthn request already active, ignoring click.');
+                        return;
+                    }
+                    
+                    const username = usernameInput.value.trim();
+                    if (!username) {
+                        alert('Please enter your Operator Identity (email) first to use passkey.');
+                        usernameInput.focus();
+                        return;
+                    }
+                    
+                    window.isWebAuthnActive = true;
+                    loginPasskeyBtn.disabled = true;
+                    loginPasskeyBtn.textContent = 'Authenticating...';
+                    
+                    try {
+                        // Fetch options
+                        const optionsResponse = await fetch('/api/webauthn/request/options', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: username })
+                        });
+                        
+                        if (!optionsResponse.ok) {
+                            throw new Error('Failed to fetch passkey options. Make sure you have a passkey registered.');
+                        }
+                        
+                        const options = await optionsResponse.json();
+                        
+                        // Request credential
+                        const credential = await webauthnJSON.get({ publicKey: options });
+                        
+                        // Send to result endpoint
+                        const resultResponse = await fetch('/api/webauthn/request/result', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(credential)
+                        });
+                        
+                        if (!resultResponse.ok) {
+                            const errorText = await resultResponse.text();
+                            console.error('Passkey auth error response:', resultResponse.status, errorText);
+                            throw new Error('Passkey authentication failed.');
+                        }
+                        
+                        // Successfully logged in! Redirect to dashboard or refresh
+                        window.location.href = '/';
+                        
+                    } catch (error) {
+                        console.error('Passkey Login Error:', error);
+                        // Only alert if it's not a generic abort/pending error to avoid double popups
+                        if (error.name !== 'AbortError' && error.name !== 'NotAllowedError' && !error.message.includes('pending')) {
+                            alert(error.message);
+                        }
+                    } finally {
+                        window.isWebAuthnActive = false;
+                        loginPasskeyBtn.disabled = false;
+                        loginPasskeyBtn.textContent = 'Sign in with Passkey';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

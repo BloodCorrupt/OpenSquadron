@@ -1,0 +1,3 @@
+webauthn_bundle:
+    resource: "@WebauthnBundle/Resources/config/routing.php"
+    type: php

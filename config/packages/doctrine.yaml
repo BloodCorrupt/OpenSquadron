@@ -8,6 +8,14 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        mapping_types:
+            enum: string
+        types:
+            aaguid: Webauthn\Bundle\Doctrine\Type\AAGUIDDataType
+            trust_path: Webauthn\Bundle\Doctrine\Type\TrustPathDataType
+            attested_credential_data: Webauthn\Bundle\Doctrine\Type\AttestedCredentialDataType
+            public_key_credential_descriptor: Webauthn\Bundle\Doctrine\Type\PublicKeyCredentialDescriptorType
+            base64: Webauthn\Bundle\Doctrine\Type\Base64BinaryDataType
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

@@ -1,0 +1,24 @@
+webauthn:
+    credential_repository: App\Repository\WebauthnCredentialRepository
+    user_repository: App\Repository\AdminRepository
+    controllers:
+        enabled: true
+        creation:
+            default:
+                options_path: '/api/webauthn/creation/options'
+                result_path: '/api/webauthn/creation/result'
+                profile: default
+                user_entity_guesser: Webauthn\Bundle\Security\Guesser\CurrentUserEntityGuesser
+
+    creation_profiles:
+        default:
+            rp:
+                name: 'OpenSquadron'
+                id: null
+            authenticator_selection_criteria:
+                require_resident_key: false
+                user_verification: 'preferred'
+    request_profiles:
+        default:
+            rp_id: null
+            user_verification: 'preferred'
