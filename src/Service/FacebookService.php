@@ -824,6 +824,37 @@ class FacebookService
     }
 
     /**
+     * Comment on a post.
+     */
+    public function commentOnPost(string $postId, string $message, ?string $attachmentUrl = null, ?FacebookConnection $connection = null): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/{$postId}/comments";
+
+        $payload = [
+            'message' => $message,
+        ];
+        if (!empty($attachmentUrl)) {
+            $payload['attachment_url'] = $attachmentUrl;
+        }
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to comment on post.');
+        }
+
+        return $content;
+    }
+
+    /**
      * Reply to a comment.
      */
     public function replyToComment(string $commentId, string $message, ?string $attachmentUrl = null, ?FacebookConnection $connection = null): array

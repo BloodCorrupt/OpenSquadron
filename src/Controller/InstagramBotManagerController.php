@@ -127,8 +127,6 @@ class InstagramBotManagerController extends AbstractController
                 'aiContextId' => '',
                 'privateReplyFlowId' => '',
                 'commentReplyText' => '',
-                'imageReplyUrl' => '',
-                'videoReplyUrl' => '',
                 'filterMatchType' => 'exact',
                 'filterWords' => ''
             ]
@@ -324,14 +322,10 @@ class InstagramBotManagerController extends AbstractController
                 
                 $automation->setGenericCommentReply($decoded['commentReplyText'] ?? null);
                 $automation->setGenericPrivateReply($decoded['privateReplyFlowId'] ?? null);
-                $automation->setGenericImageUrl($decoded['imageReplyUrl'] ?? null);
-                $automation->setGenericVideoUrl($decoded['videoReplyUrl'] ?? null);
 
                 $fallback = $decoded['fallbackSettings'] ?? [];
                 $automation->setFallbackCommentReply($fallback['commentReplyText'] ?? null);
                 $automation->setFallbackPrivateReply($fallback['privateReplyFlowId'] ?? null);
-                $automation->setFallbackImageUrl($fallback['imageReplyUrl'] ?? null);
-                $automation->setFallbackVideoUrl($fallback['videoReplyUrl'] ?? null);
 
                 // Handle rules
                 foreach ($automation->getRules() as $existingRule) {
@@ -346,8 +340,6 @@ class InstagramBotManagerController extends AbstractController
                         $rule->setFilterMatchType($ruleData['filterMatchType'] ?? 'exact');
                         $rule->setCommentReplyText($ruleData['commentReplyText'] ?? null);
                         $rule->setPrivateReplyFlowId($ruleData['privateReplyFlowId'] ?? null);
-                        $rule->setImageReplyUrl($ruleData['imageReplyUrl'] ?? null);
-                        $rule->setVideoReplyUrl($ruleData['videoReplyUrl'] ?? null);
                         $automation->addRule($rule);
                     }
                 }
@@ -536,8 +528,6 @@ class InstagramBotManagerController extends AbstractController
             'aiContextId' => '',
             'privateReplyFlowId' => '',
             'commentReplyText' => '',
-            'imageReplyUrl' => '',
-            'videoReplyUrl' => '',
             'filterMatchType' => 'exact',
             'filterWords' => ''
         ];
@@ -1004,9 +994,9 @@ class InstagramBotManagerController extends AbstractController
                     // Process feed posts
                     foreach ($feed as $fbPost) {
                         $fbId = $fbPost['id'];
-                        $likesCount = $fbPost['likes']['summary']['total_count'] ?? 0;
-                        $commentsCount = $fbPost['comments']['summary']['total_count'] ?? 0;
-                        $sharesCount = $fbPost['shares']['count'] ?? 0;
+                        $likesCount = $fbPost['like_count'] ?? 0;
+                        $commentsCount = $fbPost['comments_count'] ?? 0;
+                        $sharesCount = 0; // Not exposed natively via IG media edge
 
                         if (isset($localPostsByFbId[$fbId])) {
                             // Update existing local post
@@ -1016,8 +1006,8 @@ class InstagramBotManagerController extends AbstractController
                             $localPost['likes'] = $likesCount;
                             $localPost['comments'] = $commentsCount;
                             $localPost['shares'] = $sharesCount;
-                            if (isset($fbPost['permalink_url'])) {
-                                $localPost['link'] = $fbPost['permalink_url'];
+                            if (isset($fbPost['permalink'])) {
+                                $localPost['link'] = $fbPost['permalink'];
                             }
                             $syncedPosts[] = $localPost;
                             unset($localPostsByFbId[$fbId]);
@@ -1025,7 +1015,7 @@ class InstagramBotManagerController extends AbstractController
                             // Try matching by message for unpublished posts that were actually published
                             $matchedIndex = -1;
                             foreach ($otherLocalPosts as $idx => $olp) {
-                                if ($olp['status'] !== 'published' && !empty($olp['message']) && !empty($fbPost['message']) && levenshtein($olp['message'], $fbPost['message']) < 5) {
+                                if ($olp['status'] !== 'published' && !empty($olp['message']) && !empty($fbPost['caption']) && levenshtein($olp['message'], $fbPost['caption']) < 5) {
                                     $matchedIndex = $idx;
                                     break;
                                 }
@@ -1039,8 +1029,8 @@ class InstagramBotManagerController extends AbstractController
                                 $localPost['likes'] = $likesCount;
                                 $localPost['comments'] = $commentsCount;
                                 $localPost['shares'] = $sharesCount;
-                                if (isset($fbPost['permalink_url'])) {
-                                    $localPost['link'] = $fbPost['permalink_url'];
+                                if (isset($fbPost['permalink'])) {
+                                    $localPost['link'] = $fbPost['permalink'];
                                 }
                                 $syncedPosts[] = $localPost;
                                 array_splice($otherLocalPosts, $matchedIndex, 1);
@@ -1048,12 +1038,12 @@ class InstagramBotManagerController extends AbstractController
                                 // New post from Instagram directly
                                 $syncedPosts[] = [
                                     'id' => uniqid('post_'),
-                                    'createdAt' => (new \DateTime($fbPost['created_time']))->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
+                                    'createdAt' => isset($fbPost['timestamp']) ? (new \DateTime($fbPost['timestamp']))->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s') : date('Y-m-d H:i:s'),
                                     'type' => 'multimedia',
-                                    'message' => $fbPost['message'] ?? '',
-                                    'link' => $fbPost['permalink_url'] ?? '',
-                                    'mediaType' => isset($fbPost['full_picture']) ? 'image' : 'none',
-                                    'mediaUrl' => $fbPost['full_picture'] ?? '',
+                                    'message' => $fbPost['caption'] ?? '',
+                                    'link' => $fbPost['permalink'] ?? '',
+                                    'mediaType' => isset($fbPost['media_type']) ? strtolower($fbPost['media_type']) : 'image',
+                                    'mediaUrl' => $fbPost['media_url'] ?? ($fbPost['thumbnail_url'] ?? ''),
                                     'status' => 'published',
                                     'fbPostId' => $fbId,
                                     'likes' => $likesCount,
@@ -1376,6 +1366,38 @@ class InstagramBotManagerController extends AbstractController
         $em->flush();
 
         return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/Instagram-bot-manager/posts/comment-manual', name: 'app_instagram_bot_posts_comment_manual', methods: ['POST'])]
+    public function manualComment(Request $request, EntityManagerInterface $em, InstagramService $instagramService): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            $postId = $data['postId'] ?? null;
+            $message = $data['message'] ?? null;
+            $connectionId = $data['connectionId'] ?? null;
+
+            if (!$postId || !$message || !$connectionId) {
+                return new JsonResponse(['success' => false, 'error' => 'Missing required fields (postId, message, connectionId).'], 400);
+            }
+
+            $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
+            if (!$connection) {
+                return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+            }
+
+            $result = $instagramService->commentOnPost($postId, $message, null, $connection);
+
+            return new JsonResponse([
+                'success' => true,
+                'result' => $result
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     #[Route('/Instagram-bot-manager/posts/add-by-id', name: 'app_instagram_bot_posts_add_by_id', methods: ['POST'])]

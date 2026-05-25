@@ -32,6 +32,7 @@ class LiveChatController extends AbstractController
         $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['label' => 'ASC']);
         $instagramConnections = $em->getRepository(InstagramConnection::class)->findBy([], ['label' => 'ASC']);
 
+        /** @var \App\Entity\Admin $currentUser */
         $currentUser = $this->getUser();
         $tenantOwner = $currentUser->getParent() ?: $currentUser;
         
@@ -77,6 +78,7 @@ class LiveChatController extends AbstractController
         $facebookConnections = $em->getRepository(FacebookConnection::class)->findBy([], ['label' => 'ASC']);
         $instagramConnections = $em->getRepository(InstagramConnection::class)->findBy([], ['label' => 'ASC']);
 
+        /** @var \App\Entity\Admin $currentUser */
         $currentUser = $this->getUser();
         $tenantOwner = $currentUser->getParent() ?: $currentUser;
         
@@ -391,6 +393,7 @@ class LiveChatController extends AbstractController
             }
             
             // Security check: Operator must belong to the same tenant workspace
+            /** @var \App\Entity\Admin $currentUser */
             $currentUser = $this->getUser();
             $tenantOwner = $currentUser->getParent() ?: $currentUser;
             $opOwner = $operator->getParent() ?: $operator;
@@ -479,6 +482,7 @@ class LiveChatController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Note text is required'], 400);
         }
         
+        /** @var \App\Entity\Admin $currentUser */
         $currentUser = $this->getUser();
         $notes = $subscriber->getNotes();
         $notes[] = [

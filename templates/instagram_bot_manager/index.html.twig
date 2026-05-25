@@ -1,4 +1,4 @@
-﻿{% extends 'base.html.twig' %}
+{% extends 'base.html.twig' %}
 
 {% block title %}Instagram Bot Console - OpenSquadron{% endblock %}
 
@@ -1680,6 +1680,7 @@
         flex-direction: column;
         gap: 20px;
         overflow-y: auto;
+        min-width: 0;
     }
     
     .comment-middle-col {
@@ -4025,18 +4026,10 @@
                 </div>
             </div>
 
-            {# â”€â”€ Center: Tabbed Form â”€â”€ #}
+            {# ── Center: Tabbed Form ── #}
             <div class="mpc-form-col">
                 <div class="mpc-tab-bar">
-                    <button class="mpc-tab-btn is-active" data-mpc-tab="text" onclick="switchMpcTab('text')">
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                        Text
-                    </button>
-                    <button class="mpc-tab-btn" data-mpc-tab="link" onclick="switchMpcTab('link')">
-                        <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        Link
-                    </button>
-                    <button class="mpc-tab-btn" data-mpc-tab="image" onclick="switchMpcTab('image')">
+                    <button class="mpc-tab-btn is-active" data-mpc-tab="image" onclick="switchMpcTab('image')">
                         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                         Image/Carousel
                     </button>
@@ -4045,73 +4038,8 @@
                         Video
                     </button>
                 </div>
-
-                {# â”€â”€ Text Tab â”€â”€ #}
-                <div class="mpc-tab-panel is-active" id="mpc-panel-text">
-                    <div>
-                        <div class="mpc-field-label">CAMPAIGN NAME</div>
-                        <input type="text" class="mpc-input" id="mpc-campaign-text" placeholder="Enter campaign name..." style="margin-top:6px;">
-                    </div>
-                    <div>
-                        <div class="mpc-field-label">TEXT</div>
-                        <div class="mpc-textarea-wrap" style="margin-top:6px;">
-                            <textarea class="mpc-textarea" id="mpc-text-message" placeholder="Type your message here..." oninput="updateMpcPreview()"></textarea>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
-                        <div class="mpc-posting-time" style="margin-top:8px;">
-                            <label class="switch-toggle">
-                                <input type="checkbox" id="mpc-post-now-text" checked>
-                                <span class="slider-round"></span>
-                            </label>
-                            <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
-                        </div>
-                    </div>
-                    <div class="mpc-submit-row">
-                        <button class="mpc-submit-btn" id="mpc-btn-submit-text" onclick="publishMpcPost('text')">
-                            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
-                            Submit
-                        </button>
-                    </div>
-                </div>
-
-                {# â”€â”€ Link Tab â”€â”€ #}
-                <div class="mpc-tab-panel" id="mpc-panel-link">
-                    <div>
-                        <div class="mpc-field-label">CAMPAIGN NAME</div>
-                        <input type="text" class="mpc-input" id="mpc-campaign-link" placeholder="Enter campaign name..." style="margin-top:6px;">
-                    </div>
-                    <div>
-                        <div class="mpc-field-label">TEXT</div>
-                        <div class="mpc-textarea-wrap" style="margin-top:6px;">
-                            <textarea class="mpc-textarea" id="mpc-link-message" placeholder="Type your message here..." oninput="updateMpcPreview()"></textarea>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="mpc-field-label">PASTE LINK</div>
-                        <input type="url" class="mpc-input" id="mpc-link-url" placeholder="https://example.com/your-article" oninput="updateMpcPreview()" style="margin-top:6px;">
-                    </div>
-                    <div>
-                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
-                        <div class="mpc-posting-time" style="margin-top:8px;">
-                            <label class="switch-toggle">
-                                <input type="checkbox" id="mpc-post-now-link" checked>
-                                <span class="slider-round"></span>
-                            </label>
-                            <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
-                        </div>
-                    </div>
-                    <div class="mpc-submit-row">
-                        <button class="mpc-submit-btn" id="mpc-btn-submit-link" onclick="publishMpcPost('link')">
-                            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
-                            Submit
-                        </button>
-                    </div>
-                </div>
-
-                {# â”€â”€ Image/Carousel Tab â”€â”€ #}
-                <div class="mpc-tab-panel" id="mpc-panel-image">
+                {# ── Image/Carousel Tab ── #}
+                <div class="mpc-tab-panel is-active" id="mpc-panel-image">
                     <div id="mpc-img-url-input" style="margin-top: 10px;">
                         <input type="url" class="mpc-input" id="mpc-image-url" placeholder="https://example.com/image.jpg" oninput="updateMpcPreview()">
                     </div>
@@ -4202,27 +4130,24 @@
                             <div class="fb-post-time">1m Â· <svg viewBox="0 0 16 16" fill="currentColor" style="width:12px; height:12px;"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 9H8a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 1 0v5h3a.5.5 0 0 1 0 1z"></path></svg></div>
                         </div>
                     </div>
-                    <div class="fb-post-body">
-                        <div class="fb-post-text" id="mpc-preview-text">Text goes here</div>
-
+                    <div class="fb-post-body" style="padding: 0;">
                         {# Image placeholder (for Image tab) #}
-                        <div class="fb-post-media-container" id="mpc-preview-media" style="display:none;">
-                            <div class="fb-post-placeholder-img" id="mpc-preview-placeholder">
+                        <div class="fb-post-media-container" id="mpc-preview-media" style="display:block; margin-bottom:0;">
+                            <div class="fb-post-placeholder-img" id="mpc-preview-placeholder" style="aspect-ratio: 1; border-radius: 0; background: #fafafa;">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                <span>Placeholder Image</span>
+                                <span>Image/Video Preview</span>
                             </div>
-                            <img id="mpc-preview-img" src="" alt="" style="width:100%; display:none;">
+                            <img id="mpc-preview-img" src="" alt="" style="width:100%; display:none; border-radius: 0;">
                         </div>
 
-                        {# Link card (for Link tab) #}
-                        <div class="fb-post-link-card" id="mpc-preview-link-card" style="display:none;">
-                            <div class="fb-post-placeholder-img" id="mpc-preview-link-placeholder">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                <span>Placeholder Image</span>
-                            </div>
-                            <div class="fb-post-link-title" id="mpc-preview-link-title">Title goes here...</div>
-                            <div class="fb-post-link-desc" id="mpc-preview-link-desc">Description goes here..</div>
+                        {# Action icons #}
+                        <div style="padding: 10px 15px; display: flex; gap: 12px; color: var(--text-main);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </div>
+                        <div class="fb-post-text" id="mpc-preview-text" style="padding: 0 15px 15px; font-size: 14px;">Caption goes here</div>
+                    </div>
 
                         {# Video player (for Video tab) #}
                         <div class="fb-post-media-container" id="mpc-preview-video" style="display:none;">
@@ -4239,7 +4164,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
                     <div class="fb-post-footer">
                         <div class="fb-post-action-btn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
@@ -4255,7 +4179,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> <!-- Closes .mpc-preview-col -->
         </div> <!-- Closes .mpc-layout -->
         </div> <!-- Closes #poster-content-create -->
 
@@ -4366,7 +4290,7 @@
                 </div>
 
                 {# Middle Column: Full Page Settings & Metrics #}
-                <div class="comment-middle-col" style="padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+                <div class="comment-middle-col" style="padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; min-width: 0;">
                     {% if connection %}
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: var(--primary-accent);"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
@@ -4446,7 +4370,7 @@
                 </div>
 
                 {# Right Column: Latest Posts #}
-                <div class="comment-right-col" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+                <div class="comment-right-col" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; min-width: 0;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
                         <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--text-main);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: var(--primary-accent);"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
@@ -4473,6 +4397,29 @@
 </div>
 
 {# â•â•â•â•â•â•â•â•â•â•â• Dialog Modals for Comment Automation â•â•â•â•â•â•â•â•â•â•â• #}
+
+<!-- Manual Comment Modal -->
+<div id="manual-comment-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <div class="modal-title">Send Manual Comment</div>
+            <button class="modal-close-btn" onclick="closeManualCommentModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="manual-comment-graph-id" />
+            <div style="margin-bottom: 16px;">
+                <label class="switch-label" style="display: block; margin-bottom: 6px;">Your Comment *</label>
+                <textarea id="manual-comment-text" class="modal-textarea" placeholder="Type your comment here..." style="min-height: 120px;"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+            <button class="btn-action btn-secondary" onclick="closeManualCommentModal()">Cancel</button>
+            <button class="btn-action btn-create" id="btn-send-manual-comment" onclick="submitManualComment()">Send Comment</button>
+        </div>
+    </div>
+</div>
 
 <!-- 1. Configuration Modal -->
 <div id="comment-automation-modal" class="modal-overlay">
@@ -4626,22 +4573,6 @@
                     <textarea id="modal-comment-reply-text" class="modal-textarea" placeholder="Type your message here..."></textarea>
                 </div>
 
-                <div class="form-group-grid" style="margin-bottom: 14px;">
-                    <div>
-                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional image URL for the reply</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="modal-image-reply-url" class="modal-input" placeholder="Paste image URL">
-                            <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional video URL (MP4) for the reply</label>
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="modal-video-reply-url" class="modal-input" placeholder="Paste video URL">
-                            <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
-                        </div>
-                    </div>
-                </div>
 
                 <div>
                     <label class="switch-label" style="display: block; margin-bottom: 6px;">Private direct message template to send to the commenter</label>
@@ -4685,22 +4616,6 @@
                         <textarea id="modal-fallback-comment-reply-text" class="modal-textarea" placeholder="Type your message here..."></textarea>
                     </div>
 
-                    <div class="form-group-grid" style="margin-bottom: 14px;">
-                        <div>
-                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional image URL for fallback reply</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="text" id="modal-fallback-image-reply-url" class="modal-input" placeholder="Put your image URL here">
-                                <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional video URL (MP4) for fallback reply</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="text" id="modal-fallback-video-reply-url" class="modal-input" placeholder="Put your video URL here">
-                                <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
-                            </div>
-                        </div>
-                    </div>
 
                     <div>
                         <label class="switch-label" style="display: block; margin-bottom: 6px;">Fallback Private DM Template (If no keywords match)</label>
@@ -5288,9 +5203,14 @@
                             ${settingsIndicator}
                         </div>
                     </div>
-                    <button class="comment-post-gear-btn" onclick="openCommentAutomationModal('${post.id}')" title="Configure comment automation">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    </button>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="comment-post-gear-btn" onclick="openManualCommentModal('${post.id}', '${post.fbPostId || ''}')" title="Send Manual Comment" style="color: var(--primary-accent);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        </button>
+                        <button class="comment-post-gear-btn" onclick="openCommentAutomationModal('${post.id}')" title="Configure comment automation">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                    </div>
                 </div>
             `;
         });
@@ -5302,6 +5222,60 @@
         document.getElementById('comment-modal-title').textContent = "Please give the following information for page response";
         populateModalSettings(pageCommentSettings);
         document.getElementById('comment-automation-modal').classList.add('is-active');
+    }
+
+    function openManualCommentModal(dbPostId, graphPostId) {
+        if (!graphPostId) {
+            showToast('Cannot comment: Post ID is missing.', 'error');
+            return;
+        }
+        document.getElementById('manual-comment-graph-id').value = graphPostId;
+        document.getElementById('manual-comment-text').value = '';
+        document.getElementById('manual-comment-modal').classList.add('is-active');
+    }
+
+    function closeManualCommentModal() {
+        document.getElementById('manual-comment-modal').classList.remove('is-active');
+    }
+
+    function submitManualComment() {
+        const graphId = document.getElementById('manual-comment-graph-id').value;
+        const message = document.getElementById('manual-comment-text').value.trim();
+        const btn = document.getElementById('btn-send-manual-comment');
+        
+        if (!message) {
+            showToast('Please enter a comment.', 'error');
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        
+        fetch('{{ path('app_instagram_bot_posts_comment_manual') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                postId: graphId,
+                message: message,
+                connectionId: activeConnectionId
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = 'Send Comment';
+            if (data.success) {
+                showToast('Comment sent successfully!', 'success');
+                closeManualCommentModal();
+            } else {
+                showToast('Failed to send comment: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = 'Send Comment';
+            showToast('Network error: ' + err.message, 'error');
+        });
     }
 
     function openCommentAutomationModal(postId) {
@@ -5371,22 +5345,6 @@
                 <textarea class="modal-textarea rule-comment-reply-text" placeholder="Type your message here..." style="min-height: 80px;">${data.commentReplyText || ''}</textarea>
             </div>
 
-            <div class="form-group-grid" style="margin-bottom: 12px;">
-                <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional image URL for the reply</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" class="modal-input rule-image-reply-url" placeholder="Put your image URL here" value="${data.imageReplyUrl || ''}">
-                        <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct image uploads should be supplied as a valid image URL.')">Upload</button>
-                    </div>
-                </div>
-                <div>
-                    <label class="switch-label" style="display: block; margin-bottom: 6px;">Optional video URL (MP4) for the reply</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" class="modal-input rule-video-reply-url" placeholder="Put your video URL here" value="${data.videoReplyUrl || ''}">
-                        <button type="button" class="btn-action btn-secondary" style="font-size: 11px; padding: 8px 12px;" onclick="alert('Direct video uploads should be supplied as a valid MP4 URL.')">Upload</button>
-                    </div>
-                </div>
-            </div>
 
             <div>
                 <label class="switch-label" style="display: block; margin-bottom: 6px;">Private direct message template to send to the commenter</label>
@@ -5440,8 +5398,6 @@
         document.getElementById('modal-ai-context-id').value = s.aiContextId || '';
         document.getElementById('modal-ai-private-reply-flow-id').value = s.privateReplyFlowId || '';
         document.getElementById('modal-comment-reply-text').value = s.commentReplyText || '';
-        document.getElementById('modal-image-reply-url').value = s.imageReplyUrl || '';
-        document.getElementById('modal-video-reply-url').value = s.videoReplyUrl || '';
         document.getElementById('modal-generic-private-reply-flow-id').value = s.privateReplyFlowId || '';
 
         // Clear and rebuild filter rules
@@ -5462,8 +5418,6 @@
                     filterWords: s.filterWords,
                     filterMatchType: s.filterMatchType || 'exact',
                     commentReplyText: s.commentReplyText || '',
-                    imageReplyUrl: s.imageReplyUrl || '',
-                    videoReplyUrl: s.videoReplyUrl || '',
                     privateReplyFlowId: s.privateReplyFlowId || ''
                 });
             } else {
@@ -5475,8 +5429,6 @@
         // Populate fallback settings
         const fallback = s.fallbackSettings || {};
         document.getElementById('modal-fallback-comment-reply-text').value = fallback.commentReplyText || '';
-        document.getElementById('modal-fallback-image-reply-url').value = fallback.imageReplyUrl || '';
-        document.getElementById('modal-fallback-video-reply-url').value = fallback.videoReplyUrl || '';
         document.getElementById('modal-fallback-private-reply-flow-id').value = fallback.privateReplyFlowId || '';
     }
 
@@ -5626,8 +5578,6 @@
         let aiContextId = '';
         let privateReplyFlowId = '';
         let commentReplyText = '';
-        let imageReplyUrl = '';
-        let videoReplyUrl = '';
         let filterMatchType = 'exact';
         let filterWords = '';
         let filterRules = [];
@@ -5638,8 +5588,6 @@
             privateReplyFlowId = document.getElementById('modal-ai-private-reply-flow-id').value;
         } else if (automationMode === 'generic') {
             commentReplyText = document.getElementById('modal-comment-reply-text').value;
-            imageReplyUrl = document.getElementById('modal-image-reply-url').value.trim();
-            videoReplyUrl = document.getElementById('modal-video-reply-url').value.trim();
             privateReplyFlowId = document.getElementById('modal-generic-private-reply-flow-id').value;
         } else if (automationMode === 'filter') {
             const ruleCards = document.querySelectorAll('#filter-rules-container .filter-rule-card');
@@ -5654,8 +5602,6 @@
                 const words = card.querySelector('.rule-filter-words').value.trim();
                 const matchType = card.querySelector('.rule-match-exact').checked ? 'exact' : 'partial';
                 const commentText = card.querySelector('.rule-comment-reply-text').value;
-                const imageReply = card.querySelector('.rule-image-reply-url').value.trim();
-                const videoReply = card.querySelector('.rule-video-reply-url').value.trim();
                 const privateReplyFlow = card.querySelector('.rule-private-reply-flow-id').value;
 
                 if (enableCommentReply) {
@@ -5663,8 +5609,8 @@
                         showToast(`Please enter filter words for Rule #${i + 1}.`, 'error');
                         return;
                     }
-                    if (!commentText && !imageReply && !videoReply && !privateReplyFlow) {
-                        showToast(`Please enter a comment reply, media URL, or select a message template for Rule #${i + 1}.`, 'error');
+                    if (!commentText && !privateReplyFlow) {
+                        showToast(`Please enter a comment reply or select a message template for Rule #${i + 1}.`, 'error');
                         return;
                     }
                 }
@@ -5673,22 +5619,16 @@
                     filterWords: words,
                     filterMatchType: matchType,
                     commentReplyText: commentText,
-                    imageReplyUrl: imageReply,
-                    videoReplyUrl: videoReply,
                     privateReplyFlowId: privateReplyFlow
                 });
             }
 
             // Gather fallback settings
             const fallbackCommentText = document.getElementById('modal-fallback-comment-reply-text').value;
-            const fallbackImageReply = document.getElementById('modal-fallback-image-reply-url').value.trim();
-            const fallbackVideoReply = document.getElementById('modal-fallback-video-reply-url').value.trim();
             const fallbackPrivateReplyFlow = document.getElementById('modal-fallback-private-reply-flow-id').value;
 
             fallbackSettings = {
                 commentReplyText: fallbackCommentText,
-                imageReplyUrl: fallbackImageReply,
-                videoReplyUrl: fallbackVideoReply,
                 privateReplyFlowId: fallbackPrivateReplyFlow
             };
 
@@ -5697,8 +5637,6 @@
                 filterWords = filterRules[0].filterWords;
                 filterMatchType = filterRules[0].filterMatchType;
                 commentReplyText = filterRules[0].commentReplyText;
-                imageReplyUrl = filterRules[0].imageReplyUrl;
-                videoReplyUrl = filterRules[0].videoReplyUrl;
                 privateReplyFlowId = filterRules[0].privateReplyFlowId;
             }
         }
@@ -5731,8 +5669,6 @@
             aiContextId,
             privateReplyFlowId,
             commentReplyText,
-            imageReplyUrl,
-            videoReplyUrl,
             filterMatchType,
             filterWords,
             filterRules,
@@ -5866,8 +5802,6 @@
                 aiContextId: '',
                 privateReplyFlowId: '',
                 commentReplyText: '',
-                imageReplyUrl: '',
-                videoReplyUrl: '',
                 filterMatchType: 'exact',
                 filterWords: '',
                 filterRules: [],
@@ -7283,7 +7217,7 @@
     }
 
     // â•â•â•â•â•â•â•â•â•â•â• Multimedia Post Create (MPC) Logic â•â•â•â•â•â•â•â•â•â•â•
-    let mpcActiveTab = 'text';
+    let mpcActiveTab = 'image';
     const mpcCarouselImages = [];
 
     function switchMpcTab(tab) {

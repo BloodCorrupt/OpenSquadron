@@ -561,82 +561,124 @@ class InstagramService
      */
     public function publishFeedPost(InstagramConnection $connection, string $message, ?string $link = null): array
     {
-        $accessToken = $this->getAccessToken($connection);
-        $pageId = $connection->getPageId();
-        $url = "https://graph.facebook.com/v21.0/{$pageId}/feed";
-
-        $json = ['message' => $message];
-        if ($link !== null && $link !== '') {
-            $json['link'] = $link;
-        }
-
-        $response = $this->httpClient->request('POST', $url, [
-            'headers' => [
-                'Authorization' => "Bearer {$accessToken}",
-                'Content-Type' => 'application/json',
-            ],
-            'json' => $json
-        ]);
-
-        $content = $response->toArray(false);
-        if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish feed post.');
-        }
-
-        return $content;
+        throw new \RuntimeException('Text-only or link-only posts are not natively supported on Instagram through this API. You must provide an image or video.');
     }
 
     /**
-     * Publish a photo post to the page's photos.
+     * Publish a photo post to Instagram.
      */
     public function publishPhotoPost(InstagramConnection $connection, string $imageUrl, string $message): array
     {
         $accessToken = $this->getAccessToken($connection);
-        $pageId = $connection->getPageId();
-        $url = "https://graph.facebook.com/v21.0/{$pageId}/photos";
+        $pageId = $connection->getPageId(); // IG User ID
 
-        $response = $this->httpClient->request('POST', $url, [
+        // 1. Create Media Container
+        $containerUrl = "https://graph.facebook.com/v21.0/{$pageId}/media";
+        $containerRes = $this->httpClient->request('POST', $containerUrl, [
             'headers' => [
                 'Authorization' => "Bearer {$accessToken}",
                 'Content-Type' => 'application/json',
             ],
-            'json' => [
-                'url' => $imageUrl,
-                'caption' => $message,
-            ]
+            'json' => ['image_url' => $imageUrl, 'caption' => $message]
         ]);
+        
+        $containerData = $containerRes->toArray(false);
+        if ($containerRes->getStatusCode() >= 400 || empty($containerData['id'])) {
+            throw new \RuntimeException($containerData['error']['message'] ?? 'Failed to create Instagram photo container.');
+        }
+        $containerId = $containerData['id'];
 
-        $content = $response->toArray(false);
-        if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish photo post.');
+        // 2. Publish Media with Retry for processing delay (Error 9007)
+        $publishUrl = "https://graph.facebook.com/v21.0/{$pageId}/media_publish";
+        $attempts = 0;
+        $content = [];
+        $publishRes = null;
+        
+        while ($attempts < 4) {
+            $publishRes = $this->httpClient->request('POST', $publishUrl, [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => ['creation_id' => $containerId]
+            ]);
+            
+            $content = $publishRes->toArray(false);
+            if ($publishRes->getStatusCode() < 400) {
+                break;
+            }
+            
+            $errorMessage = $content['error']['message'] ?? '';
+            if (strpos($errorMessage, 'Media ID is not available') !== false || ($content['error']['code'] ?? 0) == 9007) {
+                $attempts++;
+                sleep(3);
+                continue;
+            }
+            break; // other error
+        }
+        
+        if ($publishRes->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish Instagram photo.');
         }
 
         return $content;
     }
 
     /**
-     * Publish a video post to the page's videos.
+     * Publish a video post to Instagram.
      */
     public function publishVideoPost(InstagramConnection $connection, string $videoUrl, string $message): array
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
-        $url = "https://graph.facebook.com/v21.0/{$pageId}/videos";
 
-        $response = $this->httpClient->request('POST', $url, [
+        // 1. Create Media Container
+        $containerUrl = "https://graph.facebook.com/v21.0/{$pageId}/media";
+        $containerRes = $this->httpClient->request('POST', $containerUrl, [
             'headers' => [
                 'Authorization' => "Bearer {$accessToken}",
                 'Content-Type' => 'application/json',
             ],
-            'json' => [
-                'file_url' => $videoUrl,
-                'description' => $message,
-            ]
+            'json' => ['media_type' => 'REELS', 'video_url' => $videoUrl, 'caption' => $message]
         ]);
+        
+        $containerData = $containerRes->toArray(false);
+        if ($containerRes->getStatusCode() >= 400 || empty($containerData['id'])) {
+            throw new \RuntimeException($containerData['error']['message'] ?? 'Failed to create Instagram video container.');
+        }
+        $containerId = $containerData['id'];
 
-        $content = $response->toArray(false);
-        if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish video post.');
+        // 2. Publish Media with Retry for processing delay (Error 9007)
+        $publishUrl = "https://graph.facebook.com/v21.0/{$pageId}/media_publish";
+        $attempts = 0;
+        $content = [];
+        $publishRes = null;
+        
+        while ($attempts < 6) { // Videos can take a bit longer
+            $publishRes = $this->httpClient->request('POST', $publishUrl, [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => ['creation_id' => $containerId]
+            ]);
+            
+            $content = $publishRes->toArray(false);
+            if ($publishRes->getStatusCode() < 400) {
+                break;
+            }
+            
+            $errorMessage = $content['error']['message'] ?? '';
+            if (strpos($errorMessage, 'Media ID is not available') !== false || ($content['error']['code'] ?? 0) == 9007) {
+                $attempts++;
+                sleep(5);
+                continue;
+            }
+            break; // other error
+        }
+        
+        if ($publishRes->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish video. Video may still be processing on Instagram, try again in a few minutes.');
         }
 
         return $content;
@@ -647,40 +689,7 @@ class InstagramService
      */
     public function publishCtaPost(InstagramConnection $connection, string $message, string $link, string $ctaType): array
     {
-        $accessToken = $this->getAccessToken($connection);
-        $pageId = $connection->getPageId();
-        $url = "https://graph.facebook.com/v21.0/{$pageId}/feed";
-
-        $payload = [
-            'message' => $message,
-            'link' => $link,
-        ];
-
-        // Some App Verification scopes restrict organic CTA feed posts, so we handle call_to_action payload
-        if ($ctaType !== '' && $ctaType !== 'NONE') {
-            $payload['call_to_action'] = [
-                'type' => $ctaType,
-                'value' => [
-                    'link' => $link
-                ]
-            ];
-        }
-
-        $response = $this->httpClient->request('POST', $url, [
-            'headers' => [
-                'Authorization' => "Bearer {$accessToken}",
-                'Content-Type' => 'application/json',
-            ],
-            'json' => $payload
-        ]);
-
-        $content = $response->toArray(false);
-        if ($response->getStatusCode() >= 400) {
-            // Fallback to standard feed post if CTA restrictions apply
-            return $this->publishFeedPost($connection, $message, $link);
-        }
-
-        return $content;
+        throw new \RuntimeException('Call-to-action buttons are not supported on organic Instagram posts via the API.');
     }
 
     /**
@@ -694,53 +703,78 @@ class InstagramService
         $mediaIds = [];
         foreach ($slides as $index => $slide) {
             $imageUrl = trim($slide['imageUrl'] ?? '');
-            if ($imageUrl === '') {
-                continue;
-            }
+            if ($imageUrl === '') continue;
 
-            // Upload photo as unpublished
-            $url = "https://graph.facebook.com/v21.0/{$pageId}/photos";
-            $response = $this->httpClient->request('POST', $url, [
+            $url = "https://graph.facebook.com/v21.0/{$pageId}/media";
+            $res = $this->httpClient->request('POST', $url, [
                 'headers' => [
                     'Authorization' => "Bearer {$accessToken}",
                     'Content-Type' => 'application/json',
                 ],
-                'json' => [
-                    'url' => $imageUrl,
-                    'published' => false,
-                    'caption' => $slide['title'] ?? '',
-                ]
+                'json' => ['image_url' => $imageUrl, 'is_carousel_item' => 'true']
             ]);
-
-            $data = $response->toArray(false);
-            if ($response->getStatusCode() >= 400 || !isset($data['id'])) {
-                continue;
+            
+            $data = $res->toArray(false);
+            if ($res->getStatusCode() < 400 && !empty($data['id'])) {
+                $mediaIds[] = $data['id'];
             }
-
-            $mediaIds[] = ['media_fbid' => $data['id']];
         }
 
         if (empty($mediaIds)) {
-            // Fallback to simple feed post if no images could be uploaded
-            return $this->publishFeedPost($connection, $message);
+            throw new \RuntimeException('Failed to upload any carousel items.');
         }
 
-        // Publish all uploaded unpublished photos as a single feed post
-        $feedUrl = "https://graph.facebook.com/v21.0/{$pageId}/feed";
-        $response = $this->httpClient->request('POST', $feedUrl, [
+        // Create Carousel Container
+        $containerUrl = "https://graph.facebook.com/v21.0/{$pageId}/media";
+        $containerRes = $this->httpClient->request('POST', $containerUrl, [
             'headers' => [
                 'Authorization' => "Bearer {$accessToken}",
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                'message' => $message,
-                'attached_media' => $mediaIds,
+                'media_type' => 'CAROUSEL', 
+                'children' => implode(',', $mediaIds), 
+                'caption' => $message
             ]
         ]);
+        
+        $containerData = $containerRes->toArray(false);
+        if ($containerRes->getStatusCode() >= 400 || empty($containerData['id'])) {
+            throw new \RuntimeException($containerData['error']['message'] ?? 'Failed to create carousel container.');
+        }
+        $containerId = $containerData['id'];
 
-        $content = $response->toArray(false);
-        if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish multi-photo feed post.');
+        // Publish Carousel with Retry for processing delay (Error 9007)
+        $publishUrl = "https://graph.facebook.com/v21.0/{$pageId}/media_publish";
+        $attempts = 0;
+        $content = [];
+        $publishRes = null;
+        
+        while ($attempts < 5) {
+            $publishRes = $this->httpClient->request('POST', $publishUrl, [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => ['creation_id' => $containerId]
+            ]);
+            
+            $content = $publishRes->toArray(false);
+            if ($publishRes->getStatusCode() < 400) {
+                break;
+            }
+            
+            $errorMessage = $content['error']['message'] ?? '';
+            if (strpos($errorMessage, 'Media ID is not available') !== false || ($content['error']['code'] ?? 0) == 9007) {
+                $attempts++;
+                sleep(4);
+                continue;
+            }
+            break; // other error
+        }
+        
+        if ($publishRes->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to publish Instagram carousel.');
         }
 
         return $content;
@@ -753,14 +787,14 @@ class InstagramService
     {
         $accessToken = $this->getAccessToken($connection);
         $pageId = $connection->getPageId();
-        $url = "https://graph.facebook.com/v21.0/{$pageId}/feed";
+        $url = "https://graph.facebook.com/v21.0/{$pageId}/media";
 
         $response = $this->httpClient->request('GET', $url, [
             'headers' => [
                 'Authorization' => "Bearer {$accessToken}",
             ],
             'query' => [
-                'fields' => 'id,message,created_time,status_type,permalink_url,full_picture,shares,likes.summary(true),comments.summary(true)',
+                'fields' => 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,comments_count,like_count',
                 'limit' => $limit,
             ]
         ]);
@@ -812,6 +846,37 @@ class InstagramService
         if ($response->getStatusCode() >= 400) {
             throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete comment.');
         }
+        return $content;
+    }
+
+    /**
+     * Comment on a media post.
+     */
+    public function commentOnPost(string $mediaId, string $message, ?string $attachmentUrl = null, ?InstagramConnection $connection = null): array
+    {
+        $accessToken = $this->getAccessToken($connection);
+        $url = "https://graph.facebook.com/v21.0/{$mediaId}/comments";
+
+        $payload = [
+            'message' => $message,
+        ];
+        if (!empty($attachmentUrl)) {
+            $payload['attachment_url'] = $attachmentUrl;
+        }
+
+        $response = $this->httpClient->request('POST', $url, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload
+        ]);
+
+        $content = $response->toArray(false);
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException($content['error']['message'] ?? 'Failed to comment on media post.');
+        }
+
         return $content;
     }
 

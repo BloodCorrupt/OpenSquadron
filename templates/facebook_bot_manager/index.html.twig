@@ -4474,6 +4474,29 @@
 
 {# ═══════════ Dialog Modals for Comment Automation ═══════════ #}
 
+<!-- Manual Comment Modal -->
+<div id="manual-comment-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <div class="modal-title">Send Manual Comment</div>
+            <button class="modal-close-btn" onclick="closeManualCommentModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="manual-comment-graph-id" />
+            <div style="margin-bottom: 16px;">
+                <label class="switch-label" style="display: block; margin-bottom: 6px;">Your Comment *</label>
+                <textarea id="manual-comment-text" class="modal-textarea" placeholder="Type your comment here..." style="min-height: 120px;"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+            <button class="btn-action btn-secondary" onclick="closeManualCommentModal()">Cancel</button>
+            <button class="btn-action btn-create" id="btn-send-manual-comment" onclick="submitManualComment()">Send Comment</button>
+        </div>
+    </div>
+</div>
+
 <!-- 1. Configuration Modal -->
 <div id="comment-automation-modal" class="modal-overlay">
     <div class="modal-card">
@@ -5288,9 +5311,14 @@
                             ${settingsIndicator}
                         </div>
                     </div>
-                    <button class="comment-post-gear-btn" onclick="openCommentAutomationModal('${post.id}')" title="Configure comment automation">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    </button>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="comment-post-gear-btn" onclick="openManualCommentModal('${post.id}', '${post.fbPostId || ''}')" title="Send Manual Comment" style="color: var(--primary-accent);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        </button>
+                        <button class="comment-post-gear-btn" onclick="openCommentAutomationModal('${post.id}')" title="Configure comment automation">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                    </div>
                 </div>
             `;
         });
@@ -5302,6 +5330,60 @@
         document.getElementById('comment-modal-title').textContent = "Please give the following information for page response";
         populateModalSettings(pageCommentSettings);
         document.getElementById('comment-automation-modal').classList.add('is-active');
+    }
+
+    function openManualCommentModal(dbPostId, graphPostId) {
+        if (!graphPostId) {
+            showToast('Cannot comment: Facebook Post ID is missing.', 'error');
+            return;
+        }
+        document.getElementById('manual-comment-graph-id').value = graphPostId;
+        document.getElementById('manual-comment-text').value = '';
+        document.getElementById('manual-comment-modal').classList.add('is-active');
+    }
+
+    function closeManualCommentModal() {
+        document.getElementById('manual-comment-modal').classList.remove('is-active');
+    }
+
+    function submitManualComment() {
+        const graphId = document.getElementById('manual-comment-graph-id').value;
+        const message = document.getElementById('manual-comment-text').value.trim();
+        const btn = document.getElementById('btn-send-manual-comment');
+        
+        if (!message) {
+            showToast('Please enter a comment.', 'error');
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        
+        fetch('{{ path('app_facebook_bot_posts_comment_manual') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                postId: graphId,
+                message: message,
+                connectionId: activeConnectionId
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = 'Send Comment';
+            if (data.success) {
+                showToast('Comment sent successfully!', 'success');
+                closeManualCommentModal();
+            } else {
+                showToast('Failed to send comment: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = 'Send Comment';
+            showToast('Network error: ' + err.message, 'error');
+        });
     }
 
     function openCommentAutomationModal(postId) {

@@ -1378,6 +1378,38 @@ class FacebookBotManagerController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
+    #[Route('/facebook-bot-manager/posts/comment-manual', name: 'app_facebook_bot_posts_comment_manual', methods: ['POST'])]
+    public function manualComment(Request $request, EntityManagerInterface $em, FacebookService $facebookService): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            $postId = $data['postId'] ?? null;
+            $message = $data['message'] ?? null;
+            $connectionId = $data['connectionId'] ?? null;
+
+            if (!$postId || !$message || !$connectionId) {
+                return new JsonResponse(['success' => false, 'error' => 'Missing required fields (postId, message, connectionId).'], 400);
+            }
+
+            $connection = $em->getRepository(FacebookConnection::class)->find($connectionId);
+            if (!$connection) {
+                return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+            }
+
+            $result = $facebookService->commentOnPost($postId, $message, null, $connection);
+
+            return new JsonResponse([
+                'success' => true,
+                'result' => $result
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     #[Route('/facebook-bot-manager/posts/add-by-id', name: 'app_facebook_bot_posts_add_by_id', methods: ['POST'])]
     public function addPostById(Request $request): JsonResponse
     {
