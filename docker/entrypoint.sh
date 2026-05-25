@@ -44,6 +44,15 @@ elif [ ! -d ".git" ]; then
     chown -R $HOST_UID:$HOST_GID . || true
 fi
 
+# Ensure .env exists so Symfony's Dotenv parser doesn't crash with PathException
+if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+    cp .env.example .env
+    
+    HOST_UID=$(stat -c '%u' .)
+    HOST_GID=$(stat -c '%g' .)
+    chown $HOST_UID:$HOST_GID .env || true
+fi
+
 echo "Waiting for database to be ready..."
 # A simple loop to check if doctrine can connect to the database
 # We retry up to 30 times (about 60 seconds)
