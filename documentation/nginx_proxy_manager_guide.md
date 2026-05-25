@@ -39,7 +39,19 @@ Meta Webhooks **will absolutely fail** if you do not have a valid SSL certificat
 By default, OpenSquadron allows file uploads up to 64MB for attachments. To ensure Nginx doesn't block large file uploads, click the **Advanced** tab and paste the following line:
 
 ```nginx
+# 1. Standard Reverse Proxy Headers
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto https;
+proxy_set_header X-Forwarded-Port 443;
 client_max_body_size 64M;
+# 2. Tell Symfony directly that the port is secure
+proxy_set_header X-Forwarded-Ssl on;
+
+# 3. Clean HTTP to HTTPS Redirect handler
+proxy_redirect http:// $scheme://;
+
 ```
 
 ## Step 5: Save and Test
