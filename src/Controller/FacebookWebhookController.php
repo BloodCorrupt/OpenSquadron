@@ -417,6 +417,36 @@ class FacebookWebhookController extends AbstractController
                                     ]);
                                 if ($actionButton) {
                                     $this->executeFacebookActionButton($actionButton, $subscriber);
+                                } elseif ($resolvedConnection && $resolvedConnection->isAiActive()) {
+                                    $aiSetting = $this->entityManager->getRepository(\App\Entity\AiSetting::class)->findOneBy([
+                                        'owner' => $resolvedConnection->getOwner(),
+                                        'isActive' => true
+                                    ]);
+                                    if ($aiSetting) {
+                                        $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection);
+                                        if ($aiResponse) {
+                                            try {
+                                                $response = $this->facebookService->sendMessage($subscriber->getPsid(), $aiResponse, $resolvedConnection);
+                                                $metaMessageId = $response['message_id'] ?? null;
+
+                                                $outboundMsg = new Message();
+                                                $outboundMsg->setSubscriber($subscriber);
+                                                $outboundMsg->setDirection('outbound');
+                                                $outboundMsg->setStatus('sent');
+                                                $outboundMsg->setType('text');
+                                                $outboundMsg->setContent($aiResponse);
+                                                $outboundMsg->setMetaMessageId($metaMessageId);
+
+                                                $this->entityManager->persist($outboundMsg);
+                                            } catch (\Exception $sendEx) {
+                                                file_put_contents(
+                                                    $this->getParameter('kernel.project_dir') . '/var/Facebook_webhook.log',
+                                                    date('Y-m-d H:i:s') . " - AI Send Error: " . $sendEx->getMessage() . PHP_EOL,
+                                                    FILE_APPEND
+                                                );
+                                            }
+                                        }
+                                    }
                                 } else {
                                     // Clear if they say something else and no preset is configured
                                     if ($subscriber->getAssignedFacebookFlow()) {
