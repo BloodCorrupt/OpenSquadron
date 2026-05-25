@@ -117,9 +117,14 @@ class InstagramWebhookController extends AbstractController
                 // Process feed webhook changes (comment automation)
                 if (isset($entry['changes']) && is_array($entry['changes']) && $resolvedConnection) {
                     foreach ($entry['changes'] as $change) {
-                        if (($change['field'] ?? '') === 'feed') {
+                        if (($change['field'] ?? '') === 'feed' || ($change['field'] ?? '') === 'comments') {
                             $value = $change['value'] ?? [];
-                            if (($value['item'] ?? '') === 'comment' && ($value['verb'] ?? '') === 'add') {
+                            // For FB it's feed with item=comment and verb=add.
+                            // For IG it's field=comments and verb is not present in the same way.
+                            $isFbComment = ($change['field'] ?? '') === 'feed' && ($value['item'] ?? '') === 'comment' && ($value['verb'] ?? '') === 'add';
+                            $isIgComment = ($change['field'] ?? '') === 'comments';
+                            
+                            if ($isFbComment || $isIgComment) {
                                 try {
                                     $this->handleCommentAddition($value, $resolvedConnection);
                                 } catch (\Throwable $e) {
@@ -315,7 +320,7 @@ class InstagramWebhookController extends AbstractController
                             if ($msgBody === 'WELCOME_GET_STARTED_TRIGGER') {
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'InstagramConnection' => $resolvedConnection,
+                                        'instagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'get-started',
                                         'isEnabled' => true
                                     ]);
@@ -332,7 +337,7 @@ class InstagramWebhookController extends AbstractController
 
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'InstagramConnection' => $resolvedConnection,
+                                        'instagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'chat-with-human',
                                         'isEnabled' => true
                                     ]);
@@ -349,7 +354,7 @@ class InstagramWebhookController extends AbstractController
 
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'InstagramConnection' => $resolvedConnection,
+                                        'instagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'chat-with-bot',
                                         'isEnabled' => true
                                     ]);
@@ -364,7 +369,7 @@ class InstagramWebhookController extends AbstractController
                         if (!$isResumed && $msgType === 'location') {
                             $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                 ->findOneBy([
-                                    'InstagramConnection' => $resolvedConnection,
+                                    'instagramConnection' => $resolvedConnection,
                                     'buttonKey' => 'location-reply',
                                     'isEnabled' => true
                                 ]);
@@ -386,7 +391,7 @@ class InstagramWebhookController extends AbstractController
                                 ->getRepository(\App\Entity\InstagramBotFlow::class)
                                 ->findBy([
                                     'isActive' => true,
-                                    'InstagramConnection' => $resolvedConnection,
+                                    'instagramConnection' => $resolvedConnection,
                                 ]);
 
                             $matchedFlow = null;
@@ -397,7 +402,7 @@ class InstagramWebhookController extends AbstractController
                                     ->findOneBy([
                                         'id' => $flowId,
                                         'isActive' => true,
-                                        'InstagramConnection' => $resolvedConnection,
+                                        'instagramConnection' => $resolvedConnection,
                                     ]);
                             } else {
                                 foreach ($flows as $flow) {
@@ -419,7 +424,7 @@ class InstagramWebhookController extends AbstractController
                                 // No keyword match! Check if No Match is enabled and trigger it.
                                 $actionButton = $this->entityManager->getRepository(\App\Entity\InstagramActionButton::class)
                                     ->findOneBy([
-                                        'InstagramConnection' => $resolvedConnection,
+                                        'instagramConnection' => $resolvedConnection,
                                         'buttonKey' => 'no-match',
                                         'isEnabled' => true
                                     ]);
@@ -462,10 +467,10 @@ class InstagramWebhookController extends AbstractController
             return;
         }
 
-        $commentId = $value['comment_id'] ?? null;
-        $postId = $value['post_id'] ?? null;
-        $commentText = $value['message'] ?? '';
-        $senderName = $value['sender_name'] ?? $value['from']['name'] ?? '';
+        $commentId = $value['comment_id'] ?? $value['id'] ?? null;
+        $postId = $value['post_id'] ?? $value['media']['id'] ?? null;
+        $commentText = $value['message'] ?? $value['text'] ?? '';
+        $senderName = $value['sender_name'] ?? $value['from']['name'] ?? $value['from']['username'] ?? '';
 
         if (!$commentId || !$postId) {
             return;
@@ -475,7 +480,7 @@ class InstagramWebhookController extends AbstractController
         if ($senderId && !empty($senderName)) {
             $existingSubscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
                 'psid' => $senderId,
-                'InstagramConnection' => $connection,
+                'instagramConnection' => $connection,
             ]);
             if ($existingSubscriber && (!$existingSubscriber->getName() || $existingSubscriber->getName() === $senderId)) {
                 $existingSubscriber->setName($senderName);
@@ -520,7 +525,7 @@ class InstagramWebhookController extends AbstractController
         $pageSettings = null;
         if (!$postSettings) {
             $pageAutomation = $automationRepo->findOneBy([
-                'InstagramConnection' => $connection,
+                'instagramConnection' => $connection,
                 'postId' => null
             ]);
             if ($pageAutomation) {
@@ -780,7 +785,7 @@ class InstagramWebhookController extends AbstractController
     {
         $subscriber = $this->entityManager->getRepository(Subscriber::class)->findOneBy([
             'psid' => $psid,
-            'InstagramConnection' => $connection,
+            'instagramConnection' => $connection,
         ]);
 
         if (!$subscriber) {

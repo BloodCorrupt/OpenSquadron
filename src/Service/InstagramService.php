@@ -886,7 +886,7 @@ class InstagramService
     public function replyToComment(string $commentId, string $message, ?string $attachmentUrl = null, ?InstagramConnection $connection = null): array
     {
         $accessToken = $this->getAccessToken($connection);
-        $url = "https://graph.facebook.com/v21.0/{$commentId}/comments";
+        $url = "https://graph.facebook.com/v21.0/{$commentId}/replies";
 
         $payload = [
             'message' => $message,
