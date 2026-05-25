@@ -79,6 +79,15 @@ class ProfileController extends AbstractController
             }
 
             if (!empty($plainPassword)) {
+                $currentPassword = $request->request->get('current_password');
+                if (empty($currentPassword) || !$this->passwordHasher->isPasswordValid($currentUser, $currentPassword)) {
+                    $this->addFlash('error', 'Current password is required and must be correct to change your password.');
+                    return $this->render('profile/edit.html.twig', [
+                        'account' => $currentUser,
+                        'currentUser' => $currentUser,
+                        'owners' => [],
+                    ]);
+                }
                 $currentUser->setPassword($this->passwordHasher->hashPassword($currentUser, $plainPassword));
             }
 

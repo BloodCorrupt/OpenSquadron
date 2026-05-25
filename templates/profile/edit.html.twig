@@ -266,11 +266,32 @@
             </div>
         </div>
 
-        {# Password Field #}
-        <div class="form-group">
-            <label for="password">Security Password <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">(leave blank to keep current)</span></label>
+        {# New Password Field #}
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label for="password">New Password <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">(leave blank to keep current)</span></label>
             <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" autocomplete="new-password">
         </div>
+
+        {# Current Password Field (Required for changes) #}
+        <div class="form-group conditional-field" id="current_password_group">
+            <label for="current_password">Current Password <span style="font-size: 12px; color: #f59e0b; font-weight: normal;">(required to save new password)</span></label>
+            <input type="password" id="current_password" name="current_password" class="form-control" placeholder="Enter current password to confirm changes" autocomplete="current-password">
+        </div>
+
+        {# Security Settings Link #}
+        {% if currentUser.id == account.id %}
+        <div class="form-group" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px;">
+            <div>
+                <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Two-Factor Authentication</h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 12px;">Generate backup codes in case you lose your device.</p>
+            </div>
+            {% if currentUser.isTotpAuthenticationEnabled() %}
+                <a href="{{ path('app_generate_backup_codes') }}" class="btn-secondary" style="padding: 10px 20px; font-size: 13px;">Manage 2FA Backup Codes</a>
+            {% else %}
+                <span class="btn-secondary" style="padding: 10px 20px; font-size: 13px; opacity: 0.5; cursor: not-allowed;" title="You must enable 2FA first to generate backup codes.">Manage 2FA Backup Codes</span>
+            {% endif %}
+        </div>
+        {% endif %}
 
         {# Only Admins editing other accounts can modify roles/types #}
         {% if currentUser.accountType in ['super_admin', 'admin'] and account.id != currentUser.id %}
@@ -399,6 +420,21 @@
 
             updateFieldsVisibility();
             accountTypeSelect.addEventListener('change', updateFieldsVisibility);
+        }
+        
+        // Show current password field if new password is being typed
+        const passwordInput = document.getElementById('password');
+        const currentPasswordGroup = document.getElementById('current_password_group');
+        if (passwordInput && currentPasswordGroup) {
+            passwordInput.addEventListener('input', function() {
+                if (this.value.length > 0) {
+                    currentPasswordGroup.classList.add('visible');
+                    document.getElementById('current_password').required = true;
+                } else {
+                    currentPasswordGroup.classList.remove('visible');
+                    document.getElementById('current_password').required = false;
+                }
+            });
         }
         
         // Dynamic file upload preview helper

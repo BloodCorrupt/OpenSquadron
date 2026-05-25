@@ -8,3 +8,6 @@ scheb_two_factor:
         issuer: OpenSquadron
         leeway: 1
         template: security/2fa_form.html.twig
+    backup_codes:
+        enabled: true
+        manager: scheb_two_factor.default_backup_code_manager

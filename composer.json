@@ -11,6 +11,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.6",
         "endroid/qr-code": "*",
+        "scheb/2fa-backup-code": "^7.13",
         "scheb/2fa-bundle": "*",
         "scheb/2fa-totp": "*",
         "symfony/apache-pack": "*",

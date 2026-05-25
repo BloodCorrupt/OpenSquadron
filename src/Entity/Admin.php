@@ -11,10 +11,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
 use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
+use Scheb\TwoFactorBundle\Model\BackupCodeInterface;
 
 #[ORM\Entity(repositoryClass: AdminRepository::class)]
 #[ORM\Table(name: '`admin`')]
-class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFactorInterface
+class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFactorInterface, BackupCodeInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -114,6 +115,9 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isTotpAuthenticationEnabled = false;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $backupCodes = [];
 
     public function __construct()
     {
@@ -536,6 +540,45 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
     public function setTotpSecret(?string $totpSecret): self
     {
         $this->totpSecret = $totpSecret;
+        return $this;
+    }
+
+    /**
+     * Check if it is a valid backup code.
+     */
+    public function isBackupCode(string $code): bool
+    {
+        if (null === $this->backupCodes) {
+            return false;
+        }
+
+        return in_array($code, $this->backupCodes, true);
+    }
+
+    /**
+     * Invalidate a backup code
+     */
+    public function invalidateBackupCode(string $code): void
+    {
+        if (null === $this->backupCodes) {
+            return;
+        }
+
+        $key = array_search($code, $this->backupCodes, true);
+        if (false !== $key) {
+            unset($this->backupCodes[$key]);
+            $this->backupCodes = array_values($this->backupCodes);
+        }
+    }
+
+    public function getBackupCodes(): ?array
+    {
+        return $this->backupCodes;
+    }
+
+    public function setBackupCodes(?array $backupCodes): self
+    {
+        $this->backupCodes = $backupCodes;
         return $this;
     }
 }
