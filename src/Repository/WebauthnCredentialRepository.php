@@ -62,7 +62,7 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Cr
     {
         return $this->createQueryBuilder('c')
             ->where('c.publicKeyCredentialId = :publicKeyCredentialId')
-            ->setParameter('publicKeyCredentialId', $publicKeyCredentialId)
+            ->setParameter('publicKeyCredentialId', base64_encode($publicKeyCredentialId))
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
