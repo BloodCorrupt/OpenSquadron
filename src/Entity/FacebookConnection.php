@@ -26,6 +26,15 @@ class FacebookConnection implements TenantAwareInterface
     #[ORM\Column(length: 255)]
     private ?string $pageId = null;
 
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $botSettings = [];
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $postsCache = [];
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $repliedCommentsCache = [];
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $pageName = null;
 
@@ -215,6 +224,39 @@ class FacebookConnection implements TenantAwareInterface
     public function setCreatedAtValue(): void
     {
         $this->createdAt = new \DateTime('now', new \DateTimeZone('UTC'));
+    }
+
+    public function getBotSettings(): ?array
+    {
+        return $this->botSettings;
+    }
+
+    public function setBotSettings(?array $botSettings): static
+    {
+        $this->botSettings = $botSettings;
+        return $this;
+    }
+
+    public function getPostsCache(): ?array
+    {
+        return $this->postsCache;
+    }
+
+    public function setPostsCache(?array $postsCache): static
+    {
+        $this->postsCache = $postsCache;
+        return $this;
+    }
+
+    public function getRepliedCommentsCache(): ?array
+    {
+        return $this->repliedCommentsCache;
+    }
+
+    public function setRepliedCommentsCache(?array $repliedCommentsCache): static
+    {
+        $this->repliedCommentsCache = $repliedCommentsCache;
+        return $this;
     }
 
     #[ORM\PreUpdate]

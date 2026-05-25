@@ -29,6 +29,9 @@ class WhatsAppConnection implements TenantAwareInterface
     #[ORM\Column(length: 255)]
     private ?string $phoneNumberId = null;
 
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $botSettings = [];
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $label = null;
 
@@ -251,6 +254,17 @@ class WhatsAppConnection implements TenantAwareInterface
     public function setCreatedAtValue(): void
     {
         $this->createdAt = new \DateTime();
+    }
+
+    public function getBotSettings(): ?array
+    {
+        return $this->botSettings;
+    }
+
+    public function setBotSettings(?array $botSettings): static
+    {
+        $this->botSettings = $botSettings;
+        return $this;
     }
 
     #[ORM\PreUpdate]

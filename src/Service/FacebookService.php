@@ -1023,19 +1023,10 @@ class FacebookService
         }
 
         // Save menuItems to connection's settings file
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $file = $dir . "/conn_{$connection->getId()}.json";
-
-        $currentSettings = [];
-        if (file_exists($file)) {
-            $currentSettings = json_decode(file_get_contents($file), true) ?: [];
-        }
-
+        $currentSettings = $connection->getBotSettings() ?: [];
         $currentSettings['persistent-menu'] = $menuItems;
-        file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
+        $connection->setBotSettings($currentSettings);
+        $this->entityManager->flush();
 
         return $menuItems;
     }
@@ -1192,16 +1183,7 @@ class FacebookService
         $fbData = $this->getWelcomeScreenSettings($connection);
 
         // Load existing settings first to preserve custom/draft fields (e.g. disabled greeting text)
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $file = $dir . "/conn_{$connection->getId()}.json";
-
-        $currentSettings = [];
-        if (file_exists($file)) {
-            $currentSettings = json_decode(file_get_contents($file), true) ?: [];
-        }
+        $currentSettings = $connection->getBotSettings() ?: [];
         $localWelcome = $currentSettings['welcome-screen'] ?? [];
 
         $showGreeting = $localWelcome['showGreeting'] ?? false;
@@ -1256,7 +1238,8 @@ class FacebookService
         ];
 
         $currentSettings['welcome-screen'] = $welcomeSettings;
-        file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
+        $connection->setBotSettings($currentSettings);
+        $this->entityManager->flush();
 
         return $welcomeSettings;
     }

@@ -533,14 +533,12 @@ class InstagramWebhookController extends AbstractController
 
         // Try to find the internal post ID mapped to this fbPostId
         $internalPostId = null;
-        $postsFile = $projectDir . "/var/Instagram_posts/conn_" . $connection->getId() . ".json";
-        if (file_exists($postsFile)) {
-            $posts = json_decode(file_get_contents($postsFile), true) ?: [];
-            foreach ($posts as $p) {
-                if (($p['fbPostId'] ?? '') === $postId || ($p['id'] ?? '') === $postId) {
-                    $internalPostId = $p['id'] ?? null;
-                    break;
-                }
+        $postsCache = $connection->getPostsCache() ?: [];
+        $cachedPosts = $postsCache['posts'] ?? [];
+        foreach ($cachedPosts as $p) {
+            if (($p['fbPostId'] ?? '') === $postId || ($p['id'] ?? '') === $postId) {
+                $internalPostId = $p['id'] ?? null;
+                break;
             }
         }
         
@@ -619,14 +617,7 @@ class InstagramWebhookController extends AbstractController
         }
 
         // 3. Prevent multiple replies if sendReplyMultipleTimes is false
-        $repliedFile = $projectDir . "/var/Instagram_bot_settings/replied_comments_" . $connection->getId() . ".json";
-        if (!is_dir(dirname($repliedFile))) {
-            mkdir(dirname($repliedFile), 0777, true);
-        }
-        $repliedComments = [];
-        if (file_exists($repliedFile)) {
-            $repliedComments = json_decode(file_get_contents($repliedFile), true) ?: [];
-        }
+        $repliedComments = $connection->getRepliedCommentsCache() ?: [];
 
         if (empty($settings['sendReplyMultipleTimes']) && in_array($commentId, $repliedComments)) {
             return;
@@ -786,7 +777,8 @@ class InstagramWebhookController extends AbstractController
 
                 if ($replySuccess) {
                     $repliedComments[] = $commentId;
-                    file_put_contents($repliedFile, json_encode($repliedComments));
+                    $connection->setRepliedCommentsCache($repliedComments);
+                    $this->entityManager->flush();
                 }
 
                 // Send Private Reply message flow if configured

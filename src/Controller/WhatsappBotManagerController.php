@@ -111,12 +111,8 @@ class WhatsappBotManagerController extends AbstractController
         $sequences = [];
         $actionButtons = [];
         if ($selectedConnection) {
-            $dir = __DIR__ . '/../../var/whatsapp_bot_settings';
-            $file = $dir . "/conn_{$selectedConnection->getId()}.json";
-            if (file_exists($file)) {
-                $saved = json_decode(file_get_contents($file), true) ?: [];
-                $settings = $this->mergeSettings($defaultSettings, $saved);
-            }
+            $saved = $selectedConnection->getBotSettings() ?: [];
+            $settings = $this->mergeSettings($defaultSettings, $saved);
 
             // Load sequences from DB
             $seqEntities = $em->getRepository(WhatsappDripSequence::class)->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'DESC']);
@@ -252,21 +248,17 @@ class WhatsappBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Invalid WhatsApp Connection ID.'], 400);
         }
 
+        $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
         $type = trim((string)$request->request->get('type'));
         if ($type === '') {
             return new JsonResponse(['success' => false, 'error' => 'Settings target type is required.'], 400);
         }
 
-        $dir = __DIR__ . '/../../var/whatsapp_bot_settings';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $file = $dir . "/conn_{$connectionId}.json";
-        
-        $currentSettings = [];
-        if (file_exists($file)) {
-            $currentSettings = json_decode(file_get_contents($file), true) ?: [];
-        }
+        $currentSettings = $connection->getBotSettings() ?: [];
 
         $data = $request->request->get('data');
         if (\is_string($data)) {
@@ -280,7 +272,8 @@ class WhatsappBotManagerController extends AbstractController
             $currentSettings[$type] = $data;
         }
 
-        file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
+        $connection->setBotSettings($currentSettings);
+        $em->flush();
 
         return new JsonResponse([
             'success' => true,

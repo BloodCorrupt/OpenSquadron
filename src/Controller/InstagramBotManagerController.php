@@ -138,14 +138,8 @@ class InstagramBotManagerController extends AbstractController
             $flows = $em->getRepository(InstagramBotFlow::class)->findBy(['InstagramConnection' => $selectedConnection], ['id' => 'DESC']);
             
             // Read saved settings
-            $dir = __DIR__ . '/../../var/Instagram_bot_settings';
-            $file = $dir . "/conn_{$selectedConnection->getId()}.json";
-            if (file_exists($file)) {
-                $saved = json_decode(file_get_contents($file), true) ?: [];
-                $settings = $this->mergeSettings($defaultSettings, $saved);
-            } else {
-                $settings = $defaultSettings;
-            }
+            $saved = $selectedConnection->getBotSettings() ?: [];
+            $settings = $this->mergeSettings($defaultSettings, $saved);
 
             // Load sequences from DB
             $seqEntities = $em->getRepository(InstagramDripSequence::class)->findBy(['InstagramConnection' => $selectedConnection], ['id' => 'DESC']);
@@ -280,6 +274,11 @@ class InstagramBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Invalid Instagram Connection ID.'], 400);
         }
 
+        $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
+        }
+
         $type = trim((string)$request->request->get('type'));
         if ($type === '') {
             return new JsonResponse(['success' => false, 'error' => 'Settings target type is required.'], 400);
@@ -292,11 +291,6 @@ class InstagramBotManagerController extends AbstractController
         }
 
         if ($type === 'comment-automation') {
-            $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
-            if (!$connection) {
-                return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
-            }
-
             $automationRepo = $em->getRepository(\App\Entity\InstagramCommentAutomation::class);
             $automation = $automationRepo->findOneBy([
                 'InstagramConnection' => $connection,
@@ -347,30 +341,12 @@ class InstagramBotManagerController extends AbstractController
 
             $em->persist($automation);
             $em->flush();
-
-            return new JsonResponse([
-                'success' => true,
-                'message' => 'Comment Automation settings saved successfully.',
-                'data'    => $decoded
-            ]);
         }
 
-        $dir = __DIR__ . '/../../var/Instagram_bot_settings';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $file = $dir . "/conn_{$connectionId}.json";
-        
-        $currentSettings = [];
-        if (file_exists($file)) {
-            $currentSettings = json_decode(file_get_contents($file), true) ?: [];
-        }
-
+        $currentSettings = $connection->getBotSettings() ?: [];
         $currentSettings[$type] = $decoded;
 
         if ($type === 'persistent-menu') {
-            file_put_contents($dir . '/last_persistent_menu_payload.json', json_encode($currentSettings, JSON_PRETTY_PRINT));
-            $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
             if ($connection) {
                 $menuItems = [];
                 if (is_array($currentSettings['persistent-menu'])) {
@@ -404,7 +380,6 @@ class InstagramBotManagerController extends AbstractController
         }
 
         if ($type === 'welcome-screen') {
-            $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
             if ($connection) {
                 try {
                     $welcomeSettings = $currentSettings['welcome-screen'] ?? [];
@@ -418,7 +393,8 @@ class InstagramBotManagerController extends AbstractController
             }
         }
 
-        file_put_contents($file, json_encode($currentSettings, JSON_PRETTY_PRINT));
+        $connection->setBotSettings($currentSettings);
+        $em->flush();
 
         return new JsonResponse([
             'success' => true,
@@ -570,13 +546,9 @@ class InstagramBotManagerController extends AbstractController
         if ($selectedConnection) {
             $flows = $em->getRepository(InstagramBotFlow::class)->findBy(['InstagramConnection' => $selectedConnection], ['id' => 'DESC']);
             
-            $dir = __DIR__ . '/../../var/Instagram_bot_settings';
-            $file = $dir . "/conn_{$selectedConnection->getId()}.json";
-            if (file_exists($file)) {
-                $saved = json_decode(file_get_contents($file), true) ?: [];
-                if (isset($saved['broadcast-template']) && \is_array($saved['broadcast-template'])) {
-                    $templates = $saved['broadcast-template'];
-                }
+            $saved = $selectedConnection->getBotSettings() ?: [];
+            if (isset($saved['broadcast-template']) && \is_array($saved['broadcast-template'])) {
+                $templates = $saved['broadcast-template'];
             }
         }
 
@@ -959,22 +931,18 @@ class InstagramBotManagerController extends AbstractController
 
         $refresh = filter_var($request->query->get('refresh'), FILTER_VALIDATE_BOOLEAN);
 
-        $dir = __DIR__ . '/../../var/Instagram_posts';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $file = $dir . "/conn_{$connectionId}.json";
-        $posts = [];
-
-        $cacheExists = file_exists($file);
-        if ($cacheExists) {
-            $posts = json_decode(file_get_contents($file), true) ?: [];
+        $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
         }
 
-        $needsRefresh = !$cacheExists || empty($posts) || (time() - filemtime($file) > 300);
+        $cache = $connection->getPostsCache() ?: [];
+        $posts = $cache['posts'] ?? [];
+        $lastUpdated = $cache['updatedAt'] ?? 0;
+
+        $needsRefresh = empty($posts) || (time() - $lastUpdated > 300);
 
         if ($refresh || $needsRefresh) {
-            $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
             if ($connection) {
                 try {
                     $feed = $InstagramService->fetchPageFeed($connection, 50);
@@ -1068,7 +1036,8 @@ class InstagramBotManagerController extends AbstractController
                     });
 
                     $posts = $syncedPosts;
-                    file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+                    $connection->setPostsCache(['updatedAt' => time(), 'posts' => $posts]);
+                    $em->flush();
                 } catch (\Exception $e) {
                     return new JsonResponse([
                         'success' => true,
@@ -1080,7 +1049,6 @@ class InstagramBotManagerController extends AbstractController
         }
 
         // Attach DB-based comment automation settings to posts
-        $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
         if ($connection) {
             $automationRepo = $em->getRepository(\App\Entity\InstagramCommentAutomation::class);
             // Fetch all automations for this connection that have a postId
@@ -1137,16 +1105,8 @@ class InstagramBotManagerController extends AbstractController
         $slides = json_decode($slidesJson, true) ?: [];
         $publishNow = filter_var($request->request->get('publishNow'), FILTER_VALIDATE_BOOLEAN);
 
-        $dir = __DIR__ . '/../../var/Instagram_posts';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $file = $dir . "/conn_{$connectionId}.json";
-
-        $posts = [];
-        if (file_exists($file)) {
-            $posts = json_decode(file_get_contents($file), true) ?: [];
-        }
+        $cache = $connection->getPostsCache() ?: [];
+        $posts = $cache['posts'] ?? [];
 
         $postIndex = -1;
         if ($id) {
@@ -1208,7 +1168,10 @@ class InstagramBotManagerController extends AbstractController
             $posts[] = $post;
         }
 
-        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+        $cache['posts'] = $posts;
+        $cache['updatedAt'] = time();
+        $connection->setPostsCache($cache);
+        $em->flush();
 
         return new JsonResponse(['success' => true, 'post' => $post]);
     }
@@ -1226,14 +1189,11 @@ class InstagramBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
         }
 
-        $dir = __DIR__ . '/../../var/Instagram_posts';
-        $file = $dir . "/conn_{$connectionId}.json";
-
-        if (!file_exists($file)) {
+        $cache = $connection->getPostsCache() ?: [];
+        $posts = $cache['posts'] ?? [];
+        if (empty($posts)) {
             return new JsonResponse(['success' => false, 'error' => 'Post log not found.'], 404);
         }
-
-        $posts = json_decode(file_get_contents($file), true) ?: [];
         $postIndex = -1;
         foreach ($posts as $idx => $p) {
             if ($p['id'] === $id) {
@@ -1284,27 +1244,29 @@ class InstagramBotManagerController extends AbstractController
         }
 
         $posts[$postIndex] = $post;
-        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+        $cache['posts'] = $posts;
+        $cache['updatedAt'] = time();
+        $connection->setPostsCache($cache);
+        $em->flush();
 
         return new JsonResponse(['success' => true, 'post' => $post]);
     }
 
     #[Route('/Instagram-bot-manager/posts/delete/{id}', name: 'app_instagram_bot_posts_delete', methods: ['POST'])]
-    public function deletePost(string $id, Request $request): JsonResponse
+    public function deletePost(string $id, Request $request, EntityManagerInterface $em): JsonResponse
     {
         $connectionId = (int)$request->request->get('connectionId');
         if (!$connectionId) {
             return new JsonResponse(['success' => false, 'error' => 'Connection ID is required.'], 400);
         }
 
-        $dir = __DIR__ . '/../../var/Instagram_posts';
-        $file = $dir . "/conn_{$connectionId}.json";
-
-        if (!file_exists($file)) {
-            return new JsonResponse(['success' => false, 'error' => 'Post log not found.'], 404);
+        $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
         }
 
-        $posts = json_decode(file_get_contents($file), true) ?: [];
+        $cache = $connection->getPostsCache() ?: [];
+        $posts = $cache['posts'] ?? [];
         $updatedPosts = [];
         $found = false;
 
@@ -1320,7 +1282,10 @@ class InstagramBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Post not found in log.'], 404);
         }
 
-        file_put_contents($file, json_encode($updatedPosts, JSON_PRETTY_PRINT));
+        $cache['posts'] = $updatedPosts;
+        $cache['updatedAt'] = time();
+        $connection->setPostsCache($cache);
+        $em->flush();
 
         return new JsonResponse(['success' => true]);
     }
@@ -1401,7 +1366,7 @@ class InstagramBotManagerController extends AbstractController
     }
 
     #[Route('/Instagram-bot-manager/posts/add-by-id', name: 'app_instagram_bot_posts_add_by_id', methods: ['POST'])]
-    public function addPostById(Request $request): JsonResponse
+    public function addPostById(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $connectionId = (int)$request->request->get('connectionId');
         $fbPostId = trim((string)$request->request->get('fbPostId'));
@@ -1410,16 +1375,13 @@ class InstagramBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Connection ID and Instagram Post ID are required.'], 400);
         }
 
-        $dir = __DIR__ . '/../../var/Instagram_posts';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+        $connection = $em->getRepository(InstagramConnection::class)->find($connectionId);
+        if (!$connection) {
+            return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
         }
-        $file = $dir . "/conn_{$connectionId}.json";
 
-        $posts = [];
-        if (file_exists($file)) {
-            $posts = json_decode(file_get_contents($file), true) ?: [];
-        }
+        $cache = $connection->getPostsCache() ?: [];
+        $posts = $cache['posts'] ?? [];
 
         $existingPost = null;
         foreach ($posts as $p) {
@@ -1450,7 +1412,10 @@ class InstagramBotManagerController extends AbstractController
         ];
 
         array_unshift($posts, $newPost);
-        file_put_contents($file, json_encode($posts, JSON_PRETTY_PRINT));
+        $cache['posts'] = $posts;
+        $cache['updatedAt'] = time();
+        $connection->setPostsCache($cache);
+        $em->flush();
 
         return new JsonResponse(['success' => true, 'post' => $newPost]);
     }
