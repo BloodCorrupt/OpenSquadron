@@ -12,6 +12,20 @@ Before you begin, ensure you have the following installed on your Windows machin
 
 ---
 
+## Documentation
+
+We have comprehensive guides for setting up, deploying, and customizing OpenSquadron:
+
+- 🐳 **[Docker Deployment Guide](documentation/docker_setup.md)** - CLI deployments via Docker Compose (NPM, Cloudflare, HAProxy).
+- 🚢 **[Portainer Deployment Guide](documentation/portainer_guide.md)** - 1-Click GUI deployments via App Templates (GitOps/Auto-Updating).
+- ☁️ **[Cloudflare Tunnel Setup](documentation/cloudflare_setup.md)** - Securely exposing your local server to the internet.
+- 💬 **[Connect WhatsApp Cloud API](documentation/connect_whatsapp.md)** - Step-by-step guide to linking WhatsApp.
+- 📘 **[Connect Meta / Facebook App](documentation/connect_meta_app.md)** - Step-by-step guide for Facebook/Instagram integration.
+- 🎨 **[CSS Customization](documentation/css_customization.md)** - How to style the chat widget and dashboard.
+- 🌍 **[White Label Domain Setup](documentation/white_label_domain_setup.md)** - Running OpenSquadron under your own custom branding.
+
+---
+
 ## 1. Project Setup
 
 1. **Install Dependencies:**
