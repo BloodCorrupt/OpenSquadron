@@ -194,7 +194,7 @@ class InstagramBotManagerController extends AbstractController
 
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
 
-        return $this->render('Instagram_bot_manager/index.html.twig', [
+        return $this->render('instagram_bot_manager/index.html.twig', [
             'flows'         => $flows,
             'connection'    => $selectedConnection,
             'connections'   => $connections,
@@ -556,7 +556,7 @@ class InstagramBotManagerController extends AbstractController
 
         $httpApis = $em->getRepository(\App\Entity\HttpApi::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
 
-        return $this->render('Instagram_bot_manager/flows.html.twig', [
+        return $this->render('instagram_bot_manager/flows.html.twig', [
             'flows'       => $flows,
             'flowsJson'   => $payload,
             'connection'  => $selectedConnection,
@@ -604,7 +604,7 @@ class InstagramBotManagerController extends AbstractController
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
         $httpApis = $em->getRepository(\App\Entity\HttpApi::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
 
-        return $this->render('Instagram_bot_manager/sequence_builder.html.twig', [
+        return $this->render('instagram_bot_manager/sequence_builder.html.twig', [
             'connection' => $connection,
             'sequence' => $sequence,
             'flows' => $flows,
