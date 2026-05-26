@@ -297,4 +297,53 @@ class SubscriptionUsageService
             'limit'   => $limit,
         ];
     }
+
+    /**
+     * Returns true if the user can add another eCommerce product.
+     * A limit of 0 means unlimited.
+     */
+    public function canAddProduct(Admin $user): bool
+    {
+        $owner = $this->resolveOwner($user);
+
+        if ($owner->getAccountType() === 'super_admin') {
+            return true;
+        }
+
+        $limits = $this->getLimits($owner);
+        if ($limits === null) {
+            return true;
+        }
+
+        $limit = (int) ($limits['products'] ?? 0);
+        if ($limit === 0) {
+            return true; // 0 = unlimited
+        }
+
+        $currentProductCount = $this->em->getRepository(\App\Entity\EcomProduct::class)->count([
+            'owner' => $owner,
+        ]);
+
+        return $currentProductCount < $limit;
+    }
+
+    /**
+     * Returns the current eCommerce product usage info.
+     * Returns ['current' => int, 'limit' => int] where limit 0 = unlimited.
+     */
+    public function getProductUsage(Admin $user): array
+    {
+        $owner = $this->resolveOwner($user);
+        $limits = $this->getLimits($owner);
+        $limit = (int) ($limits['products'] ?? 0);
+
+        $current = $this->em->getRepository(\App\Entity\EcomProduct::class)->count([
+            'owner' => $owner,
+        ]);
+
+        return [
+            'current' => $current,
+            'limit'   => $limit,
+        ];
+    }
 }

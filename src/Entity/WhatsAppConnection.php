@@ -50,6 +50,9 @@ class WhatsAppConnection implements TenantAwareInterface
     #[ORM\Column(length: 50)]
     private ?string $status = 'active';
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $ecomContextEnabled = false;
+
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $aiActive = false;
 
@@ -71,6 +74,10 @@ class WhatsAppConnection implements TenantAwareInterface
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
+
+    public function __construct()
+    {
+    }
 
     public function getId(): ?int
     {
@@ -167,6 +174,18 @@ class WhatsAppConnection implements TenantAwareInterface
     public function setStatus(string $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function isEcomContextEnabled(): bool
+    {
+        return $this->ecomContextEnabled;
+    }
+
+    public function setEcomContextEnabled(bool $ecomContextEnabled): static
+    {
+        $this->ecomContextEnabled = $ecomContextEnabled;
 
         return $this;
     }

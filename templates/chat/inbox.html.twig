@@ -1053,6 +1053,7 @@
                    data-id="{{ sub.id }}"
                    data-name="{{ name|lower }}"
                    data-phone="{{ phone|lower }}"
+                   data-bot-paused="{{ sub.isBotPaused() ? 'true' : 'false' }}"
                    data-connection-id="{% if sub.channel == 'facebook' %}{{ sub.facebookConnection ? 'facebook-' ~ sub.facebookConnection.id : '' }}{% elseif sub.channel == 'Instagram' %}{{ sub.instagramConnection ? 'instagram-' ~ sub.instagramConnection.id : '' }}{% else %}{{ sub.whatsAppConnection ? 'whatsapp-' ~ sub.whatsAppConnection.id : '' }}{% endif %}"
                    onclick="selectSubscriber(event, {{ sub.id }}, '{{ name|escape('js') }}', '{{ phone|escape('js') }}')">
                     <div class="subscriber-name" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -1147,6 +1148,11 @@
                     <span id="chat-window-timer-text">24h 00m 00s</span>
                 </div>
                 
+                <!-- Bot Pause Toggle -->
+                <button id="bot-pause-btn" onclick="toggleBotPause()" style="margin-left: 8px; display: {% if activeSubscriber %}flex{% else %}none{% endif %}; align-items: center; gap: 6px; background: {% if activeSubscriber and activeSubscriber.isBotPaused() %}rgba(239, 68, 68, 0.2){% else %}rgba(15, 23, 42, 0.5){% endif %}; border: 1px solid {% if activeSubscriber and activeSubscriber.isBotPaused() %}rgba(239, 68, 68, 0.4){% else %}var(--glass-border){% endif %}; border-radius: 8px; padding: 6px 14px; font-size: 13px; color: {% if activeSubscriber and activeSubscriber.isBotPaused() %}#ef4444{% else %}#fff{% endif %}; cursor: pointer; transition: all 0.2s;">
+                    <span id="bot-pause-text">{% if activeSubscriber and activeSubscriber.isBotPaused() %}Bot: Paused{% else %}Bot: Active{% endif %}</span>
+                </button>
+                
                 <!-- Mobile Info Toggle Button -->
                 <button class="mobile-info-btn" onclick="toggleRightSidebar()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; padding: 4px; align-items: center; justify-content: center; outline: none; -webkit-tap-highlight-color: transparent;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-accent);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
@@ -1160,7 +1166,7 @@
                             {% if message.type == 'image' and message.mediaUrl %}
                                 {% set mediaUrl = ('://' in message.mediaUrl) ? message.mediaUrl : '/' ~ message.mediaUrl %}
                                 <a href="{{ mediaUrl }}" target="_blank">
-                                    <img src="{{ mediaUrl }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                                    <img src="{{ mediaUrl }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; image-orientation: none;">
                                 </a>
                             {% elseif message.type == 'audio' and message.mediaUrl %}
                                 {% set mediaUrl = ('://' in message.mediaUrl) ? message.mediaUrl : '/' ~ message.mediaUrl %}
@@ -1191,6 +1197,9 @@
                 <input type="file" id="media-upload" accept="image/*,audio/*" style="display: none;" onchange="handleFileSelect(this)">
                 <button id="media-upload-btn" class="attachment-btn" onclick="document.getElementById('media-upload').click()" title="Attach File" {% if activeSubscriber and not chatWindow.isOpen %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </button>
+                <button id="ecom-btn" class="attachment-btn" onclick="openEcomModal()" title="Send Product" {% if activeSubscriber and not chatWindow.isOpen %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                 </button>
                 <div id="file-preview" style="display: none; align-items: center; background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 20px; font-size: 12px; color: #fff; gap: 10px;">
                     <span id="file-name">file.jpg</span>
@@ -1342,6 +1351,20 @@
     </div>
 </div>
 
+<!-- eCommerce Modal -->
+<div id="ecomModal" class="template-modal">
+    <div class="template-modal-content" style="max-width: 600px;">
+        <div class="template-modal-header">
+            <h3 class="template-modal-title">Select a Product to Send</h3>
+            <button onclick="closeEcomModal()" class="template-modal-close">&times;</button>
+        </div>
+        
+        <div class="template-modal-body" id="ecomModalBody">
+            <div style="color: #888; text-align: center; padding: 20px;">Loading products...</div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block javascripts %}
@@ -1395,6 +1418,7 @@
     function handleFileSelect(input) {
         const file = input.files[0];
         if (file) {
+            window.ecomAttachedImageUrls = [];
             document.getElementById('file-preview').style.display = 'flex';
             document.getElementById('file-name').innerText = file.name;
         }
@@ -1403,6 +1427,7 @@
     function clearFile() {
         document.getElementById('media-upload').value = '';
         document.getElementById('file-preview').style.display = 'none';
+        window.ecomAttachedImageUrls = [];
     }
 
     function renderMessage(msg) {
@@ -1412,7 +1437,7 @@
         
         let mediaHtml = '';
         if (msg.type === 'image' && msg.mediaUrl) {
-            mediaHtml = `<a href="${msg.mediaUrl}" target="_blank"><img src="${msg.mediaUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;"></a>`;
+            mediaHtml = `<a href="${msg.mediaUrl}" target="_blank"><img src="${msg.mediaUrl}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; image-orientation: none;"></a>`;
         } else if (msg.type === 'audio' && msg.mediaUrl) {
             mediaHtml = `<audio controls style="max-width: 100%; margin-bottom: 8px;"><source src="${msg.mediaUrl}"></audio>`;
         }
@@ -1434,13 +1459,33 @@
         activeSubscriberId = id;
         
         // Update active class in sidebar
+        let activeItem = null;
         document.querySelectorAll('.subscriber-item').forEach(item => {
             if (parseInt(item.getAttribute('data-id'), 10) === id) {
                 item.classList.add('active');
+                activeItem = item;
             } else {
                 item.classList.remove('active');
             }
         });
+        
+        const isBotPaused = activeItem ? (activeItem.getAttribute('data-bot-paused') === 'true') : false;
+        const botPauseBtn = document.getElementById('bot-pause-btn');
+        if (botPauseBtn) {
+            const botPauseText = document.getElementById('bot-pause-text');
+            if (isBotPaused) {
+                botPauseBtn.style.background = 'rgba(239, 68, 68, 0.2)';
+                botPauseBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                botPauseBtn.style.color = '#ef4444';
+                botPauseText.innerText = 'Bot: Paused';
+            } else {
+                botPauseBtn.style.background = 'rgba(15, 23, 42, 0.5)';
+                botPauseBtn.style.borderColor = 'var(--glass-border)';
+                botPauseBtn.style.color = '#fff';
+                botPauseText.innerText = 'Bot: Active';
+            }
+            botPauseBtn.style.display = 'flex';
+        }
         
         // Force list re-render cache refresh on next poll
         subscribersCacheJson = ''; 
@@ -1508,25 +1553,99 @@
         });
     }
 
+    async function toggleBotPause() {
+        if (!activeSubscriberId) return;
+        
+        const btn = document.getElementById('bot-pause-btn');
+        const textSpan = document.getElementById('bot-pause-text');
+        const originalText = textSpan.innerText;
+        textSpan.innerText = 'Updating...';
+        btn.disabled = true;
+        
+        try {
+            const res = await fetch(`/inbox/api/subscriber/${activeSubscriberId}/toggle-bot-pause`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                const activeItem = document.querySelector(`.subscriber-item[data-id="${activeSubscriberId}"]`);
+                if (activeItem) {
+                    activeItem.setAttribute('data-bot-paused', data.botPaused ? 'true' : 'false');
+                }
+                
+                if (data.botPaused) {
+                    btn.style.background = 'rgba(239, 68, 68, 0.2)';
+                    btn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                    btn.style.color = '#ef4444';
+                    textSpan.innerText = 'Bot: Paused';
+                } else {
+                    btn.style.background = 'rgba(15, 23, 42, 0.5)';
+                    btn.style.borderColor = 'var(--glass-border)';
+                    btn.style.color = '#fff';
+                    textSpan.innerText = 'Bot: Active';
+                }
+            } else {
+                alert('Failed to update bot status.');
+                textSpan.innerText = originalText;
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error updating bot status.');
+            textSpan.innerText = originalText;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    /**
+     * Fix EXIF orientation client-side using Canvas API.
+     * Modern browsers auto-apply EXIF rotation when drawing to canvas,
+     * so the exported blob has correct pixel orientation with no EXIF metadata.
+     */
+    function fixImageOrientation(file) {
+        return new Promise((resolve) => {
+            if (!file.type.startsWith('image/')) { resolve(file); return; }
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob((blob) => {
+                    const fixedName = file.name.replace(/\.[^.]+$/, '.jpg');
+                    const fixedFile = new File([blob], fixedName, { type: 'image/jpeg' });
+                    resolve(fixedFile);
+                    URL.revokeObjectURL(img.src);
+                }, 'image/jpeg', 0.92);
+            };
+            img.onerror = () => { resolve(file); };
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
     async function sendMessage() {
         const input = document.getElementById('message-input');
         const fileInput = document.getElementById('media-upload');
         const content = input.value.trim();
-        const file = fileInput.files[0];
+        let file = fileInput.files[0];
         
         if (!activeSubscriberId) return;
-        if (!content && !file) return;
+        if (!content && !file && (!window.ecomAttachedImageUrls || window.ecomAttachedImageUrls.length === 0)) return;
         
         input.disabled = true;
         
-        const formData = new FormData();
-        formData.append('subscriber_id', activeSubscriberId);
-        formData.append('content', content);
+        // Prepare an array of messages to send
+        let messagesToSend = [];
         
         if (file) {
             let mediaType = 'text';
             if (file.type.startsWith('image/')) {
                 mediaType = 'image';
+                file = await fixImageOrientation(file);
             } else if (file.type.startsWith('audio/')) {
                 mediaType = 'audio';
             }
@@ -1537,7 +1656,6 @@
             fileNameEl.innerText = 'Uploading to Cloud...';
             
             try {
-                // 1. Get presigned URL
                 const res = await fetch('/settings/media/presign', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1551,15 +1669,16 @@
                 if (!res.ok) {
                     const errData = await res.json();
                     if (errData.code === 'R2_NOT_CONFIGURED') {
-                        // Fallback: Append raw file binary to formData and post directly to PHP
-                        formData.append('media', file);
+                        let fd = new FormData();
+                        fd.append('subscriber_id', activeSubscriberId);
+                        fd.append('content', content);
+                        fd.append('media', file);
+                        messagesToSend.push(fd);
                     } else {
                         throw new Error(errData.error || 'Failed to get upload signature.');
                     }
                 } else {
                     const { uploadUrl, publicUrl } = await res.json();
-
-                    // 2. Direct PUT upload to R2
                     const uploadRes = await fetch(uploadUrl, {
                         method: 'PUT',
                         headers: { 'Content-Type': file.type },
@@ -1570,9 +1689,12 @@
                         throw new Error('Cloud storage upload failed.');
                     }
 
-                    // Success! Add the publicUrl and media_type to form data
-                    formData.append('media_url', publicUrl);
-                    formData.append('media_type', mediaType);
+                    let fd = new FormData();
+                    fd.append('subscriber_id', activeSubscriberId);
+                    fd.append('content', content);
+                    fd.append('media_url', publicUrl);
+                    fd.append('media_type', mediaType);
+                    messagesToSend.push(fd);
                 }
             } catch (err) {
                 console.error(err);
@@ -1581,55 +1703,69 @@
                 input.disabled = false;
                 return;
             }
+        } else if (window.ecomAttachedImageUrls && window.ecomAttachedImageUrls.length > 0) {
+            window.ecomAttachedImageUrls.forEach((imgUrl, idx) => {
+                let fd = new FormData();
+                fd.append('subscriber_id', activeSubscriberId);
+                fd.append('media_url', imgUrl);
+                fd.append('media_type', 'image');
+                fd.append('content', idx === 0 ? content : '');
+                messagesToSend.push(fd);
+            });
+        } else {
+            let fd = new FormData();
+            fd.append('subscriber_id', activeSubscriberId);
+            fd.append('content', content);
+            messagesToSend.push(fd);
         }
         
-        fetch('{{ path('app_inbox_send') }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                input.value = '';
-                clearFile();
+        try {
+            for (let fd of messagesToSend) {
+                const data = await fetch('{{ path('app_inbox_send') }}', {
+                    method: 'POST',
+                    body: fd
+                }).then(r => r.json());
                 
-                if (activeSubscriberId === data.message.subscriber_id || data.message.id) {
-                    if (!document.querySelector(`.message-bubble[data-message-id="${data.message.id}"]`)) {
-                        const bubble = renderMessage({
-                            id: data.message.id,
-                            type: data.message.type,
-                            content: data.message.content,
-                            mediaUrl: data.message.mediaUrl,
-                            timeOnly: 'Just now',
-                            direction: 'outbound'
-                        });
-                        
-                        const emptyPlaceholder = messagesContainer.querySelector('div[style*="text-align: center"]');
-                        if (emptyPlaceholder) {
-                            emptyPlaceholder.remove();
-                        }
-                        
-                        messagesContainer.appendChild(bubble);
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                        
-                        if (data.message.id > lastMessageId) {
-                            lastMessageId = data.message.id;
+                if (data.success) {
+                    input.value = '';
+                    clearFile();
+                    
+                    if (activeSubscriberId === data.message.subscriber_id || data.message.id) {
+                        if (!document.querySelector(`.message-bubble[data-message-id="${data.message.id}"]`)) {
+                            const bubble = renderMessage({
+                                id: data.message.id,
+                                type: data.message.type,
+                                content: data.message.content,
+                                mediaUrl: data.message.mediaUrl,
+                                timeOnly: 'Just now',
+                                direction: 'outbound'
+                            });
+                            
+                            const emptyPlaceholder = messagesContainer.querySelector('div[style*="text-align: center"]');
+                            if (emptyPlaceholder) {
+                                emptyPlaceholder.remove();
+                            }
+                            
+                            messagesContainer.appendChild(bubble);
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            
+                            if (data.message.id > lastMessageId) {
+                                lastMessageId = data.message.id;
+                            }
                         }
                     }
+                    refreshSidebar();
+                } else {
+                    alert('Error sending message: ' + data.error);
                 }
-                refreshSidebar();
-            } else {
-                alert('Error sending message: ' + data.error);
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
             alert('Failed to send message.');
-        })
-        .finally(() => {
+        } finally {
             input.disabled = false;
             input.focus();
-        });
+        }
     }
 
     function openTemplateModal() {
@@ -1686,6 +1822,172 @@
             console.error('Error:', error);
             alert('Failed to send template.');
         });
+    }
+
+    let ecomBaseUrl = '';
+    let ecomProductsCache = [];
+    let ecomCheckoutEnabled = true;
+
+    function openEcomModal() {
+        if (!activeSubscriberId) return;
+        document.getElementById('ecomModal').style.display = 'flex';
+        const body = document.getElementById('ecomModalBody');
+        
+        body.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">Loading products...</div>';
+        
+        fetch(`/inbox/api/subscriber/${activeSubscriberId}/products`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                body.innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">${data.error || 'Failed to load products.'}</div>`;
+                return;
+            }
+            
+            ecomBaseUrl = data.baseUrl;
+            ecomProductsCache = data.products;
+            ecomCheckoutEnabled = data.checkoutEnabled;
+            window.ecomGlobalExternalUrl = data.globalExternalUrl;
+            
+            if (ecomProductsCache.length === 0) {
+                body.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No active products found. Add some in the eCommerce Hub.</div>';
+                return;
+            }
+            
+            renderEcomProducts();
+        })
+        .catch(err => {
+            body.innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Error loading products.</div>';
+        });
+    }
+
+    function renderEcomProducts() {
+        const body = document.getElementById('ecomModalBody');
+        let html = '<div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); padding: 4px;">';
+        ecomProductsCache.forEach(p => {
+            const img = p.imageUrl 
+                ? `<img src="${p.imageUrl}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px 8px 0 0; image-orientation: none;">` 
+                : `<div style="width: 100%; height: 120px; background: rgba(0,0,0,0.2); display: flex; align-items:center; justify-content:center; border-radius: 8px 8px 0 0; color: #888; font-size: 12px;">No Image</div>`;
+            
+            html += `
+            <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer; transition: background 0.2s;" onclick="openProductImageSelect(${p.id})" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                ${img}
+                <div style="padding: 10px;">
+                    <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #fff; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">${p.name}</div>
+                    <div style="font-size: 13px; color: #22d3ee; font-weight: 500;">${p.currency} ${parseFloat(p.price).toFixed(2)}</div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        body.innerHTML = html;
+    }
+
+    window.tempEcomSelectedImages = [];
+    window.tempEcomAllImages = [];
+
+    function openProductImageSelect(productId) {
+        const p = ecomProductsCache.find(x => x.id === productId);
+        if (!p) return;
+        
+        let images = [];
+        if (p.imageUrl) images.push(p.imageUrl);
+        if (p.galleryUrls && p.galleryUrls.length > 0) {
+            images = images.concat(p.galleryUrls);
+        }
+        
+        const body = document.getElementById('ecomModalBody');
+        let html = `<div style="margin-bottom: 15px;">
+            <button onclick="renderEcomProducts()" class="btn-sidebar-accent" style="padding: 6px 12px; margin-right: 10px;">&larr; Back to Products</button>
+            <span style="color: #fff; font-weight: bold;">Select images for ${p.name.replace(/'/g, "\\'")}</span>
+        </div>`;
+
+        window.tempEcomSelectedImages = images.length > 0 ? [images[0]] : [];
+        window.tempEcomAllImages = images;
+
+        if (images.length === 0) {
+            html += `<div style="color: #888; margin-bottom: 20px;">No images available.</div>`;
+        } else {
+            html += `<div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin-bottom: 20px;">`;
+            images.forEach((img, i) => {
+                const isSelected = i === 0;
+                html += `
+                <div style="position: relative; cursor: pointer;" onclick="toggleImageSelect(${i})">
+                    <img src="${img}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; border: 2px solid ${isSelected ? '#10b981' : 'transparent'};" id="product-img-sel-${i}">
+                    <div id="product-img-check-${i}" style="position: absolute; top: 5px; right: 5px; background: #10b981; color: white; border-radius: 50%; width: 24px; height: 24px; display: ${isSelected ? 'flex' : 'none'}; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="3" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        const extUrlSafe = p.externalUrl ? p.externalUrl.replace(/'/g, "\\'") : '';
+        const skuSafe = p.sku ? p.sku.replace(/'/g, "\\'") : '';
+
+        html += `
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button onclick="insertProductLink(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${extUrlSafe}', '${skuSafe}')" class="btn-sidebar-accent">Attach & Send</button>
+        </div>`;
+        
+        body.innerHTML = html;
+    }
+
+    function toggleImageSelect(index) {
+        const imgUrl = window.tempEcomAllImages[index];
+        const selIdx = window.tempEcomSelectedImages.indexOf(imgUrl);
+        const checkEl = document.getElementById(`product-img-check-${index}`);
+        const imgEl = document.getElementById(`product-img-sel-${index}`);
+        if (selIdx > -1) {
+            window.tempEcomSelectedImages.splice(selIdx, 1);
+            checkEl.style.display = 'none';
+            imgEl.style.border = '2px solid transparent';
+        } else {
+            window.tempEcomSelectedImages.push(imgUrl);
+            checkEl.style.display = 'flex';
+            imgEl.style.border = '2px solid #10b981';
+        }
+    }
+
+    function closeEcomModal() {
+        document.getElementById('ecomModal').style.display = 'none';
+    }
+
+    function insertProductLink(productId, productName, externalUrl, sku) {
+        closeEcomModal();
+        const input = document.getElementById('message-input');
+        let link = '';
+        if (ecomCheckoutEnabled) {
+            link = `${ecomBaseUrl}?product=${productId}`;
+        } else if (externalUrl) {
+            link = externalUrl;
+        } else if (window.ecomGlobalExternalUrl) {
+            link = window.ecomGlobalExternalUrl;
+        }
+        
+        if (window.tempEcomSelectedImages && window.tempEcomSelectedImages.length > 0) {
+            window.ecomAttachedImageUrls = window.tempEcomSelectedImages;
+            document.getElementById('file-preview').style.display = 'flex';
+            document.getElementById('file-name').innerText = `Attached ${window.ecomAttachedImageUrls.length} Product Image(s)`;
+            document.getElementById('media-upload').value = '';
+        } else {
+            window.ecomAttachedImageUrls = [];
+        }
+        
+        const currentVal = input.value.trim();
+        let msg = `Check out this product: ${productName}`;
+        if (sku) {
+            msg += `\nSKU: ${sku}`;
+        }
+        if (link) {
+            msg += `\n${link}`;
+        }
+        
+        if (currentVal) {
+            input.value = currentVal + '\n\n' + msg;
+        } else {
+            input.value = msg;
+        }
+        
+        input.focus();
     }
 
     function filterSubscribers() {

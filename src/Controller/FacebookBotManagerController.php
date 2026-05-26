@@ -855,9 +855,11 @@ class FacebookBotManagerController extends AbstractController
         }
 
         $aiActive = (bool)$request->request->get('aiActive', false);
+        $ecomContextEnabled = (bool)$request->request->get('ecomContextEnabled', false);
         $activeContextId = $request->request->get('activeContextId');
 
         $connection->setAiActive($aiActive);
+        $connection->setEcomContextEnabled($ecomContextEnabled);
 
         if ($request->request->has('agentName')) {
             $connection->setAgentName(trim($request->request->get('agentName', '')) ?: null);

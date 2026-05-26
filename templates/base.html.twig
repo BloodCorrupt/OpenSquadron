@@ -1528,7 +1528,7 @@
                 </div>
                 {% endif %}
                 <div class="nav-dropdown">
-                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'custom_field' in app.request.attributes.get('_route')|default('') or 'http_api' in app.request.attributes.get('_route')|default('') or 'team_members' in app.request.attributes.get('_route')|default('') or 'media_storage_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
+                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'custom_field' in app.request.attributes.get('_route')|default('') or 'http_api' in app.request.attributes.get('_route')|default('') or 'team_members' in app.request.attributes.get('_route')|default('') or 'media_storage_settings' in app.request.attributes.get('_route')|default('') or 'ecommerce' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </span> Settings <span class="dropdown-caret">▼</span>
@@ -1539,6 +1539,13 @@
                                 <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                             </span> Subscribers
                         </a>
+                        {% if app.user.hasModuleAccess('ecommerce') %}
+                        <a href="{{ path('app_ecommerce') }}" class="dropdown-item {% if 'ecommerce' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            </span> eCommerce Hub
+                        </a>
+                        {% endif %}
                         {% if app.user.hasModuleAccess('ai_copilot') %}
                         <a href="{{ path('app_ai_settings') }}" class="dropdown-item {% if 'ai_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
                             <span class="nav-icon">
@@ -1649,9 +1656,23 @@
                     </div>
 
                     <!-- Notification Bell -->
-                    <div class="bell-btn" onclick="alert('No new notifications.')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                        <div class="bell-badge">0</div>
+                    <div class="profile-container" id="notificationContainer">
+                        <div class="bell-btn" id="notificationBtn" style="cursor: pointer; position: relative;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <div class="bell-badge" id="notificationBadge" style="display: none;">0</div>
+                        </div>
+                        <div class="profile-dropdown-menu" id="notificationMenu" style="width: 300px; max-height: 420px; overflow-y: auto;">
+                            <!-- Header -->
+                            <div style="padding: 12px 18px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: inherit; z-index: 10;">
+                                <div style="font-weight: 600; color: var(--text-header); font-size: 14px;">Notifications</div>
+                                {% if app.user.hasModuleAccess('ecommerce') %}
+                                <a href="{{ path('app_ecommerce') }}" style="font-size: 11px; color: var(--primary-accent); text-decoration: none; font-weight: 600;">View Hub</a>
+                                {% endif %}
+                            </div>
+                            <div id="notificationList">
+                                <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">No new notifications</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Profile Dropdown -->
@@ -1804,17 +1825,27 @@
                 profileBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     var isOpen = profileContainer.classList.contains('is-open');
+                    document.querySelectorAll('.nav-dropdown').forEach(function(d) { d.classList.remove('is-open'); });
+                    var notifContainer = document.getElementById('notificationContainer');
+                    if (notifContainer) notifContainer.classList.remove('is-open');
                     
-                    // Close normal navigation dropdowns
-                    document.querySelectorAll('.nav-dropdown').forEach(function(d) {
-                        d.classList.remove('is-open');
-                    });
+                    if (isOpen) profileContainer.classList.remove('is-open');
+                    else profileContainer.classList.add('is-open');
+                });
+            }
+
+            // Notification dropdown logic
+            var notifBtn = document.getElementById('notificationBtn');
+            var notifContainer = document.getElementById('notificationContainer');
+            if (notifBtn && notifContainer) {
+                notifBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var isOpen = notifContainer.classList.contains('is-open');
+                    document.querySelectorAll('.nav-dropdown').forEach(function(d) { d.classList.remove('is-open'); });
+                    if (profileContainer) profileContainer.classList.remove('is-open');
                     
-                    if (isOpen) {
-                        profileContainer.classList.remove('is-open');
-                    } else {
-                        profileContainer.classList.add('is-open');
-                    }
+                    if (isOpen) notifContainer.classList.remove('is-open');
+                    else notifContainer.classList.add('is-open');
                 });
             }
 
@@ -1827,6 +1858,9 @@
                 }
                 if (profileContainer && !e.target.closest('.profile-container')) {
                     profileContainer.classList.remove('is-open');
+                }
+                if (notifContainer && !e.target.closest('#notificationContainer')) {
+                    notifContainer.classList.remove('is-open');
                 }
                 // Custom select outside click handler
                 if (!e.target.closest('.custom-glass-select-wrapper')) {
@@ -2122,5 +2156,42 @@
             }
         </script>
         {% block javascripts %}{% endblock %}
-    </body>
+    {% if app.user and app.user.hasModuleAccess('ecommerce') %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/ecommerce/api/recent-orders')
+        .then(res => res.json())
+        .then(data => {
+            if (data.totalPending > 0) {
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    badge.textContent = data.totalPending;
+                    badge.style.display = 'flex';
+                }
+            }
+            if (data.orders && data.orders.length > 0) {
+                const list = document.getElementById('notificationList');
+                if (list) {
+                    list.innerHTML = data.orders.map(order => `
+                        <a href="/ecommerce" class="profile-dropdown-item" style="display:flex; flex-direction:column; align-items:flex-start; padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); text-decoration: none;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">
+                                <span style="background: rgba(245,158,11,0.15); color: #f59e0b; padding: 2px 6px; border-radius: 4px; font-size: 9px; text-transform: uppercase; margin-right: 6px;">New Order</span>
+                                #${order.orderNumber}
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted);">
+                                ${order.customerName} &mdash; ${order.currency} ${parseFloat(order.totalAmount).toFixed(2)}
+                            </div>
+                            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px; opacity: 0.7;">
+                                ${order.createdAt}
+                            </div>
+                        </a>
+                    `).join('');
+                }
+            }
+        })
+        .catch(err => console.error('Failed to fetch notifications', err));
+});
+</script>
+{% endif %}
+</body>
 </html>

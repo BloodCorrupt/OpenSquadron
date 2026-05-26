@@ -62,6 +62,9 @@ class InstagramConnection implements TenantAwareInterface
     #[ORM\Column(length: 50)]
     private ?string $status = 'active';
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $ecomContextEnabled = false;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -209,6 +212,17 @@ class InstagramConnection implements TenantAwareInterface
     public function setStatus(string $status): static
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function isEcomContextEnabled(): bool
+    {
+        return $this->ecomContextEnabled;
+    }
+
+    public function setEcomContextEnabled(bool $ecomContextEnabled): static
+    {
+        $this->ecomContextEnabled = $ecomContextEnabled;
         return $this;
     }
 

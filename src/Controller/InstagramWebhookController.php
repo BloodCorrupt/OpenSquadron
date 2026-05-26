@@ -410,7 +410,7 @@ class InstagramWebhookController extends AbstractController
                         }
 
                         // If subscriber is paused (bot paused for live chat), ignore regular flows
-                        if (!$isResumed && $subscriber->getStatus() === 'paused') {
+                        if (!$isResumed && ($subscriber->getStatus() === 'paused' || $subscriber->isBotPaused())) {
                             $isResumed = true;
                         }
 
@@ -466,7 +466,7 @@ class InstagramWebhookController extends AbstractController
                                         'isActive' => true
                                     ]);
                                     if ($aiSetting) {
-                                        $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection);
+                                        $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection, (string)$subscriber->getId(), 'instagram');
                                         if ($aiResponse) {
                                             try {
                                                 $response = $this->InstagramService->sendMessage($subscriber->getPsid(), $aiResponse, $resolvedConnection);
@@ -685,7 +685,7 @@ class InstagramWebhookController extends AbstractController
                         }
                     }
 
-                    $replyText = $this->aiAgentService->generateResponse($commentText, $aiSetting, $connection);
+                    $replyText = $this->aiAgentService->generateResponse($commentText, $aiSetting, $connection, (string)$senderId, 'instagram');
                     
                     // Restore original context
                     $connection->setActiveContext($originalContext);

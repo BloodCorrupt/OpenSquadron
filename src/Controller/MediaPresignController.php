@@ -33,7 +33,7 @@ class MediaPresignController extends AbstractController
         }
 
         // Validate prefix to prevent arbitrary paths
-        $allowedPrefixes = ['avatars', 'branding', 'whatsapp', 'posts'];
+        $allowedPrefixes = ['avatars', 'branding', 'whatsapp', 'posts', 'products'];
         if (!in_array($prefix, $allowedPrefixes, true)) {
             return new JsonResponse(['error' => 'Invalid upload prefix.'], 400);
         }
@@ -93,7 +93,7 @@ class MediaPresignController extends AbstractController
             return new JsonResponse(['error' => 'No file uploaded.'], 400);
         }
 
-        $allowedPrefixes = ['avatars', 'branding', 'whatsapp', 'posts'];
+        $allowedPrefixes = ['avatars', 'branding', 'whatsapp', 'posts', 'products'];
         if (!in_array($prefix, $allowedPrefixes, true)) {
             return new JsonResponse(['error' => 'Invalid upload prefix.'], 400);
         }

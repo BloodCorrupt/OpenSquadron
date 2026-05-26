@@ -141,11 +141,30 @@ class LiveChatController extends AbstractController
                     'Instagram' => $sub->getInstagramConnection() ? 'instagram-' . $sub->getInstagramConnection()->getId() : null,
                     default => $sub->getWhatsAppConnection() ? 'whatsapp-' . $sub->getWhatsAppConnection()->getId() : null,
                 },
+                'botPaused' => $sub->isBotPaused(),
                 'lastMessage' => $lastMessage,
             ];
         }
         
         return new JsonResponse($data);
+    }
+
+    #[Route('/inbox/api/subscriber/{id}/toggle-bot-pause', name: 'app_inbox_toggle_bot_pause', methods: ['POST'])]
+    public function toggleBotPause(Subscriber $subscriber, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
+        
+        $data = json_decode($request->getContent(), true);
+        if ($data && isset($data['botPaused'])) {
+            $botPaused = filter_var($data['botPaused'], FILTER_VALIDATE_BOOLEAN);
+        } else {
+            $botPaused = !$subscriber->isBotPaused();
+        }
+        
+        $subscriber->setBotPaused($botPaused);
+        $em->flush();
+        
+        return new JsonResponse(['success' => true, 'botPaused' => $subscriber->isBotPaused()]);
     }
 
     #[Route('/inbox/api/messages/{id}', name: 'app_inbox_api_messages', methods: ['GET'])]
@@ -288,9 +307,21 @@ class LiveChatController extends AbstractController
                     if ($channel === 'facebook') {
                         $response = $facebookService->sendMediaMessage($subscriber->getPsid(), $type, $absoluteUrl, $subscriber->getFacebookConnection());
                         $metaMessageId = $response['message_id'] ?? null;
+                        if (!empty(trim($content))) {
+                            $facebookService->sendMessage($subscriber->getPsid(), $content, $subscriber->getFacebookConnection());
+                        }
+                    } elseif ($channel === 'Instagram') {
+                        $response = $instagramService->sendMediaMessage($subscriber->getPsid(), $type, $absoluteUrl, $subscriber->getInstagramConnection());
+                        $metaMessageId = $response['message_id'] ?? null;
+                        if (!empty(trim($content))) {
+                            $instagramService->sendMessage($subscriber->getPsid(), $content, $subscriber->getInstagramConnection());
+                        }
                     } else {
                         $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $type, $absoluteUrl, $subscriber->getWhatsAppConnection());
                         $metaMessageId = $response['messages'][0]['id'] ?? null;
+                        if (!empty(trim($content))) {
+                            $whatsappService->sendMessage($subscriber->getPhoneNumber(), $content, $subscriber->getWhatsAppConnection());
+                        }
                     }
                 }
             } elseif ($mediaUrl && $mediaType !== 'text') {
@@ -301,9 +332,21 @@ class LiveChatController extends AbstractController
                 if ($channel === 'facebook') {
                     $response = $facebookService->sendMediaMessage($subscriber->getPsid(), $mediaType, $mediaUrl, $subscriber->getFacebookConnection());
                     $metaMessageId = $response['message_id'] ?? null;
+                    if (!empty(trim($content))) {
+                        $facebookService->sendMessage($subscriber->getPsid(), $content, $subscriber->getFacebookConnection());
+                    }
+                } elseif ($channel === 'Instagram') {
+                    $response = $instagramService->sendMediaMessage($subscriber->getPsid(), $mediaType, $mediaUrl, $subscriber->getInstagramConnection());
+                    $metaMessageId = $response['message_id'] ?? null;
+                    if (!empty(trim($content))) {
+                        $instagramService->sendMessage($subscriber->getPsid(), $content, $subscriber->getInstagramConnection());
+                    }
                 } else {
                     $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $mediaType, $mediaUrl, $subscriber->getWhatsAppConnection());
                     $metaMessageId = $response['messages'][0]['id'] ?? null;
+                    if (!empty(trim($content))) {
+                        $whatsappService->sendMessage($subscriber->getPhoneNumber(), $content, $subscriber->getWhatsAppConnection());
+                    }
                 }
             } else {
                 // Normal text message
@@ -538,6 +581,64 @@ class LiveChatController extends AbstractController
         $subscriber->setNotes($notes);
         $em->flush();
         return new JsonResponse(['success' => true, 'notes' => $notes]);
+    }
+
+    #[Route('/inbox/api/subscriber/{id}/products', name: 'app_inbox_api_subscriber_products', methods: ['GET'])]
+    public function getSubscriberProducts(Subscriber $subscriber, EntityManagerInterface $em): JsonResponse
+    {
+        $channel = strtolower(trim($subscriber->getChannel() ?? ''));
+        $connectionId = null;
+        $owner = null;
+
+        if ($channel === 'whatsapp' || empty($channel)) {
+            $conn = $subscriber->getWhatsAppConnection();
+            if ($conn) { $connectionId = $conn->getId(); $owner = $conn->getOwner(); $channel = 'whatsapp'; }
+        }
+        
+        if (!$connectionId && ($channel === 'facebook' || empty($channel))) {
+            $conn = $subscriber->getFacebookConnection();
+            if ($conn) { $connectionId = $conn->getId(); $owner = $conn->getOwner(); $channel = 'facebook'; }
+        }
+        
+        if (!$connectionId && ($channel === 'instagram' || empty($channel))) {
+            $conn = $subscriber->getInstagramConnection();
+            if ($conn) { $connectionId = $conn->getId(); $owner = $conn->getOwner(); $channel = 'instagram'; }
+        }
+
+        if (!$owner || !$connectionId) {
+            return new JsonResponse(['success' => false, 'error' => 'No active connection found.'], 404);
+        }
+
+        $products = $em->getRepository(\App\Entity\EcomProduct::class)->findBy([
+            'owner' => $owner,
+            'status' => 'active'
+        ], ['name' => 'ASC']);
+
+        $setting = $em->getRepository(\App\Entity\EcomSetting::class)->findOneBy(['owner' => $owner]);
+        $checkoutEnabled = $setting ? $setting->isCheckoutEnabled() : true;
+        $globalExternalUrl = $setting ? $setting->getGlobalExternalUrl() : null;
+
+        $baseUrl = $this->generateUrl('app_public_checkout', [
+            'channel' => $channel,
+            'connectionId' => $connectionId,
+            'senderId' => $subscriber->getPsid() ?: $subscriber->getPhoneNumber()
+        ], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL);
+
+        return new JsonResponse([
+            'success' => true,
+            'baseUrl' => $baseUrl,
+            'checkoutEnabled' => $checkoutEnabled,
+            'globalExternalUrl' => $globalExternalUrl,
+            'products' => array_map(fn($p) => [
+                'id' => $p->getId(),
+                'name' => $p->getName(),
+                'price' => $p->getPrice(),
+                'currency' => $p->getCurrency(),
+                'imageUrl' => $p->getImageUrl(),
+                'externalUrl' => $p->getExternalUrl(),
+                'galleryUrls' => $p->getGalleryUrls() ?: []
+            ], $products)
+        ]);
     }
 
     private function getChatWindowStatus(Subscriber $subscriber, EntityManagerInterface $em): array

@@ -1,0 +1,1345 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}eCommerce Hub - OpenSquadron{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* ═══════════════════════ eCommerce Hub Styles ═══════════════════════ */
+
+    .ecom-hub { padding: 24px 32px; height: 100%; overflow-y: auto; }
+
+    /* ── Stats Bar ── */
+    .ecom-stats-bar {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;
+        margin-bottom: 28px;
+    }
+    .ecom-stat-card {
+        background: var(--glass-bg); backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border); border-radius: 16px;
+        padding: 20px 24px; display: flex; align-items: center; gap: 16px;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .ecom-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+    .ecom-stat-icon {
+        width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .ecom-stat-icon svg { width: 24px; height: 24px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .ecom-stat-icon.products { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+    .ecom-stat-icon.active-prod { background: linear-gradient(135deg, #10b981, #34d399); }
+    .ecom-stat-icon.orders { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+    .ecom-stat-icon.revenue { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+    .ecom-stat-value { font-size: 26px; font-weight: 700; color: var(--text-header); line-height: 1; }
+    .ecom-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Tab Navigation ── */
+    .ecom-tabs {
+        display: flex; gap: 4px; margin-bottom: 24px;
+        background: var(--glass-bg); backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border); border-radius: 12px;
+        padding: 4px; width: fit-content;
+    }
+    .ecom-tab {
+        padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 500;
+        color: var(--text-muted); cursor: pointer; transition: all 0.25s ease;
+        border: none; background: transparent; white-space: nowrap;
+    }
+    .ecom-tab:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
+    .ecom-tab.active {
+        background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(16,185,129,0.1));
+        color: var(--primary-accent); font-weight: 600;
+        box-shadow: 0 2px 12px rgba(6,182,212,0.12);
+    }
+    .ecom-tab-panel { display: none; }
+    .ecom-tab-panel.active { display: block; }
+
+    /* ── Header Row ── */
+    .ecom-header-row {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+    .ecom-header-title { font-size: 20px; font-weight: 700; color: var(--text-header); }
+    .ecom-btn-primary {
+        display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: 12px;
+        background: linear-gradient(135deg, #06b6d4, #10b981); color: #fff; font-weight: 600;
+        font-size: 14px; border: none; cursor: pointer; transition: all 0.25s ease;
+        box-shadow: 0 4px 16px rgba(6,182,212,0.25);
+    }
+    .ecom-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(6,182,212,0.35); }
+    .ecom-btn-primary svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── Product Grid ── */
+    .ecom-product-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
+    }
+    .ecom-product-card {
+        background: var(--glass-bg); backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border); border-radius: 16px;
+        overflow: hidden; transition: transform 0.25s ease, box-shadow 0.25s ease;
+        display: flex; flex-direction: column;
+    }
+    .ecom-product-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+    .ecom-product-img {
+        width: 100%; height: 200px; object-fit: cover; background: rgba(0,0,0,0.2);
+        display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .ecom-product-img img { width: 100%; height: 100%; object-fit: cover; }
+    .ecom-product-img .no-image {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; height: 100%; color: var(--text-muted); font-size: 13px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04));
+    }
+    .ecom-product-img .no-image svg { width: 36px; height: 36px; opacity: 0.4; stroke: var(--text-muted); fill: none; }
+    .ecom-product-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+    .ecom-product-name { font-size: 16px; font-weight: 600; color: var(--text-header); margin-bottom: 6px; }
+    .ecom-product-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .ecom-product-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .ecom-product-price { font-size: 20px; font-weight: 700; background: linear-gradient(135deg, #06b6d4, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .ecom-product-stock { font-size: 11px; padding: 3px 10px; border-radius: 8px; font-weight: 600; }
+    .ecom-product-stock.in-stock { background: rgba(16,185,129,0.15); color: #10b981; }
+    .ecom-product-stock.unlimited { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .ecom-product-stock.out-of-stock { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    .ecom-product-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--glass-border); }
+    .ecom-product-actions button {
+        flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+        border: none; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .ecom-product-actions button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .ecom-btn-publish { background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(16,185,129,0.1)); color: var(--primary-accent); }
+    .ecom-btn-publish:hover { background: linear-gradient(135deg, rgba(6,182,212,0.3), rgba(16,185,129,0.2)); }
+    .ecom-btn-edit { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+    .ecom-btn-edit:hover { background: rgba(255,255,255,0.1); color: var(--text-main); }
+    .ecom-btn-delete { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .ecom-btn-delete:hover { background: rgba(239,68,68,0.2); }
+
+    .ecom-product-badge {
+        position: absolute; top: 12px; right: 12px; padding: 3px 10px; border-radius: 8px;
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .ecom-badge-active { background: rgba(16,185,129,0.2); color: #10b981; }
+    .ecom-badge-draft { background: rgba(245,158,11,0.2); color: #f59e0b; }
+    .ecom-badge-archived { background: rgba(107,114,128,0.2); color: #6b7280; }
+    .ecom-product-img { position: relative; }
+
+    /* ── Orders Table ── */
+    .ecom-orders-table {
+        width: 100%; border-collapse: separate; border-spacing: 0;
+        background: var(--glass-bg); backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden;
+    }
+    .ecom-orders-table th {
+        padding: 14px 18px; text-align: left; font-size: 11px; text-transform: uppercase;
+        letter-spacing: 0.8px; color: var(--text-muted); font-weight: 600;
+        border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.15);
+    }
+    .ecom-orders-table td {
+        padding: 14px 18px; font-size: 13px; color: var(--text-main);
+        border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle;
+    }
+    .ecom-orders-table tr:last-child td { border-bottom: none; }
+    .ecom-orders-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .ecom-status-badge {
+        padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
+        display: inline-block; text-transform: capitalize;
+    }
+    .ecom-status-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .ecom-status-approved { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .ecom-status-confirmed { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .ecom-status-delivered { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .ecom-status-completed { background: rgba(16,185,129,0.15); color: #10b981; }
+    .ecom-status-cancelled { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    .ecom-order-actions { display: flex; gap: 6px; }
+    .ecom-order-actions button, .ecom-order-actions select {
+        padding: 5px 10px; border-radius: 6px; font-size: 11px; border: 1px solid var(--glass-border);
+        background: rgba(255,255,255,0.04); color: var(--text-main); cursor: pointer; transition: all 0.2s;
+    }
+    .ecom-order-actions button:hover { background: rgba(255,255,255,0.08); }
+    .ecom-order-actions select { appearance: none; padding-right: 20px; }
+
+    /* ── Slide Panel (Product Form / Order Form / Publish) ── */
+    .ecom-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+        z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .ecom-overlay.is-open { opacity: 1; pointer-events: auto; }
+
+    .ecom-panel {
+        position: fixed; top: 0; right: -560px; width: 520px; max-width: 90vw; height: 100vh;
+        background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px);
+        border-left: 1px solid var(--glass-border); box-shadow: -10px 0 50px rgba(0,0,0,0.5);
+        z-index: 1001; transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex; flex-direction: column;
+    }
+    body[data-theme="light"] .ecom-panel { background: rgba(255, 255, 255, 0.95); }
+    .ecom-panel.is-open { right: 0; }
+
+    .ecom-panel-header {
+        padding: 22px 28px; border-bottom: 1px solid var(--glass-border);
+        display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .ecom-panel-title { font-size: 18px; font-weight: 700; color: var(--text-header); }
+    .ecom-panel-close {
+        background: none; border: none; color: var(--text-muted); cursor: pointer;
+        transition: color 0.2s; padding: 4px; line-height: 1;
+    }
+    .ecom-panel-close:hover { color: #ef4444; }
+    .ecom-panel-close svg { width: 22px; height: 22px; stroke: currentColor; fill: none; }
+    .ecom-panel-body { padding: 24px 28px; overflow-y: auto; flex: 1; }
+
+    .ecom-form-group { margin-bottom: 18px; }
+    .ecom-form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ecom-form-input, .ecom-form-select, .ecom-form-textarea {
+        width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 14px;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+        color: var(--text-main); transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+        box-sizing: border-box;
+    }
+    .ecom-form-input:focus, .ecom-form-select:focus, .ecom-form-textarea:focus {
+        outline: none; border-color: var(--primary-accent);
+    }
+    .ecom-form-textarea { min-height: 80px; resize: vertical; }
+    .ecom-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .ecom-form-submit {
+        width: 100%; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700;
+        background: linear-gradient(135deg, #06b6d4, #10b981); color: #fff;
+        border: none; cursor: pointer; transition: all 0.25s; margin-top: 8px;
+        box-shadow: 0 4px 20px rgba(6,182,212,0.25);
+    }
+    .ecom-form-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(6,182,212,0.35); }
+    .ecom-form-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Glass Upload Button (R2) ── */
+    .ecom-upload-zone {
+        border: 2px dashed rgba(6,182,212,0.3); border-radius: 12px; padding: 20px;
+        text-align: center; cursor: pointer; transition: all 0.25s;
+        background: linear-gradient(135deg, rgba(6,182,212,0.04), rgba(16,185,129,0.02));
+    }
+    .ecom-upload-zone:hover { border-color: rgba(6,182,212,0.6); background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(16,185,129,0.04)); }
+    .ecom-upload-zone svg { width: 32px; height: 32px; stroke: var(--primary-accent); fill: none; margin-bottom: 8px; }
+    .ecom-upload-zone .upload-text { font-size: 13px; color: var(--text-muted); }
+    .ecom-upload-zone .upload-hint { font-size: 11px; color: var(--text-muted); opacity: 0.6; margin-top: 4px; }
+    .ecom-upload-preview { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .ecom-preview-thumb {
+        position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden;
+        border: 1px solid var(--glass-border);
+    }
+    .ecom-preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .ecom-preview-remove {
+        position: absolute; top: 4px; right: 4px; width: 20px; height: 20px;
+        background: rgba(239,68,68,0.9); color: white; border: none; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        padding: 0; line-height: 1;
+    }
+    .ecom-preview-remove svg { width: 12px; height: 12px; stroke: currentColor; fill: none; margin: 0; }
+    .ecom-upload-status { font-size: 11px; color: var(--primary-accent); margin-top: 6px; min-height: 16px; }
+
+    /* ── Publish Modal Extras ── */
+    .ecom-conn-list { max-height: 200px; overflow-y: auto; }
+    .ecom-conn-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+        border-radius: 10px; margin-bottom: 6px; cursor: pointer;
+        background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+        transition: all 0.2s;
+    }
+    .ecom-conn-item:hover { background: rgba(255,255,255,0.06); }
+    .ecom-conn-item.selected { border-color: var(--primary-accent); background: rgba(6,182,212,0.08); }
+    .ecom-conn-item input[type="checkbox"] { accent-color: var(--primary-accent); width: 16px; height: 16px; }
+    .ecom-conn-name { font-size: 13px; font-weight: 500; color: var(--text-main); }
+    .ecom-conn-channel { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; text-transform: uppercase; }
+    .ecom-conn-channel.fb { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .ecom-conn-channel.ig { background: rgba(236,72,153,0.15); color: #ec4899; }
+
+    .ecom-schedule-toggle {
+        display: flex; align-items: center; gap: 10px; padding: 12px 0;
+    }
+    .ecom-schedule-toggle label { font-size: 13px; color: var(--text-main); cursor: pointer; }
+    .ecom-schedule-fields { display: none; margin-top: 8px; }
+    .ecom-schedule-fields.visible { display: block; }
+
+    /* ── Toggle Switch ── */
+    .ecom-toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .ecom-toggle input { opacity: 0; width: 0; height: 0; }
+    .ecom-toggle-slider {
+        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.1); border-radius: 24px; transition: 0.3s;
+    }
+    .ecom-toggle-slider:before {
+        position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+        background: #fff; border-radius: 50%; transition: 0.3s;
+    }
+    .ecom-toggle input:checked + .ecom-toggle-slider { background: linear-gradient(135deg, #06b6d4, #10b981); }
+    .ecom-toggle input:checked + .ecom-toggle-slider:before { transform: translateX(20px); }
+
+    /* ── Empty State ── */
+    .ecom-empty {
+        text-align: center; padding: 60px 20px; color: var(--text-muted);
+    }
+    .ecom-empty svg { width: 64px; height: 64px; stroke: var(--text-muted); fill: none; opacity: 0.3; margin-bottom: 16px; }
+    .ecom-empty-title { font-size: 18px; font-weight: 600; color: var(--text-header); margin-bottom: 8px; }
+    .ecom-empty-desc { font-size: 13px; max-width: 400px; margin: 0 auto; line-height: 1.6; }
+
+    /* ── Order Items Builder ── */
+    .ecom-order-items-list { margin-bottom: 12px; }
+    .ecom-order-item-row {
+        display: grid; grid-template-columns: 1fr 80px 90px 32px; gap: 8px; align-items: center; margin-bottom: 8px;
+    }
+    .ecom-order-item-row select, .ecom-order-item-row input {
+        padding: 8px 10px; border-radius: 8px; font-size: 13px;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+        color: var(--text-main); box-sizing: border-box; width: 100%;
+    }
+    .ecom-order-item-remove {
+        width: 28px; height: 28px; border-radius: 6px; border: none;
+        background: rgba(239,68,68,0.1); color: #ef4444; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .ecom-order-item-remove:hover { background: rgba(239,68,68,0.2); }
+    .ecom-order-item-remove svg { width: 14px; height: 14px; }
+    .ecom-add-item-btn {
+        display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+        border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px dashed var(--glass-border);
+        background: transparent; color: var(--primary-accent); cursor: pointer; transition: all 0.2s;
+    }
+    .ecom-add-item-btn:hover { border-color: var(--primary-accent); background: rgba(6,182,212,0.06); }
+
+    .ecom-order-total {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 12px 14px; border-radius: 10px; background: rgba(6,182,212,0.06);
+        font-weight: 600; color: var(--text-header); margin-top: 8px; font-size: 15px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+        .ecom-hub { padding: 16px; }
+        .ecom-stats-bar { grid-template-columns: 1fr 1fr; }
+        .ecom-product-grid { grid-template-columns: 1fr; }
+        .ecom-panel { width: 100vw; max-width: 100vw; }
+        .ecom-form-row { grid-template-columns: 1fr; }
+        .ecom-orders-table { display: block; overflow-x: auto; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="ecom-hub" id="ecomHub">
+
+    {# ── Stats Bar ── #}
+    <div class="ecom-stats-bar">
+        <div class="ecom-stat-card">
+            <div class="ecom-stat-icon products">
+                <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            </div>
+            <div>
+                <div class="ecom-stat-value" id="statTotalProducts">0</div>
+                <div class="ecom-stat-label">Total Products</div>
+            </div>
+        </div>
+        <div class="ecom-stat-card">
+            <div class="ecom-stat-icon active-prod">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <div>
+                <div class="ecom-stat-value" id="statActiveProducts">0</div>
+                <div class="ecom-stat-label">Active Products</div>
+            </div>
+        </div>
+        <div class="ecom-stat-card">
+            <div class="ecom-stat-icon orders">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </div>
+            <div>
+                <div class="ecom-stat-value" id="statTotalOrders">0</div>
+                <div class="ecom-stat-label">Total Orders</div>
+            </div>
+        </div>
+        <div class="ecom-stat-card">
+            <div class="ecom-stat-icon revenue">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div>
+                <div class="ecom-stat-value" id="statRevenue">0</div>
+                <div class="ecom-stat-label">Revenue (Delivered)</div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Tabs ── #}
+    <div class="ecom-tabs">
+        <button class="ecom-tab active" onclick="switchEcomTab('products')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;vertical-align:middle;margin-right:4px;stroke-width:2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line></svg>
+            Products
+        </button>
+        <button class="ecom-tab" onclick="switchEcomTab('orders')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;vertical-align:middle;margin-right:4px;stroke-width:2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            Orders
+        </button>
+        <button class="ecom-tab" onclick="switchEcomTab('settings')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;vertical-align:middle;margin-right:4px;stroke-width:2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Store Settings
+        </button>
+    </div>
+
+    {# ═══════════════════ Products Tab ═══════════════════ #}
+    <div class="ecom-tab-panel active" id="ecomPanelProducts">
+        <div class="ecom-header-row">
+            <div class="ecom-header-title">Product Catalog</div>
+            <button class="ecom-btn-primary" onclick="openProductPanel()">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Product
+            </button>
+        </div>
+        <div class="ecom-product-grid" id="productGrid">
+            <div class="ecom-empty" id="productsEmpty">
+                <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                <div class="ecom-empty-title">No products yet</div>
+                <div class="ecom-empty-desc">Add your first product to start building your catalog and selling on your social channels.</div>
+            </div>
+        </div>
+    </div>
+
+    {# ═══════════════════ Orders Tab ═══════════════════ #}
+    <div class="ecom-tab-panel" id="ecomPanelOrders">
+        <div class="ecom-header-row">
+            <div class="ecom-header-title">Order Management</div>
+            <button class="ecom-btn-primary" onclick="openOrderPanel()">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Order
+            </button>
+        </div>
+        <div id="ordersTableWrap">
+            <div class="ecom-empty" id="ordersEmpty">
+                <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <div class="ecom-empty-title">No orders yet</div>
+                <div class="ecom-empty-desc">Orders will appear here when you create them manually or customers place orders via your bots.</div>
+            </div>
+        </div>
+    </div>
+
+    {# ═══════════════════ Store Settings Tab ═══════════════════ #}
+    <div class="ecom-tab-panel" id="ecomPanelSettings">
+        <div class="ecom-header-row">
+            <div class="ecom-header-title">Store Settings</div>
+            <button class="ecom-btn-primary" id="saveSettingsBtn" onclick="saveStoreSettings()">
+                <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                Save Settings
+            </button>
+        </div>
+        
+        <div style="background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; max-width: 800px;">
+            <div class="ecom-form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <label class="ecom-toggle">
+                    <input type="checkbox" id="settingCheckoutEnabled">
+                    <span class="ecom-toggle-slider"></span>
+                </label>
+                <div>
+                    <div style="font-weight: 600; font-size: 14px; color: var(--text-main);">Enable Public Checkout</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Allow users to access the webview checkout and place orders automatically.</div>
+                </div>
+            </div>
+
+            <div class="ecom-form-group">
+                <label class="ecom-form-label" style="font-size: 14px; color: var(--text-main);">Manual Payment Instructions</label>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
+                    These instructions will be shown to your customers on the <b>Order Success Screen</b> so they know how to pay you.<br>
+                    <i>Example: "Please send the total amount via Bank Transfer to XYZ Bank, Acct 1234567, or Cash App to $MyStore."</i>
+                </div>
+                <textarea class="ecom-form-textarea" id="settingPaymentInstructions" rows="6" placeholder="Enter your payment instructions here..." style="font-size: 14px; line-height: 1.6;"></textarea>
+            </div>
+            
+            <div class="ecom-form-group">
+                <label class="ecom-form-label" style="font-size: 14px; color: var(--text-main);">Global External Store Link (Fallback)</label>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
+                    If checkout is disabled, products will link here if they don't have a specific external URL set.
+                </div>
+                <input type="url" class="ecom-form-input" id="settingGlobalExternalUrl" placeholder="https://mystore.com">
+            </div>
+            
+            <button class="ecom-form-submit" id="settingsSaveBtn" onclick="saveStoreSettings()" style="margin-top: 24px;">Save Settings</button>
+        </div>
+    </div>
+</div>
+
+{# ═══════════════════ Product Form Panel ═══════════════════ #}
+<div class="ecom-overlay" id="productOverlay" onclick="closeProductPanel()"></div>
+<div class="ecom-panel" id="productPanel">
+    <div class="ecom-panel-header">
+        <div class="ecom-panel-title" id="productPanelTitle">Add Product</div>
+        <button class="ecom-panel-close" onclick="closeProductPanel()">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+    <div class="ecom-panel-body">
+        <input type="hidden" id="productFormId">
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Product Name *</label>
+            <input type="text" class="ecom-form-input" id="productName" placeholder="e.g. Premium T-Shirt">
+        </div>
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Description</label>
+            <textarea class="ecom-form-textarea" id="productDesc" placeholder="Describe your product..."></textarea>
+        </div>
+        <div class="ecom-form-row">
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Price *</label>
+                <input type="number" step="0.01" min="0" class="ecom-form-input" id="productPrice" placeholder="0.00">
+            </div>
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Currency</label>
+                <input type="text" class="ecom-form-input" id="productCurrency" placeholder="USD" maxlength="10">
+            </div>
+        </div>
+        <div class="ecom-form-row">
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">SKU</label>
+                <input type="text" class="ecom-form-input" id="productSku" placeholder="Optional SKU">
+            </div>
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">External URL</label>
+                <input type="url" class="ecom-form-input" id="productExternalUrl" placeholder="https://yourstore.com/product">
+            </div>
+        </div>
+        <div class="ecom-form-row">
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Stock (0 = unlimited)</label>
+                <input type="number" min="0" class="ecom-form-input" id="productStock" placeholder="0">
+            </div>
+        </div>
+        <div class="ecom-form-row">
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Category</label>
+                <input type="text" class="ecom-form-input" id="productCategory" placeholder="e.g. Clothing">
+            </div>
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Status</label>
+                <select class="ecom-form-select" id="productStatus">
+                    <option value="active">Active</option>
+                    <option value="draft">Draft</option>
+                    <option value="archived">Archived</option>
+                </select>
+            </div>
+        </div>
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Product Image</label>
+            <div class="ecom-upload-zone" id="productUploadZone" onclick="document.getElementById('productFileInput').click()">
+                <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div class="upload-text">Click to upload product image(s)</div>
+                <div class="upload-hint">Supports JPG, PNG, WEBP up to 10MB</div>
+            </div>
+            <input type="file" id="productFileInput" accept="image/*" multiple style="display:none" onchange="handleProductImageUpload(this)">
+            <div class="ecom-upload-status" id="productUploadStatus"></div>
+            <div class="ecom-upload-preview" id="productImagePreview" style="display:none"></div>
+            <input type="hidden" id="productImageUrl">
+        </div>
+        <button class="ecom-form-submit" id="productSaveBtn" onclick="saveProduct()">Save Product</button>
+    </div>
+</div>
+
+{# ═══════════════════ Publish Panel ═══════════════════ #}
+<div class="ecom-overlay" id="publishOverlay" onclick="closePublishPanel()"></div>
+<div class="ecom-panel" id="publishPanel">
+    <div class="ecom-panel-header">
+        <div class="ecom-panel-title">Publish Product</div>
+        <button class="ecom-panel-close" onclick="closePublishPanel()">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+    <div class="ecom-panel-body">
+        <input type="hidden" id="publishProductId">
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Caption / Message</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: stretch;">
+                <input type="text" class="ecom-form-input" id="publishAiPrompt" placeholder="AI Prompt (e.g. Make it festive)" style="flex: 1; font-size: 13px; margin: 0;">
+                <button type="button" class="ecom-form-submit" onclick="generateAiCaption()" id="btnGenerateCaption" style="white-space: nowrap; width: auto; font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; padding: 0 16px;">Generate</button>
+            </div>
+            <textarea class="ecom-form-textarea" id="publishMessage" rows="4" placeholder="Write your post caption..."></textarea>
+        </div>
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Select Pages to Post</label>
+            <div class="ecom-conn-list" id="publishConnList">
+                {% for conn in fbConnections %}
+                <div class="ecom-conn-item" onclick="toggleConnSelection(this)">
+                    <input type="checkbox" data-id="{{ conn.id }}" data-channel="facebook">
+                    <span class="ecom-conn-name">{{ conn.pageName ?? conn.pageId }}</span>
+                    <span class="ecom-conn-channel fb">FB</span>
+                </div>
+                {% endfor %}
+                {% for conn in igConnections %}
+                <div class="ecom-conn-item" onclick="toggleConnSelection(this)">
+                    <input type="checkbox" data-id="{{ conn.id }}" data-channel="instagram">
+                    <span class="ecom-conn-name">{{ conn.pageName ?? conn.pageId }}</span>
+                    <span class="ecom-conn-channel ig">IG</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="ecom-schedule-toggle">
+            <label class="ecom-toggle">
+                <input type="checkbox" id="publishNowToggle" checked onchange="togglePublishSchedule()">
+                <span class="ecom-toggle-slider"></span>
+            </label>
+            <label for="publishNowToggle" style="cursor:pointer">Post Now</label>
+        </div>
+        <div class="ecom-schedule-fields" id="publishScheduleFields">
+            <div class="ecom-form-row">
+                <div class="ecom-form-group">
+                    <label class="ecom-form-label">Schedule Time</label>
+                    <input type="datetime-local" class="ecom-form-input" id="publishScheduleTime">
+                </div>
+                <div class="ecom-form-group">
+                    <label class="ecom-form-label">Timezone</label>
+                    <select class="ecom-form-select" id="publishTimezone">
+                        <option value="Asia/Dhaka">Asia/Dhaka (BDT)</option>
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York (EST)</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                        <option value="Europe/London">Europe/London (GMT)</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                        <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <button class="ecom-form-submit" id="publishBtn" onclick="publishProduct()">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;vertical-align:middle;margin-right:6px;stroke-width:2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            Publish
+        </button>
+    </div>
+</div>
+
+{# ═══════════════════ Order Form Panel ═══════════════════ #}
+<div class="ecom-overlay" id="orderOverlay" onclick="closeOrderPanel()"></div>
+<div class="ecom-panel" id="orderPanel">
+    <div class="ecom-panel-header">
+        <div class="ecom-panel-title" id="orderPanelTitle">New Order</div>
+        <button class="ecom-panel-close" onclick="closeOrderPanel()">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+    <div class="ecom-panel-body">
+        <input type="hidden" id="orderFormId">
+        <div class="ecom-form-row">
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Customer Name *</label>
+                <input type="text" class="ecom-form-input" id="orderCustomerName" placeholder="Customer name">
+            </div>
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Contact</label>
+                <input type="text" class="ecom-form-input" id="orderCustomerContact" placeholder="Phone or email">
+            </div>
+        </div>
+        <div class="ecom-form-row">
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Channel</label>
+                <select class="ecom-form-select" id="orderChannel">
+                    <option value="">— Select —</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="manual">Manual</option>
+                </select>
+            </div>
+            <div class="ecom-form-group">
+                <label class="ecom-form-label">Currency</label>
+                <input type="text" class="ecom-form-input" id="orderCurrency" placeholder="USD" maxlength="10">
+            </div>
+        </div>
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Order Items</label>
+            <div class="ecom-order-items-list" id="orderItemsList"></div>
+            <button class="ecom-add-item-btn" onclick="addOrderItemRow()">
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Item
+            </button>
+            <div class="ecom-order-total" id="orderTotalDisplay">
+                <span>Total</span>
+                <span id="orderTotalValue">0.00</span>
+            </div>
+        </div>
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Shipping Address</label>
+            <textarea class="ecom-form-textarea" id="orderShippingAddress" rows="2" placeholder="Delivery address..."></textarea>
+        </div>
+        <div class="ecom-form-group">
+            <label class="ecom-form-label">Notes</label>
+            <textarea class="ecom-form-textarea" id="orderNotes" rows="2" placeholder="Internal notes..."></textarea>
+        </div>
+        <button class="ecom-form-submit" id="orderSaveBtn" onclick="saveOrder()">Save Order</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    // ═══════════════════ Data Stores ═══════════════════
+    let ecomProducts = [];
+    let ecomOrders = [];
+    let currentProductImages = [];
+
+    // ═══════════════════ Tab Switching ═══════════════════
+    function switchEcomTab(tab) {
+        document.querySelectorAll('.ecom-tab').forEach((t, i) => {
+            t.classList.toggle('active', 
+                (tab === 'products' && i === 0) || 
+                (tab === 'orders' && i === 1) || 
+                (tab === 'settings' && i === 2)
+            );
+        });
+        document.getElementById('ecomPanelProducts').classList.toggle('active', tab === 'products');
+        document.getElementById('ecomPanelOrders').classList.toggle('active', tab === 'orders');
+        document.getElementById('ecomPanelSettings').classList.toggle('active', tab === 'settings');
+
+        if (tab === 'settings') {
+            loadStoreSettings();
+        }
+    }
+
+    // ═══════════════════ Store Settings ═══════════════════
+
+    async function loadStoreSettings() {
+        try {
+            const res = await fetch('/ecommerce/settings');
+            const data = await res.json();
+            if (data.settings) {
+                document.getElementById('settingCheckoutEnabled').checked = data.settings.checkoutEnabled;
+                document.getElementById('settingPaymentInstructions').value = data.settings.paymentInstructions || '';
+                document.getElementById('settingGlobalExternalUrl').value = data.settings.globalExternalUrl || '';
+            }
+        } catch (e) {
+            console.error('Failed to load settings', e);
+        }
+    }
+
+    async function saveStoreSettings() {
+        const btn = document.getElementById('settingsSaveBtn');
+        const origText = btn.innerHTML;
+        btn.disabled = true; 
+        btn.textContent = 'Saving...';
+
+        const payload = {
+            checkoutEnabled: document.getElementById('settingCheckoutEnabled').checked,
+            paymentInstructions: document.getElementById('settingPaymentInstructions').value,
+            globalExternalUrl: document.getElementById('settingGlobalExternalUrl').value
+        };
+
+        try {
+            const res = await fetch('/ecommerce/settings/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Settings saved successfully!', 'success');
+            } else {
+                showToast('Failed to save settings.', 'error');
+            }
+        } catch (e) {
+            showToast('Error saving settings.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    }
+
+    // ═══════════════════ Products ═══════════════════
+
+    async function loadProducts() {
+        try {
+            const res = await fetch('/ecommerce/products');
+            const data = await res.json();
+            ecomProducts = data.products || [];
+            renderProducts();
+            updateStats();
+        } catch (e) { console.error('Failed to load products', e); }
+    }
+
+    function renderProducts() {
+        const grid = document.getElementById('productGrid');
+        const empty = document.getElementById('productsEmpty');
+        if (ecomProducts.length === 0) {
+            grid.innerHTML = '';
+            grid.appendChild(empty);
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
+        grid.innerHTML = ecomProducts.map(p => {
+            const stockClass = p.stock === 0 ? 'unlimited' : (p.stock > 0 ? 'in-stock' : 'out-of-stock');
+            const stockLabel = p.stock === 0 ? 'Unlimited' : `${p.stock} in stock`;
+            const statusClass = 'ecom-badge-' + p.status;
+            const imgHtml = p.imageUrl
+                ? `<img src="${escHtml(p.imageUrl)}" alt="${escHtml(p.name)}" loading="lazy">`
+                : `<div class="no-image"><svg viewBox="0 0 24 24" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>No image</div>`;
+            return `
+            <div class="ecom-product-card" data-id="${p.id}">
+                <div class="ecom-product-img">
+                    ${imgHtml}
+                    <span class="ecom-product-badge ${statusClass}">${p.status}</span>
+                </div>
+                <div class="ecom-product-body">
+                    <div class="ecom-product-name">${escHtml(p.name)}</div>
+                    <div class="ecom-product-desc">${escHtml(p.description || '')}</div>
+                    <div class="ecom-product-meta">
+                        <span class="ecom-product-price">${escHtml(p.currency)} ${parseFloat(p.price).toFixed(2)}</span>
+                        <span class="ecom-product-stock ${stockClass}">${stockLabel}</span>
+                    </div>
+                    <div class="ecom-product-actions">
+                        <button class="ecom-btn-publish" onclick="openPublishPanel(${p.id})">
+                            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            Post
+                        </button>
+                        <button class="ecom-btn-edit" onclick="editProduct(${p.id})">
+                            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            Edit
+                        </button>
+                        <button class="ecom-btn-delete" onclick="deleteProduct(${p.id})">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function openProductPanel(product = null) {
+        document.getElementById('productFormId').value = product ? product.id : '';
+        document.getElementById('productPanelTitle').textContent = product ? 'Edit Product' : 'Add Product';
+        document.getElementById('productName').value = product ? product.name : '';
+        document.getElementById('productDesc').value = product ? (product.description || '') : '';
+        document.getElementById('productPrice').value = product ? product.price : '';
+        document.getElementById('productCurrency').value = product ? product.currency : 'USD';
+        document.getElementById('productSku').value = product ? (product.sku || '') : '';
+        document.getElementById('productExternalUrl').value = product ? (product.externalUrl || '') : '';
+        document.getElementById('productStock').value = product ? product.stock : '0';
+        document.getElementById('productCategory').value = product ? (product.category || '') : '';
+        document.getElementById('productStatus').value = product ? product.status : 'active';
+        
+        currentProductImages = [];
+        if (product && product.imageUrl) currentProductImages.push(product.imageUrl);
+        if (product && product.galleryUrls) currentProductImages = currentProductImages.concat(product.galleryUrls);
+        
+        document.getElementById('productUploadStatus').textContent = '';
+        renderProductImages();
+
+        document.getElementById('productOverlay').classList.add('is-open');
+        document.getElementById('productPanel').classList.add('is-open');
+    }
+
+    function closeProductPanel() {
+        document.getElementById('productOverlay').classList.remove('is-open');
+        document.getElementById('productPanel').classList.remove('is-open');
+    }
+
+    function editProduct(id) {
+        const p = ecomProducts.find(x => x.id === id);
+        if (p) openProductPanel(p);
+    }
+
+    async function saveProduct() {
+        const btn = document.getElementById('productSaveBtn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        const payload = {
+            id: document.getElementById('productFormId').value || null,
+            name: document.getElementById('productName').value,
+            description: document.getElementById('productDesc').value,
+            price: document.getElementById('productPrice').value || '0',
+            currency: document.getElementById('productCurrency').value || 'USD',
+            sku: document.getElementById('productSku').value,
+            externalUrl: document.getElementById('productExternalUrl').value,
+            stock: parseInt(document.getElementById('productStock').value) || 0,
+            category: document.getElementById('productCategory').value,
+            status: document.getElementById('productStatus').value,
+            imageUrl: currentProductImages.length > 0 ? currentProductImages[0] : null,
+            galleryUrls: currentProductImages.length > 1 ? currentProductImages.slice(1) : [],
+        };
+
+        try {
+            const res = await fetch('/ecommerce/products/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.error) { showToast(data.error, 'error'); return; }
+            showToast('Product saved successfully!', 'success');
+            closeProductPanel();
+            loadProducts();
+        } catch (e) {
+            showToast('Failed to save product.', 'error');
+        } finally {
+            btn.disabled = false; btn.textContent = 'Save Product';
+        }
+    }
+
+    async function deleteProduct(id) {
+        if (!confirm('Delete this product? This cannot be undone.')) return;
+        try {
+            await fetch(`/ecommerce/products/${id}/delete`, { method: 'POST' });
+            showToast('Product deleted.', 'success');
+            loadProducts();
+        } catch (e) { showToast('Failed to delete product.', 'error'); }
+    }
+
+    // ═══════════════════ Image Upload (R2 / Local) ═══════════════════
+
+    /**
+     * Fix EXIF orientation client-side using Canvas API.
+     * Modern browsers auto-apply EXIF rotation when drawing to canvas,
+     * so the exported blob has correct pixel orientation with no EXIF metadata.
+     */
+    function fixImageOrientation(file) {
+        return new Promise((resolve) => {
+            if (!file.type.startsWith('image/')) { resolve(file); return; }
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob((blob) => {
+                    const fixedName = file.name.replace(/\.[^.]+$/, '.jpg');
+                    const fixedFile = new File([blob], fixedName, { type: 'image/jpeg' });
+                    resolve(fixedFile);
+                    URL.revokeObjectURL(img.src);
+                }, 'image/jpeg', 0.92);
+            };
+            img.onerror = () => { resolve(file); };
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+    async function handleProductImageUpload(input) {
+        const files = Array.from(input.files);
+        if (files.length === 0) return;
+        const status = document.getElementById('productUploadStatus');
+        status.textContent = `Uploading ${files.length} image(s)...`;
+
+        for (const rawFile of files) {
+            try {
+                // Fix EXIF orientation in browser before uploading
+                const file = await fixImageOrientation(rawFile);
+
+                // Try R2 presigned upload first
+                const presignRes = await fetch('/settings/media/presign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, contentType: file.type, prefix: 'products' })
+                });
+                const presignData = await presignRes.json();
+
+                if (presignData.error === 'R2_NOT_CONFIGURED') {
+                    // Fall back to local upload
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('prefix', 'products');
+                    const localRes = await fetch('/settings/media/upload-local', { method: 'POST', body: formData });
+                    const localData = await localRes.json();
+                    if (localData.publicUrl) {
+                        currentProductImages.push(localData.publicUrl);
+                        renderProductImages();
+                    }
+                    continue;
+                }
+
+                if (presignData.uploadUrl && presignData.publicUrl) {
+                    // Upload to R2
+                    await fetch(presignData.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+                    currentProductImages.push(presignData.publicUrl);
+                    renderProductImages();
+                }
+            } catch (e) {
+                console.error('Upload error for', rawFile.name, e);
+            }
+        }
+        status.textContent = 'Upload complete.';
+        input.value = ''; // reset input
+    }
+
+    function removeProductImage(index) {
+        currentProductImages.splice(index, 1);
+        renderProductImages();
+    }
+
+    function renderProductImages() {
+        const preview = document.getElementById('productImagePreview');
+        if (currentProductImages.length === 0) {
+            preview.innerHTML = '';
+            preview.style.display = 'none';
+            return;
+        }
+        preview.style.display = 'flex';
+        preview.innerHTML = currentProductImages.map((url, i) => `
+            <div class="ecom-preview-thumb">
+                <img src="${escHtml(url)}" alt="Preview">
+                <button class="ecom-preview-remove" onclick="removeProductImage(${i})" type="button" title="Remove">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // ═══════════════════ Publish ═══════════════════
+
+    function openPublishPanel(productId) {
+        const p = ecomProducts.find(x => x.id === productId);
+        if (!p) return;
+        document.getElementById('publishProductId').value = productId;
+        // Pre-fill caption
+        let caption = `${p.name}\n${p.currency} ${parseFloat(p.price).toFixed(2)}`;
+        if (p.description) caption += `\n\n${p.description}`;
+        document.getElementById('publishMessage').value = caption;
+        // Reset selections
+        document.querySelectorAll('#publishConnList input[type="checkbox"]').forEach(cb => { cb.checked = false; cb.closest('.ecom-conn-item').classList.remove('selected'); });
+        document.getElementById('publishNowToggle').checked = true;
+        document.getElementById('publishScheduleFields').classList.remove('visible');
+
+        document.getElementById('publishOverlay').classList.add('is-open');
+        document.getElementById('publishPanel').classList.add('is-open');
+    }
+
+    function closePublishPanel() {
+        document.getElementById('publishOverlay').classList.remove('is-open');
+        document.getElementById('publishPanel').classList.remove('is-open');
+    }
+
+    function toggleConnSelection(el) {
+        const cb = el.querySelector('input[type="checkbox"]');
+        cb.checked = !cb.checked;
+        el.classList.toggle('selected', cb.checked);
+    }
+
+    function togglePublishSchedule() {
+        const isNow = document.getElementById('publishNowToggle').checked;
+        document.getElementById('publishScheduleFields').classList.toggle('visible', !isNow);
+    }
+
+    async function generateAiCaption() {
+        const productId = document.getElementById('publishProductId').value;
+        const prompt = document.getElementById('publishAiPrompt').value.trim();
+        if (!prompt) {
+            showToast('Please enter an AI prompt.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btnGenerateCaption');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Generating...';
+
+        try {
+            const res = await fetch('/ecommerce/api/generate-caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, prompt })
+            });
+            const data = await res.json();
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else if (data.caption) {
+                document.getElementById('publishMessage').value = data.caption;
+                showToast('Caption generated!', 'success');
+            }
+        } catch (e) {
+            showToast('Failed to generate caption.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    }
+
+    async function publishProduct() {
+        const btn = document.getElementById('publishBtn');
+        btn.disabled = true; btn.innerHTML = 'Publishing...';
+
+        const productId = document.getElementById('publishProductId').value;
+        const message = document.getElementById('publishMessage').value;
+        const publishNow = document.getElementById('publishNowToggle').checked;
+        const scheduledTime = document.getElementById('publishScheduleTime').value;
+        const timezone = document.getElementById('publishTimezone').value;
+
+        // Gather selected connections grouped by channel
+        const checkboxes = document.querySelectorAll('#publishConnList input[type="checkbox"]:checked');
+        if (checkboxes.length === 0) {
+            showToast('Please select at least one page.', 'error');
+            btn.disabled = false; btn.innerHTML = 'Publish';
+            return;
+        }
+
+        // Group by channel
+        const byChannel = {};
+        checkboxes.forEach(cb => {
+            const ch = cb.dataset.channel;
+            if (!byChannel[ch]) byChannel[ch] = [];
+            byChannel[ch].push(parseInt(cb.dataset.id));
+        });
+
+        let allResults = [];
+        for (const [channel, ids] of Object.entries(byChannel)) {
+            try {
+                const res = await fetch(`/ecommerce/products/${productId}/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        connectionIds: ids, channel, message, publishNow, scheduledTime, timezone
+                    })
+                });
+                const data = await res.json();
+                if (data.error) { showToast(data.error, 'error'); continue; }
+                allResults.push(...(data.results || []));
+            } catch (e) {
+                showToast(`Failed to publish to ${channel}.`, 'error');
+            }
+        }
+
+        const published = allResults.filter(r => r.status === 'published').length;
+        const scheduled = allResults.filter(r => r.status === 'scheduled').length;
+        const errors = allResults.filter(r => r.status === 'error').length;
+        let msg = '';
+        if (published > 0) msg += `${published} published. `;
+        if (scheduled > 0) msg += `${scheduled} scheduled. `;
+        if (errors > 0) msg += `${errors} failed.`;
+        showToast(msg || 'Done!', errors > 0 ? 'error' : 'success');
+
+        closePublishPanel();
+        btn.disabled = false; btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;vertical-align:middle;margin-right:6px;stroke-width:2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Publish`;
+    }
+
+    // ═══════════════════ Orders ═══════════════════
+
+    async function loadOrders() {
+        try {
+            const res = await fetch('/ecommerce/orders');
+            const data = await res.json();
+            ecomOrders = data.orders || [];
+            renderOrders();
+            updateStats();
+        } catch (e) { console.error('Failed to load orders', e); }
+    }
+
+    function renderOrders() {
+        const wrap = document.getElementById('ordersTableWrap');
+        const empty = document.getElementById('ordersEmpty');
+        if (ecomOrders.length === 0) {
+            wrap.innerHTML = '';
+            wrap.appendChild(empty);
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
+        const statusOptions = ['pending','approved','confirmed','delivered','completed','cancelled'];
+        wrap.innerHTML = `
+        <table class="ecom-orders-table">
+            <thead><tr>
+                <th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Channel</th><th>Date</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+                ${ecomOrders.map(o => {
+                    const itemsSummary = (o.items || []).map(i => `${i.productName || 'Item'} ×${i.qty || 1}`).join(', ');
+                    const statusOpts = statusOptions.map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s}</option>`).join('');
+                    return `<tr>
+                        <td style="font-weight:600;color:var(--primary-accent)">${escHtml(o.orderNumber)}</td>
+                        <td>${escHtml(o.customerName)}</td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(itemsSummary)}">${escHtml(itemsSummary) || '—'}</td>
+                        <td style="font-weight:600">${escHtml(o.currency)} ${parseFloat(o.totalAmount).toFixed(2)}</td>
+                        <td><span class="ecom-status-badge ecom-status-${o.status}">${o.status}</span></td>
+                        <td>${o.channel ? escHtml(o.channel) : '—'}</td>
+                        <td style="font-size:12px;color:var(--text-muted)">${o.createdAt ? o.createdAt.substring(0, 10) : ''}</td>
+                        <td>
+                            <div class="ecom-order-actions">
+                                <select onchange="updateOrderStatus(${o.id}, this.value)">${statusOpts}</select>
+                                <button onclick="editOrder(${o.id})" title="Edit">✎</button>
+                                <button onclick="deleteOrder(${o.id})" title="Delete" style="color:#ef4444">✕</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>`;
+    }
+
+    function openOrderPanel(order = null) {
+        document.getElementById('orderFormId').value = order ? order.id : '';
+        document.getElementById('orderPanelTitle').textContent = order ? 'Edit Order' : 'New Order';
+        document.getElementById('orderCustomerName').value = order ? order.customerName : '';
+        document.getElementById('orderCustomerContact').value = order ? (order.customerContact || '') : '';
+        document.getElementById('orderChannel').value = order ? (order.channel || '') : '';
+        document.getElementById('orderCurrency').value = order ? order.currency : 'USD';
+        document.getElementById('orderShippingAddress').value = order ? (order.shippingAddress || '') : '';
+        document.getElementById('orderNotes').value = order ? (order.notes || '') : '';
+
+        // Populate items
+        const list = document.getElementById('orderItemsList');
+        list.innerHTML = '';
+        if (order && order.items && order.items.length > 0) {
+            order.items.forEach(item => addOrderItemRow(item));
+        } else {
+            addOrderItemRow();
+        }
+        recalcOrderTotal();
+
+        document.getElementById('orderOverlay').classList.add('is-open');
+        document.getElementById('orderPanel').classList.add('is-open');
+    }
+
+    function closeOrderPanel() {
+        document.getElementById('orderOverlay').classList.remove('is-open');
+        document.getElementById('orderPanel').classList.remove('is-open');
+    }
+
+    function editOrder(id) {
+        const o = ecomOrders.find(x => x.id === id);
+        if (o) openOrderPanel(o);
+    }
+
+    function addOrderItemRow(item = null) {
+        const list = document.getElementById('orderItemsList');
+        const row = document.createElement('div');
+        row.className = 'ecom-order-item-row';
+        const productOptions = ecomProducts.map(p =>
+            `<option value="${p.id}" data-price="${p.price}" data-name="${escHtml(p.name)}" ${item && item.productId == p.id ? 'selected' : ''}>${escHtml(p.name)} (${p.currency} ${parseFloat(p.price).toFixed(2)})</option>`
+        ).join('');
+        row.innerHTML = `
+            <select class="order-item-product" onchange="onOrderItemProductChange(this)">
+                <option value="">Select product...</option>
+                ${productOptions}
+            </select>
+            <input type="number" class="order-item-qty" min="1" value="${item ? (item.qty || 1) : 1}" placeholder="Qty" onchange="recalcOrderTotal()">
+            <input type="number" class="order-item-price" step="0.01" value="${item ? (item.unitPrice || 0) : ''}" placeholder="Price" onchange="recalcOrderTotal()">
+            <button class="ecom-order-item-remove" onclick="this.closest('.ecom-order-item-row').remove(); recalcOrderTotal()">
+                <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        `;
+        list.appendChild(row);
+    }
+
+    function onOrderItemProductChange(select) {
+        const opt = select.selectedOptions[0];
+        if (opt && opt.dataset.price) {
+            select.closest('.ecom-order-item-row').querySelector('.order-item-price').value = parseFloat(opt.dataset.price).toFixed(2);
+            recalcOrderTotal();
+        }
+    }
+
+    function recalcOrderTotal() {
+        let total = 0;
+        document.querySelectorAll('.ecom-order-item-row').forEach(row => {
+            const qty = parseFloat(row.querySelector('.order-item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.order-item-price').value) || 0;
+            total += qty * price;
+        });
+        document.getElementById('orderTotalValue').textContent = total.toFixed(2);
+    }
+
+    async function saveOrder() {
+        const btn = document.getElementById('orderSaveBtn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        const items = [];
+        document.querySelectorAll('.ecom-order-item-row').forEach(row => {
+            const sel = row.querySelector('.order-item-product');
+            const opt = sel.selectedOptions[0];
+            const productId = sel.value;
+            if (!productId) return;
+            items.push({
+                productId: parseInt(productId),
+                productName: opt ? opt.dataset.name : '',
+                qty: parseInt(row.querySelector('.order-item-qty').value) || 1,
+                unitPrice: parseFloat(row.querySelector('.order-item-price').value) || 0,
+                currency: document.getElementById('orderCurrency').value || 'USD'
+            });
+        });
+
+        let total = 0;
+        items.forEach(i => total += i.qty * i.unitPrice);
+
+        const payload = {
+            id: document.getElementById('orderFormId').value || null,
+            customerName: document.getElementById('orderCustomerName').value,
+            customerContact: document.getElementById('orderCustomerContact').value,
+            channel: document.getElementById('orderChannel').value,
+            currency: document.getElementById('orderCurrency').value || 'USD',
+            items: items,
+            totalAmount: total.toFixed(2),
+            shippingAddress: document.getElementById('orderShippingAddress').value,
+            notes: document.getElementById('orderNotes').value,
+            status: 'pending',
+        };
+
+        try {
+            const res = await fetch('/ecommerce/orders/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.error) { showToast(data.error, 'error'); return; }
+            showToast('Order saved successfully!', 'success');
+            closeOrderPanel();
+            loadOrders();
+        } catch (e) {
+            showToast('Failed to save order.', 'error');
+        } finally {
+            btn.disabled = false; btn.textContent = 'Save Order';
+        }
+    }
+
+    async function updateOrderStatus(id, status) {
+        try {
+            const res = await fetch(`/ecommerce/orders/${id}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            const data = await res.json();
+            if (data.error) { showToast(data.error, 'error'); return; }
+            showToast(`Order status updated to "${status}".`, 'success');
+            loadOrders();
+        } catch (e) { showToast('Failed to update status.', 'error'); }
+    }
+
+    async function deleteOrder(id) {
+        if (!confirm('Delete this order?')) return;
+        try {
+            await fetch(`/ecommerce/orders/${id}/delete`, { method: 'POST' });
+            showToast('Order deleted.', 'success');
+            loadOrders();
+        } catch (e) { showToast('Failed to delete order.', 'error'); }
+    }
+
+    // ═══════════════════ Stats ═══════════════════
+
+    function updateStats() {
+        document.getElementById('statTotalProducts').textContent = ecomProducts.length;
+        document.getElementById('statActiveProducts').textContent = ecomProducts.filter(p => p.status === 'active').length;
+        document.getElementById('statTotalOrders').textContent = ecomOrders.length;
+
+        const delivered = ecomOrders.filter(o => o.status === 'delivered');
+        let revenue = 0;
+        delivered.forEach(o => revenue += parseFloat(o.totalAmount) || 0);
+        document.getElementById('statRevenue').textContent = revenue.toFixed(2);
+    }
+
+    // ═══════════════════ Utilities ═══════════════════
+
+    function escHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ═══════════════════ Init ═══════════════════
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProducts();
+        loadOrders();
+    });
+</script>
+{% endblock %}

@@ -89,6 +89,9 @@ class Subscriber implements TenantAwareInterface
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $notes = [];
 
+    #[ORM\Column(options: ['default' => false])]
+    private bool $botPaused = false;
+
     public function __construct()
     {
         $this->messages = new ArrayCollection();
@@ -345,6 +348,17 @@ class Subscriber implements TenantAwareInterface
     public function setNotes(?array $notes): static
     {
         $this->notes = $notes;
+        return $this;
+    }
+
+    public function isBotPaused(): bool
+    {
+        return $this->botPaused;
+    }
+
+    public function setBotPaused(bool $botPaused): static
+    {
+        $this->botPaused = $botPaused;
         return $this;
     }
 }

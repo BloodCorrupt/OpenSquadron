@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\AiSetting;
 use App\Entity\Admin;
+use App\Entity\EcomProduct;
 use App\Entity\WhatsAppConnection;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -14,7 +15,8 @@ class AiAgentService
         private HttpClientInterface $httpClient,
         private LoggerInterface $logger,
         private \Doctrine\ORM\EntityManagerInterface $em,
-        private ?\App\Service\TenantContext $tenantContext = null
+        private ?\App\Service\TenantContext $tenantContext = null,
+        private ?\Symfony\Component\Routing\Generator\UrlGeneratorInterface $urlGenerator = null
     ) {}
 
     public function getSetting(): ?AiSetting
@@ -191,7 +193,7 @@ class AiAgentService
         }
     }
 
-    public function generateResponse(string $userMessage, AiSetting $setting, object|null $connection = null): ?string
+    public function generateResponse(string $userMessage, AiSetting $setting, object|null $connection = null, ?string $senderId = null, ?string $channel = null): ?string
     {
         $provider = strtolower($setting->getProvider() ?? 'openai');
         $apiKey = $setting->getApiKey();
@@ -246,6 +248,55 @@ class AiAgentService
             }
         }
 
+        // ── Auto-inject eCommerce product catalog into AI context (if enabled per-channel) ──
+        if ($connection && method_exists($connection, 'isEcomContextEnabled') && $connection->isEcomContextEnabled()) {
+            try {
+                $catalogProducts = $this->em->getRepository(EcomProduct::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
+                if (!empty($catalogProducts)) {
+                    $catalogLines = ["=== PRODUCT CATALOG ==="];
+                    foreach ($catalogProducts as $cp) {
+                        $stockInfo = $cp->getStock() > 0 ? "In Stock ({$cp->getStock()} available)" : 'Available';
+                        $extLinkInfo = $cp->getExternalUrl() ? " — External Link: {$cp->getExternalUrl()}" : "";
+                        $catalogLines[] = "• {$cp->getName()} — {$cp->getCurrency()} {$cp->getPrice()} — {$stockInfo}{$extLinkInfo}";
+                        if ($cp->getDescription()) {
+                            $catalogLines[] = "  {$cp->getDescription()}";
+                        }
+                    }
+                    $catalogLines[] = "=== END PRODUCT CATALOG ===";
+                    
+                    $checkoutInstruction = "";
+                    if ($senderId && $channel && $this->urlGenerator) {
+                        $setting = $this->em->getRepository(\App\Entity\EcomSetting::class)->findOneBy(['owner' => $connection->getOwner()]);
+                        $checkoutEnabled = $setting ? $setting->isCheckoutEnabled() : true;
+                        $globalExternalUrl = $setting ? $setting->getGlobalExternalUrl() : null;
+
+                        if ($checkoutEnabled) {
+                            try {
+                                $checkoutUrl = $this->urlGenerator->generate('app_public_checkout', [
+                                    'channel' => $channel,
+                                    'connectionId' => $connection->getId(),
+                                    'senderId' => $senderId
+                                ], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL);
+                                $checkoutInstruction = "\n\n[CHECKOUT INSTRUCTION]\nWhen the user indicates they want to buy something or place an order, provide them with this EXACT secure checkout link so they can place their order:\n" . $checkoutUrl;
+                            } catch (\Exception $e) {
+                                // URL generation failed
+                            }
+                        } else {
+                            if ($globalExternalUrl) {
+                                $checkoutInstruction = "\n\n[CHECKOUT INSTRUCTION]\nDirect checkout is disabled. If the user wants to buy a product, direct them to our main store: " . $globalExternalUrl . " or use the product's specific External Link if one is listed.";
+                            } else {
+                                $checkoutInstruction = "\n\n[CHECKOUT INSTRUCTION]\nDirect checkout is disabled. If a product has an External Link listed, you may provide it. Otherwise, inform the user that a human agent will assist them with their purchase shortly.";
+                            }
+                        }
+                    }
+
+                    $systemParts[] = "Use this product catalog to answer customer questions about products, prices, and availability:\n\n" . implode("\n", $catalogLines) . $checkoutInstruction;
+                }
+            } catch (\Exception $e) {
+                // Catalog table may not exist yet; silently skip
+            }
+        }
+
         $systemInstruction = implode("\n\n", $systemParts);
         $model = $setting->getModel();
 
@@ -273,6 +324,39 @@ class AiAgentService
 
         $systemInstruction = "You are a helpful AI assistant tasked with converting unstructured business text into a clean, structured Frequently Asked Questions (FAQ) list. Output strictly in Q&A format. Do not include introductory or concluding conversational text.";
         $userMessage = "Convert the following information into an FAQ format:\n\n" . $rawText;
+        $model = $setting->getModel();
+
+        if ($provider === 'gemini') {
+            return $this->callGemini($userMessage, $apiKey, $model, $systemInstruction);
+        }
+
+        return $this->callOpenAiCompatible($provider, $userMessage, $apiKey, $model, $systemInstruction, $setting->getApiEndpoint());
+    }
+
+    public function generateMarketingCaption(EcomProduct $product, string $prompt, AiSetting $setting): ?string
+    {
+        $provider = strtolower($setting->getProvider() ?? 'openai');
+        $apiKey = $setting->getApiKey();
+        
+        if (empty($apiKey) && $provider === 'lmstudio') {
+            $apiKey = 'lm-studio';
+        }
+        
+        if (empty($apiKey) && $provider !== 'ollama') {
+            $this->logger->warning('Marketing caption generation requested but API Key is empty.');
+            return null;
+        }
+
+        $systemInstruction = "You are an expert social media marketer and copywriter. Your goal is to write a highly attractive and engaging social media post caption for an eCommerce product based on the product details and the user's specific request. Do not use emojis.";
+        
+        $productDetails = "Product Name: " . $product->getName() . "\n";
+        $productDetails .= "Price: " . $product->getCurrency() . " " . $product->getPrice() . "\n";
+        if ($product->getDescription()) {
+            $productDetails .= "Description: " . $product->getDescription() . "\n";
+        }
+        
+        $userMessage = "Product Details:\n{$productDetails}\n\nMarketing Request / Prompt:\n{$prompt}\n\nPlease generate the caption now. Output only the caption text.";
+        
         $model = $setting->getModel();
 
         if ($provider === 'gemini') {

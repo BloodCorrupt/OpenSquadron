@@ -61,6 +61,7 @@ class SubscriptionPackageController extends AbstractController
                     'bots' => $request->request->getInt('limit_bots', 0),
                     'team' => $request->request->getInt('limit_team', 0),
                     'messages' => $request->request->getInt('limit_messages', 0),
+                    'products' => $request->request->getInt('limit_products', 0),
                 ],
                 'media_storage_mode' => $request->request->get('media_storage_mode', 'parent')
             ];
@@ -135,6 +136,7 @@ class SubscriptionPackageController extends AbstractController
                     'bots' => $request->request->getInt('limit_bots', 0),
                     'team' => $request->request->getInt('limit_team', 0),
                     'messages' => $request->request->getInt('limit_messages', 0),
+                    'products' => $request->request->getInt('limit_products', 0),
                 ],
                 'media_storage_mode' => $request->request->get('media_storage_mode', 'parent')
             ];

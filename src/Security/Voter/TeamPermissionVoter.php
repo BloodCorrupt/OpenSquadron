@@ -18,6 +18,7 @@ class TeamPermissionVoter extends Voter
     public const PERM_BROADCASTS_MANAGE = 'PERM_BROADCASTS_MANAGE';
     public const PERM_API_INTEGRATIONS = 'PERM_API_INTEGRATIONS';
     public const PERM_TEAM_MANAGE = 'PERM_TEAM_MANAGE';
+    public const PERM_ECOMMERCE_MANAGE = 'PERM_ECOMMERCE_MANAGE';
 
     public static function getAvailablePermissions(): array
     {
@@ -32,6 +33,7 @@ class TeamPermissionVoter extends Voter
             self::PERM_BROADCASTS_MANAGE => 'Manage & Send Broadcasts',
             self::PERM_API_INTEGRATIONS => 'Manage HTTP APIs & Custom Fields',
             self::PERM_TEAM_MANAGE => 'Manage Team Roles & Members',
+            self::PERM_ECOMMERCE_MANAGE => 'Manage eCommerce Hub & Orders',
         ];
     }
 

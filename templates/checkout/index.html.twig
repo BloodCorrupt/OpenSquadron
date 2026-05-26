@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ brandName }} - Secure Checkout</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 16px;
+            padding-bottom: 80px; /* Space for bottom bar */
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .glass-panel {
+            background: var(--surface-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Product List */
+        .product-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .product-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .product-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #1e293b;
+            flex-shrink: 0;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .product-price {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .qty-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .qty-btn:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .qty-value {
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-color);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .total-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .total-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .total-price {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .btn-submit:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #success-message {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .icon-success {
+            width: 64px;
+            height: 64px;
+            color: #10b981;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="checkout-container">
+        <header class="header">
+            <h1>{{ brandName }}</h1>
+        </header>
+
+        {% if products is empty %}
+            <div class="glass-panel" style="text-align: center; padding: 40px 20px;">
+                <p>No products available right now.</p>
+            </div>
+        {% else %}
+            <!-- Products List -->
+            <div class="glass-panel">
+                <h2 style="font-size: 16px; margin-bottom: 16px;">Select Products</h2>
+                <div id="product-list">
+                    {% for product in products %}
+                        <div class="product-item" data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-currency="{{ product.currency }}">
+                            {% if product.imageUrl %}
+                                <img src="{{ product.imageUrl }}" alt="{{ product.name }}" class="product-image">
+                            {% else %}
+                                <div class="product-image" style="display:flex; align-items:center; justify-content:center; color: var(--text-muted);">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="product-info">
+                                <div class="product-title">{{ product.name }}</div>
+                                <div class="product-price">{{ product.currency }} {{ product.price }}</div>
+                            </div>
+
+                            <div class="qty-controls">
+                                <button type="button" class="qty-btn" onclick="updateQty({{ product.id }}, -1)">-</button>
+                                <span class="qty-value" id="qty-{{ product.id }}">0</span>
+                                <button type="button" class="qty-btn" onclick="updateQty({{ product.id }}, 1)">+</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Customer Details -->
+            <div class="glass-panel">
+                <h2 style="font-size: 16px; margin-bottom: 16px;">Shipping Details</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="customerName" class="form-input" placeholder="John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" id="customerContact" class="form-input" placeholder="+1 234 567 8900" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Delivery Address</label>
+                    <textarea id="shippingAddress" class="form-input" placeholder="Enter your full address" required></textarea>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="bottom-bar">
+                <div class="total-wrapper">
+                    <span class="total-label">Total Amount</span>
+                    <span class="total-price" id="total-display">USD 0.00</span>
+                </div>
+                <button type="button" class="btn-submit" id="btn-submit" onclick="submitOrder()" disabled>Place Order</button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Success Screen -->
+    <div class="container" id="success-container" style="display: none; padding-top: 60px;">
+        <div class="glass-panel" id="success-message" style="display: block;">
+            <svg class="icon-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <h2 style="font-size: 24px; margin-bottom: 12px;">Order Placed!</h2>
+            <p style="color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">Your order has been successfully placed. You can return to the chat.</p>
+            <div style="background: rgba(15,23,42,0.5); border-radius: 8px; padding: 16px; font-family: monospace; font-size: 16px; color: var(--primary); margin-bottom: 24px;">
+                Order #<span id="success-order-number"></span>
+            </div>
+
+            {% if paymentInstructions %}
+            <div style="text-align: left; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 20px;">
+                <h3 style="font-size: 16px; color: #10b981; margin-bottom: 12px;">Payment Instructions</h3>
+                <div style="font-size: 14px; color: var(--text-main); white-space: pre-wrap; line-height: 1.6;">{{ paymentInstructions }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const cart = {};
+        const currencyMap = {};
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectProductId = urlParams.get('product');
+
+        // Initialize products
+        document.querySelectorAll('.product-item').forEach(el => {
+            const id = el.dataset.id;
+            const price = parseFloat(el.dataset.price);
+            const currency = el.dataset.currency;
+            const name = el.dataset.name;
+            
+            let initialQty = 0;
+            if (preselectProductId && id === preselectProductId) {
+                initialQty = 1;
+                setTimeout(() => {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+
+            cart[id] = {
+                id,
+                name,
+                price,
+                currency,
+                qty: initialQty
+            };
+            currencyMap[id] = currency;
+            
+            if (initialQty > 0) {
+                document.getElementById(`qty-${id}`).innerText = initialQty;
+            }
+        });
+
+        if (preselectProductId) {
+            calculateTotal();
+        }
+
+        function updateQty(id, delta) {
+            if (!cart[id]) return;
+            const newQty = cart[id].qty + delta;
+            if (newQty < 0) return;
+
+            cart[id].qty = newQty;
+            document.getElementById(`qty-${id}`).innerText = newQty;
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            let totalItems = 0;
+            let displayCurrency = 'USD';
+
+            for (const id in cart) {
+                if (cart[id].qty > 0) {
+                    total += cart[id].price * cart[id].qty;
+                    totalItems += cart[id].qty;
+                    displayCurrency = cart[id].currency; // Assume single currency
+                }
+            }
+
+            document.getElementById('total-display').innerText = `${displayCurrency} ${total.toFixed(2)}`;
+            
+            // Enable button only if items in cart
+            document.getElementById('btn-submit').disabled = totalItems === 0;
+        }
+
+        async function submitOrder() {
+            const btn = document.getElementById('btn-submit');
+            
+            const name = document.getElementById('customerName').value.trim();
+            const contact = document.getElementById('customerContact').value.trim();
+            const address = document.getElementById('shippingAddress').value.trim();
+
+            if (!name || !contact || !address) {
+                alert("Please fill in your Name, Phone, and Address.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            const items = [];
+            let totalAmount = 0;
+            let currency = 'USD';
+
+            for (const id in cart) {
+                if (cart[id].qty > 0) {
+                    items.push({
+                        productId: id,
+                        name: cart[id].name,
+                        price: cart[id].price,
+                        quantity: cart[id].qty
+                    });
+                    totalAmount += cart[id].price * cart[id].qty;
+                    currency = cart[id].currency;
+                }
+            }
+
+            const payload = {
+                channel: '{{ channel }}',
+                connectionId: {{ connectionId }},
+                senderId: '{{ senderId }}',
+                customerName: name,
+                customerContact: contact,
+                shippingAddress: address,
+                items: items,
+                totalAmount: totalAmount,
+                currency: currency
+            };
+
+            try {
+                const response = await fetch('/c/api/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    document.getElementById('checkout-container').style.display = 'none';
+                    document.getElementById('success-container').style.display = 'block';
+                    document.getElementById('success-order-number').innerText = result.orderNumber;
+                } else {
+                    alert(result.error || "An error occurred.");
+                    btn.disabled = false;
+                    btn.innerText = "Place Order";
+                }
+            } catch (err) {
+                alert("Network error. Please try again.");
+                btn.disabled = false;
+                btn.innerText = "Place Order";
+            }
+        }
+    </script>
+</body>
+</html>

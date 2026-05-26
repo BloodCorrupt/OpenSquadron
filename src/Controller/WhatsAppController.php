@@ -350,7 +350,7 @@ class WhatsAppController extends AbstractController
                             }
 
                             // If subscriber is paused, ignore bot keyword flows
-                            if (!$isResumed && $subscriber->getStatus() === 'paused') {
+                            if (!$isResumed && ($subscriber->getStatus() === 'paused' || $subscriber->isBotPaused())) {
                                 $isResumed = true;
                             }
 
@@ -389,7 +389,7 @@ class WhatsAppController extends AbstractController
                                             'isActive' => true
                                         ]);
                                         if ($aiSetting) {
-                                            $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection);
+                                            $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection, (string)$subscriber->getId(), 'whatsapp');
                                             if ($aiResponse) {
                                                 try {
                                                     $response = $this->whatsappService->sendMessage($subscriber->getPhoneNumber(), $aiResponse, $resolvedConnection);
