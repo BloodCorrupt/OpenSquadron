@@ -165,7 +165,7 @@ class ResellerClientController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_reseller_clients_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, int $id): Response
+    public function edit(Request $request, int $id, \App\Service\R2SettingsService $r2SettingsService): Response
     {
         /** @var Admin $currentUser */
         $currentUser = $this->getUser();
@@ -207,6 +207,7 @@ class ResellerClientController extends AbstractController
 
             $name = $request->request->get('name');
             $avatarPreset = $request->request->get('avatar_preset');
+            $avatarUrl = $request->request->get('avatar_url');
             $avatarFile = $request->files->get('avatar_file');
 
             if (empty($email)) {
@@ -233,7 +234,10 @@ class ResellerClientController extends AbstractController
             $account->setEmail($email);
             $account->setName($name);
 
-            if ($avatarFile) {
+            $settings = $r2SettingsService->getActiveSettings($account);
+            $isR2Configured = $r2SettingsService->isComplete($settings);
+
+            if ($avatarFile && !$isR2Configured) {
                 $originalFilename = pathinfo($avatarFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = preg_replace('/[^a-zA-Z0-9_]/', '', $originalFilename);
                 $newFilename = $safeFilename.'-'.uniqid().'.'.$avatarFile->guessExtension();
@@ -247,6 +251,8 @@ class ResellerClientController extends AbstractController
                 } catch (\Exception $e) {
                     $this->addFlash('error', 'Failed to upload avatar: '.$e->getMessage());
                 }
+            } elseif (!empty($avatarUrl)) {
+                $account->setAvatar($avatarUrl);
             } elseif (!empty($avatarPreset)) {
                 if ($avatarPreset === 'clear') {
                     $account->setAvatar(null);

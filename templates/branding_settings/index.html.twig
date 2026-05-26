@@ -163,9 +163,10 @@
             <label>Brand Logo</label>
             {% if branding.logoUrl %}
                 <div>
-                    <img src="/{{ branding.logoUrl }}" alt="Current Logo" class="current-logo">
+                    <img src="{% if branding.logoUrl starts with 'http' or branding.logoUrl starts with '//' %}{{ branding.logoUrl }}{% else %}/{{ branding.logoUrl }}{% endif %}" alt="Current Logo" class="current-logo">
                 </div>
             {% endif %}
+            <input type="hidden" id="logoUrl" name="logoUrl" value="{{ branding.logoUrl }}">
             <input type="file" id="logoFile" name="logoFile" class="form-control" accept="image/png, image/jpeg, image/svg+xml" style="padding: 9px 15px;">
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Upload a square PNG, JPG, or SVG image. Max 2MB.</div>
         </div>
@@ -182,4 +183,98 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('logoFile');
+    const hiddenUrlInput = document.getElementById('logoUrl');
+    const form = fileInput ? fileInput.closest('form') : null;
+    const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+
+    if (fileInput && form) {
+        fileInput.addEventListener('change', async function() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            let statusText = document.getElementById('upload-status');
+            if (!statusText) {
+                statusText = document.createElement('span');
+                statusText.id = 'upload-status';
+                statusText.style.marginLeft = '15px';
+                statusText.style.fontSize = '13px';
+                statusText.style.fontWeight = 'bold';
+                fileInput.parentNode.appendChild(statusText);
+            }
+
+            statusText.textContent = 'Uploading to Cloud Storage...';
+            statusText.style.color = '#38bdf8';
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                // 1. Request presigned URL
+                const res = await fetch('/settings/media/presign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: file.name,
+                        contentType: file.type,
+                        prefix: 'branding'
+                    })
+                });
+
+                 if (!res.ok) {
+                     const errData = await res.json();
+                     if (errData.code === 'R2_NOT_CONFIGURED') {
+                         statusText.textContent = 'Using local storage (cloud storage not configured).';
+                         statusText.style.color = '#eab308';
+                         fileInput.setAttribute('name', 'logoFile');
+                         if (submitBtn) submitBtn.disabled = false;
+                         return;
+                     }
+                     throw new Error(errData.error || 'Failed to get upload signature.');
+                 }
+
+                const { uploadUrl, publicUrl } = await res.json();
+
+                // 2. Direct PUT upload to R2
+                const uploadRes = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type },
+                    body: file
+                });
+
+                if (!uploadRes.ok) {
+                    throw new Error('Cloud storage upload failed.');
+                }
+
+                // 3. Success! Set hidden input and show preview
+                hiddenUrlInput.value = publicUrl;
+                
+                let previewImg = document.querySelector('.current-logo');
+                if (!previewImg) {
+                    const container = document.createElement('div');
+                    previewImg = document.createElement('img');
+                    previewImg.className = 'current-logo';
+                    container.appendChild(previewImg);
+                    fileInput.parentNode.insertBefore(container, fileInput);
+                }
+                previewImg.src = publicUrl;
+                previewImg.style.display = 'block';
+
+                statusText.textContent = 'Uploaded successfully!';
+                statusText.style.color = '#10b981';
+                
+                // Remove name attribute so file content isn't posted to PHP
+                fileInput.removeAttribute('name');
+            } catch (err) {
+                statusText.textContent = 'Upload failed: ' + err.message;
+                statusText.style.color = '#ef4444';
+                fileInput.value = '';
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

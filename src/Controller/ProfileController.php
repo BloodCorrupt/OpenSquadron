@@ -25,7 +25,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/profile', name: 'app_accounts_edit_self', methods: ['GET', 'POST'])]
-    public function editSelf(Request $request): Response
+    public function editSelf(Request $request, \App\Service\R2SettingsService $r2SettingsService): Response
     {
         /** @var Admin $currentUser */
         $currentUser = $this->getUser();
@@ -62,7 +62,13 @@ class ProfileController extends AbstractController
             $currentUser->setEmail($email);
             $currentUser->setName($name);
 
-            if ($avatarFile) {
+            $avatarUrl = $request->request->get('avatar_url');
+            $avatarPreset = $request->request->get('avatar_preset');
+
+            $settings = $r2SettingsService->getActiveSettings($currentUser);
+            $isR2Configured = $r2SettingsService->isComplete($settings);
+
+            if ($avatarFile && !$isR2Configured) {
                 $originalFilename = pathinfo($avatarFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = preg_replace('/[^a-zA-Z0-9_]/', '', $originalFilename);
                 $newFilename = $safeFilename.'-'.uniqid().'.'.$avatarFile->guessExtension();
@@ -76,6 +82,8 @@ class ProfileController extends AbstractController
                 } catch (\Exception $e) {
                     $this->addFlash('error', 'Failed to upload avatar: '.$e->getMessage());
                 }
+            } elseif (!empty($avatarUrl)) {
+                $currentUser->setAvatar($avatarUrl);
             } elseif (!empty($avatarPreset)) {
                 if ($avatarPreset === 'clear') {
                     $currentUser->setAvatar(null);

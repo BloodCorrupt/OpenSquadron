@@ -17,7 +17,7 @@ use App\Service\CloudflareService;
 class BrandingSettingsController extends AbstractController
 {
     #[Route('/settings/branding', name: 'app_branding_settings', methods: ['GET', 'POST'])]
-    public function index(Request $request, EntityManagerInterface $entityManager, CloudflareService $cfService): Response
+    public function index(Request $request, EntityManagerInterface $entityManager, CloudflareService $cfService, \App\Service\R2SettingsService $r2SettingsService): Response
     {
         /** @var Admin $user */
         $user = $this->getUser();
@@ -96,9 +96,14 @@ class BrandingSettingsController extends AbstractController
             $customCss = $request->request->get('customCss');
             $branding->setCustomCss($customCss);
             
-            // Handle logo upload
+            // Handle logo URL or fallback file upload
+            $logoUrl = $request->request->get('logoUrl');
             $logoFile = $request->files->get('logoFile');
-            if ($logoFile) {
+
+            $settings = $r2SettingsService->getActiveSettings($user);
+            $isR2Configured = $r2SettingsService->isComplete($settings);
+
+            if ($logoFile && !$isR2Configured) {
                 $originalFilename = pathinfo($logoFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = preg_replace('/[^a-zA-Z0-9_]/', '', $originalFilename);
                 $newFilename = $safeFilename.'-'.uniqid().'.'.$logoFile->guessExtension();
@@ -112,6 +117,8 @@ class BrandingSettingsController extends AbstractController
                 } catch (\Exception $e) {
                     $this->addFlash('error', 'Failed to upload logo: '.$e->getMessage());
                 }
+            } elseif (!empty($logoUrl)) {
+                $branding->setLogoUrl($logoUrl);
             }
 
             $entityManager->persist($branding);

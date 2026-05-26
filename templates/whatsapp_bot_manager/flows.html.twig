@@ -1562,6 +1562,7 @@
                 u.value = d.url || '';
                 u.oninput = () => onChange({ url: u.value });
                 wrap.appendChild(wrapField('Image URL', u, 'Must be publicly reachable HTTPS so Meta can fetch it.'));
+                wrap.appendChild(createMediaUploadField(u, 'image', (url) => onChange({ url })));
 
                 const c = document.createElement('input');
                 c.type = 'text'; c.className = 'fb-input';
@@ -1580,12 +1581,15 @@
                 ? '<div class="fb-node-preview" style="font-family:monospace;font-size:11px;">' + escapeHtml(truncate(d.url, 40)) + '</div>'
                 : '<div class="fb-empty">Add audio file URL…</div>',
             inspector: (d, onChange) => {
+                const wrap = document.createDocumentFragment();
                 const u = document.createElement('input');
                 u.type = 'text'; u.className = 'fb-input';
                 u.placeholder = 'https://example.com/audio.mp3';
                 u.value = d.url || '';
                 u.oninput = () => onChange({ url: u.value });
-                return wrapField('Audio URL', u, 'Must be public .mp3, .ogg, or .m4a format.');
+                wrap.appendChild(wrapField('Audio URL', u, 'Must be public .mp3, .ogg, or .m4a format.'));
+                wrap.appendChild(createMediaUploadField(u, 'audio', (url) => onChange({ url })));
+                return wrap;
             }
         },
         send_video: {
@@ -1596,12 +1600,15 @@
                 ? '<div class="fb-node-preview" style="font-family:monospace;font-size:11px;">' + escapeHtml(truncate(d.url, 40)) + '</div>'
                 : '<div class="fb-empty">Add video URL…</div>',
             inspector: (d, onChange) => {
+                const wrap = document.createDocumentFragment();
                 const u = document.createElement('input');
                 u.type = 'text'; u.className = 'fb-input';
                 u.placeholder = 'https://example.com/video.mp4';
                 u.value = d.url || '';
                 u.oninput = () => onChange({ url: u.value });
-                return wrapField('Video URL', u, 'Must be public .mp4 format.');
+                wrap.appendChild(wrapField('Video URL', u, 'Must be public .mp4 format.'));
+                wrap.appendChild(createMediaUploadField(u, 'video', (url) => onChange({ url })));
+                return wrap;
             }
         },
         send_file: {
@@ -1612,12 +1619,15 @@
                 ? '<div class="fb-node-preview" style="font-family:monospace;font-size:11px;">' + escapeHtml(truncate(d.url, 40)) + '</div>'
                 : '<div class="fb-empty">Add document URL…</div>',
             inspector: (d, onChange) => {
+                const wrap = document.createDocumentFragment();
                 const u = document.createElement('input');
                 u.type = 'text'; u.className = 'fb-input';
                 u.placeholder = 'https://example.com/document.pdf';
                 u.value = d.url || '';
                 u.oninput = () => onChange({ url: u.value });
-                return wrapField('Document/File URL', u, 'Must be public .pdf, .docx, .zip, etc.');
+                wrap.appendChild(wrapField('Document/File URL', u, 'Must be public .pdf, .docx, .zip, etc.'));
+                wrap.appendChild(createMediaUploadField(u, 'general', (url) => onChange({ url })));
+                return wrap;
             }
         },
         send_location: {
@@ -2188,6 +2198,135 @@
             g.appendChild(h);
         }
         return g;
+    }
+
+    function createMediaUploadField(inputEl, prefix, onUploadSuccess) {
+        const container = document.createElement('div');
+        container.style.marginTop = '8px';
+        container.style.position = 'relative';
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.style.display = 'none';
+        
+        if (prefix === 'image') fileInput.accept = 'image/*';
+        else if (prefix === 'audio') fileInput.accept = 'audio/*';
+        else if (prefix === 'video') fileInput.accept = 'video/*';
+        else fileInput.accept = '*/*';
+
+        const uploadBtn = document.createElement('button');
+        uploadBtn.type = 'button';
+        uploadBtn.style.cssText = 'width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--glass-border); border-radius: 8px; color: var(--text-main); cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s;';
+        uploadBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; stroke: var(--primary-accent);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>Upload from Computer</span>
+        `;
+        
+        uploadBtn.onmouseover = () => {
+            uploadBtn.style.background = 'rgba(255, 255, 255, 0.08)';
+            uploadBtn.style.borderColor = 'var(--primary-accent)';
+        };
+        uploadBtn.onmouseout = () => {
+            uploadBtn.style.background = 'rgba(255, 255, 255, 0.03)';
+            uploadBtn.style.borderColor = 'var(--glass-border)';
+        };
+
+        const statusEl = document.createElement('div');
+        statusEl.style.cssText = 'display: none; margin-top: 6px; font-size: 11px; text-align: center; font-weight: 600;';
+
+        uploadBtn.onclick = () => fileInput.click();
+
+        fileInput.onchange = () => {
+            if (!fileInput.files || fileInput.files.length === 0) return;
+            const file = fileInput.files[0];
+            
+            statusEl.style.display = 'block';
+            statusEl.style.color = 'var(--text-muted)';
+            statusEl.textContent = 'Preparing upload...';
+
+            fetch('{{ path('app_media_presign') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type,
+                    prefix: 'posts'
+                })
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(errData => {
+                        if (errData.code === 'R2_NOT_CONFIGURED') {
+                            throw new Error('R2_NOT_CONFIGURED');
+                        }
+                        throw new Error(errData.error || 'Failed to get presigned upload URL.');
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                statusEl.textContent = 'Uploading to Cloudflare R2...';
+                return fetch(data.uploadUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': file.type
+                    },
+                    body: file
+                }).then(putRes => {
+                    if (!putRes.ok) {
+                        throw new Error('Failed to upload file to storage bucket.');
+                    }
+                    return data.publicUrl;
+                });
+            })
+            .then(publicUrl => {
+                statusEl.style.color = '#10b981';
+                statusEl.textContent = 'Upload successful!';
+                inputEl.value = publicUrl;
+                onUploadSuccess(publicUrl);
+            })
+            .catch(err => {
+                if (err.message === 'R2_NOT_CONFIGURED') {
+                    statusEl.textContent = 'Cloudflare R2 not configured. Uploading to local server...';
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('prefix', 'posts');
+
+                    fetch('{{ path('app_media_upload_local') }}', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => {
+                        if (!res.ok) {
+                            return res.json().then(errData => {
+                                throw new Error(errData.error || 'Failed to upload locally.');
+                            });
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        statusEl.style.color = '#10b981';
+                        statusEl.textContent = 'Upload successful (Local fallback)!';
+                        inputEl.value = data.publicUrl;
+                        onUploadSuccess(data.publicUrl);
+                    })
+                    .catch(localErr => {
+                        statusEl.style.color = '#f43f5e';
+                        statusEl.textContent = 'Upload failed: ' + localErr.message;
+                    });
+                } else {
+                    statusEl.style.color = '#f43f5e';
+                    statusEl.textContent = 'Upload failed: ' + err.message;
+                }
+            });
+        };
+
+        container.appendChild(fileInput);
+        container.appendChild(uploadBtn);
+        container.appendChild(statusEl);
+        return container;
     }
     function showToast(msg, kind) {
         const t = document.getElementById('fb-toast');

@@ -4002,6 +4002,28 @@
 
         <!-- Posting Panel Tab -->
         <div id="poster-content-create" class="poster-tab-content is-active">
+            <style>
+                .mpc-upload-btn-glass {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    background: rgba(255, 255, 255, 0.03) !important;
+                    border: 1px dashed var(--glass-border) !important;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    color: var(--text-main);
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+                .mpc-upload-btn-glass:hover {
+                    background: rgba(255, 255, 255, 0.08) !important;
+                    border-color: var(--primary-accent) !important;
+                    box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+                }
+            </style>
             <div class="mpc-layout">
             {# â”€â”€ Left: Page Selector â”€â”€ #}
             <div class="mpc-sidebar">
@@ -4040,13 +4062,19 @@
                 </div>
                 {# ── Image/Carousel Tab ── #}
                 <div class="mpc-tab-panel is-active" id="mpc-panel-image">
-                    <div id="mpc-img-url-input" style="margin-top: 10px;">
-                        <input type="url" class="mpc-input" id="mpc-image-url" placeholder="https://example.com/image.jpg" oninput="updateMpcPreview()">
+                    <div id="mpc-img-url-input" style="margin-top: 10px; display: flex; gap: 8px;">
+                        <input type="url" class="mpc-input" id="mpc-image-url" placeholder="https://example.com/image.jpg" oninput="updateMpcPreview()" style="flex: 1;">
+                        <button class="btn-action btn-secondary" onclick="addCarouselImage()" style="height: 48px; padding: 0 16px; border-radius: 8px; flex-shrink: 0;">Add URL</button>
                     </div>
-                    <button class="mpc-upload-btn" onclick="addCarouselImage()" style="margin-top: 10px;">
-                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Upload
-                    </button>
+                    <!-- Premium Glass-styled Direct Upload Button -->
+                    <div style="margin-top: 12px; position: relative;">
+                        <input type="file" id="mpc-image-file-input" accept="image/*" style="display: none;" onchange="handleMpcImageUpload(this)">
+                        <button class="mpc-upload-btn-glass" onclick="document.getElementById('mpc-image-file-input').click()" style="width: 100%;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; stroke: var(--primary-accent);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <span>Upload Image from Computer</span>
+                        </button>
+                        <div id="mpc-image-upload-status" style="display: none; margin-top: 8px; font-size: 12px; font-weight: 600; text-align: center;"></div>
+                    </div>
                     <div class="mpc-info-banner" style="margin-top: 10px;">
                         Multi image Post Limit: 10 images. In Instagram it will be posted as multi images post. For Instagram multi image post, videos will be ignored. For Instagram carousel post, <a href="#">see more...</a>
                     </div>
@@ -4062,13 +4090,36 @@
                         </div>
                     </div>
                     <div>
-                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
+                        <div class="mpc-field-label">POSTING TIME</div>
                         <div class="mpc-posting-time" style="margin-top:8px;">
                             <label class="switch-toggle">
-                                <input type="checkbox" id="mpc-post-now-image" checked>
+                                <input type="checkbox" id="mpc-post-now-image" checked onchange="toggleMpcScheduleFields('image')">
                                 <span class="slider-round"></span>
                             </label>
                             <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
+                        </div>
+                        <div id="mpc-schedule-fields-image" style="display: none; margin-top: 15px; gap: 15px;">
+                            <div style="flex: 1;">
+                                <div class="mpc-field-label">SCHEDULE TIME</div>
+                                <input type="datetime-local" class="mpc-input" id="mpc-schedule-time-image" style="margin-top:6px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="mpc-field-label">TIMEZONE</div>
+                                <select class="form-control" id="mpc-timezone-image" style="margin-top:6px;">
+                                    <option value="UTC" selected>UTC</option>
+                                    <option value="America/New_York">EST (New York)</option>
+                                    <option value="America/Chicago">CST (Chicago)</option>
+                                    <option value="America/Denver">MST (Denver)</option>
+                                    <option value="America/Los_Angeles">PST (Los Angeles)</option>
+                                    <option value="Europe/London">GMT (London)</option>
+                                    <option value="Europe/Paris">CET (Paris)</option>
+                                    <option value="Asia/Kolkata">IST (Kolkata)</option>
+                                    <option value="Asia/Dhaka">Asia/Dhaka</option>
+                                    <option value="Asia/Singapore">SGT (Singapore)</option>
+                                    <option value="Asia/Tokyo">JST (Tokyo)</option>
+                                    <option value="Australia/Sydney">AEST (Sydney)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="mpc-submit-row">
@@ -4079,15 +4130,20 @@
                     </div>
                 </div>
 
-                {# â”€â”€ Video Tab â”€â”€ #}
+                {# ── Video Tab ── #}
                 <div class="mpc-tab-panel" id="mpc-panel-video">
-                    <div>
+                    <div id="mpc-video-url-input" style="margin-top: 10px;">
                         <input type="url" class="mpc-input" id="mpc-video-url" placeholder="Paste URL" oninput="updateMpcPreview()">
                     </div>
-                    <button class="mpc-upload-btn" id="mpc-video-upload-btn">
-                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Upload
-                    </button>
+                    <!-- Premium Glass-styled Direct Video Upload Button -->
+                    <div style="margin-top: 12px; position: relative;">
+                        <input type="file" id="mpc-video-file-input" accept="video/*" style="display: none;" onchange="handleMpcVideoUpload(this)">
+                        <button class="mpc-upload-btn-glass" onclick="document.getElementById('mpc-video-file-input').click()" style="width: 100%;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; stroke: var(--primary-accent);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <span>Upload Video from Computer</span>
+                        </button>
+                        <div id="mpc-video-upload-status" style="display: none; margin-top: 8px; font-size: 12px; font-weight: 600; text-align: center;"></div>
+                    </div>
                     <div>
                         <div class="mpc-field-label">CAMPAIGN NAME</div>
                         <input type="text" class="mpc-input" id="mpc-campaign-video" placeholder="Enter campaign name..." style="margin-top:6px;">
@@ -4099,13 +4155,36 @@
                         </div>
                     </div>
                     <div>
-                        <div class="mpc-field-label">POSTING TIME <span class="info-dot" title="Schedule or post immediately">i</span></div>
+                        <div class="mpc-field-label">POSTING TIME</div>
                         <div class="mpc-posting-time" style="margin-top:8px;">
                             <label class="switch-toggle">
-                                <input type="checkbox" id="mpc-post-now-video" checked>
+                                <input type="checkbox" id="mpc-post-now-video" checked onchange="toggleMpcScheduleFields('video')">
                                 <span class="slider-round"></span>
                             </label>
                             <span style="font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">POST NOW</span>
+                        </div>
+                        <div id="mpc-schedule-fields-video" style="display: none; margin-top: 15px; gap: 15px;">
+                            <div style="flex: 1;">
+                                <div class="mpc-field-label">SCHEDULE TIME</div>
+                                <input type="datetime-local" class="mpc-input" id="mpc-schedule-time-video" style="margin-top:6px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="mpc-field-label">TIMEZONE</div>
+                                <select class="form-control" id="mpc-timezone-video" style="margin-top:6px;">
+                                    <option value="UTC" selected>UTC</option>
+                                    <option value="America/New_York">EST (New York)</option>
+                                    <option value="America/Chicago">CST (Chicago)</option>
+                                    <option value="America/Denver">MST (Denver)</option>
+                                    <option value="America/Los_Angeles">PST (Los Angeles)</option>
+                                    <option value="Europe/London">GMT (London)</option>
+                                    <option value="Europe/Paris">CET (Paris)</option>
+                                    <option value="Asia/Kolkata">IST (Kolkata)</option>
+                                    <option value="Asia/Dhaka">Asia/Dhaka</option>
+                                    <option value="Asia/Singapore">SGT (Singapore)</option>
+                                    <option value="Asia/Tokyo">JST (Tokyo)</option>
+                                    <option value="Australia/Sydney">AEST (Sydney)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="mpc-submit-row">
@@ -7305,6 +7384,137 @@
         }
     }
 
+    function toggleMpcScheduleFields(tab) {
+        const checkbox = document.getElementById('mpc-post-now-' + tab);
+        const fields = document.getElementById('mpc-schedule-fields-' + tab);
+        if (checkbox && fields) {
+            fields.style.display = checkbox.checked ? 'none' : 'flex';
+        }
+    }
+
+    function uploadMpcFile(file, statusElId, successCallback) {
+        const statusEl = document.getElementById(statusElId);
+        if (statusEl) {
+            statusEl.style.display = 'block';
+            statusEl.style.color = 'var(--text-muted)';
+            statusEl.textContent = 'Preparing upload...';
+        }
+
+        fetch('{{ path('app_media_presign') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filename: file.name,
+                contentType: file.type,
+                prefix: 'posts'
+            })
+        })
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(errData => {
+                    if (errData.code === 'R2_NOT_CONFIGURED') {
+                        throw new Error('R2_NOT_CONFIGURED');
+                    }
+                    throw new Error(errData.error || 'Failed to get presigned upload URL.');
+                });
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (statusEl) {
+                statusEl.textContent = 'Uploading to Cloudflare R2...';
+            }
+            return fetch(data.uploadUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': file.type
+                },
+                body: file
+            }).then(putRes => {
+                if (!putRes.ok) {
+                    throw new Error('Failed to upload file to storage bucket.');
+                }
+                return data.publicUrl;
+            });
+        })
+        .then(publicUrl => {
+            if (statusEl) {
+                statusEl.style.color = '#10b981';
+                statusEl.textContent = 'Upload successful!';
+            }
+            successCallback(publicUrl);
+        })
+        .catch(err => {
+            if (err.message === 'R2_NOT_CONFIGURED') {
+                if (statusEl) {
+                    statusEl.textContent = 'Cloudflare R2 not configured. Uploading to local server...';
+                }
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('prefix', 'posts');
+
+                fetch('{{ path('app_media_upload_local') }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errData => {
+                            throw new Error(errData.error || 'Failed to upload locally.');
+                        });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (statusEl) {
+                        statusEl.style.color = '#10b981';
+                        statusEl.textContent = 'Upload successful (Local fallback)!';
+                    }
+                    successCallback(data.publicUrl);
+                })
+                .catch(localErr => {
+                    if (statusEl) {
+                        statusEl.style.color = '#f43f5e';
+                        statusEl.textContent = 'Upload failed: ' + localErr.message;
+                    }
+                });
+            } else {
+                if (statusEl) {
+                    statusEl.style.color = '#f43f5e';
+                    statusEl.textContent = 'Upload failed: ' + err.message;
+                }
+            }
+        });
+    }
+
+    function handleMpcImageUpload(input) {
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+        if (mpcCarouselImages.length >= 10) {
+            showToast('Maximum 10 images allowed.', 'error');
+            return;
+        }
+        uploadMpcFile(file, 'mpc-image-upload-status', function(url) {
+            mpcCarouselImages.push(url);
+            renderCarouselList();
+            updateMpcPreview();
+        });
+    }
+
+    function handleMpcVideoUpload(input) {
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+        uploadMpcFile(file, 'mpc-video-upload-status', function(url) {
+            const urlInput = document.getElementById('mpc-video-url');
+            if (urlInput) {
+                urlInput.value = url;
+            }
+            updateMpcPreview();
+        });
+    }
+
     function updateMpcPreview() {
         const previewText = document.getElementById('mpc-preview-text');
         const previewMedia = document.getElementById('mpc-preview-media');
@@ -7429,6 +7639,19 @@
             return;
         }
 
+        let scheduledTime = '';
+        let timezone = 'UTC';
+        if (!postNow) {
+            scheduledTime = document.getElementById('mpc-schedule-time-' + tab)?.value || '';
+            timezone = document.getElementById('mpc-timezone-' + tab)?.value || 'UTC';
+            if (!scheduledTime) {
+                showToast('Please select a schedule time or toggle Post Now.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                return;
+            }
+        }
+
         // Publish to each selected page
         const promises = pageIds.map(connId => {
             const formData = new FormData();
@@ -7440,6 +7663,8 @@
             formData.append('mediaUrl', mediaUrl);
             formData.append('slides', slides);
             formData.append('publishNow', postNow ? 'true' : 'false');
+            formData.append('scheduledTime', scheduledTime);
+            formData.append('timezone', timezone);
 
             return fetch('{{ path('app_instagram_bot_posts_save') }}', {
                 method: 'POST',

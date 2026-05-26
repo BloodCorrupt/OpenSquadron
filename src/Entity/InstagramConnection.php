@@ -19,7 +19,7 @@ class InstagramConnection implements TenantAwareInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Admin::class, inversedBy: 'InstagramConnections')]
+    #[ORM\ManyToOne(targetEntity: Admin::class, inversedBy: 'instagramConnections')]
     #[ORM\JoinColumn(name: 'owner_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Admin $owner = null;
 

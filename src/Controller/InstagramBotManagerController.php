@@ -1134,6 +1134,28 @@ class InstagramBotManagerController extends AbstractController
         $post['fbPostId'] = null;
         $post['errorMessage'] = null;
 
+        $scheduledTimeStr = $request->request->get('scheduledTime');
+        $timezoneStr = $request->request->get('timezone', 'UTC');
+
+        if ($publishNow) {
+            $post['status'] = 'published';
+            $post['scheduledAt'] = null;
+        } elseif (!empty($scheduledTimeStr)) {
+            try {
+                $tz = new \DateTimeZone($timezoneStr);
+                $dt = new \DateTime($scheduledTimeStr, $tz);
+                $dt->setTimezone(new \DateTimeZone('UTC'));
+                $post['scheduledAt'] = $dt->format('Y-m-d H:i:s');
+                $post['status'] = 'scheduled';
+            } catch (\Exception $e) {
+                $post['status'] = 'draft';
+                $post['scheduledAt'] = null;
+            }
+        } else {
+            $post['status'] = 'draft';
+            $post['scheduledAt'] = null;
+        }
+
         if ($publishNow) {
             try {
                 $result = null;

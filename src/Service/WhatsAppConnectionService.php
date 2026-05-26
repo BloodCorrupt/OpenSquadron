@@ -8,6 +8,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Service\R2SettingsService;
+use App\Service\R2StorageService;
 
 class WhatsAppConnectionService
 {
@@ -17,6 +19,8 @@ class WhatsAppConnectionService
         private EntityManagerInterface $entityManager,
         private HttpClientInterface $httpClient,
         private RouterInterface $router,
+        private R2SettingsService $r2SettingsService,
+        private R2StorageService $r2StorageService,
         #[Autowire(env: 'APP_SECRET')]
         private string $appSecret
     ) {
@@ -342,7 +346,7 @@ class WhatsAppConnectionService
         return $content;
     }
 
-    public function downloadMedia(string $mediaId, string $uploadDir, ?WhatsAppConnection $connection = null): ?string
+    public function downloadMedia(string $mediaId, string $uploadDir = '', ?WhatsAppConnection $connection = null): ?string
     {
         $accessToken = $this->getAccessToken($connection);
         
@@ -384,12 +388,39 @@ class WhatsAppConnectionService
         elseif (str_contains($mimeType, 'audio/mp4')) $extension = 'm4a';
         
         $filename = uniqid('media_') . '.' . $extension;
-        $filepath = rtrim($uploadDir, '/') . '/' . $filename;
-        
+
+        // Resolve active R2 settings for connection owner
+        if (!$connection) {
+            $connection = $this->getDefaultConnection();
+        }
+        $owner = $connection ? $connection->getOwner() : null;
+
+        $r2Settings = null;
+        if ($owner) {
+            $r2Settings = $this->r2SettingsService->getActiveSettings($owner);
+        }
+
+        if ($r2Settings && $this->r2SettingsService->isComplete($r2Settings)) {
+            $objectKey = "whatsapp/{$filename}";
+            $uploadedUrl = $this->r2StorageService->uploadContent(
+                $r2Settings,
+                $fileResponse->getContent(),
+                $objectKey,
+                $mimeType
+            );
+            if ($uploadedUrl) {
+                return $uploadedUrl;
+            }
+        }
+
+        // Fallback to local storage
+        if (empty($uploadDir)) {
+            $uploadDir = __DIR__ . '/../../public/uploads/whatsapp_media';
+        }
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-        
+        $filepath = rtrim($uploadDir, '/') . '/' . $filename;
         file_put_contents($filepath, $fileResponse->getContent());
         
         return 'uploads/whatsapp_media/' . $filename;

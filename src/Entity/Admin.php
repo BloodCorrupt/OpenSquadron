@@ -94,6 +94,9 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
     #[ORM\OneToOne(mappedBy: 'owner', targetEntity: CloudflareSettings::class, cascade: ['persist', 'remove'])]
     private ?CloudflareSettings $cloudflareSettings = null;
 
+    #[ORM\OneToOne(mappedBy: 'owner', targetEntity: R2Settings::class, cascade: ['persist', 'remove'])]
+    private ?R2Settings $r2Settings = null;
+
     #[ORM\ManyToOne(targetEntity: SubscriptionPackage::class)]
     #[ORM\JoinColumn(name: 'subscription_package_id', referencedColumnName: 'id', onDelete: 'SET NULL')]
     private ?SubscriptionPackage $subscriptionPackage = null;
@@ -426,6 +429,28 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
         }
 
         $this->cloudflareSettings = $cloudflareSettings;
+
+        return $this;
+    }
+
+    public function getR2Settings(): ?R2Settings
+    {
+        return $this->r2Settings;
+    }
+
+    public function setR2Settings(?R2Settings $r2Settings): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($r2Settings === null && $this->r2Settings !== null) {
+            $this->r2Settings->setOwner(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($r2Settings !== null && $r2Settings->getOwner() !== $this) {
+            $r2Settings->setOwner($this);
+        }
+
+        $this->r2Settings = $r2Settings;
 
         return $this;
     }

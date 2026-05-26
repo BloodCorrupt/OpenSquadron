@@ -1,0 +1,278 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Media Storage Settings - OpenSquadron{% endblock %}
+
+{% block body %}
+<style>
+    .form-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 35px;
+        max-width: 650px;
+        margin: 0 auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    .form-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 15px;
+    }
+    .form-title svg {
+        width: 24px;
+        height: 24px;
+        stroke: var(--primary-accent);
+    }
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 35px;
+        border-top: 1px solid var(--glass-border);
+        padding-top: 20px;
+    }
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .info-box {
+        background: rgba(6, 182, 212, 0.08);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        color: #e0f2fe;
+        padding: 18px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .switch-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--glass-border);
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+    }
+    .switch-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .switch-title {
+        font-weight: 600;
+        color: #fff;
+        font-size: 14px;
+    }
+    .switch-description {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+    .switch-toggle {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+    .switch-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider-round {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .3s;
+        border-radius: 24px;
+        border: 1px solid var(--glass-border);
+    }
+    .slider-round:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    .switch-toggle input:checked + .slider-round {
+        background-color: var(--primary-accent);
+    }
+    .switch-toggle input:checked + .slider-round:before {
+        transform: translateX(20px);
+    }
+</style>
+
+<div class="header">
+    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+    <h1>Media Storage Settings</h1>
+</div>
+
+<div class="form-card">
+    <div class="form-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+        Cloudflare R2 / S3-Compatible Storage
+    </div>
+
+    {% if isUserChoice %}
+        <div class="switch-group">
+            <div class="switch-info">
+                <span class="switch-title">Use Custom R2 Storage</span>
+                <span class="switch-description">Enable this to store files in your own bucket instead of using workspace shared storage.</span>
+            </div>
+            <label class="switch-toggle">
+                <input type="checkbox" name="useCustom" id="useCustomToggle" value="1" {% if settings.isUseCustom %}checked{% endif %}>
+                <span class="slider-round"></span>
+            </label>
+        </div>
+    {% endif %}
+
+    <div id="inheritedStorageNotice" class="info-box" style="display: none;">
+        <strong>Shared Storage Active</strong>: You are currently using your workspace's shared storage. All images, avatars, and WhatsApp attachments will be served securely from the central workspace storage system.
+    </div>
+
+    <form id="r2SettingsForm" action="{{ path('app_media_storage_settings') }}" method="POST" autocomplete="off">
+        {% if isUserChoice %}
+            <input type="hidden" name="useCustom" id="useCustomHidden" value="{% if settings.isUseCustom %}1{% else %}0{% endif %}">
+        {% endif %}
+
+        <div class="info-box">
+            Configure S3-compatible credentials (such as Cloudflare R2). File uploads will bypass the application server and upload directly from the user's browser, maximizing performance and saving server resources.
+        </div>
+
+        <div class="form-group">
+            <label for="accountId">Cloudflare Account ID (or custom Endpoint URL)</label>
+            <input type="text" id="accountId" name="accountId" class="form-control" value="{{ settings.accountId }}" placeholder="e.g. f83272d0c353ecad9ca31a83023e105f" required>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Your Cloudflare Account ID (used to construct the R2 API endpoint).</div>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="accessKeyId">Access Key ID</label>
+            <input type="text" id="accessKeyId" name="accessKeyId" class="form-control" value="{{ settings.accessKeyId }}" placeholder="e.g. 70ecf83d9ca31a83023e1a0d81ef77aa" required>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="secretAccessKey">Secret Access Key</label>
+            <input type="password" id="secretAccessKey" name="secretAccessKey" class="form-control" value="{{ settings.secretAccessKey }}" placeholder="••••••••••••••••••••••••••••••••" required>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="bucketName">Bucket Name</label>
+            <input type="text" id="bucketName" name="bucketName" class="form-control" value="{{ settings.bucketName }}" placeholder="e.g. opensquadron-media" required>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="publicUrl">Public Access URL (CDN Domain)</label>
+            <input type="url" id="publicUrl" name="publicUrl" class="form-control" value="{{ settings.publicUrl }}" placeholder="e.g. https://media.yourdomain.com" required>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">The public-facing domain or R2 public access URL (e.g., <code>https://pub-xxxx.r2.dev</code>). Do not include trailing slash.</div>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="inboxRetentionDays">Auto-delete Inbox Media</label>
+            <select id="inboxRetentionDays" name="inboxRetentionDays" class="form-control">
+                <option value="0" {% if settings.inboxRetentionDays is empty or settings.inboxRetentionDays == 0 %}selected{% endif %}>Keep Forever (Disabled)</option>
+                <option value="7" {% if settings.inboxRetentionDays == 7 %}selected{% endif %}>7 Days</option>
+                <option value="30" {% if settings.inboxRetentionDays == 30 %}selected{% endif %}>30 Days</option>
+                <option value="90" {% if settings.inboxRetentionDays == 90 %}selected{% endif %}>90 Days</option>
+                <option value="180" {% if settings.inboxRetentionDays == 180 %}selected{% endif %}>180 Days</option>
+            </select>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">
+                Specify how long to keep WhatsApp inbox media files in R2 storage. Once expired, Cloudflare will automatically delete them to save storage space. User avatars and posts/branding assets are not affected.
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ path('app_dashboard') }}" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Storage Settings</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const useCustomToggle = document.getElementById('useCustomToggle');
+        const useCustomHidden = document.getElementById('useCustomHidden');
+        const settingsForm = document.getElementById('r2SettingsForm');
+        const inheritedNotice = document.getElementById('inheritedStorageNotice');
+
+        if (useCustomToggle) {
+            function updateStorageVisibility() {
+                const enabled = useCustomToggle.checked;
+                useCustomHidden.value = enabled ? '1' : '0';
+                
+                // Hide/show inputs and enable/disable required attributes
+                const inputs = settingsForm.querySelectorAll('input:not([type="hidden"])');
+                if (enabled) {
+                    settingsForm.style.display = 'block';
+                    inheritedNotice.style.display = 'none';
+                    inputs.forEach(input => {
+                        input.setAttribute('required', 'required');
+                    });
+                } else {
+                    settingsForm.style.display = 'none';
+                    inheritedNotice.style.display = 'block';
+                    inputs.forEach(input => {
+                        input.removeAttribute('required');
+                    });
+                }
+            }
+
+            useCustomToggle.addEventListener('change', updateStorageVisibility);
+            
+            // Initial call
+            updateStorageVisibility();
+            
+            // Allow submitting the toggle change directly
+            useCustomToggle.addEventListener('change', function() {
+                // If it is turned off, we submit the form immediately to save the setting
+                if (!useCustomToggle.checked) {
+                    const tempForm = document.createElement('form');
+                    tempForm.method = 'POST';
+                    tempForm.action = settingsForm.action;
+                    
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'useCustom';
+                    hidden.value = '0';
+                    tempForm.appendChild(hidden);
+                    
+                    document.body.appendChild(tempForm);
+                    tempForm.submit();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

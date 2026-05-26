@@ -221,7 +221,7 @@
                                 {{ (account.name ?: account.email)|slice(0, 1)|upper }}
                             </div>
                         {% else %}
-                            <img src="{{ '/' ~ account.avatar }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{% if account.avatar starts with 'http' or account.avatar starts with '//' %}{{ account.avatar }}{% else %}/{{ account.avatar }}{% endif %}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                         {% endif %}
                     {% else %}
                         <div class="avatar-inner" style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px;">
@@ -238,6 +238,7 @@
             <!-- Upload Custom File -->
             <div style="margin-bottom: 20px;">
                 <label for="avatar_file" style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px; display: block;">Upload Image File (.png, .jpg, .jpeg)</label>
+                <input type="hidden" id="avatarUrl" name="avatar_url" value="{{ account.avatar }}">
                 <input type="file" id="avatar_file" name="avatar_file" class="form-control" accept="image/*" style="padding: 10px;">
             </div>
 
@@ -463,23 +464,92 @@
             });
         }
         
-        // Dynamic file upload preview helper
+        // Dynamic file upload preview helper with direct R2 upload
         const fileInput = document.getElementById('avatar_file');
+        const hiddenUrlInput = document.getElementById('avatarUrl');
+        const submitBtn = fileInput ? fileInput.closest('form').querySelector('button[type="submit"]') : null;
+        
         if (fileInput) {
-            fileInput.addEventListener('change', function(e) {
+            fileInput.addEventListener('change', async function(e) {
                 if (e.target.files && e.target.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(evt) {
+                    const file = e.target.files[0];
+                    
+                    let statusText = document.getElementById('upload-status');
+                    if (!statusText) {
+                        statusText = document.createElement('span');
+                        statusText.id = 'upload-status';
+                        statusText.style.display = 'block';
+                        statusText.style.marginTop = '10px';
+                        statusText.style.fontSize = '12px';
+                        statusText.style.fontWeight = 'bold';
+                        fileInput.parentNode.appendChild(statusText);
+                    }
+
+                    statusText.textContent = 'Uploading to Cloud Storage...';
+                    statusText.style.color = '#38bdf8';
+                    if (submitBtn) submitBtn.disabled = true;
+
+                    try {
+                        // 1. Request presigned URL
+                        const res = await fetch('/settings/media/presign', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                filename: file.name,
+                                contentType: file.type,
+                                prefix: 'avatars'
+                            })
+                        });
+
+                        if (!res.ok) {
+                            const errData = await res.json();
+                            if (errData.code === 'R2_NOT_CONFIGURED') {
+                                statusText.textContent = 'Using local storage (cloud storage not configured).';
+                                statusText.style.color = '#eab308';
+                                fileInput.setAttribute('name', 'avatar_file');
+                                if (submitBtn) submitBtn.disabled = false;
+                                return;
+                            }
+                            throw new Error(errData.error || 'Failed to get upload signature.');
+                        }
+
+                        const { uploadUrl, publicUrl } = await res.json();
+
+                        // 2. Direct PUT upload to R2
+                        const uploadRes = await fetch(uploadUrl, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': file.type },
+                            body: file
+                        });
+
+                        if (!uploadRes.ok) {
+                            throw new Error('Cloud storage upload failed.');
+                        }
+
+                        // 3. Success! Set hidden input and show preview
+                        hiddenUrlInput.value = publicUrl;
+                        
                         const preview = document.getElementById('avatar_preview_container');
-                        preview.innerHTML = `<img src="${evt.target.result}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        preview.innerHTML = `<img src="${publicUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
                         
                         // Clear active preset buttons
                         document.querySelectorAll('.preset-btn').forEach(btn => {
                             btn.classList.remove('active');
                         });
                         document.getElementById('avatar_preset').value = '';
-                    };
-                    reader.readAsDataURL(e.target.files[0]);
+
+                        statusText.textContent = 'Uploaded successfully!';
+                        statusText.style.color = '#10b981';
+                        
+                        // Remove name attribute so file content isn't posted to PHP
+                        fileInput.removeAttribute('name');
+                    } catch (err) {
+                        statusText.textContent = 'Upload failed: ' + err.message;
+                        statusText.style.color = '#ef4444';
+                        fileInput.value = '';
+                    } finally {
+                        if (submitBtn) submitBtn.disabled = false;
+                    }
                 }
             });
         }

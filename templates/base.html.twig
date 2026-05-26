@@ -1528,7 +1528,7 @@
                 </div>
                 {% endif %}
                 <div class="nav-dropdown">
-                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'custom_field' in app.request.attributes.get('_route')|default('') or 'http_api' in app.request.attributes.get('_route')|default('') or 'team_members' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
+                    <div class="nav-item {% if 'subscriber' in app.request.attributes.get('_route')|default('') or 'ai_settings' in app.request.attributes.get('_route')|default('') or 'custom_field' in app.request.attributes.get('_route')|default('') or 'http_api' in app.request.attributes.get('_route')|default('') or 'team_members' in app.request.attributes.get('_route')|default('') or 'media_storage_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </span> Settings <span class="dropdown-caret">▼</span>
@@ -1563,13 +1563,20 @@
                                 </span> Team Members
                             </a>
                         {% endif %}
+                        {% if app.user.subscriptionPackage and (app.user.subscriptionPackage.features['media_storage_mode']|default('parent') in ['user', 'choice']) %}
+                            <a href="{{ path('app_media_storage_settings') }}" class="dropdown-item {% if 'media_storage_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+                                </span> Media Storage
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
 
                 {# ── Admin Panel (super_admin + reseller/admin only) ── #}
                 {% if app.user.accountType in ['super_admin', 'admin'] %}
                 <div class="nav-dropdown">
-                    <div class="nav-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') or 'smtp_settings' in app.request.attributes.get('_route')|default('') or 'branding_settings' in app.request.attributes.get('_route')|default('') or 'cloudflare_settings' in app.request.attributes.get('_route')|default('') or 'server_accounts' in app.request.attributes.get('_route')|default('') or 'reseller_clients' in app.request.attributes.get('_route')|default('') or 'subscription_packages' in app.request.attributes.get('_route')|default('') or 'team_roles' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
+                    <div class="nav-item {% if 'facebook_settings' in app.request.attributes.get('_route')|default('') or 'smtp_settings' in app.request.attributes.get('_route')|default('') or 'branding_settings' in app.request.attributes.get('_route')|default('') or 'cloudflare_settings' in app.request.attributes.get('_route')|default('') or 'server_accounts' in app.request.attributes.get('_route')|default('') or 'reseller_clients' in app.request.attributes.get('_route')|default('') or 'subscription_packages' in app.request.attributes.get('_route')|default('') or 'team_roles' in app.request.attributes.get('_route')|default('') or 'media_storage_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %} dropdown-trigger" style="cursor: pointer;">
                         <span class="nav-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
                         </span> Admin Panel <span class="dropdown-caret">▼</span>
@@ -1589,6 +1596,11 @@
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                             </span> Branding &amp; Custom CSS
+                        </a>
+                        <a href="{{ path('app_media_storage_settings') }}" class="dropdown-item {% if 'media_storage_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path></svg>
+                            </span> Media Storage
                         </a>
                         {% if app.user.accountType == 'super_admin' %}
                         <a href="{{ path('app_cloudflare_settings') }}" class="dropdown-item {% if 'cloudflare_settings' in app.request.attributes.get('_route')|default('') %}active{% endif %}">

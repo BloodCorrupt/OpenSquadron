@@ -169,11 +169,15 @@ class LiveChatController extends AbstractController
         
         $data = [];
         foreach ($messages as $msg) {
+            $resMediaUrl = $msg->getMediaUrl();
+            if ($resMediaUrl && !str_starts_with($resMediaUrl, 'http://') && !str_starts_with($resMediaUrl, 'https://')) {
+                $resMediaUrl = '/' . $resMediaUrl;
+            }
             $data[] = [
                 'id' => $msg->getId(),
                 'type' => $msg->getType(),
                 'content' => $msg->getContent(),
-                'mediaUrl' => $msg->getMediaUrl() ? '/' . $msg->getMediaUrl() : null,
+                'mediaUrl' => $resMediaUrl,
                 'timestamp' => $msg->getTimestamp()->format('Y-m-d H:i:s'),
                 'timeOnly' => $msg->getTimestamp()->format('H:i'),
                 'direction' => $msg->getDirection()
@@ -184,14 +188,22 @@ class LiveChatController extends AbstractController
     }
 
     #[Route('/inbox/api/send', name: 'app_inbox_send', methods: ['POST'])]
-    public function send(Request $request, EntityManagerInterface $em, WhatsAppConnectionService $whatsappService, FacebookService $facebookService, \App\Service\InstagramService $instagramService): JsonResponse
-    {
+    public function send(
+        Request $request,
+        EntityManagerInterface $em,
+        WhatsAppConnectionService $whatsappService,
+        FacebookService $facebookService,
+        \App\Service\InstagramService $instagramService,
+        \App\Service\R2SettingsService $r2SettingsService
+    ): JsonResponse {
         $this->denyAccessUnlessGranted(TeamPermissionVoter::PERM_SUBSCRIBERS_MANAGE);
         $subscriberId = $request->request->get('subscriber_id');
         $content = $request->request->get('content', '');
         $file = $request->files->get('media');
+        $mediaUrl = $request->request->get('media_url');
+        $mediaType = $request->request->get('media_type', 'text');
 
-        if (!$subscriberId || (empty(trim($content)) && !$file)) {
+        if (!$subscriberId || (empty(trim($content)) && !$file && !$mediaUrl)) {
             return new JsonResponse(['success' => false, 'error' => 'Invalid data'], 400);
         }
 
@@ -213,8 +225,6 @@ class LiveChatController extends AbstractController
             }
         }
 
-        // Instagram service is now injected via method signature
-
         try {
             $msg = new Message();
             $msg->setSubscriber($subscriber);
@@ -223,7 +233,24 @@ class LiveChatController extends AbstractController
 
             $metaMessageId = null;
 
-            if ($file) {
+            // Resolve whether connection owner has R2 configured
+            $connection = null;
+            if ($channel === 'facebook') {
+                $connection = $subscriber->getFacebookConnection();
+            } elseif ($channel === 'Instagram') {
+                $connection = $subscriber->getInstagramConnection();
+            } else {
+                $connection = $subscriber->getWhatsAppConnection();
+            }
+            $owner = $connection ? $connection->getOwner() : null;
+
+            $r2Settings = null;
+            if ($owner) {
+                $r2Settings = $r2SettingsService->getActiveSettings($owner);
+            }
+            $isR2Configured = $r2SettingsService->isComplete($r2Settings);
+
+            if ($file && !$isR2Configured) {
                 // Use native PHP finfo to detect MIME (no symfony/mime needed)
                 $finfo = new \finfo(FILEINFO_MIME_TYPE);
                 $mimeType = $finfo->file($file->getPathname());
@@ -251,11 +278,11 @@ class LiveChatController extends AbstractController
                     $filename = uniqid('out_') . '.' . $ext;
                     $file->move($uploadDir, $filename);
                     
-                    $mediaUrl = 'uploads/whatsapp_media/' . $filename;
-                    $absoluteUrl = $request->getSchemeAndHttpHost() . '/' . $mediaUrl;
+                    $localMediaUrl = 'uploads/whatsapp_media/' . $filename;
+                    $absoluteUrl = $request->getSchemeAndHttpHost() . '/' . $localMediaUrl;
                     
                     $msg->setType($type);
-                    $msg->setMediaUrl($mediaUrl);
+                    $msg->setMediaUrl($localMediaUrl);
                     $msg->setContent($content);
                     
                     if ($channel === 'facebook') {
@@ -265,6 +292,18 @@ class LiveChatController extends AbstractController
                         $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $type, $absoluteUrl, $subscriber->getWhatsAppConnection());
                         $metaMessageId = $response['messages'][0]['id'] ?? null;
                     }
+                }
+            } elseif ($mediaUrl && $mediaType !== 'text') {
+                $msg->setType($mediaType);
+                $msg->setMediaUrl($mediaUrl);
+                $msg->setContent($content);
+                
+                if ($channel === 'facebook') {
+                    $response = $facebookService->sendMediaMessage($subscriber->getPsid(), $mediaType, $mediaUrl, $subscriber->getFacebookConnection());
+                    $metaMessageId = $response['message_id'] ?? null;
+                } else {
+                    $response = $whatsappService->sendMediaMessage($subscriber->getPhoneNumber(), $mediaType, $mediaUrl, $subscriber->getWhatsAppConnection());
+                    $metaMessageId = $response['messages'][0]['id'] ?? null;
                 }
             } else {
                 // Normal text message
@@ -290,13 +329,18 @@ class LiveChatController extends AbstractController
             
             $em->flush();
 
+            $resMediaUrl = $msg->getMediaUrl();
+            if ($resMediaUrl && !str_starts_with($resMediaUrl, 'http://') && !str_starts_with($resMediaUrl, 'https://')) {
+                $resMediaUrl = '/' . $resMediaUrl;
+            }
+
             return new JsonResponse([
                 'success' => true, 
                 'message' => [
                     'id' => $msg->getId(),
                     'type' => $msg->getType(),
                     'content' => $msg->getContent(),
-                    'mediaUrl' => $msg->getMediaUrl() ? '/' . $msg->getMediaUrl() : null,
+                    'mediaUrl' => $resMediaUrl,
                     'timestamp' => $msg->getTimestamp()->format('Y-m-d H:i:s'),
                     'direction' => 'outbound'
                 ]

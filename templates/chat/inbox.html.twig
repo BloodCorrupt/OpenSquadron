@@ -1158,12 +1158,14 @@
                     {% for message in messages %}
                         <div class="message-bubble {% if message.direction == 'inbound' %}message-inbound{% else %}message-outbound{% endif %}" data-message-id="{{ message.id }}">
                             {% if message.type == 'image' and message.mediaUrl %}
-                                <a href="/{{ message.mediaUrl }}" target="_blank">
-                                    <img src="/{{ message.mediaUrl }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+                                {% set mediaUrl = ('://' in message.mediaUrl) ? message.mediaUrl : '/' ~ message.mediaUrl %}
+                                <a href="{{ mediaUrl }}" target="_blank">
+                                    <img src="{{ mediaUrl }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
                                 </a>
                             {% elseif message.type == 'audio' and message.mediaUrl %}
+                                {% set mediaUrl = ('://' in message.mediaUrl) ? message.mediaUrl : '/' ~ message.mediaUrl %}
                                 <audio controls style="max-width: 100%; margin-bottom: 8px;">
-                                    <source src="/{{ message.mediaUrl }}">
+                                    <source src="{{ mediaUrl }}">
                                 </audio>
                             {% endif %}
                             
@@ -1506,7 +1508,7 @@
         });
     }
 
-    function sendMessage() {
+    async function sendMessage() {
         const input = document.getElementById('message-input');
         const fileInput = document.getElementById('media-upload');
         const content = input.value.trim();
@@ -1520,8 +1522,65 @@
         const formData = new FormData();
         formData.append('subscriber_id', activeSubscriberId);
         formData.append('content', content);
+        
         if (file) {
-            formData.append('media', file);
+            let mediaType = 'text';
+            if (file.type.startsWith('image/')) {
+                mediaType = 'image';
+            } else if (file.type.startsWith('audio/')) {
+                mediaType = 'audio';
+            }
+            
+            // Show status in UI
+            const fileNameEl = document.getElementById('file-name');
+            const originalFileName = fileNameEl.innerText;
+            fileNameEl.innerText = 'Uploading to Cloud...';
+            
+            try {
+                // 1. Get presigned URL
+                const res = await fetch('/settings/media/presign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: file.name,
+                        contentType: file.type,
+                        prefix: 'whatsapp'
+                    })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    if (errData.code === 'R2_NOT_CONFIGURED') {
+                        // Fallback: Append raw file binary to formData and post directly to PHP
+                        formData.append('media', file);
+                    } else {
+                        throw new Error(errData.error || 'Failed to get upload signature.');
+                    }
+                } else {
+                    const { uploadUrl, publicUrl } = await res.json();
+
+                    // 2. Direct PUT upload to R2
+                    const uploadRes = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': file.type },
+                        body: file
+                    });
+
+                    if (!uploadRes.ok) {
+                        throw new Error('Cloud storage upload failed.');
+                    }
+
+                    // Success! Add the publicUrl and media_type to form data
+                    formData.append('media_url', publicUrl);
+                    formData.append('media_type', mediaType);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Upload failed: ' + err.message);
+                fileNameEl.innerText = originalFileName;
+                input.disabled = false;
+                return;
+            }
         }
         
         fetch('{{ path('app_inbox_send') }}', {
