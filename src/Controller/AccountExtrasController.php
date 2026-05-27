@@ -131,6 +131,16 @@ class AccountExtrasController extends AbstractController
         return new JsonResponse(['success' => true, 'message' => 'Two-Factor Authentication has been disabled.']);
     }
 
+    #[Route('/security/2fa/status', name: 'app_profile_security_2fa_status', methods: ['GET'])]
+    public function status2fa(): JsonResponse
+    {
+        /** @var \App\Entity\Admin $user */
+        $user = $this->getUser();
+        return new JsonResponse([
+            'enabled' => $user->isTotpAuthenticationEnabled()
+        ]);
+    }
+
     #[Route('/developer', name: 'app_profile_developer', methods: ['GET'])]
     public function developer(): Response
     {
