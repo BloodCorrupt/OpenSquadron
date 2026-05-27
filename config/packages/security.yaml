@@ -55,16 +55,16 @@ security:
         - { path: ^/terms, roles: PUBLIC_ACCESS }
         - { path: ^/facebook/data-deletion, roles: PUBLIC_ACCESS }
         - { path: ^/facebook/deletion-status, roles: PUBLIC_ACCESS }
-        - { path: ^/facebook/callback, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/inbox, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/subscribers, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/whatsapp-bot-manager, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/facebook-bot-manager, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/settings/facebook, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/facebook/connect, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/whatsapp-business/connect, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/ai-settings, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/$, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/facebook/callback, roles: ROLE_USER }
+        - { path: ^/inbox, roles: ROLE_USER }
+        - { path: ^/subscribers, roles: ROLE_USER }
+        - { path: ^/whatsapp-bot-manager, roles: ROLE_USER }
+        - { path: ^/facebook-bot-manager, roles: ROLE_USER }
+        - { path: ^/settings/facebook, roles: ROLE_USER }
+        - { path: ^/facebook/connect, roles: ROLE_USER }
+        - { path: ^/whatsapp-business/connect, roles: ROLE_USER }
+        - { path: ^/ai-settings, roles: ROLE_USER }
+        - { path: ^/$, roles: ROLE_USER }
 
 when@test:
     security:
