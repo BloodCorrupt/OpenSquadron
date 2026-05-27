@@ -537,6 +537,33 @@ class MetaConnectionController extends AbstractController
         ]);
     }
 
+    #[Route('/facebook/connect/{id}/toggle-status', name: 'facebook_connect_toggle_status', methods: ['POST'])]
+    #[Route('/instagram/connect/{id}/toggle-status', name: 'instagram_connect_toggle_status', methods: ['POST'])]
+    public function toggleStatus(int $id, Request $request, EntityManagerInterface $em): Response
+    {
+        $isInstagram = str_contains($request->getPathInfo(), '/instagram/');
+        $service = $isInstagram ? $this->instagramService : $this->facebookService;
+        $redirectRoute = $isInstagram ? 'instagram_connect_show' : 'facebook_connect_show';
+
+        try {
+            $connection = $service->getConnectionById($id);
+            if (!$connection) {
+                $this->addFlash('error', 'Connection not found.');
+                return $this->redirectToRoute($redirectRoute);
+            }
+
+            $newStatus = $connection->getStatus() === 'active' ? 'inactive' : 'active';
+            $connection->setStatus($newStatus);
+            $em->flush();
+
+            $this->addFlash('success', sprintf('Connection successfully %s!', $newStatus === 'active' ? 'enabled' : 'disabled'));
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Failed to toggle status: ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute($redirectRoute);
+    }
+
     #[Route('/meta/deletion-status', name: 'meta_deletion_status', methods: ['GET'])]
     public function deletionStatus(Request $request): Response
     {

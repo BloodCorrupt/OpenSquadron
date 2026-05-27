@@ -122,6 +122,10 @@ class FacebookWebhookController extends AbstractController
                 }
 
                 if ($resolvedConnection) {
+                    if ($resolvedConnection->getStatus() !== 'active') {
+                        continue;
+                    }
+
                     $owner = $resolvedConnection->getOwner();
                     if ($owner) {
                         $this->tenantContext->setCurrentOwner($owner);

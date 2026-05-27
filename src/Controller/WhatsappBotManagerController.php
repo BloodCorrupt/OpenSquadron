@@ -36,7 +36,7 @@ class WhatsappBotManagerController extends AbstractController
             return $this->redirectToRoute('app_dashboard');
         }
 
-        $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
+        $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
         
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
@@ -57,55 +57,7 @@ class WhatsappBotManagerController extends AbstractController
         $aiSetting = $em->getRepository(AiSetting::class)->findOneBy([]) ?? new AiSetting();
         $contexts = $em->getRepository(AiContext::class)->findBy([], ['id' => 'DESC']);
 
-        // Default realistic settings for 11 tabs to ensure premium instantly-featured appearance
-        $defaultSettings = [
-            'broadcast-campaigns' => [
-                ['name' => 'Newsletter May 2026', 'template' => 'monthly_newsletter', 'status' => 'SENT', 'sentCount' => 1250, 'deliveredCount' => 1245],
-                ['name' => 'Flash Sale Alert', 'template' => 'flash_sale', 'status' => 'SCHEDULED', 'sentCount' => 0, 'deliveredCount' => 0],
-            ],
-            'growth-widgets' => [
-                'phoneNumber' => '+15550199',
-                'welcomeMessage' => 'Hi there! How can we help you today?',
-                'bubbleColor' => '#128c7e',
-                'position' => 'right',
-                'embedCode' => '<script src="https://opensquadron.io/js/whatsapp-widget.js" data-phone="+15550199"></script>'
-            ],
-            'drip-sequences' => [],
-            'structured-inputs' => [
-                ['fieldName' => 'lead_email', 'dataType' => 'EMAIL', 'prompt' => 'Please provide your email address for lead tracking:'],
-                ['fieldName' => 'lead_company', 'dataType' => 'TEXT', 'prompt' => 'What is your company name?'],
-            ],
-            'dynamic-flows' => [
-                ['name' => 'Customer Feedback Survey', 'flowId' => 'survey_flow_v1', 'status' => 'PUBLISHED'],
-                ['name' => 'Book Appointment Flow', 'flowId' => 'booking_flow_v2', 'status' => 'DRAFT'],
-            ],
-            'ecommerce-automations' => [
-                'abandonedCartActive' => true,
-                'abandonedCartDelay' => '30 minutes',
-                'abandonedCartTemplate' => 'abandoned_cart_reminder',
-                'orderConfirmationActive' => true,
-                'orderConfirmationTemplate' => 'order_confirmation_official',
-            ],
-            'outbound-streams' => [
-                'webhookUrl' => 'https://api.crm-connector.io/v1/whatsapp-receiver',
-                'activeEvents' => ['message_sent', 'message_received', 'opt_in', 'opt_out']
-            ],
-            'action-buttons' => [
-                ['label' => '💬 Chat with Specialist', 'type' => 'quick_reply', 'payload' => 'TALK_TO_SPECIALIST'],
-                ['label' => '📅 Book Appointment', 'type' => 'url', 'value' => 'https://opensquadron.io/book'],
-            ],
-            'copilot-settings' => [
-                'enableIntentRouting' => false,
-                'intentCampaign' => '',
-                'routingProtocol' => 'omnipresent',
-                'deepContext' => false,
-                'suspendOffHours' => false,
-                'humanEscalation' => false,
-                'typingIndicator' => false,
-                'replyBuffer' => 0,
-                'reasoningDepth' => 'standard'
-            ]
-        ];
+        $defaultSettings = $this->getDefaultSettings();
 
         $settings = $defaultSettings;
         $sequences = [];
@@ -405,7 +357,7 @@ class WhatsappBotManagerController extends AbstractController
     #[Route('/whatsapp-bot-manager/flows', name: 'app_whatsapp_bot_flows', methods: ['GET'])]
     public function flows(Request $request, EntityManagerInterface $em): Response
     {
-        $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
+        $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
         
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
@@ -607,7 +559,7 @@ class WhatsappBotManagerController extends AbstractController
         }
         if (!$connection) {
             // Default to the first connection
-            $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy([], ['id' => 'DESC']);
+            $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
             $connection = $connections[0] ?? null;
         }
 
@@ -1058,6 +1010,58 @@ class WhatsappBotManagerController extends AbstractController
             }
         }
         return $result;
+    }
+
+    private function getDefaultSettings(): array
+    {
+        return [
+            'broadcast-campaigns' => [
+                ['name' => 'Newsletter May 2026', 'template' => 'monthly_newsletter', 'status' => 'SENT', 'sentCount' => 1250, 'deliveredCount' => 1245],
+                ['name' => 'Flash Sale Alert', 'template' => 'flash_sale', 'status' => 'SCHEDULED', 'sentCount' => 0, 'deliveredCount' => 0],
+            ],
+            'growth-widgets' => [
+                'phoneNumber' => '+15550199',
+                'welcomeMessage' => 'Hi there! How can we help you today?',
+                'bubbleColor' => '#128c7e',
+                'position' => 'right',
+                'embedCode' => '<script src="https://opensquadron.io/js/whatsapp-widget.js" data-phone="+15550199"></script>'
+            ],
+            'drip-sequences' => [],
+            'structured-inputs' => [
+                ['fieldName' => 'lead_email', 'dataType' => 'EMAIL', 'prompt' => 'Please provide your email address for lead tracking:'],
+                ['fieldName' => 'lead_company', 'dataType' => 'TEXT', 'prompt' => 'What is your company name?'],
+            ],
+            'dynamic-flows' => [
+                ['name' => 'Customer Feedback Survey', 'flowId' => 'survey_flow_v1', 'status' => 'PUBLISHED'],
+                ['name' => 'Book Appointment Flow', 'flowId' => 'booking_flow_v2', 'status' => 'DRAFT'],
+            ],
+            'ecommerce-automations' => [
+                'abandonedCartActive' => true,
+                'abandonedCartDelay' => '30 minutes',
+                'abandonedCartTemplate' => 'abandoned_cart_reminder',
+                'orderConfirmationActive' => true,
+                'orderConfirmationTemplate' => 'order_confirmation_official',
+            ],
+            'outbound-streams' => [
+                'webhookUrl' => 'https://api.crm-connector.io/v1/whatsapp-receiver',
+                'activeEvents' => ['message_sent', 'message_received', 'opt_in', 'opt_out']
+            ],
+            'action-buttons' => [
+                ['label' => '💬 Chat with Specialist', 'type' => 'quick_reply', 'payload' => 'TALK_TO_SPECIALIST'],
+                ['label' => '📅 Book Appointment', 'type' => 'url', 'value' => 'https://opensquadron.io/book'],
+            ],
+            'copilot-settings' => [
+                'enableIntentRouting' => false,
+                'intentCampaign' => '',
+                'routingProtocol' => 'omnipresent',
+                'deepContext' => false,
+                'suspendOffHours' => false,
+                'humanEscalation' => false,
+                'typingIndicator' => false,
+                'replyBuffer' => 0,
+                'reasoningDepth' => 'standard'
+            ]
+        ];
     }
 }
 

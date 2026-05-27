@@ -34,7 +34,7 @@ class FacebookBotManagerController extends AbstractController
             return $this->redirectToRoute('app_dashboard');
         }
 
-        $connections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
+        $connections = $em->getRepository(FacebookConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
         
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
@@ -543,7 +543,7 @@ class FacebookBotManagerController extends AbstractController
     #[Route('/facebook-bot-manager/flows', name: 'app_facebook_bot_flows', methods: ['GET'])]
     public function flows(Request $request, EntityManagerInterface $em): Response
     {
-        $connections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
+        $connections = $em->getRepository(FacebookConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
         
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
@@ -745,7 +745,7 @@ class FacebookBotManagerController extends AbstractController
         }
         if (!$connection) {
             // Default to the first connection
-            $connections = $em->getRepository(FacebookConnection::class)->findBy([], ['id' => 'DESC']);
+            $connections = $em->getRepository(FacebookConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
             $connection = $connections[0] ?? null;
         }
 

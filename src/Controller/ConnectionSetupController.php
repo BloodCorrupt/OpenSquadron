@@ -150,4 +150,25 @@ class ConnectionSetupController extends AbstractController
         $success = $this->whatsappService->deleteConnection($id);
         return new JsonResponse(['success' => $success]);
     }
+    #[Route('/whatsapp/connect/{id}/toggle-status', name: 'whatsapp_connect_toggle_status', methods: ['POST'])]
+    public function toggleStatus(int $id, \Doctrine\ORM\EntityManagerInterface $em): Response
+    {
+        try {
+            $connection = $this->whatsappService->getConnectionById($id);
+            if (!$connection) {
+                $this->addFlash('error', 'Connection not found.');
+                return $this->redirectToRoute('whatsapp_connect_show');
+            }
+
+            $newStatus = $connection->getStatus() === 'active' ? 'inactive' : 'active';
+            $connection->setStatus($newStatus);
+            $em->flush();
+
+            $this->addFlash('success', sprintf('Connection successfully %s!', $newStatus === 'active' ? 'enabled' : 'disabled'));
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Failed to toggle status: ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('whatsapp_connect_show');
+    }
 }

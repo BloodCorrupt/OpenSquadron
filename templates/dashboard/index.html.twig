@@ -790,11 +790,12 @@
         <div class="welcome-panel">
             <div class="welcome-content">
                 <h1>Command Center</h1>
-                <p>Welcome back, <strong style="color:var(--primary-accent);">{{ app.user.userIdentifier }}</strong>. System integrity is stable. All automated triggers, AI grounding pipelines, and custom message gateways are online.</p>
+                <p>Welcome back, <strong style="color:var(--primary-accent);">{{ app.user.name ?: app.user.userIdentifier }}</strong>. System integrity is stable. All automated triggers, AI grounding pipelines, and custom message gateways are online.</p>
             </div>
-            <div class="system-status-indicator">
-                <div class="pulse-dot"></div>
-                <span class="system-status-text">Matrix Gateway: Online</span>
+            {% set total_gateways = wa_conn_count + fb_conn_count + ig_conn_count %}
+            <div class="system-status-indicator" {% if total_gateways == 0 %}style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);"{% endif %}>
+                <div class="pulse-dot" {% if total_gateways == 0 %}style="background-color: #ef4444; box-shadow: none; animation: none;"{% endif %}></div>
+                <span class="system-status-text" {% if total_gateways == 0 %}style="color: #ef4444;"{% endif %}>Matrix Gateway: {% if total_gateways > 0 %}Online{% else %}Offline{% endif %}</span>
             </div>
         </div>
 
