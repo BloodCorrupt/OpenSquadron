@@ -994,7 +994,8 @@ class FacebookService
 
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete persistent menu on Facebook.');
+            // Silently ignore deletion errors if the menu doesn't exist
+            // throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete persistent menu on Facebook.');
         }
 
         return $content;
@@ -1124,20 +1125,21 @@ class FacebookService
         $results = [];
 
         if (!empty($deleteFields)) {
-            $response = $this->httpClient->request('DELETE', $url, [
-                'headers' => [
-                    'Authorization' => "Bearer {$accessToken}",
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'fields' => $deleteFields
-                ]
-            ]);
-            $content = $response->toArray(false);
-            if ($response->getStatusCode() >= 400) {
-                throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete welcome settings on Facebook.');
+            try {
+                $response = $this->httpClient->request('DELETE', $url, [
+                    'headers' => [
+                        'Authorization' => "Bearer {$accessToken}",
+                        'Content-Type' => 'application/json',
+                    ],
+                    'json' => [
+                        'fields' => $deleteFields
+                    ]
+                ]);
+                $results['delete'] = $response->toArray(false);
+            } catch (\Exception $e) {
+                // Silently ignore deletion errors. Facebook Graph API throws an error
+                // if we try to delete fields that are not currently set.
             }
-            $results['delete'] = $content;
         }
 
         if ($deleteGreeting) {

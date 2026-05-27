@@ -378,7 +378,7 @@ class FacebookBotManagerController extends AbstractController
                     } else {
                         $facebookService->setPersistentMenu($connection, $menuItems);
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     return new JsonResponse([
                         'success' => false,
                         'error' => 'Saved locally but failed to update Facebook: ' . $e->getMessage()
@@ -392,7 +392,7 @@ class FacebookBotManagerController extends AbstractController
                 try {
                     $welcomeSettings = $currentSettings['welcome-screen'] ?? [];
                     $facebookService->setWelcomeScreenSettings($connection, $welcomeSettings);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     return new JsonResponse([
                         'success' => false,
                         'error' => 'Saved locally but failed to update Facebook: ' . $e->getMessage()
@@ -402,7 +402,15 @@ class FacebookBotManagerController extends AbstractController
         }
 
         $connection->setBotSettings($currentSettings);
-        $em->flush();
+        
+        try {
+            $em->flush();
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Database save failed: ' . $e->getMessage()
+            ], 500);
+        }
 
         return new JsonResponse([
             'success' => true,

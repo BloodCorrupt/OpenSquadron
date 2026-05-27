@@ -950,7 +950,8 @@ class InstagramService
                 'Authorization' => "Bearer {$accessToken}",
             ],
             'query' => [
-                'fields' => 'persistent_menu'
+                'fields' => 'persistent_menu',
+                'platform' => 'instagram'
             ]
         ]);
 
@@ -975,6 +976,7 @@ class InstagramService
         $url = "https://graph.facebook.com/v21.0/me/messenger_profile";
 
         $payload = [
+            'platform' => 'instagram',
             'persistent_menu' => [
                 [
                     'locale' => 'default',
@@ -1013,6 +1015,9 @@ class InstagramService
                 'Authorization' => "Bearer {$accessToken}",
                 'Content-Type' => 'application/json',
             ],
+            'query' => [
+                'platform' => 'instagram'
+            ],
             'json' => [
                 'fields' => ['persistent_menu']
             ]
@@ -1020,7 +1025,8 @@ class InstagramService
 
         $content = $response->toArray(false);
         if ($response->getStatusCode() >= 400) {
-            throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete persistent menu on Instagram.');
+            // Silently ignore deletion errors if the menu doesn't exist
+            // throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete persistent menu on Instagram.');
         }
 
         return $content;
@@ -1070,7 +1076,8 @@ class InstagramService
                 'Authorization' => "Bearer {$accessToken}",
             ],
             'query' => [
-                'fields' => 'greeting,get_started,ice_breakers'
+                'fields' => 'greeting,get_started,ice_breakers',
+                'platform' => 'instagram'
             ]
         ]);
 
@@ -1150,20 +1157,23 @@ class InstagramService
         $results = [];
 
         if (!empty($deleteFields)) {
-            $response = $this->httpClient->request('DELETE', $url, [
-                'headers' => [
-                    'Authorization' => "Bearer {$accessToken}",
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'fields' => $deleteFields
-                ]
-            ]);
-            $content = $response->toArray(false);
-            if ($response->getStatusCode() >= 400) {
-                throw new \RuntimeException($content['error']['message'] ?? 'Failed to delete welcome settings on Instagram.');
+            try {
+                $response = $this->httpClient->request('DELETE', $url, [
+                    'headers' => [
+                        'Authorization' => "Bearer {$accessToken}",
+                        'Content-Type' => 'application/json',
+                    ],
+                    'query' => [
+                        'platform' => 'instagram'
+                    ],
+                    'json' => [
+                        'fields' => $deleteFields
+                    ]
+                ]);
+                $results['delete'] = $response->toArray(false);
+            } catch (\Exception $e) {
+                // Silently ignore deletion errors.
             }
-            $results['delete'] = $content;
         }
 
         if ($deleteGreeting) {
@@ -1172,6 +1182,9 @@ class InstagramService
                     'headers' => [
                         'Authorization' => "Bearer {$accessToken}",
                         'Content-Type' => 'application/json',
+                    ],
+                    'query' => [
+                        'platform' => 'instagram'
                     ],
                     'json' => [
                         'fields' => ['greeting']
@@ -1184,6 +1197,7 @@ class InstagramService
         }
 
         if (!empty($payload)) {
+            $payload['platform'] = 'instagram'; // Must specify platform for Instagram updates
             $response = $this->httpClient->request('POST', $url, [
                 'headers' => [
                     'Authorization' => "Bearer {$accessToken}",

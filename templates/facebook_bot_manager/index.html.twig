@@ -434,19 +434,22 @@
     }
     .iphone-body {
         flex: 1;
-        padding: 15px;
+        padding: 15px 15px 40px 15px; /* Safely clear the bottom corners */
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         background: radial-gradient(circle at top, #1e293b, #0f172a);
+        overflow-x: hidden;
+        overflow-y: auto;
     }
     .iphone-content {
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        margin-top: 40px;
+        margin-top: 20px;
+        margin-bottom: 20px;
         gap: 15px;
+        flex: 1; /* Pushes footer down */
     }
     .iphone-avatar {
         width: 60px;
@@ -474,6 +477,7 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 12px;
         padding: 12px;
+        box-sizing: border-box;
         font-size: 12px;
         color: #e2e8f0;
         line-height: 1.5;
@@ -495,6 +499,7 @@
         font-size: 12px;
         font-weight: 700;
         padding: 10px;
+        box-sizing: border-box;
         border-radius: 8px;
         text-align: center;
         width: 100%;
@@ -504,7 +509,7 @@
 
     /* Table, list and checklist components */
     .table-container {
-        overflow-x: auto;
+        overflow: visible;
         border: 1px solid var(--glass-border);
         border-radius: 12px;
         background: rgba(0, 0, 0, 0.15);
@@ -748,29 +753,6 @@
         padding: 40px !important;
         font-style: italic;
     }
-
-    .fb-toast {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(20px);
-        background: #0f172a;
-        color: #ffffff;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s, transform 0.25s;
-        z-index: 10000;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--glass-border);
-    }
-    .fb-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .fb-toast.is-success { border-left: 4px solid #10b981; }
-    .fb-toast.is-error { border-left: 4px solid #ef4444; }
-
     select.form-control option, select.toolbar-select option, select option {
         background-color: #0f172a !important;
         color: #f8fafc !important;
@@ -3967,7 +3949,7 @@
                         </div>
 
                         <!-- FAQ Questions Preview -->
-                        <div id="preview-ice-breakers-container" style="display:flex; flex-direction:column; gap:6px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); max-height:120px; overflow-y:auto;">
+                        <div id="preview-ice-breakers-container" style="display:flex; flex-direction:column; gap:6px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">
                             <!-- Dynamic preview questions -->
                         </div>
                         
@@ -5178,8 +5160,6 @@
     </div>
 </div>
 
-<div id="toast" class="fb-toast">Message</div>
-
 <script>
     window.openSquadronActiveFlows = [
         {% for flow in flows %}
@@ -6122,12 +6102,6 @@
         });
     }
 
-    function showToast(msg, type = 'success') {
-        const el = document.getElementById('toast');
-        el.textContent = msg;
-        el.className = 'fb-toast is-shown ' + (type === 'success' ? 'is-success' : 'is-error');
-        setTimeout(() => el.classList.remove('is-shown'), 3000);
-    }
 
     // Save Unified Settings AJAX Helper
     function postSettingsSave(type, dataStructure) {
@@ -6509,17 +6483,23 @@
         const row = select.closest('tr');
         const input = row.querySelector('.menu-val-input');
         const sel = row.querySelector('.menu-val-select');
+        let targetSel = sel;
+        if (sel && sel.parentNode && sel.parentNode.classList.contains('custom-glass-select-wrapper')) {
+            targetSel = sel.parentNode;
+        }
+        
         if (select.value === 'web_url') {
             input.style.display = 'block';
-            sel.style.display = 'none';
+            targetSel.style.display = 'none';
         } else {
             input.style.display = 'none';
-            sel.style.display = 'block';
+            targetSel.style.display = 'block';
         }
     }
 
     function savePersistentMenu() {
         const rows = [];
+        let hasError = false;
         document.querySelectorAll('.menu-row').forEach(tr => {
             const title = tr.querySelector('.menu-title').value.trim();
             const type = tr.querySelector('.menu-type').value;
@@ -6529,16 +6509,27 @@
             } else {
                 payloadUrl = tr.querySelector('.menu-val-input').value.trim();
             }
-            if (title !== '' && payloadUrl !== '') {
-                const item = { title, type };
-                if (type === 'postback') {
-                    item.payload = payloadUrl;
-                } else {
-                    item.url = payloadUrl;
-                }
-                rows.push(item);
+            if (title === '') {
+                showToast('All Persistent Menu items must have a title.', 'error');
+                hasError = true;
+                return;
             }
+            if (payloadUrl === '') {
+                showToast('All Persistent Menu items must have a valid payload or URL.', 'error');
+                hasError = true;
+                return;
+            }
+            
+            const item = { title, type };
+            if (type === 'postback') {
+                item.payload = payloadUrl;
+            } else {
+                item.url = payloadUrl;
+            }
+            rows.push(item);
         });
+
+        if (hasError) return;
         postSettingsSave('persistent-menu', rows);
     }
 
@@ -6567,7 +6558,19 @@
                     data.data.forEach(item => {
                         const tr = document.createElement('tr');
                         tr.className = 'menu-row';
-                        const typeVal = item.type === 'postback' ? item.payload : item.url;
+                        
+                        let pbOptions = '<option value="">-- Select Postback --</option>';
+                        postbacks.forEach(pb => {
+                            const sel = (item.type === 'postback' && item.payload === pb.payload) ? 'selected' : '';
+                            pbOptions += `<option value="${escapeHtml(pb.payload)}" ${sel}>${escapeHtml(pb.name)} (${escapeHtml(pb.payload)})</option>`;
+                        });
+                        
+                        // Support custom postback payloads if they don't match existing postbacks
+                        const hasCustomPayload = item.type === 'postback' && item.payload && !postbacks.find(p => p.payload === item.payload);
+                        if (hasCustomPayload) {
+                            pbOptions += `<option value="${escapeHtml(item.payload)}" selected>Custom Payload: ${escapeHtml(item.payload)}</option>`;
+                        }
+
                         tr.innerHTML = `
                             <td><input type="text" class="glass-input menu-title" style="width:100%" value="${escapeHtml(item.title)}"></td>
                             <td>
@@ -6577,7 +6580,10 @@
                                 </select>
                             </td>
                             <td>
-                                <input type="text" class="glass-input menu-val" style="width:100%" value="${escapeHtml(typeVal)}">
+                                <input type="url" class="glass-input menu-val-input" style="width:100%; display:${item.type === 'web_url' ? 'block' : 'none'};" placeholder="e.g. https://yoursite.com" value="${item.type === 'web_url' ? escapeHtml(item.url || '') : ''}">
+                                <select class="glass-input menu-val-select" style="width:100%; display:${item.type === 'postback' ? 'block' : 'none'};">
+                                    ${pbOptions}
+                                </select>
                             </td>
                             <td>
                                 <button class="btn-row-action delete-action" onclick="this.closest('tr').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -7400,8 +7406,33 @@
         const showGreeting = document.getElementById('welcome-show').checked;
         const greetingText = document.getElementById('welcome-greeting-text').value.trim();
         const getStartedStatus = document.getElementById('get-started-status').value;
-        const getStartedPayload = document.getElementById('welcome-payload').value.trim();
+        let getStartedPayload = document.getElementById('welcome-payload').value.trim();
+        const getStartedSelector = document.getElementById('get-started-flow-selector');
+        if (getStartedSelector && getStartedSelector.value !== 'custom') {
+            getStartedPayload = getStartedSelector.value;
+        }
         const iceBreakersStatus = document.getElementById('ice-breakers-status').value;
+        
+        if (showGreeting && getStartedStatus !== 'enabled') {
+            showToast('Facebook requires the Get Started button to be enabled when using a Welcome Greeting.', 'error');
+            return;
+        }
+        if (showGreeting && greetingText === '') {
+            showToast('Please enter a Welcome Greeting text.', 'error');
+            return;
+        }
+        if (showGreeting && greetingText.replace(new RegExp('\\{\\{.*?\\}\\}', 'g'), '').trim() === '') {
+            showToast('Facebook requires the Welcome Greeting to contain at least some normal text, not just variables.', 'error');
+            return;
+        }
+        if (getStartedStatus === 'enabled' && getStartedPayload === '') {
+            showToast('Please specify a payload or select a chat flow for the Get Started button.', 'error');
+            return;
+        }
+        if (getStartedStatus === 'enabled' && iceBreakersStatus === 'enabled') {
+            showToast('Facebook does not allow both Get Started and FAQ (Ice Breakers) to be enabled at the same time.', 'error');
+            return;
+        }
         
         const iceBreakers = [];
         document.querySelectorAll('#ice-breaker-rows .ice-breaker-row').forEach(row => {
@@ -7444,6 +7475,7 @@
                 if (data.data) {
                     document.getElementById('welcome-show').checked = data.data.showGreeting;
                     document.getElementById('welcome-greeting-text').value = data.data.greetingText || '';
+                    updateGreetingPreview();
                     
                     const getStartedStatus = document.getElementById('get-started-status');
                     if (getStartedStatus) {

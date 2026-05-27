@@ -1940,6 +1940,10 @@
                     }
                 });
 
+                if (select.style.display === 'none') {
+                    wrapper.style.display = 'none';
+                }
+
                 // Create trigger
                 const trigger = document.createElement('div');
                 trigger.className = 'custom-glass-select-trigger';

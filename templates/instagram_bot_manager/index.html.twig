@@ -434,19 +434,22 @@
     }
     .iphone-body {
         flex: 1;
-        padding: 15px;
+        padding: 15px 15px 40px 15px; /* Safely clear the bottom corners */
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         background: radial-gradient(circle at top, #1e293b, #0f172a);
+        overflow-x: hidden;
+        overflow-y: auto;
     }
     .iphone-content {
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        margin-top: 40px;
+        margin-top: 20px;
+        margin-bottom: 20px;
         gap: 15px;
+        flex: 1;
     }
     .iphone-avatar {
         width: 60px;
@@ -474,6 +477,7 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 12px;
         padding: 12px;
+        box-sizing: border-box;
         font-size: 12px;
         color: #e2e8f0;
         line-height: 1.5;
@@ -495,6 +499,7 @@
         font-size: 12px;
         font-weight: 700;
         padding: 10px;
+        box-sizing: border-box;
         border-radius: 8px;
         text-align: center;
         width: 100%;
@@ -504,7 +509,7 @@
 
     /* Table, list and checklist components */
     .table-container {
-        overflow-x: auto;
+        overflow: visible;
         border: 1px solid var(--glass-border);
         border-radius: 12px;
         background: rgba(0, 0, 0, 0.15);
@@ -748,29 +753,6 @@
         padding: 40px !important;
         font-style: italic;
     }
-
-    .fb-toast {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(20px);
-        background: #0f172a;
-        color: #ffffff;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s, transform 0.25s;
-        z-index: 10000;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--glass-border);
-    }
-    .fb-toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .fb-toast.is-success { border-left: 4px solid #10b981; }
-    .fb-toast.is-error { border-left: 4px solid #ef4444; }
-
     select.form-control option, select.toolbar-select option, select option {
         background-color: #0f172a !important;
         color: #f8fafc !important;
@@ -3968,7 +3950,7 @@
                         </div>
 
                         <!-- FAQ Questions Preview -->
-                        <div id="preview-ice-breakers-container" style="display:flex; flex-direction:column; gap:6px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); max-height:120px; overflow-y:auto;">
+                        <div id="preview-ice-breakers-container" style="display:flex; flex-direction:column; gap:6px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">
                             <!-- Dynamic preview questions -->
                         </div>
                         
@@ -5023,8 +5005,6 @@
         </div>
     </div>
 </div>
-
-<div id="toast" class="fb-toast">Message</div>
 
 <script>
     window.openSquadronActiveFlows = [
@@ -6315,17 +6295,23 @@
         const row = select.closest('tr');
         const input = row.querySelector('.menu-val-input');
         const sel = row.querySelector('.menu-val-select');
+        let targetSel = sel;
+        if (sel && sel.parentNode && sel.parentNode.classList.contains('custom-glass-select-wrapper')) {
+            targetSel = sel.parentNode;
+        }
+        
         if (select.value === 'web_url') {
             input.style.display = 'block';
-            sel.style.display = 'none';
+            targetSel.style.display = 'none';
         } else {
             input.style.display = 'none';
-            sel.style.display = 'block';
+            targetSel.style.display = 'block';
         }
     }
 
     function savePersistentMenu() {
         const rows = [];
+        let hasError = false;
         document.querySelectorAll('.menu-row').forEach(tr => {
             const title = tr.querySelector('.menu-title').value.trim();
             const type = tr.querySelector('.menu-type').value;
@@ -6335,16 +6321,27 @@
             } else {
                 payloadUrl = tr.querySelector('.menu-val-input').value.trim();
             }
-            if (title !== '' && payloadUrl !== '') {
-                const item = { title, type };
-                if (type === 'postback') {
-                    item.payload = payloadUrl;
-                } else {
-                    item.url = payloadUrl;
-                }
-                rows.push(item);
+            if (title === '') {
+                showToast('All Persistent Menu items must have a title.', 'error');
+                hasError = true;
+                return;
             }
+            if (payloadUrl === '') {
+                showToast('All Persistent Menu items must have a valid payload or URL.', 'error');
+                hasError = true;
+                return;
+            }
+            
+            const item = { title, type };
+            if (type === 'postback') {
+                item.payload = payloadUrl;
+            } else {
+                item.url = payloadUrl;
+            }
+            rows.push(item);
         });
+
+        if (hasError) return;
         postSettingsSave('persistent-menu', rows);
     }
 
@@ -7217,6 +7214,27 @@
                 iceBreakers.push({ question, payload });
             }
         });
+
+        if (showGreeting && getStartedStatus !== 'enabled') {
+            showToast('Instagram requires the Get Started button to be enabled when using a Welcome Greeting.', 'error');
+            return;
+        }
+        if (showGreeting && greetingText === '') {
+            showToast('Please enter a Welcome Greeting text.', 'error');
+            return;
+        }
+        if (showGreeting && greetingText.replace(new RegExp('\\{\\{.*?\\}\\}', 'g'), '').trim() === '') {
+            showToast('Instagram requires the Welcome Greeting to contain at least some normal text, not just variables.', 'error');
+            return;
+        }
+        if (getStartedStatus === 'enabled' && getStartedPayload === '') {
+            showToast('Please specify a payload or select a chat flow for the Get Started button.', 'error');
+            return;
+        }
+        if (getStartedStatus === 'enabled' && iceBreakersStatus === 'enabled') {
+            showToast('Instagram does not allow both Get Started and FAQ (Ice Breakers) to be enabled at the same time.', 'error');
+            return;
+        }
 
         postSettingsSave('welcome-screen', { 
             showGreeting, 
@@ -8459,5 +8477,6 @@
     });
 </script>
 {% endblock %}
+
 
 
