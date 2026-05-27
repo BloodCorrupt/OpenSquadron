@@ -773,6 +773,25 @@
                 color: var(--text-muted);
                 cursor: not-allowed;
             }
+
+            /* ─── Premium Glassmorphic File Input ─── */
+            input[type="file"]::file-selector-button {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid var(--glass-border);
+                color: var(--text-main);
+                padding: 8px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                margin-right: 15px;
+                font-weight: 500;
+                font-family: inherit;
+            }
+            input[type="file"]::file-selector-button:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: var(--primary-accent);
+                color: var(--primary-accent);
+            }
             
             /* ─── Premium Glassmorphic Dropdowns ─── */
             select:not(.hidden-native-select), 
@@ -1440,8 +1459,6 @@
                Applies to all pages using .glass-modal, .btn-glass,
                .dynamic-grid-box, .radio-pill-group, .sandbox-panel etc.
             ═══════════════════════════════════════════════════════ */
-
-            /* Page title gradients that use #fff become invisible on white bg */
             body[data-theme="light"] .page-title {
                 background: linear-gradient(135deg, #0f172a, var(--primary-accent)) !important;
                 -webkit-background-clip: text !important;
@@ -1461,6 +1478,26 @@
             body[data-theme="light"] .nav-item.active {
                 color: var(--primary-accent) !important;
                 background-color: rgba(8, 145, 178, 0.1) !important;
+            }
+
+            /* File Input Button Light Mode */
+            body[data-theme="light"] input[type="file"]::file-selector-button {
+                background: #fff !important;
+                border-color: rgba(15, 23, 42, 0.15) !important;
+                color: var(--text-main) !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            }
+            body[data-theme="light"] input[type="file"]::file-selector-button:hover {
+                background: #f8fafc !important;
+                border-color: var(--primary-accent) !important;
+                color: var(--primary-accent) !important;
+            }
+
+            /* Default Avatar Visibility in Light Mode */
+            body[data-theme="light"] .avatar-inner:not([class*="avatar-preset-"]) {
+                background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(8, 145, 178, 0.15)) !important;
+                border-color: rgba(8, 145, 178, 0.3) !important;
+                color: #0e7490 !important;
             }
 
             /* btn-glass: dark bg color invisible on white */

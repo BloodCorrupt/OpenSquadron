@@ -168,6 +168,52 @@
         color: #8b5cf6;
         border-color: rgba(139, 92, 246, 0.2);
     }
+    
+    /* Security Panel Styles */
+    .security-panel {
+        margin-bottom: 24px;
+        background: rgba(0,0,0,0.15);
+        border: 1px solid var(--glass-border);
+        padding: 15px;
+        border-radius: 12px;
+    }
+    .security-panel h4 {
+        margin: 0 0 5px 0;
+        color: #fff;
+        font-size: 14px;
+    }
+    .security-panel-item {
+        background: rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.03);
+    }
+    .security-panel-text {
+        color: #fff;
+    }
+
+    /* Light Mode Overrides for Profile Edit */
+    body[data-theme="light"] .security-panel {
+        background: rgba(15, 23, 42, 0.03);
+        border-color: rgba(15, 23, 42, 0.12);
+    }
+    body[data-theme="light"] .security-panel h4,
+    body[data-theme="light"] .security-panel-text {
+        color: var(--text-header) !important;
+    }
+    body[data-theme="light"] .security-panel-item {
+        background: rgba(255, 255, 255, 0.6);
+        border-color: rgba(15, 23, 42, 0.08);
+    }
+    body[data-theme="light"] .btn-secondary {
+        background: #fff;
+        border-color: rgba(15, 23, 42, 0.15);
+        color: var(--text-main);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    body[data-theme="light"] .btn-secondary:hover {
+        background: #f8fafc;
+        border-color: var(--primary-accent);
+        color: var(--primary-accent);
+    }
 </style>
 
 <div class="header">
@@ -212,7 +258,7 @@
         {# Profile Avatar Field #}
         <div class="form-group" style="margin-bottom: 24px;">
             <label>Profile Avatar</label>
-            <div style="display: flex; align-items: center; gap: 20px; margin-top: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px;">
+            <div class="security-panel" style="display: flex; align-items: center; gap: 20px; margin-top: 10px; margin-bottom: 20px;">
                 <div style="flex-shrink: 0; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); overflow: hidden;" id="avatar_preview_container">
                     {% if account.avatar %}
                         {% if 'preset:' in account.avatar %}
@@ -230,7 +276,7 @@
                     {% endif %}
                 </div>
                 <div>
-                    <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Avatar Preview</h4>
+                    <h4>Avatar Preview</h4>
                     <p style="margin: 0; color: var(--text-muted); font-size: 12px;">Choose a beautiful gradient preset or upload a custom image below.</p>
                 </div>
             </div>
@@ -281,9 +327,9 @@
 
         {# Security Settings Link #}
         {% if currentUser.id == account.id %}
-        <div class="form-group" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px;">
+        <div class="form-group security-panel" style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Two-Factor Authentication</h4>
+                <h4>Two-Factor Authentication</h4>
                 <p style="margin: 0; color: var(--text-muted); font-size: 12px;">Generate backup codes in case you lose your device.</p>
             </div>
             {% if currentUser.isTotpAuthenticationEnabled() %}
@@ -293,10 +339,10 @@
             {% endif %}
         </div>
         
-        <div class="form-group" style="margin-bottom: 24px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px;">
+        <div class="form-group security-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: {% if passkeys|length > 0 %}12px{% else %}0{% endif %};">
                 <div>
-                    <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Passkeys (WebAuthn)</h4>
+                    <h4>Passkeys (WebAuthn)</h4>
                     <p style="margin: 0; color: var(--text-muted); font-size: 12px;">Use your device or biometric to log in securely without a password.</p>
                 </div>
                 <button type="button" class="btn-secondary" id="register-passkey-btn" style="padding: 10px 20px; font-size: 13px; flex-shrink: 0;">Register Passkey</button>
@@ -304,11 +350,11 @@
             {% if passkeys|length > 0 %}
             <div id="passkey-list" style="border-top: 1px solid var(--glass-border); padding-top: 10px;">
                 {% for passkey in passkeys %}
-                <div class="passkey-item" data-id="{{ passkey.id }}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; margin-bottom: 6px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
+                <div class="passkey-item security-panel-item" data-id="{{ passkey.id }}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; margin-bottom: 6px; border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         <div>
-                            <span style="color: #fff; font-size: 13px; font-weight: 500;">Passkey {{ loop.index }}</span>
+                            <span class="security-panel-text" style="font-size: 13px; font-weight: 500;">Passkey {{ loop.index }}</span>
                             <span style="color: var(--text-muted); font-size: 11px; margin-left: 8px;">ID: {{ passkey.id[:8] }}…</span>
                         </div>
                     </div>
@@ -401,6 +447,7 @@
 <script>
     function selectPreset(preset) {
         document.getElementById('avatar_preset').value = preset;
+        document.getElementById('avatarUrl').value = ''; // Clear the old URL so preset takes precedence
         
         // Remove active class from all buttons
         document.querySelectorAll('.preset-btn').forEach(btn => {

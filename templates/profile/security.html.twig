@@ -10,6 +10,52 @@
     </h1>
 </div>
 
+<style>
+    .security-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(0,0,0,0.2);
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid var(--glass-border);
+    }
+    .security-row-title {
+        margin: 0;
+        font-size: 15px;
+        color: #fff;
+    }
+    .session-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border-radius: 12px;
+    }
+    .session-row-title {
+        font-weight: 600;
+        color: #fff;
+        font-size: 14px;
+    }
+    
+    /* Light Mode Overrides */
+    body[data-theme="light"] .security-row {
+        background: rgba(15, 23, 42, 0.03);
+    }
+    body[data-theme="light"] .security-row-title {
+        color: var(--text-header) !important;
+    }
+    body[data-theme="light"] .session-row {
+        background: rgba(15, 23, 42, 0.03) !important;
+    }
+    body[data-theme="light"] .session-row.is-current {
+        background: rgba(8, 145, 178, 0.05) !important;
+    }
+    body[data-theme="light"] .session-row-title {
+        color: var(--text-header) !important;
+    }
+</style>
+
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
     <!-- Left Column: Password Update & 2FA -->
     <div style="display: flex; flex-direction: column; gap: 30px;">
@@ -83,14 +129,14 @@
                 <svg class="title-icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                 Two-Factor Authentication (2FA)
             </h2>
-            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid var(--glass-border);">
+            <div class="security-row">
                 <div>
-                    <h3 style="margin: 0; font-size: 15px; color: #fff;">Authenticator App</h3>
+                    <h3 class="security-row-title">Authenticator App</h3>
                     <p style="margin: 5px 0 0 0; font-size: 12px; color: var(--text-muted);">Use Google Authenticator or Authy to secure your sessions.</p>
                 </div>
-                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                <label class="switch-toggle" style="position: relative; display: inline-block; width: 44px; height: 24px;">
                     <input type="checkbox" id="totp-toggle" onchange="toggle2fa(this)" style="opacity: 0; width: 0; height: 0;" {% if app.user.totpSecret %}checked{% endif %}>
-                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: {% if app.user.totpSecret %}var(--primary-accent){% else %}rgba(255,255,255,0.1){% endif %}; transition: .4s; border-radius: 24px; border: 1px solid var(--glass-border);"></span>
+                    <span class="slider-round" id="totp-slider"></span>
                 </label>
             </div>
         </div>
@@ -135,7 +181,7 @@
                         .then(data => {
                             if (data.success) {
                                 alert(data.message);
-                                checkbox.nextElementSibling.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                                checkbox.nextElementSibling.style.backgroundColor = '';
                             }
                         });
                 } else {
@@ -160,7 +206,7 @@
                     close2faModal();
                     const toggle = document.getElementById('totp-toggle');
                     toggle.checked = true;
-                    toggle.nextElementSibling.style.backgroundColor = 'var(--primary-accent)';
+                    toggle.nextElementSibling.style.backgroundColor = '';
                 } else {
                     alert(data.error);
                 }
@@ -182,11 +228,11 @@
         <div style="display: flex; flex-direction: column; gap: 15px;">
             {% for session in sessions %}
                 {% set isCurrent = (session.sessionId == currentSessionId) %}
-                <div id="session-item-{{ session.id }}" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: {% if isCurrent %}rgba(6, 182, 212, 0.05){% else %}rgba(0,0,0,0.2){% endif %}; border: 1px solid {% if isCurrent %}rgba(6, 182, 212, 0.2){% else %}var(--glass-border){% endif %}; border-radius: 12px;">
+                <div id="session-item-{{ session.id }}" class="session-row {% if isCurrent %}is-current{% endif %}" style="background: {% if isCurrent %}rgba(6, 182, 212, 0.05){% else %}rgba(0,0,0,0.2){% endif %}; border: 1px solid {% if isCurrent %}rgba(6, 182, 212, 0.2){% else %}var(--glass-border){% endif %};">
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <div style="width: 10px; height: 10px; background: {% if isCurrent %}var(--secondary-accent){% else %}#64748b{% endif %}; border-radius: 50%; box-shadow: 0 0 8px {% if isCurrent %}var(--secondary-accent){% else %}transparent{% endif %};"></div>
                         <div>
-                            <div style="font-weight: 600; color: #fff; font-size: 14px;">
+                            <div class="session-row-title">
                                 {% if session.userAgent matches '/Windows/i' %}Windows PC
                                 {% elseif session.userAgent matches '/Mac/i' %}Mac
                                 {% elseif session.userAgent matches '/Linux/i' %}Linux
@@ -232,11 +278,25 @@ function revokeSession(id) {
 </script>
 
 <style>
-/* Custom switch slider helper */
-.switch input:checked + span {
-    background-color: var(--primary-accent) !important;
+/* Modern Toggle Switch component styling */
+.switch-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
-.switch span::before {
+.slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .3s;
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+}
+.slider-round:before {
     position: absolute;
     content: "";
     height: 16px;
@@ -244,11 +304,29 @@ function revokeSession(id) {
     left: 3px;
     bottom: 3px;
     background-color: white;
-    transition: .4s;
+    transition: .3s;
     border-radius: 50%;
 }
-.switch input:checked + span::before {
+.switch-toggle input:checked + .slider-round {
+    background-color: var(--primary-accent) !important;
+    border-color: var(--primary-accent);
+}
+.switch-toggle input:checked + .slider-round:before {
     transform: translateX(20px);
+}
+
+/* Toggle Light Mode Overrides */
+body[data-theme="light"] .slider-round {
+    background-color: rgba(15, 23, 42, 0.15);
+    border-color: rgba(15, 23, 42, 0.2);
+}
+body[data-theme="light"] .slider-round:before {
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+body[data-theme="light"] .switch-toggle input:checked + .slider-round {
+    background-color: var(--primary-accent) !important;
+    border-color: var(--primary-accent);
 }
 </style>
 {% endblock %}
