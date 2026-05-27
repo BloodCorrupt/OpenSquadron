@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/profile')]
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('ROLE_USER')]
 class AccountExtrasController extends AbstractController
 {
     #[Route('/security', name: 'app_profile_security', methods: ['GET'])]
@@ -52,6 +52,7 @@ class AccountExtrasController extends AbstractController
     #[Route('/security/passphrase', name: 'app_profile_security_passphrase', methods: ['POST'])]
     public function updatePassphrase(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $em): JsonResponse
     {
+        /** @var \App\Entity\Admin $user */
         $user = $this->getUser();
         $data = json_decode($request->getContent(), true);
         
