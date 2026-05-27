@@ -293,7 +293,7 @@
                 padding: 10px 16px;
                 color: var(--text-muted);
                 text-decoration: none;
-                font-weight: 500;
+                font-weight: 600;
                 border-radius: 8px;
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
@@ -344,7 +344,7 @@
                 color: var(--text-muted);
                 text-decoration: none;
                 font-size: 14px;
-                font-weight: 500;
+                font-weight: 600;
                 transition: all 0.2s;
                 border-radius: 6px;
                 margin: 2px 8px;
@@ -1088,6 +1088,42 @@
             }
 
             /* ─── Light Mode Global Overrides ─── */
+
+            /* Core glass panel — must be opaque enough to distinguish from page bg */
+            body[data-theme="light"] .glass-panel {
+                background: #f1f5f9 !important;
+                border: 1px solid rgba(15, 23, 42, 0.14) !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+            }
+            body[data-theme="light"] .glass-table-wrapper {
+                background: #f1f5f9 !important;
+                border: 1px solid rgba(15, 23, 42, 0.12) !important;
+                border-radius: 12px !important;
+            }
+            /* Instruction / helper alert box — amber, visible */
+            body[data-theme="light"] .instruction-alert {
+                background: rgba(180, 83, 9, 0.08) !important;
+                border: 1px solid rgba(180, 83, 9, 0.35) !important;
+                color: #92400e !important;
+            }
+            body[data-theme="light"] .instruction-alert strong {
+                color: #78350f !important;
+            }
+            body[data-theme="light"] .instruction-alert svg {
+                stroke: #92400e !important;
+            }
+            
+            /* Notification bell — darker amber for visibility */
+            body[data-theme="light"] .bell-btn {
+                background: rgba(217, 119, 6, 0.1) !important;
+                border-color: rgba(217, 119, 6, 0.3) !important;
+                color: #b45309 !important;
+            }
+            body[data-theme="light"] .bell-btn:hover {
+                background: rgba(217, 119, 6, 0.18) !important;
+                border-color: rgba(217, 119, 6, 0.4) !important;
+            }
+
             body[data-theme="light"] h1,
             body[data-theme="light"] h2,
             body[data-theme="light"] h3,
@@ -1397,6 +1433,126 @@
                 background: #fee2e2 !important;
                 border-color: #b91c1c !important;
                 color: #b91c1c !important;
+            }
+
+            /* ═══════════════════════════════════════════════════════
+               GLOBAL GLASS COMPONENT LIGHT MODE — high-contrast fixes
+               Applies to all pages using .glass-modal, .btn-glass,
+               .dynamic-grid-box, .radio-pill-group, .sandbox-panel etc.
+            ═══════════════════════════════════════════════════════ */
+
+            /* Page title gradients that use #fff become invisible on white bg */
+            body[data-theme="light"] .page-title {
+                background: linear-gradient(135deg, #0f172a, var(--primary-accent)) !important;
+                -webkit-background-clip: text !important;
+                -webkit-text-fill-color: transparent !important;
+            }
+
+            /* Nav items text color - make them legible in light mode instead of washed out gray */
+            body[data-theme="light"] .nav-item,
+            body[data-theme="light"] .dropdown-item {
+                color: #334155 !important;
+                font-weight: 600 !important;
+            }
+            body[data-theme="light"] .nav-item:hover,
+            body[data-theme="light"] .dropdown-item:hover {
+                color: #0f172a !important;
+            }
+            body[data-theme="light"] .nav-item.active {
+                color: var(--primary-accent) !important;
+                background-color: rgba(8, 145, 178, 0.1) !important;
+            }
+
+            /* btn-glass: dark bg color invisible on white */
+            body[data-theme="light"] .btn-glass {
+                color: var(--text-main) !important;
+                background: rgba(15, 23, 42, 0.05) !important;
+                border-color: rgba(15, 23, 42, 0.15) !important;
+            }
+            body[data-theme="light"] .btn-glass:hover {
+                background: rgba(15, 23, 42, 0.09) !important;
+                border-color: rgba(15, 23, 42, 0.25) !important;
+            }
+            /* Keep colored variants legible */
+            body[data-theme="light"] .btn-glass.btn-success {
+                color: #fff !important;
+                background: #059669 !important;
+                border-color: #059669 !important;
+            }
+            body[data-theme="light"] .btn-glass.btn-success:hover {
+                background: #047857 !important;
+                border-color: #047857 !important;
+            }
+            body[data-theme="light"] .btn-glass.btn-primary-accent {
+                color: var(--primary-accent) !important;
+                background: rgba(8, 145, 178, 0.1) !important;
+                border-color: var(--primary-accent) !important;
+            }
+            body[data-theme="light"] .btn-glass.btn-danger {
+                color: #b91c1c !important;
+                background: #fef2f2 !important;
+                border-color: #fca5a5 !important;
+            }
+
+            /* Glass table */
+            body[data-theme="light"] .glass-table th {
+                background: rgba(15, 23, 42, 0.04) !important;
+                color: var(--text-header) !important;
+            }
+            body[data-theme="light"] .glass-table th,
+            body[data-theme="light"] .glass-table td {
+                border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
+            }
+            body[data-theme="light"] .glass-table tr:hover td {
+                background: rgba(15, 23, 42, 0.02) !important;
+            }
+
+            /* Dynamic grid boxes (Headers, Queries, Cookies, Body Data) */
+            body[data-theme="light"] .dynamic-grid-box {
+                background: rgba(15, 23, 42, 0.03) !important;
+                border-color: rgba(15, 23, 42, 0.12) !important;
+            }
+            body[data-theme="light"] .dynamic-grid-title {
+                color: var(--text-header) !important;
+            }
+
+            /* Radio pill group (DEFAULT / FORM-DATA / JSON / BINARY) */
+            body[data-theme="light"] .radio-pill-group {
+                background: rgba(15, 23, 42, 0.06) !important;
+                border-color: rgba(15, 23, 42, 0.12) !important;
+            }
+            body[data-theme="light"] .radio-pill:checked + .radio-pill-label {
+                color: #fff !important;
+            }
+
+            /* Sandbox response panel */
+            body[data-theme="light"] .sandbox-panel {
+                background: rgba(15, 23, 42, 0.04) !important;
+                border-color: rgba(8, 145, 178, 0.3) !important;
+            }
+            body[data-theme="light"] .sandbox-log-box {
+                background: rgba(15, 23, 42, 0.05) !important;
+                color: var(--text-main) !important;
+            }
+
+            /* Glass modal overlay — needs darker backdrop */
+            body[data-theme="light"] .glass-modal {
+                background: rgba(15, 23, 42, 0.55) !important;
+            }
+            body[data-theme="light"] .glass-modal-close:hover {
+                color: var(--text-header) !important;
+            }
+
+            /* Panel card titles */
+            body[data-theme="light"] .panel-card-title,
+            body[data-theme="light"] .panel-card-title span {
+                color: var(--text-header) !important;
+            }
+
+            /* Filter / search panels */
+            body[data-theme="light"] .filter-panel {
+                background: rgba(15, 23, 42, 0.03) !important;
+                border-color: rgba(15, 23, 42, 0.1) !important;
             }
 
             /* Global Toast Component */

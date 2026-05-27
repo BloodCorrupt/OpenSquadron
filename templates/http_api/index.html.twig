@@ -54,13 +54,45 @@
         background: rgba(6, 182, 212, 0.25);
         box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
     }
+    /* Light mode: all ghost btn-glass elements must use dark text */
+    body[data-theme="light"] .btn-glass {
+        color: var(--text-main) !important;
+        background: rgba(15, 23, 42, 0.05) !important;
+        border-color: rgba(15, 23, 42, 0.18) !important;
+    }
+    body[data-theme="light"] .btn-glass:hover {
+        background: rgba(15, 23, 42, 0.1) !important;
+        border-color: rgba(15, 23, 42, 0.28) !important;
+    }
+    body[data-theme="light"] .btn-glass.btn-primary-accent {
+        color: var(--primary-accent) !important;
+        background: rgba(8, 145, 178, 0.1) !important;
+        border-color: var(--primary-accent) !important;
+    }
+    body[data-theme="light"] .btn-glass.btn-success {
+        color: #fff !important;
+        background: #059669 !important;
+        border-color: #059669 !important;
+    }
+    body[data-theme="light"] .btn-glass.btn-success:hover {
+        background: #047857 !important;
+        border-color: #047857 !important;
+    }
+    body[data-theme="light"] .btn-glass.btn-danger {
+        color: #b91c1c !important;
+        background: #fef2f2 !important;
+        border-color: #fca5a5 !important;
+    }
     .btn-success {
-        border-color: var(--secondary-accent);
-        color: var(--secondary-accent);
-        background: rgba(16, 185, 129, 0.08);
+        border-color: #059669;
+        color: #fff;
+        background: #059669;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
     }
     .btn-success:hover {
-        background: rgba(16, 185, 129, 0.18);
+        background: #047857;
+        border-color: #047857;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
     }
     .btn-danger {
         border-color: var(--error-color);
@@ -107,6 +139,15 @@
     .glass-input:focus {
         border-color: var(--primary-accent);
         box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
+    }
+    /* Light mode input override */
+    body[data-theme="light"] .glass-input {
+        background: #fff !important;
+        border: 1px solid rgba(15, 23, 42, 0.2) !important;
+        color: var(--text-main) !important;
+    }
+    body[data-theme="light"] .glass-input::placeholder {
+        color: #94a3b8 !important;
     }
 
     /* Grid cards layout */
@@ -478,7 +519,7 @@
                 <div style="position: relative; width: 100%; box-sizing: border-box;">
                     <input type="text" name="search" class="glass-input" placeholder="Search & Enter..." value="{{ search }}" style="width: 100%;">
                     {% if search %}
-                        <a href="{{ path('app_http_api_index', {status: status, verified: verified}) }}" style="position: absolute; right: 12px; top: 10px; color: var(--text-muted); font-size: 14px; text-decoration: none;">×</a>
+                        <a href="{{ path('app_http_api_index', {status: status, verified: verified}) }}" style="position: absolute; right: 12px; top: 10px; color: var(--text-muted); font-size: 14px; text-decoration: none;"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></a>
                     {% endif %}
                 </div>
             </div>
@@ -491,11 +532,10 @@
                         <th style="width: 40px;">#</th>
                         <th>API Name</th>
                         <th>Endpoint URL</th>
-                        <th>Channel</th>
                         <th>Status</th>
                         <th>Verified</th>
                         <th>Call Counters</th>
-                        <th>Actions</th>
+                        <th style="width: 150px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -505,9 +545,6 @@
                             <td style="font-weight: 600;">{{ api.name }}</td>
                             <td style="font-family: monospace; font-size: 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 {{ api.endpointUrl }}
-                            </td>
-                            <td>
-                                <span class="badge badge-info">{{ api.channel|upper }}</span>
                             </td>
                             <td>
                                 {% if api.status == 'active' %}
@@ -526,13 +563,13 @@
                             <td>
                                 <div class="call-stats">
                                     <span class="stat-circle" title="Total calls">
-                                        <span style="color: var(--text-muted);">📞</span> {{ api.totalCall }}
+                                        <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> {{ api.totalCall }}
                                     </span>
                                     <span class="stat-circle" style="color: var(--secondary-accent);" title="Successful calls">
-                                        ✔ {{ api.totalSuccess }}
+                                        <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 2px;" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ api.totalSuccess }}
                                     </span>
                                     <span class="stat-circle" style="color: var(--error-color);" title="Error calls">
-                                        ✖ {{ api.totalError }}
+                                        <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; margin-right: 2px;" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> {{ api.totalError }}
                                     </span>
                                 </div>
                             </td>
@@ -562,15 +599,21 @@
         </div>
     </div>
     
-    <!-- Connection details panel (Hidden by default, shown on create/edit) -->
-    <div class="panel-card glass-panel" id="formColumn" style="display: none;">
-        <div class="panel-card-title">
-            <span id="formTitle">API Connection Details</span>
-            <span style="cursor: pointer; font-size: 18px; color: var(--text-muted);" onclick="hideFormCard()">×</span>
+    </div>
+</div>
+
+<!-- API Connection Form Modal -->
+<div class="glass-modal" id="apiFormModal" style="align-items: flex-start; padding: 40px 20px;" onclick="if(event.target===this)hideFormCard()">
+    <div class="glass-modal-content glass-panel" style="max-width: 900px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; position: relative; padding: 0; overflow: hidden;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 25px 15px; border-bottom: 1px solid var(--glass-border); flex-shrink: 0;">
+            <h2 id="formTitle" style="margin: 0; font-size: 20px; color: var(--primary-accent); font-weight: 700;">API Connection Details</h2>
+            <span class="glass-modal-close" onclick="hideFormCard()" style="position: relative; top: auto; right: auto;"><svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>
         </div>
-        
-        <div class="instruction-alert">
-            <span>💡</span>
+
+        <div style="flex: 1; overflow-y: auto; padding: 20px 25px;">
+
+        <div class="instruction-alert" style="margin-bottom: 20px;">
+            <span><svg viewBox="0 0 24 24" style="width: 18px; height: 18px;" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A6 6 0 1 0 7.5 11.5c.76.76 1.23 1.52 1.41 2.5"></path></svg></span>
             <div>
                 <strong>Placeholder Support:</strong> You can parse subscriber variables in URLs, Headers, Queries, and Body Data using:
                 <div style="font-family: monospace; font-size: 11.5px; margin-top: 5px; color: #f59e0b;">
@@ -578,11 +621,12 @@
                 </div>
             </div>
         </div>
-        
+
         <form id="connectionForm" onsubmit="event.preventDefault();">
             <input type="hidden" name="id" id="apiId">
-            
-            <div class="form-row three-cols">
+            <input type="hidden" name="channel" id="apiChannel" value="global">
+
+            <div class="form-row two-cols">
                 <div class="form-group">
                     <label>API Name *</label>
                     <input type="text" name="name" id="apiName" class="glass-input" required placeholder="e.g. Stripe Webhook, Log Engine">
@@ -597,18 +641,10 @@
                         <option value="DELETE">DELETE</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Channel *</label>
-                    <select name="channel" id="apiChannel" class="glass-input">
-                        <option value="global">Global (All)</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="facebook">Facebook</option>
-                    </select>
-                </div>
             </div>
-            
+
             <div class="form-row two-cols">
-                <div class="form-group" style="grid-column: span 1;">
+                <div class="form-group">
                     <label>Endpoint URL *</label>
                     <input type="url" name="endpointUrl" id="apiEndpointUrl" class="glass-input" required placeholder="https://api.yourdomain.com/v1/trigger">
                 </div>
@@ -617,7 +653,7 @@
                     <input type="text" name="testSubscriberId" id="apiTestSubscriberId" class="glass-input" placeholder="Subscriber ID or Phone or PSID">
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label>Status</label>
@@ -627,20 +663,20 @@
                     </select>
                 </div>
             </div>
-            
+
             <!-- Dynamic Headers box -->
             <div class="dynamic-grid-box">
                 <div class="dynamic-grid-header">
-                    <span class="dynamic-grid-title">🌐 Header Data</span>
+                    <span class="dynamic-grid-title"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> Header Data</span>
                     <button type="button" class="btn-glass" style="padding: 4px 10px; font-size: 12px;" onclick="addGridRow('headers')">+ Add</button>
                 </div>
                 <div id="headersGridContainer"></div>
             </div>
-            
+
             <!-- Dynamic Queries box -->
             <div class="dynamic-grid-box">
                 <div class="dynamic-grid-header">
-                    <span class="dynamic-grid-title">🔍 Option Data (Query Parameters)</span>
+                    <span class="dynamic-grid-title"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> Option Data (Query Parameters)</span>
                     <button type="button" class="btn-glass" style="padding: 4px 10px; font-size: 12px;" onclick="addGridRow('options')">+ Add</button>
                 </div>
                 <div id="optionsGridContainer"></div>
@@ -649,16 +685,16 @@
             <!-- Dynamic Cookies box -->
             <div class="dynamic-grid-box">
                 <div class="dynamic-grid-header">
-                    <span class="dynamic-grid-title">🍪 Cookie Data</span>
+                    <span class="dynamic-grid-title"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="8"></line><line x1="16" y1="12" x2="16" y2="12"></line><line x1="9" y1="13" x2="9" y2="13"></line></svg> Cookie Data</span>
                     <button type="button" class="btn-glass" style="padding: 4px 10px; font-size: 12px;" onclick="addGridRow('cookies')">+ Add</button>
                 </div>
                 <div id="cookiesGridContainer"></div>
             </div>
-            
+
             <!-- Body Selector box -->
             <div class="dynamic-grid-box">
                 <div class="dynamic-grid-header">
-                    <span class="dynamic-grid-title">📦 Body Data</span>
+                    <span class="dynamic-grid-title"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> Body Data</span>
                     <div class="radio-pill-group">
                         <input type="radio" name="bodyType" id="bodyDefault" value="DEFAULT" class="radio-pill" checked onchange="toggleBodySection()">
                         <label for="bodyDefault" class="radio-pill-label">DEFAULT</label>
@@ -676,7 +712,7 @@
                         <label for="bodyBinary" class="radio-pill-label">BINARY</label>
                     </div>
                 </div>
-                
+
                 <div id="bodyDataGridContainer" style="display: none; margin-top: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <span style="font-size: 12.5px; color: var(--text-muted);">Form parameters</span>
@@ -684,36 +720,78 @@
                     </div>
                     <div id="bodyParamsRows"></div>
                 </div>
-                
+
                 <div id="bodyDataTextContainer" style="display: none; margin-top: 15px;">
-                    <textarea id="bodyRawText" class="glass-input" style="width: 100%; min-height: 120px; font-family: monospace;" placeholder="Enter raw request body content..."></textarea>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                        <div style="flex: 1 1 300px; min-width: 0;">
+                            <textarea id="bodyRawText" class="glass-input" style="width: 100%; min-height: 220px; height: 100%; font-family: monospace; resize: vertical;" placeholder="Enter raw request body content..."></textarea>
+                        </div>
+                        <div class="glass-panel" style="flex: 0 0 250px; padding: 12px; max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); border-radius: 8px;">
+                            <div style="font-size: 11px; font-weight: bold; margin-bottom: 10px; color: var(--primary-accent); display: flex; align-items: center; gap: 4px;">
+                                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                AVAILABLE VARIABLES
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <input type="text" id="variableSearch" class="glass-input" style="width: 100%; font-size: 11px; padding: 6px 10px;" placeholder="Search variables..." onkeyup="filterVariables()">
+                            </div>
+                            <div class="variable-list" style="display: flex; flex-direction: column; gap: 5px;">
+                                <button type="button" class="btn-glass variable-btn" onclick="insertVariable('{{ '{{subscriber.name}}' }}')" style="padding: 6px; font-size: 11px; font-family: monospace; text-align: left; justify-content: flex-start;">{{ '{{subscriber.name}}' }}</button>
+                                <button type="button" class="btn-glass variable-btn" onclick="insertVariable('{{ '{{subscriber.phone_number}}' }}')" style="padding: 6px; font-size: 11px; font-family: monospace; text-align: left; justify-content: flex-start;">{{ '{{subscriber.phone_number}}' }}</button>
+                                <button type="button" class="btn-glass variable-btn" onclick="insertVariable('{{ '{{subscriber.psid}}' }}')" style="padding: 6px; font-size: 11px; font-family: monospace; text-align: left; justify-content: flex-start;">{{ '{{subscriber.psid}}' }}</button>
+                                <button type="button" class="btn-glass variable-btn" onclick="insertVariable('{{ '{{subscriber.custom_attributes.KEY}}' }}')" style="padding: 6px; font-size: 11px; font-family: monospace; text-align: left; justify-content: flex-start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Replace KEY with your custom attribute name">{{ '{{subscriber.custom_attributes.KEY}}' }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="bodyBinaryContainer" style="display: none; margin-top: 15px;">
+                    <div class="form-row three-cols" style="background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); border-radius: 8px; padding: 15px;">
+                        <div class="form-group">
+                            <label style="color: var(--primary-accent); font-size: 11px;">BODY : KEY *</label>
+                            <input type="text" id="binaryKey" class="glass-input" placeholder="Key">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: var(--primary-accent); font-size: 11px;">BODY : TYPE *</label>
+                            <select id="binaryType" class="glass-input">
+                                <option value="File Upload">File Upload</option>
+                                <option value="Raw Data">Raw Data</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="color: var(--primary-accent); font-size: 11px;">BODY : VALUE *</label>
+                            <input type="text" id="binaryValue" class="glass-input" placeholder="File URL or raw value">
+                        </div>
+                    </div>
                 </div>
             </div>
-            
+
             <div class="sandbox-panel" id="sandboxPanel">
                 <h4 class="sandbox-title">
-                    <span>📡 Connection Sandbox Log</span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16"></path><path d="M12 2v20"></path><path d="M8 18h8"></path><path d="M17 11.95V12a1 1 0 0 1-1 1h-2"></path><path d="M12 6a4 4 0 0 1 4 4v1"></path><path d="M8 12v-1a4 4 0 0 1 4-4"></path></svg> Connection Sandbox Log</span>
                     <span id="sandboxStatusBadge" class="badge">PENDING</span>
                 </h4>
                 <div class="sandbox-log-box" id="sandboxLogBox">Firing connection test...</div>
             </div>
-            
-            <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-                <button type="button" class="btn-glass btn-primary-accent" style="border-color: #f59e0b; color: #f59e0b; background: rgba(245, 158, 11, 0.08);" onclick="verifyConnection()">
-                    ⚡ Verify Connection
-                </button>
-                <button type="button" class="btn-glass btn-success" onclick="saveConnection()">
-                    💾 Save Connection
-                </button>
-            </div>
+
         </form>
+
+        </div><!-- end scrollable body -->
+
+        <!-- Sticky footer -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 25px; border-top: 1px solid var(--glass-border); flex-shrink: 0; background: rgba(0,0,0,0.2);">
+            <button type="button" class="btn-glass btn-primary-accent" style="border-color: #f59e0b; color: #f59e0b; background: rgba(245, 158, 11, 0.08); display: inline-flex; align-items: center; gap: 6px;" onclick="verifyConnection()">
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Verify Connection
+            </button>
+            <button type="button" class="btn-glass btn-success" style="display: inline-flex; align-items: center; gap: 6px;" onclick="saveConnection()">
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save Connection
+            </button>
+        </div>
     </div>
 </div>
-
 <!-- Logs/Report Modal -->
 <div class="glass-modal" id="logsModal">
     <div class="glass-modal-content glass-panel">
-        <span class="glass-modal-close" onclick="closeLogsModal()">×</span>
+        <span class="glass-modal-close" onclick="closeLogsModal()"><svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>
         <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; color: var(--primary-accent);">Outbound HTTP API Call Logs</h2>
         
         <div class="glass-table-wrapper" style="max-height: 50vh; overflow-y: auto;">
@@ -740,7 +818,7 @@
 <!-- Dynamic Log Details Expansion Box -->
 <div class="glass-modal" id="logDetailsModal" style="z-index: 10000;">
     <div class="glass-modal-content glass-panel" style="max-width: 700px;">
-        <span class="glass-modal-close" onclick="closeLogDetailsModal()">×</span>
+        <span class="glass-modal-close" onclick="closeLogDetailsModal()"><svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>
         <h3 id="logDetailsTitle" style="margin-top: 0; color: var(--primary-accent);">Call Details</h3>
         
         <div style="margin-bottom: 15px;">
@@ -749,11 +827,11 @@
         
         <div style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px;">
             <div>
-                <strong style="display: block; margin-bottom: 5px;">📤 Request Payload:</strong>
+                <strong style="display: flex; align-items: center; gap: 6px; margin-bottom: 5px;"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path><polyline points="16 16 12 12 8 16"></polyline></svg> Request Payload:</strong>
                 <pre class="sandbox-log-box" id="logDetailsRequest" style="max-height: 180px;"></pre>
             </div>
             <div>
-                <strong style="display: block; margin-bottom: 5px;">📥 Response Payload:</strong>
+                <strong style="display: flex; align-items: center; gap: 6px; margin-bottom: 5px;"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></svg> Response Payload:</strong>
                 <pre class="sandbox-log-box" id="logDetailsResponse" style="max-height: 180px;"></pre>
             </div>
         </div>
@@ -763,7 +841,7 @@
 <!-- Import Configuration Modal -->
 <div class="glass-modal" id="importModal">
     <div class="glass-modal-content glass-panel" style="max-width: 550px;">
-        <span class="glass-modal-close" onclick="closeImportModal()">×</span>
+        <span class="glass-modal-close" onclick="closeImportModal()"><svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>
         <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 20px; color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">Import API Settings Payload</h2>
         
         <div style="margin-bottom: 15px; font-size: 13px; color: var(--text-muted);">
@@ -805,16 +883,14 @@
         toggleBodySection();
         document.getElementById('sandboxPanel').style.display = 'none';
 
-        // Toggle layout
-        const mainGrid = document.getElementById('mainGrid');
-        mainGrid.classList.add('has-form');
-        document.getElementById('formColumn').style.display = 'block';
+        // Open modal
+        document.getElementById('apiFormModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 
     function hideFormCard() {
-        const mainGrid = document.getElementById('mainGrid');
-        mainGrid.classList.remove('has-form');
-        document.getElementById('formColumn').style.display = 'none';
+        document.getElementById('apiFormModal').style.display = 'none';
+        document.body.style.overflow = '';
     }
 
     function addGridRow(gridType, key = '', value = '') {
@@ -847,7 +923,7 @@
             div.innerHTML = `
                 <input type="text" class="glass-input" placeholder="Key Name" value="${escapeHtml(row.key)}" oninput="updateGridField('${gridType}', ${i}, 'key', this.value)">
                 <input type="text" class="glass-input" placeholder="Value / {{ '{{ placeholder }}' }}" value="${escapeHtml(row.value)}" oninput="updateGridField('${gridType}', ${i}, 'value', this.value)">
-                <button type="button" class="btn-glass btn-danger" style="padding: 8px 12px;" onclick="removeGridRow('${gridType}', ${i})">×</button>
+                <button type="button" class="btn-glass btn-danger" style="padding: 8px 12px; display: inline-flex; align-items: center; justify-content: center;" onclick="removeGridRow('${gridType}', ${i})"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px;" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             `;
             container.appendChild(div);
         });
@@ -869,16 +945,24 @@
         const checkedVal = document.querySelector('input[name="bodyType"]:checked').value;
         const gridBox = document.getElementById('bodyDataGridContainer');
         const textBox = document.getElementById('bodyDataTextContainer');
+        const binaryBox = document.getElementById('bodyBinaryContainer');
         
         if (checkedVal === 'DEFAULT') {
             gridBox.style.display = 'none';
             textBox.style.display = 'none';
+            binaryBox.style.display = 'none';
         } else if (checkedVal === 'FORM-DATA' || checkedVal === 'X-WWW-FORM-URLENCODED') {
             gridBox.style.display = 'block';
             textBox.style.display = 'none';
+            binaryBox.style.display = 'none';
+        } else if (checkedVal === 'BINARY') {
+            gridBox.style.display = 'none';
+            textBox.style.display = 'none';
+            binaryBox.style.display = 'block';
         } else {
             gridBox.style.display = 'none';
             textBox.style.display = 'block';
+            binaryBox.style.display = 'none';
         }
     }
 
@@ -910,6 +994,25 @@
                 grids.bodyData = [];
             }
             document.getElementById('bodyRawText').value = '';
+        } else if (bodyType === 'BINARY') {
+            grids.bodyData = [];
+            document.getElementById('bodyRawText').value = '';
+            try {
+                const binData = JSON.parse(api.bodyData);
+                if (binData && typeof binData === 'object' && binData.key !== undefined) {
+                    document.getElementById('binaryKey').value = binData.key || '';
+                    document.getElementById('binaryType').value = binData.type || 'File Upload';
+                    document.getElementById('binaryValue').value = binData.value || '';
+                } else {
+                    document.getElementById('binaryKey').value = '';
+                    document.getElementById('binaryType').value = 'File Upload';
+                    document.getElementById('binaryValue').value = api.bodyData || '';
+                }
+            } catch(e) {
+                document.getElementById('binaryKey').value = '';
+                document.getElementById('binaryType').value = 'File Upload';
+                document.getElementById('binaryValue').value = api.bodyData || '';
+            }
         } else {
             grids.bodyData = [];
             document.getElementById('bodyRawText').value = api.bodyData || '';
@@ -964,6 +1067,12 @@
 
         if (bodyType === 'FORM-DATA' || bodyType === 'X-WWW-FORM-URLENCODED') {
             fd.append('bodyData', JSON.stringify(grids.bodyData));
+        } else if (bodyType === 'BINARY') {
+            fd.append('bodyData', JSON.stringify({
+                key: document.getElementById('binaryKey').value,
+                type: document.getElementById('binaryType').value,
+                value: document.getElementById('binaryValue').value
+            }));
         } else {
             fd.append('bodyData', document.getElementById('bodyRawText').value);
         }
@@ -1190,6 +1299,31 @@
 
     function closeLogDetailsModal() {
         document.getElementById('logDetailsModal').style.display = 'none';
+    }
+
+    function insertVariable(text) {
+        const textarea = document.getElementById('bodyRawText');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        
+        textarea.value = value.substring(0, start) + text + value.substring(end);
+        
+        // Put cursor right after the inserted text
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        textarea.focus();
+    }
+
+    function filterVariables() {
+        const search = document.getElementById('variableSearch').value.toLowerCase();
+        const btns = document.querySelectorAll('.variable-btn');
+        btns.forEach(btn => {
+            if (btn.innerText.toLowerCase().includes(search)) {
+                btn.style.display = 'flex';
+            } else {
+                btn.style.display = 'none';
+            }
+        });
     }
 </script>
 {% endblock %}
