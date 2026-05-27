@@ -1100,33 +1100,8 @@ class InstagramService
         $payload = [];
         $deleteFields = [];
 
-        $showGreeting = !empty($settings['showGreeting']);
-        $greetingText = trim($settings['greetingText'] ?? '');
-        $getStartedStatus = $settings['getStartedStatus'] ?? 'enabled';
-        $getStartedPayload = trim($settings['getStartedPayload'] ?? '');
         $iceBreakersStatus = $settings['iceBreakersStatus'] ?? 'disabled';
         $iceBreakers = $settings['iceBreakers'] ?? [];
-
-        $deleteGreeting = false;
-
-        if ($showGreeting && $greetingText !== '') {
-            $payload['greeting'] = [
-                [
-                    'locale' => 'default',
-                    'text' => $greetingText
-                ]
-            ];
-        } else {
-            $deleteGreeting = true;
-        }
-
-        if ($getStartedStatus === 'enabled' && $getStartedPayload !== '') {
-            $payload['get_started'] = [
-                'payload' => $getStartedPayload
-            ];
-        } else {
-            $deleteFields[] = 'get_started';
-        }
 
         if ($iceBreakersStatus === 'enabled' && !empty($iceBreakers)) {
             $ctas = [];
@@ -1176,26 +1151,6 @@ class InstagramService
             }
         }
 
-        if ($deleteGreeting) {
-            try {
-                $this->httpClient->request('DELETE', $url, [
-                    'headers' => [
-                        'Authorization' => "Bearer {$accessToken}",
-                        'Content-Type' => 'application/json',
-                    ],
-                    'query' => [
-                        'platform' => 'instagram'
-                    ],
-                    'json' => [
-                        'fields' => ['greeting']
-                    ]
-                ]);
-            } catch (\Exception $e) {
-                // Silently ignore greeting deletion errors. Instagram Graph API sometimes
-                // omits 'greeting' from the valid fields enum, causing an exception.
-            }
-        }
-
         if (!empty($payload)) {
             $payload['platform'] = 'instagram'; // Must specify platform for Instagram updates
             $response = $this->httpClient->request('POST', $url, [
@@ -1226,28 +1181,10 @@ class InstagramService
         $currentSettings = $connection->getBotSettings() ?: [];
         $localWelcome = $currentSettings['welcome-screen'] ?? [];
 
-        $showGreeting = $localWelcome['showGreeting'] ?? false;
-        $greetingText = $localWelcome['greetingText'] ?? '';
-        $getStartedStatus = 'disabled';
-        $getStartedPayload = $localWelcome['getStartedPayload'] ?? '';
         $iceBreakersStatus = 'disabled';
         $iceBreakers = $localWelcome['iceBreakers'] ?? [];
 
         if ($fbData !== null && !empty($fbData)) {
-            if (isset($fbData['greeting'][0]['text'])) {
-                $greetingText = $fbData['greeting'][0]['text'];
-                $showGreeting = true;
-            } else {
-                $showGreeting = false; // Instagram explicitly doesn't have it
-            }
-
-            if (isset($fbData['get_started']['payload'])) {
-                $getStartedPayload = $fbData['get_started']['payload'];
-                $getStartedStatus = 'enabled';
-            } else {
-                $getStartedStatus = 'disabled';
-            }
-
             if (isset($fbData['ice_breakers'][0]['call_to_actions'])) {
                 $iceBreakersStatus = 'enabled';
                 $iceBreakers = [];
@@ -1263,16 +1200,10 @@ class InstagramService
         } else {
             // Instagram returned totally empty profile, meaning nothing is active.
             // Disable all toggles but keep the draft text/payload variables intact.
-            $showGreeting = false;
-            $getStartedStatus = 'disabled';
             $iceBreakersStatus = 'disabled';
         }
 
         $welcomeSettings = [
-            'showGreeting' => $showGreeting,
-            'greetingText' => $greetingText,
-            'getStartedStatus' => $getStartedStatus,
-            'getStartedPayload' => $getStartedPayload,
             'iceBreakersStatus' => $iceBreakersStatus,
             'iceBreakers' => $iceBreakers
         ];
