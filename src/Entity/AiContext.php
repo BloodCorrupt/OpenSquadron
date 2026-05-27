@@ -21,6 +21,12 @@ class AiContext implements TenantAwareInterface
     #[ORM\JoinColumn(name: "owner_id", referencedColumnName: "id", onDelete: "CASCADE")]
     private ?Admin $owner = null;
 
+    #[ORM\Column(length: 50)]
+    private ?string $status = 'active';
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $modulesData = [];
+
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
@@ -39,6 +45,28 @@ class AiContext implements TenantAwareInterface
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getModulesData(): ?array
+    {
+        return $this->modulesData;
+    }
+
+    public function setModulesData(?array $modulesData): static
+    {
+        $this->modulesData = $modulesData;
+        return $this;
     }
 
     public function getName(): ?string

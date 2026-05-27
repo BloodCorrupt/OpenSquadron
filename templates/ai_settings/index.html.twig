@@ -334,6 +334,10 @@
             -webkit-overflow-scrolling: touch;
         }
     }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
 </style>
 {% endblock %}
 
@@ -384,7 +388,7 @@
             <!-- Sub-pane 1: API Configuration -->
             <div class="ai-agent-subpane" id="ai-subpane-api-config" style="display: block; width: 100%;">
                 <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">
-                    <strong style="color: var(--primary-accent);">💡 Open Nature:</strong> Connect to any provider: OpenAI, Google Gemini, Moonshot (Kimi), OpenRouter, or a custom self-hosted proxy/endpoint.
+                    <strong style="color: var(--primary-accent); display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Open Nature:</strong> Connect to any provider: OpenAI, Google Gemini, Moonshot (Kimi), OpenRouter, or a custom self-hosted proxy/endpoint.
                 </div>
 
                 <form id="ai-api-config-form" onsubmit="saveAiApiConfig(event)" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
@@ -519,7 +523,7 @@
                 <div id="context-list-view">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
                         <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; padding: 12px 18px; font-size: 13px; color: #94a3b8; line-height: 1.5; flex-grow: 1; margin: 0;">
-                            <strong style="color: var(--primary-accent);">💡 Context Manager:</strong> Create multiple custom context profiles for your AI assistant. You can activate one active context profile at a time to ground your bot's answers.
+                            <strong style="color: var(--primary-accent); display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Context Manager:</strong> Create multiple custom context profiles for your AI assistant. You can activate one active context profile at a time to ground your bot's answers.
                         </div>
                         <button type="button" class="btn-action btn-create" onclick="showCreateContextForm()" style="margin: 0; font-size: 13px; padding: 12px 20px; white-space: nowrap; display: flex; align-items: center; gap: 6px; height: 42px;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -568,6 +572,7 @@
                                                             data-ctx-role="{{ ctx.agentRole|default('')|e('html_attr') }}"
                                                             data-ctx-instruction="{{ ctx.systemInstruction|default('')|e('html_attr') }}"
                                                             data-ctx-data="{{ ctx.contextData|default('')|e('html_attr') }}"
+                                                            data-ctx-modules="{{ ctx.modulesData ? ctx.modulesData|json_encode|e('html_attr') : '[]' }}"
                                                             style="padding: 6px 12px; font-size: 12px; height: 30px; margin: 0; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: var(--primary-accent); display: flex; align-items: center; gap: 4px; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;">
                                                         <svg viewBox="0 0 24 24" style="width:12px; height:12px; stroke: currentColor; fill: none; stroke-width: 2;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                                         <span>Edit</span>
@@ -623,15 +628,44 @@
                             </div>
 
                             <div class="form-group">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                                    <label class="form-label" for="ctx-contextData" style="margin-bottom: 0;">Custom Context Data (Knowledge Base) <small style="font-weight:400; opacity: 0.6;">(Optional)</small></label>
-                                    <button type="button" class="btn-action btn-secondary-action" onclick="generateFaqs()" id="btn-generate-faqs" style="padding: 4px 10px; font-size: 11px; height: 26px; margin: 0; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: var(--primary-accent); display: flex; align-items: center; gap: 4px; cursor: pointer; border-radius: 8px; border: 1px solid var(--glass-border);">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:12px; height:12px; margin-right:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                        <span>Generate FAQs with AI</span>
-                                    </button>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                                    <label class="form-label" style="margin-bottom: 0;">Context Builder <small style="font-weight:400; opacity: 0.6;">(Modular Blocks)</small></label>
                                 </div>
-                                <textarea id="ctx-contextData" name="contextData" class="form-control" style="min-height: 180px;" placeholder="Paste raw text (about your business, products, details) and click 'Generate FAQs with AI' to automatically create a Q&A list. You can also manually type the FAQs here."></textarea>
-                                <p class="form-hint">Ground your bot agent's replies on custom business info. Recommended structure: Q&A format or itemized text blocks.</p>
+                                
+                                <p class="form-hint" style="margin-bottom: 16px;">Build your AI's knowledge base by stacking blocks. Each block is a separate, distinct source of context.</p>
+                                
+                                <input type="hidden" id="ctx-modulesData" name="modulesData" value="[]">
+                                <input type="hidden" id="ctx-contextData" name="contextData" value="">
+                                
+                                <div id="context-modules-container" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                    <!-- Modules will be injected here via JS -->
+                                </div>
+                                
+                                <div style="background: rgba(0,0,0,0.2); border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; padding: 14px; text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Add a new block</div>
+                                    <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                                        <button type="button" class="btn-action btn-secondary" onclick="addContextModule('text')" style="font-size: 11px; height: 32px; margin: 0; display: flex; align-items: center; gap: 4px;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px;"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                                            Rich Text
+                                        </button>
+                                        <button type="button" class="btn-action btn-secondary" onclick="addContextModule('faq')" style="font-size: 11px; height: 32px; margin: 0; display: flex; align-items: center; gap: 4px; border-color: rgba(168,85,247,0.3); color: #c084fc; background: rgba(168,85,247,0.07);">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px;"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                            FAQ
+                                        </button>
+                                        <button type="button" class="btn-action btn-secondary" onclick="addContextModule('api')" style="font-size: 11px; height: 32px; margin: 0; display: flex; align-items: center; gap: 4px;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px;"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                                            Saved API
+                                        </button>
+                                        <button type="button" class="btn-action btn-secondary" onclick="addContextModule('web')" style="font-size: 11px; height: 32px; margin: 0; display: flex; align-items: center; gap: 4px;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                            Web Scraper
+                                        </button>
+                                        <button type="button" class="btn-action btn-secondary" onclick="addContextModule('ecommerce')" style="font-size: 11px; height: 32px; margin: 0; display: flex; align-items: center; gap: 4px;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                                            eCommerce
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -648,6 +682,111 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- ───────── FAQ Creator Modal ───────── -->
+<div id="faq-creator-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div style="background: linear-gradient(145deg, #0f172a, #1e293b); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: min(640px, 96vw); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 25px 80px rgba(0,0,0,0.6);">
+        
+        <!-- Modal Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <div style="width:32px; height:32px; border-radius:8px; background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.3); display:flex; align-items:center; justify-content:center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" style="width:16px; height:16px;"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </div>
+                <div>
+                    <div style="font-size: 15px; font-weight: 700; color: #f8fafc;">FAQ Creator</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Create Q&amp;A pairs to add to your FAQ block</div>
+                </div>
+            </div>
+            <button type="button" onclick="closeFaqModal()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#94a3b8; width:32px; height:32px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex; gap:0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <button type="button" class="faq-tab active" data-tab="manual" onclick="switchFaqTab('manual')" style="flex:1; padding: 11px 8px; font-size: 11px; font-weight:600; border:none; cursor:pointer; background:transparent; border-bottom: 2px solid #c084fc; color:#c084fc; transition: all 0.2s;">Manual</button>
+            <button type="button" class="faq-tab" data-tab="text" onclick="switchFaqTab('text')" style="flex:1; padding: 11px 8px; font-size: 11px; font-weight:600; border:none; cursor:pointer; background:transparent; border-bottom: 2px solid transparent; color:#64748b; transition: all 0.2s;">From Text</button>
+            <button type="button" class="faq-tab" data-tab="api" onclick="switchFaqTab('api')" style="flex:1; padding: 11px 8px; font-size: 11px; font-weight:600; border:none; cursor:pointer; background:transparent; border-bottom: 2px solid transparent; color:#64748b; transition: all 0.2s;">From API</button>
+            <button type="button" class="faq-tab" data-tab="web" onclick="switchFaqTab('web')" style="flex:1; padding: 11px 8px; font-size: 11px; font-weight:600; border:none; cursor:pointer; background:transparent; border-bottom: 2px solid transparent; color:#64748b; transition: all 0.2s;">From Web</button>
+            <button type="button" class="faq-tab" data-tab="ecommerce" onclick="switchFaqTab('ecommerce')" style="flex:1; padding: 11px 8px; font-size: 11px; font-weight:600; border:none; cursor:pointer; background:transparent; border-bottom: 2px solid transparent; color:#64748b; transition: all 0.2s;">Catalog</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div style="flex:1; overflow-y:auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+            
+            <!-- Manual Tab -->
+            <div id="faq-tab-manual" class="faq-tab-content">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Add Q&amp;A pairs manually. Click + to add more rows.</p>
+                <div id="faq-manual-pairs" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <button type="button" onclick="addManualFaqPair()" style="margin-top: 10px; background: rgba(168,85,247,0.1); border: 1px dashed rgba(168,85,247,0.3); color:#c084fc; border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Row
+                </button>
+            </div>
+
+            <!-- From Text Tab -->
+            <div id="faq-tab-text" class="faq-tab-content" style="display:none;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Paste raw text and let AI generate FAQ pairs from it.</p>
+                <textarea id="faq-text-input" class="form-control" style="min-height: 120px; font-size: 13px;" placeholder="Paste any raw business info, product details, policies, etc..."></textarea>
+                <button type="button" onclick="generateFaqsFromSource('text')" id="faq-btn-text" class="btn-action btn-create" style="margin-top: 10px; width: 100%; height: 40px; justify-content: center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; margin-right:6px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    Generate FAQs with AI
+                </button>
+            </div>
+
+            <!-- From API Tab -->
+            <div id="faq-tab-api" class="faq-tab-content" style="display:none;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Execute a saved HTTP API and generate FAQs from the response.</p>
+                <select id="faq-api-select" class="form-control" style="font-size: 13px; height: 40px;">
+                    <option value="">-- Select Saved API --</option>
+                    {% if httpApis is defined %}
+                        {% for api in httpApis %}
+                            <option value="{{ api.id }}">{{ api.name }} ({{ api.method }})</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                <button type="button" onclick="generateFaqsFromSource('api')" id="faq-btn-api" class="btn-action btn-create" style="margin-top: 10px; width: 100%; height: 40px; justify-content: center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; margin-right:6px;"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    Execute API & Generate FAQs
+                </button>
+            </div>
+
+            <!-- From Web Tab -->
+            <div id="faq-tab-web" class="faq-tab-content" style="display:none;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Scrape a webpage and generate FAQs from the content.</p>
+                <input type="text" id="faq-web-url" class="form-control" placeholder="URL (e.g. https://example.com/about)" style="font-size: 13px; height: 40px; margin-bottom: 8px;" autocomplete="off">
+                <input type="text" id="faq-web-selector" class="form-control" placeholder="CSS Selector (optional, e.g. .main-content)" style="font-size: 13px; height: 40px;" autocomplete="off">
+                <button type="button" onclick="generateFaqsFromSource('web')" id="faq-btn-web" class="btn-action btn-create" style="margin-top: 10px; width: 100%; height: 40px; justify-content: center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; margin-right:6px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+                    Scrape & Generate FAQs
+                </button>
+            </div>
+
+            <!-- From eCommerce Tab -->
+            <div id="faq-tab-ecommerce" class="faq-tab-content" style="display:none;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Automatically generate FAQs from your active product catalog.</p>
+                <div style="background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.15); border-radius: 8px; padding: 14px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
+                    This will fetch all your active products and ask AI to create common customer FAQ pairs (e.g. "What does X cost?", "Is X in stock?").
+                </div>
+                <button type="button" onclick="generateFaqsFromSource('ecommerce')" id="faq-btn-ecommerce" class="btn-action btn-create" style="margin-top: 10px; width: 100%; height: 40px; justify-content: center;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; margin-right:6px;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    Generate from Catalog
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="display:flex; justify-content:flex-end; gap:10px; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <button type="button" onclick="closeFaqModal()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#94a3b8; padding: 0 18px; height: 40px; border-radius: 10px; cursor:pointer; font-size: 13px;">Cancel</button>
+            <button type="button" id="faq-modal-add-btn" onclick="commitFaqsToBlock()" class="btn-action btn-create" style="margin:0; height:40px; padding: 0 20px; font-size: 13px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add to Block
+            </button>
         </div>
     </div>
 </div>
@@ -822,6 +961,10 @@
         document.getElementById('ctx-agentRole').value = '';
         document.getElementById('ctx-systemInstruction').value = '';
         document.getElementById('ctx-contextData').value = '';
+        document.getElementById('ctx-modulesData').value = '[]';
+        
+        currentModules = [];
+        renderModules();
     }
 
     // Export function to global scope for HTML events
@@ -855,9 +998,23 @@
             let contextDataEl = document.getElementById('ctx-contextData');
             if (contextDataEl) {
                 contextDataEl.value = btn.getAttribute('data-ctx-data') || '';
-            } else {
-                console.warn('ctx-contextData element not found');
             }
+            
+            let modulesStr = btn.getAttribute('data-ctx-modules') || '[]';
+            try {
+                currentModules = JSON.parse(modulesStr);
+            } catch(e) {
+                currentModules = [];
+            }
+
+            // Backward compatibility: If no modules but contextData exists, wrap it in a text block
+            let oldContextData = btn.getAttribute('data-ctx-data') || '';
+            if (currentModules.length === 0 && oldContextData.trim() !== '') {
+                currentModules.push({ type: 'text', content: oldContextData });
+            }
+
+            document.getElementById('ctx-modulesData').value = JSON.stringify(currentModules);
+            renderModules();
         } catch(err) {
             console.error('editContext Error:', err);
             alert('Error editing context: ' + err.message);
@@ -876,44 +1033,6 @@
 
     window.editContext = editContext;
 
-    function generateFaqs() {
-        const textArea = document.getElementById('ctx-contextData');
-        const rawText = textArea.value.trim();
-        if (!rawText) {
-            showToast('Please paste some raw text into the knowledge base first!', 'error');
-            return;
-        }
-
-        const btn = document.getElementById('btn-generate-faqs');
-        btn.disabled = true;
-        btn.innerHTML = '⏳ Generating...';
-
-        const formData = new FormData();
-        formData.append('contextData', rawText);
-
-        fetch('{{ path('app_ai_generate_faqs') }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                textArea.value = data.faqs;
-                showToast('FAQs generated successfully!', 'success');
-            } else {
-                showToast('Failed to generate FAQs: ' + (data.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(err => {
-            showToast('Generation error: ' + err.message, 'error');
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:12px; height:12px; margin-right:4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Generate FAQs with AI';
-        });
-    }
-
-    window.generateFaqs = generateFaqs;
 
     function submitContextForm(event) {
         event.preventDefault();
@@ -1174,7 +1293,7 @@
         }
 
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳ Fetching...</span>';
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span>Fetching...</span>';
 
         const formData = new FormData();
         formData.append('provider', provider);
@@ -1206,7 +1325,7 @@
         })
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<span>🔍 Fetch Models</span>';
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span>Fetch Models</span>';
         });
     }
 
@@ -1269,5 +1388,348 @@
             optionsList.appendChild(opt);
         });
     }
+
+
+    // ─────────── Modular Context Builder ───────────
+    let currentModules = [];
+    let faqTargetModuleIndex = null;    // Which FAQ block the modal is editing
+    let faqModalPendingItems = [];      // Items staged in the modal
+
+    function renderModules() {
+        const container = document.getElementById('context-modules-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (currentModules.length === 0) {
+            const empty = document.createElement('div');
+            empty.style.cssText = 'text-align:center; color:var(--text-muted); font-size:13px; padding:24px;';
+            empty.textContent = 'No blocks added yet. Use the buttons below to start building your context.';
+            container.appendChild(empty);
+            return;
+        }
+
+        currentModules.forEach((mod, index) => {
+            const card = document.createElement('div');
+            card.style.cssText = 'background:rgba(15,23,42,0.45); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px; position:relative;';
+
+            // ── Delete button — created FIRST, never touched by innerHTML after this ──
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.title = 'Remove block';
+            delBtn.style.cssText = 'position:absolute; top:10px; right:10px; background:transparent; border:none; color:#ef4444; cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center; justify-content:center; z-index:2;';
+            delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+            delBtn.onmouseover = () => { delBtn.style.background = 'rgba(239,68,68,0.12)'; };
+            delBtn.onmouseout  = () => { delBtn.style.background = 'transparent'; };
+            delBtn.onclick = () => removeModule(index);
+            card.appendChild(delBtn);
+
+            // ── Helper: create a label row div ──
+            function makeLabel(svgPath, labelText, color, extraSpan) {
+                const d = document.createElement('div');
+                d.style.cssText = `font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:${color}; display:flex; align-items:center; gap:6px; padding-right:28px;`;
+                d.innerHTML = svgPath;
+                const t = document.createTextNode(' ' + labelText);
+                d.appendChild(t);
+                if (extraSpan) {
+                    const s = document.createElement('span');
+                    s.style.cssText = 'font-weight:400; font-size:10px; text-transform:none; letter-spacing:0; color:#64748b;';
+                    s.textContent = extraSpan;
+                    d.appendChild(s);
+                }
+                return d;
+            }
+
+            if (mod.type === 'text') {
+                card.style.borderLeftColor = 'rgba(100,116,139,0.4)';
+                card.appendChild(makeLabel(
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>',
+                    'Rich Text', '#94a3b8', null
+                ));
+                const ta = document.createElement('textarea');
+                ta.className = 'form-control';
+                ta.style.cssText = 'min-height:80px; font-size:13px; resize:vertical;';
+                ta.placeholder = 'Enter static knowledge text here...';
+                ta.value = mod.content || '';
+                ta.oninput = () => updateModule(index, 'content', ta.value);
+                card.appendChild(ta);
+            }
+            else if (mod.type === 'faq') {
+                card.style.borderColor = 'rgba(168,85,247,0.25)';
+                card.style.background  = 'rgba(88,28,135,0.08)';
+                const items = mod.items || [];
+                const countLabel = items.length === 0 ? 'Empty — click to add pairs' : `${items.length} Q&A pair${items.length !== 1 ? 's' : ''}`;
+
+                const labelDiv = makeLabel(
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+                    'FAQ Block', '#c084fc', null
+                );
+                const countSpan = document.createElement('span');
+                countSpan.style.cssText = 'font-weight:400; color:#a855f7; font-size:10px; text-transform:none; letter-spacing:0;';
+                countSpan.textContent = '(' + countLabel + ')';
+                labelDiv.appendChild(countSpan);
+                card.appendChild(labelDiv);
+
+                if (items.length > 0) {
+                    const preview = document.createElement('div');
+                    preview.style.cssText = 'display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;';
+                    items.forEach(item => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'background:rgba(0,0,0,0.2); border-radius:6px; padding:8px 10px; font-size:12px;';
+                        const qd = document.createElement('div');
+                        qd.style.cssText = 'color:#c084fc; font-weight:600; margin-bottom:3px;';
+                        qd.textContent = 'Q: ' + (item.q || '');
+                        const ad = document.createElement('div');
+                        ad.style.cssText = 'color:#94a3b8;';
+                        ad.textContent = 'A: ' + (item.a || '');
+                        row.appendChild(qd); row.appendChild(ad);
+                        preview.appendChild(row);
+                    });
+                    card.appendChild(preview);
+                }
+
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.style.cssText = 'align-self:flex-start; background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.3); color:#c084fc; border-radius:8px; padding:6px 14px; font-size:12px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;';
+                editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;pointer-events:none;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+                editBtn.appendChild(document.createTextNode(items.length > 0 ? 'Edit FAQs' : 'Create FAQs'));
+                editBtn.onclick = () => openFaqModal(index);
+                card.appendChild(editBtn);
+            }
+            else if (mod.type === 'api') {
+                card.style.borderLeftColor = 'rgba(6,182,212,0.3)';
+                card.appendChild(makeLabel(
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
+                    'Saved API', '#67e8f9', '— data fetched on Save'
+                ));
+                const sel = document.createElement('select');
+                sel.className = 'form-control';
+                sel.style.cssText = 'font-size:13px; height:36px;';
+                let opts = '<option value="">-- Select Saved API --</option>';
+                {% if httpApis is defined %}
+                    {% for api in httpApis %}
+                        opts += `<option value="{{ api.id }}" ${mod.apiId == '{{ api.id }}' ? 'selected' : ''}>{{ api.name|escape('js') }}</option>`;
+                    {% endfor %}
+                {% endif %}
+                sel.innerHTML = opts;
+                sel.onchange = () => updateModule(index, 'apiId', sel.value);
+                card.appendChild(sel);
+            }
+            else if (mod.type === 'web') {
+                card.style.borderLeftColor = 'rgba(34,197,94,0.3)';
+                card.appendChild(makeLabel(
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>',
+                    'Web Scraper', '#86efac', '— scraped on Save'
+                ));
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; padding-right:28px;';
+                const urlIn = document.createElement('input');
+                urlIn.type = 'text'; urlIn.className = 'form-control';
+                urlIn.placeholder = 'Target URL';
+                urlIn.style.cssText = 'font-size:13px; height:36px; flex:2; min-width:200px;';
+                urlIn.value = mod.url || '';
+                urlIn.oninput = () => updateModule(index, 'url', urlIn.value);
+                const selIn = document.createElement('input');
+                selIn.type = 'text'; selIn.className = 'form-control';
+                selIn.placeholder = 'CSS Selector (optional)';
+                selIn.style.cssText = 'font-size:13px; height:36px; flex:1; min-width:140px;';
+                selIn.value = mod.selector || '';
+                selIn.oninput = () => updateModule(index, 'selector', selIn.value);
+                row.appendChild(urlIn); row.appendChild(selIn);
+                card.appendChild(row);
+            }
+            else if (mod.type === 'ecommerce') {
+                card.style.borderLeftColor = 'rgba(251,191,36,0.3)';
+                card.appendChild(makeLabel(
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
+                    'eCommerce Catalog', '#fcd34d', null
+                ));
+                const desc = document.createElement('div');
+                desc.style.cssText = 'font-size:12px; color:var(--text-muted);';
+                desc.textContent = 'Automatically imports all active products, prices, and stock levels when you Save.';
+                card.appendChild(desc);
+            }
+
+            container.appendChild(card);
+        });
+
+        const el = document.getElementById('ctx-modulesData');
+        if (el) el.value = JSON.stringify(currentModules);
+    }
+
+    function addContextModule(type) {
+        currentModules.push({ type: type, items: type === 'faq' ? [] : undefined });
+        renderModules();
+        if (type === 'faq') {
+            openFaqModal(currentModules.length - 1);
+        }
+    }
+    window.addContextModule = addContextModule;
+
+    function removeModule(index) {
+        currentModules.splice(index, 1);
+        renderModules();
+    }
+    window.removeModule = removeModule;
+
+    function updateModule(index, field, value) {
+        if (currentModules[index]) {
+            currentModules[index][field] = value;
+            const el = document.getElementById('ctx-modulesData');
+            if (el) el.value = JSON.stringify(currentModules);
+        }
+    }
+    window.updateModule = updateModule;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('context-modules-container')) renderModules();
+    });
+
+    // ─────────── FAQ Creator Modal Logic ───────────
+    function openFaqModal(moduleIndex) {
+        faqTargetModuleIndex = moduleIndex;
+        faqModalPendingItems = JSON.parse(JSON.stringify(currentModules[moduleIndex]?.items || []));
+
+        // Reset modal state
+        switchFaqTab('manual');
+        renderManualPairs();
+
+        const modal = document.getElementById('faq-creator-modal');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    window.openFaqModal = openFaqModal;
+
+    function closeFaqModal() {
+        document.getElementById('faq-creator-modal').style.display = 'none';
+        document.body.style.overflow = '';
+        faqTargetModuleIndex = null;
+        faqModalPendingItems = [];
+    }
+    window.closeFaqModal = closeFaqModal;
+
+    function switchFaqTab(tab) {
+        document.querySelectorAll('.faq-tab').forEach(btn => {
+            const isActive = btn.getAttribute('data-tab') === tab;
+            btn.style.borderBottom = isActive ? '2px solid #c084fc' : '2px solid transparent';
+            btn.style.color = isActive ? '#c084fc' : '#64748b';
+        });
+        document.querySelectorAll('.faq-tab-content').forEach(el => {
+            el.style.display = 'none';
+        });
+        const activeEl = document.getElementById('faq-tab-' + tab);
+        if (activeEl) activeEl.style.display = 'block';
+    }
+    window.switchFaqTab = switchFaqTab;
+
+    function renderManualPairs() {
+        const container = document.getElementById('faq-manual-pairs');
+        if (!container) return;
+        container.innerHTML = '';
+        faqModalPendingItems.forEach((item, i) => {
+            const row = document.createElement('div');
+            row.style.cssText = 'background:rgba(0,0,0,0.2); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:6px; position:relative;';
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.title = 'Remove this pair';
+            removeBtn.style.cssText = 'position:absolute; top:20px; right:20px; background:transparent; border:none; color:#ef4444; cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center; justify-content:center; z-index:2;';
+            removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+            removeBtn.onmouseover = () => { removeBtn.style.background = 'rgba(239,68,68,0.12)'; };
+            removeBtn.onmouseout = () => { removeBtn.style.background = 'transparent'; };
+            removeBtn.onclick = () => { faqModalPendingItems.splice(i, 1); renderManualPairs(); };
+            const qIn = document.createElement('input');
+            qIn.type = 'text'; qIn.className = 'form-control'; qIn.placeholder = 'Question'; qIn.value = item.q || '';
+            qIn.style.cssText = 'font-size:13px; height:36px; padding-right: 28px;';
+            qIn.oninput = () => { faqModalPendingItems[i].q = qIn.value; };
+            const aIn = document.createElement('textarea');
+            aIn.className = 'form-control'; aIn.placeholder = 'Answer'; aIn.value = item.a || '';
+            aIn.style.cssText = 'font-size:13px; min-height:60px; resize:vertical;';
+            aIn.oninput = () => { faqModalPendingItems[i].a = aIn.value; };
+            row.appendChild(removeBtn); row.appendChild(qIn); row.appendChild(aIn);
+            container.appendChild(row);
+        });
+    }
+
+    function addManualFaqPair() {
+        faqModalPendingItems.push({ q: '', a: '' });
+        renderManualPairs();
+    }
+    window.addManualFaqPair = addManualFaqPair;
+
+    function generateFaqsFromSource(source) {
+        const btnId = 'faq-btn-' + source;
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = true; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>Generating...'; }
+
+        const formData = new FormData();
+        formData.append('source', source);
+
+        if (source === 'text') {
+            const text = document.getElementById('faq-text-input').value.trim();
+            if (!text) { showToast('Please paste some text first.', 'error'); if (btn) { btn.disabled = false; btn.innerHTML = 'Generate FAQs with AI'; } return; }
+            formData.append('contextData', text);
+        } else if (source === 'api') {
+            const apiId = document.getElementById('faq-api-select').value;
+            if (!apiId) { showToast('Please select a saved API.', 'error'); if (btn) { btn.disabled = false; btn.innerHTML = 'Execute API & Generate FAQs'; } return; }
+            formData.append('apiId', apiId);
+        } else if (source === 'web') {
+            const url = document.getElementById('faq-web-url').value.trim();
+            const selector = document.getElementById('faq-web-selector').value.trim();
+            if (!url) { showToast('Please enter a URL.', 'error'); if (btn) { btn.disabled = false; btn.innerHTML = 'Scrape & Generate FAQs'; } return; }
+            formData.append('url', url);
+            formData.append('selector', selector);
+        }
+
+        fetch('{{ path('app_ai_generate_faqs') }}', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && Array.isArray(data.items) && data.items.length > 0) {
+                faqModalPendingItems = [...faqModalPendingItems, ...data.items];
+                renderManualPairs();
+                switchFaqTab('manual');
+                showToast(`${data.items.length} FAQ pair(s) generated!`, 'success');
+            } else {
+                showToast(data.error || 'No FAQs could be generated.', 'error');
+            }
+        })
+        .catch(err => showToast('Error: ' + err.message, 'error'))
+        .finally(() => {
+            if (btn) {
+                btn.disabled = false;
+                const labels = { text: 'Generate FAQs with AI', api: 'Execute API & Generate FAQs', web: 'Scrape & Generate FAQs', ecommerce: 'Generate from Catalog' };
+                btn.innerHTML = labels[source] || 'Generate';
+            }
+        });
+    }
+    window.generateFaqsFromSource = generateFaqsFromSource;
+
+
+    function commitFaqsToBlock() {
+        if (faqTargetModuleIndex === null) return;
+
+        // Collect from manual tab inputs (they are bound via oninput, so faqModalPendingItems is already up-to-date)
+        const validItems = faqModalPendingItems.filter(i => i.q && i.a);
+
+        if (validItems.length === 0) {
+            showToast('No valid FAQ pairs to add. Please fill in both Q and A fields.', 'error');
+            return;
+        }
+
+        currentModules[faqTargetModuleIndex].items = validItems;
+        renderModules();
+        closeFaqModal();
+        showToast(`${validItems.length} FAQ pair(s) saved to block!`, 'success');
+    }
+    window.commitFaqsToBlock = commitFaqsToBlock;
+
+    // Close modal on backdrop click
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('faq-creator-modal');
+        if (modal) {
+            modal.addEventListener('click', e => {
+                if (e.target === modal) closeFaqModal();
+            });
+        }
+    });
 </script>
 {% endblock %}

@@ -248,54 +248,7 @@ class AiAgentService
             }
         }
 
-        // ── Auto-inject eCommerce product catalog into AI context (if enabled per-channel) ──
-        if ($connection && method_exists($connection, 'isEcomContextEnabled') && $connection->isEcomContextEnabled()) {
-            try {
-                $catalogProducts = $this->em->getRepository(EcomProduct::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
-                if (!empty($catalogProducts)) {
-                    $catalogLines = ["=== PRODUCT CATALOG ==="];
-                    foreach ($catalogProducts as $cp) {
-                        $stockInfo = $cp->getStock() > 0 ? "In Stock ({$cp->getStock()} available)" : 'Available';
-                        $extLinkInfo = $cp->getExternalUrl() ? " — External Link: {$cp->getExternalUrl()}" : "";
-                        $catalogLines[] = "• {$cp->getName()} — {$cp->getCurrency()} {$cp->getPrice()} — {$stockInfo}{$extLinkInfo}";
-                        if ($cp->getDescription()) {
-                            $catalogLines[] = "  {$cp->getDescription()}";
-                        }
-                    }
-                    $catalogLines[] = "=== END PRODUCT CATALOG ===";
-                    
-                    $checkoutInstruction = "";
-                    if ($senderId && $channel && $this->urlGenerator) {
-                        $setting = $this->em->getRepository(\App\Entity\EcomSetting::class)->findOneBy(['owner' => $connection->getOwner()]);
-                        $checkoutEnabled = $setting ? $setting->isCheckoutEnabled() : true;
-                        $globalExternalUrl = $setting ? $setting->getGlobalExternalUrl() : null;
 
-                        if ($checkoutEnabled) {
-                            try {
-                                $checkoutUrl = $this->urlGenerator->generate('app_public_checkout', [
-                                    'channel' => $channel,
-                                    'connectionId' => $connection->getId(),
-                                    'senderId' => $senderId
-                                ], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL);
-                                $checkoutInstruction = "\n\n[CHECKOUT INSTRUCTION]\nWhen the user indicates they want to buy something or place an order, provide them with this EXACT secure checkout link so they can place their order:\n" . $checkoutUrl;
-                            } catch (\Exception $e) {
-                                // URL generation failed
-                            }
-                        } else {
-                            if ($globalExternalUrl) {
-                                $checkoutInstruction = "\n\n[CHECKOUT INSTRUCTION]\nDirect checkout is disabled. If the user wants to buy a product, direct them to our main store: " . $globalExternalUrl . " or use the product's specific External Link if one is listed.";
-                            } else {
-                                $checkoutInstruction = "\n\n[CHECKOUT INSTRUCTION]\nDirect checkout is disabled. If a product has an External Link listed, you may provide it. Otherwise, inform the user that a human agent will assist them with their purchase shortly.";
-                            }
-                        }
-                    }
-
-                    $systemParts[] = "Use this product catalog to answer customer questions about products, prices, and availability:\n\n" . implode("\n", $catalogLines) . $checkoutInstruction;
-                }
-            } catch (\Exception $e) {
-                // Catalog table may not exist yet; silently skip
-            }
-        }
 
         $systemInstruction = implode("\n\n", $systemParts);
         $model = $setting->getModel();

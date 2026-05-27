@@ -456,18 +456,40 @@ class FacebookWebhookController extends AbstractController
                                         $aiResponse = $this->aiAgentService->generateResponse($msgBody, $aiSetting, $resolvedConnection, (string)$subscriber->getId(), 'facebook');
                                         if ($aiResponse) {
                                             try {
-                                                $response = $this->facebookService->sendMessage($subscriber->getPsid(), $aiResponse, $resolvedConnection);
-                                                $metaMessageId = $response['message_id'] ?? null;
+                                                // Parse [ATTACH_IMAGE: <url>] from AI Response
+                                                $imageUrls = [];
+                                                if (preg_match_all('/\[ATTACH_IMAGE:\s*(.+?)\]/i', $aiResponse, $matches)) {
+                                                    $imageUrls = $matches[1];
+                                                    $aiResponse = preg_replace('/\[ATTACH_IMAGE:\s*(.+?)\]/i', '', $aiResponse);
+                                                    $aiResponse = trim($aiResponse);
+                                                }
 
-                                                $outboundMsg = new Message();
-                                                $outboundMsg->setSubscriber($subscriber);
-                                                $outboundMsg->setDirection('outbound');
-                                                $outboundMsg->setStatus('sent');
-                                                $outboundMsg->setType('text');
-                                                $outboundMsg->setContent($aiResponse);
-                                                $outboundMsg->setMetaMessageId($metaMessageId);
+                                                // Send Images
+                                                foreach ($imageUrls as $url) {
+                                                    $url = trim($url);
+                                                    if (!empty($url)) {
+                                                        try {
+                                                            $this->facebookService->sendMediaMessage($subscriber->getPsid(), 'image', $url, $resolvedConnection);
+                                                        } catch (\Exception $e) {
+                                                            // Continue if image fails
+                                                        }
+                                                    }
+                                                }
 
-                                                $this->entityManager->persist($outboundMsg);
+                                                if (!empty($aiResponse)) {
+                                                    $response = $this->facebookService->sendMessage($subscriber->getPsid(), $aiResponse, $resolvedConnection);
+                                                    $metaMessageId = $response['message_id'] ?? null;
+    
+                                                    $outboundMsg = new Message();
+                                                    $outboundMsg->setSubscriber($subscriber);
+                                                    $outboundMsg->setDirection('outbound');
+                                                    $outboundMsg->setStatus('sent');
+                                                    $outboundMsg->setType('text');
+                                                    $outboundMsg->setContent($aiResponse);
+                                                    $outboundMsg->setMetaMessageId($metaMessageId);
+    
+                                                    $this->entityManager->persist($outboundMsg);
+                                                }
                                             } catch (\Exception $sendEx) {
                                                 file_put_contents(
                                                     $this->getParameter('kernel.project_dir') . '/var/Facebook_webhook.log',
@@ -682,6 +704,12 @@ class FacebookWebhookController extends AbstractController
                     }
 
                     $replyText = $this->aiAgentService->generateResponse($commentText, $aiSetting, $connection, (string)$senderId, 'facebook');
+                    
+                    // Strip any [ATTACH_IMAGE] tags from comment replies
+                    if ($replyText) {
+                        $replyText = preg_replace('/\[ATTACH_IMAGE:\s*(.+?)\]/i', '', $replyText);
+                        $replyText = trim($replyText);
+                    }
                     
                     // Restore original context
                     $connection->setActiveContext($originalContext);
