@@ -10,16 +10,35 @@
     </h1>
 </div>
 
+<style>
+    .api-pre-box {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        padding: 15px;
+        border-radius: 8px;
+        color: var(--primary-accent);
+        font-family: monospace;
+        font-size: 13px;
+        overflow-x: auto;
+        margin: 0;
+    }
+    body[data-theme="light"] .api-pre-box {
+        background: rgba(15, 23, 42, 0.05);
+        color: #0f172a;
+        font-weight: 500;
+    }
+</style>
+
 <div class="settings-grid uneven">
     <!-- Left Column: API Keys Manager -->
     <div style="display: flex; flex-direction: column; gap: 30px;">
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
                 <h2 class="card-title" style="margin: 0;">
                     <svg class="title-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     API Credentials
                 </h2>
-                <button onclick="generateApiKey()" class="btn btn-primary" style="padding: 10px 18px; font-size: 13px; text-transform: none; letter-spacing: 0;">Generate New Key</button>
+                <button onclick="generateApiKey()" id="btn-generate" class="btn btn-primary" style="padding: 10px 18px; font-size: 13px; text-transform: none; letter-spacing: 0;">Generate New Key</button>
             </div>
             <p style="color: var(--text-muted); font-size: 14px; margin-top: -15px; margin-bottom: 25px;">
                 Use these developer tokens to authorize REST API web queries connecting to your OpenSquadron resources. Keep them extremely secret.
@@ -31,8 +50,10 @@
                     <div>
                         <div style="font-weight: 600; color: #fff; font-size: 14px;">Production API Token &bull; Active</div>
                         <div style="font-family: monospace; font-size: 13px; color: var(--text-muted); margin-top: 6px; display: flex; align-items: center; gap: 8px;">
-                            <span id="key_val">os_live_••••••••••••••••••••••••only</span>
+                            <span id="key_val">{% if app.user.apiToken %}os_live_••••••••••••••••••••••••only{% else %}Not Generated Yet{% endif %}</span>
+                            {% if app.user.apiToken %}
                             <button onclick="toggleKeyVisibility()" style="background: none; border: none; cursor: pointer; color: var(--primary-accent); padding: 0; font-size: 11px;">[Show]</button>
+                            {% endif %}
                         </div>
                     </div>
                     <button onclick="copyApiKey()" class="btn" style="padding: 8px 14px; font-size: 12px; background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); color: var(--primary-accent); border-radius: 6px; text-transform: none; letter-spacing: 0;">Copy</button>
@@ -49,7 +70,7 @@
             <p style="color: var(--text-muted); font-size: 14px; margin-top: -15px; margin-bottom: 20px;">
                 Authorise requests by transmitting your credentials in the authorization header:
             </p>
-            <pre style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); padding: 15px; border-radius: 8px; color: var(--primary-accent); font-family: monospace; font-size: 13px; overflow-x: auto; margin: 0;">curl -X POST https://opensquadron.io/api/v1/messages \
+            <pre class="api-pre-box">curl -X POST https://opensquadron.io/api/v1/messages \
   -H "Authorization: Bearer os_live_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{"recipient": "+1234567890", "body": "Hello World"}'</pre>
@@ -66,46 +87,47 @@
             Set up an endpoint URL to receive real-time JSON payloads whenever new inbound WhatsApp messages are triggered.
         </p>
         
-        <form onsubmit="event.preventDefault(); alert('Webhook configuration saved successfully!');">
+        <form onsubmit="saveWebhook(event)">
             <div class="form-group">
                 <label for="webhook_url">Payload Destination URL</label>
-                <input type="url" id="webhook_url" class="form-control" placeholder="https://api.yourdomain.com/webhooks/incoming" required>
+                <input type="url" id="webhook_url" class="form-control" value="{{ app.user.webhookUrl }}" placeholder="https://api.yourdomain.com/webhooks/incoming" required>
             </div>
             
             <div class="form-group">
                 <label for="webhook_secret">Signing Secret Key</label>
-                <input type="text" id="webhook_secret" class="form-control" value="whsec_dummy_webhook_signing_secret_for_local_testing" readonly style="font-family: monospace;">
+                <input type="text" id="webhook_secret" class="form-control" value="{{ app.user.webhookSecret }}" style="font-family: monospace;">
             </div>
 
             <div class="form-group">
                 <label>Trigger Events</label>
                 <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-muted); cursor: pointer;">
-                        <input type="checkbox" checked style="accent-color: var(--primary-accent);">
+                        <input type="checkbox" name="webhook_events[]" value="message.received" {% if 'message.received' in app.user.webhookEvents|default([]) %}checked{% endif %} style="accent-color: var(--primary-accent);">
                         <code>message.received</code> (WhatsApp Inbound)
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-muted); cursor: pointer;">
-                        <input type="checkbox" checked style="accent-color: var(--primary-accent);">
+                        <input type="checkbox" name="webhook_events[]" value="message.sent" {% if 'message.sent' in app.user.webhookEvents|default([]) %}checked{% endif %} style="accent-color: var(--primary-accent);">
                         <code>message.sent</code> (Outbound updates)
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-muted); cursor: pointer;">
-                        <input type="checkbox" style="accent-color: var(--primary-accent);">
+                        <input type="checkbox" name="webhook_events[]" value="subscriber.created" {% if 'subscriber.created' in app.user.webhookEvents|default([]) %}checked{% endif %} style="accent-color: var(--primary-accent);">
                         <code>subscriber.created</code> (New contacts)
                     </label>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Webhook Configuration</button>
+            <button type="submit" id="btn-save-webhook" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Webhook Configuration</button>
         </form>
     </div>
 </div>
 
 <script>
 var keyHidden = true;
-var actualKey = "os_live_dummy_api_key_for_console_use_only";
-var censoredKey = "os_live_••••••••••••••••••••••••only";
+var actualKey = "{{ app.user.apiToken|default('')|escape('js') }}";
+var censoredKey = actualKey ? (actualKey.substring(0, 8) + "••••••••••••••••••••••••" + actualKey.substring(actualKey.length - 4)) : "Not Generated Yet";
 
 function toggleKeyVisibility() {
+    if (!actualKey) return;
     var keyEl = document.getElementById("key_val");
     var btn = keyEl.nextElementSibling;
     if (keyHidden) {
@@ -120,6 +142,10 @@ function toggleKeyVisibility() {
 }
 
 function copyApiKey() {
+    if (!actualKey) {
+        alert("Generate an API key first!");
+        return;
+    }
     navigator.clipboard.writeText(actualKey).then(function() {
         alert("API Token copied to clipboard successfully!");
     });
@@ -127,13 +153,79 @@ function copyApiKey() {
 
 function generateApiKey() {
     if (confirm("Are you sure you want to generate a new API token? This will invalidate the previous key.")) {
-        actualKey = "os_live_" + Math.random().toString(16).substr(2, 8) + Math.random().toString(16).substr(2, 8) + Math.random().toString(16).substr(2, 8) + Math.random().toString(16).substr(2, 8);
-        censoredKey = actualKey.substr(0, 8) + "••••••••••••••••••••••••" + actualKey.substr(actualKey.length - 4);
-        keyHidden = true;
-        document.getElementById("key_val").textContent = censoredKey;
-        document.getElementById("key_val").nextElementSibling.textContent = "[Show]";
-        alert("New API key generated successfully!");
+        const btn = document.getElementById('btn-generate');
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+        
+        fetch('{{ path('app_profile_developer_api_generate') }}', {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                actualKey = data.token;
+                censoredKey = actualKey.substring(0, 8) + "••••••••••••••••••••••••" + actualKey.substring(actualKey.length - 4);
+                keyHidden = true;
+                document.getElementById("key_val").textContent = censoredKey;
+                
+                let showBtn = document.getElementById("key_val").nextElementSibling;
+                if (!showBtn) {
+                    showBtn = document.createElement('button');
+                    showBtn.onclick = toggleKeyVisibility;
+                    showBtn.style.cssText = "background: none; border: none; cursor: pointer; color: var(--primary-accent); padding: 0; font-size: 11px;";
+                    document.getElementById("key_val").after(showBtn);
+                }
+                showBtn.textContent = "[Show]";
+                alert(data.message);
+            } else {
+                alert(data.error || 'Failed to generate key.');
+            }
+        })
+        .catch(err => alert('Network error'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = 'Generate New Key';
+        });
     }
+}
+
+function saveWebhook(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-webhook');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    const checkboxes = document.querySelectorAll('input[name="webhook_events[]"]:checked');
+    const events = Array.from(checkboxes).map(cb => cb.value);
+    
+    const payload = {
+        url: document.getElementById('webhook_url').value,
+        secret: document.getElementById('webhook_secret').value,
+        events: events
+    };
+    
+    fetch('{{ path('app_profile_developer_webhook_save') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert(data.error || 'Failed to save webhook.');
+        }
+    })
+    .catch(err => alert('Network error'))
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Save Webhook Configuration';
+    });
 }
 </script>
 {% endblock %}

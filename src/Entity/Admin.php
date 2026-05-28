@@ -122,6 +122,18 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $backupCodes = [];
 
+    #[ORM\Column(length: 255, unique: true, nullable: true)]
+    private ?string $apiToken = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT, nullable: true)]
+    private ?string $webhookUrl = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $webhookSecret = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $webhookEvents = [];
+
     public function __construct()
     {
         $this->children = new ArrayCollection();
@@ -604,6 +616,50 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
     public function setBackupCodes(?array $backupCodes): self
     {
         $this->backupCodes = $backupCodes;
+        return $this;
+    }
+
+    public function getApiToken(): ?string
+    {
+        return $this->apiToken;
+    }
+
+    public function setApiToken(?string $apiToken): static
+    {
+        $this->apiToken = $apiToken;
+        return $this;
+    }
+
+    public function getWebhookUrl(): ?string
+    {
+        return $this->webhookUrl;
+    }
+
+    public function setWebhookUrl(?string $webhookUrl): static
+    {
+        $this->webhookUrl = $webhookUrl;
+        return $this;
+    }
+
+    public function getWebhookSecret(): ?string
+    {
+        return $this->webhookSecret;
+    }
+
+    public function setWebhookSecret(?string $webhookSecret): static
+    {
+        $this->webhookSecret = $webhookSecret;
+        return $this;
+    }
+
+    public function getWebhookEvents(): ?array
+    {
+        return $this->webhookEvents;
+    }
+
+    public function setWebhookEvents(?array $webhookEvents): static
+    {
+        $this->webhookEvents = $webhookEvents;
         return $this;
     }
 }

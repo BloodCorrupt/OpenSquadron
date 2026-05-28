@@ -146,4 +146,47 @@ class AccountExtrasController extends AbstractController
     {
         return $this->render('profile/developer.html.twig');
     }
+
+    #[Route('/developer/api/generate', name: 'app_profile_developer_api_generate', methods: ['POST'])]
+    public function generateApiKey(EntityManagerInterface $em): JsonResponse
+    {
+        /** @var \App\Entity\Admin $user */
+        $user = $this->getUser();
+        
+        $token = 'os_live_' . bin2hex(random_bytes(24));
+        $user->setApiToken($token);
+        
+        $em->flush();
+        
+        return new JsonResponse([
+            'success' => true,
+            'token' => $token,
+            'message' => 'New API key generated successfully. The previous key has been invalidated.'
+        ]);
+    }
+
+    #[Route('/developer/webhook/save', name: 'app_profile_developer_webhook_save', methods: ['POST'])]
+    public function saveWebhook(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        /** @var \App\Entity\Admin $user */
+        $user = $this->getUser();
+        
+        $data = json_decode($request->getContent(), true);
+        
+        $user->setWebhookUrl($data['url'] ?? null);
+        $user->setWebhookSecret($data['secret'] ?? null);
+        
+        $events = $data['events'] ?? [];
+        if (!is_array($events)) {
+            $events = [];
+        }
+        $user->setWebhookEvents($events);
+        
+        $em->flush();
+        
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Webhook configuration saved successfully.'
+        ]);
+    }
 }

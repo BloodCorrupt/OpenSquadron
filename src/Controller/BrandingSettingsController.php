@@ -13,7 +13,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use App\Service\CloudflareService;
 
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('ROLE_USER')]
 class BrandingSettingsController extends AbstractController
 {
     #[Route('/settings/branding', name: 'app_branding_settings', methods: ['GET', 'POST'])]

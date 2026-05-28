@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('ROLE_USER')]
 class SmtpSettingsController extends AbstractController
 {
     #[Route('/settings/smtp', name: 'app_smtp_settings', methods: ['GET', 'POST'])]

@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('ROLE_USER')]
 class MediaSettingsController extends AbstractController
 {
     #[Route('/settings/media', name: 'app_media_storage_settings', methods: ['GET', 'POST'])]
