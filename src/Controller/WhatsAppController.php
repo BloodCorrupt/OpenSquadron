@@ -40,6 +40,7 @@ class WhatsAppController extends AbstractController
 
     private function getVerifyToken(): string
     {
+        // Legacy fallback, but mostly unused now as logic is in verifyWebhook
         $connection = $this->whatsappService->getConnection();
         if ($connection && $connection->getVerifyToken()) {
             return $connection->getVerifyToken();
@@ -62,13 +63,35 @@ class WhatsAppController extends AbstractController
                 if ($owner) {
                     $this->tenantContext->setCurrentOwner($owner);
                 }
+            } else {
+                // Check if it's the global whatsapp verify token, or fallback to main verify token
+                $setting = $this->entityManager->getRepository(\App\Entity\MetaSetting::class)->findOneBy(['whatsappVerifyToken' => $token]);
+                if (!$setting) {
+                    $setting = $this->entityManager->getRepository(\App\Entity\MetaSetting::class)->findOneBy(['verifyToken' => $token]);
+                }
+                
+                if ($setting) {
+                    $owner = $setting->getOwner();
+                    if ($owner) {
+                        $this->tenantContext->setCurrentOwner($owner);
+                    }
+                }
             }
         }
 
-        $expectedToken = $this->getVerifyToken();
-
         if ($mode && $token) {
-            if ($mode === 'subscribe' && $token === $expectedToken) {
+            $this->tenantContext->disableTenantFilter();
+            $connection = $this->entityManager->getRepository(WhatsAppConnection::class)->findOneBy(['verifyToken' => $token]);
+            
+            $setting = null;
+            if (!$connection) {
+                $setting = $this->entityManager->getRepository(\App\Entity\MetaSetting::class)->findOneBy(['whatsappVerifyToken' => $token]);
+                if (!$setting) {
+                    $setting = $this->entityManager->getRepository(\App\Entity\MetaSetting::class)->findOneBy(['verifyToken' => $token]);
+                }
+            }
+
+            if ($mode === 'subscribe' && ($connection || $setting)) {
                 return new Response($challenge, 200);
             }
             return new Response('Forbidden', 403);

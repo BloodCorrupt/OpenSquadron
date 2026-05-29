@@ -89,6 +89,49 @@ class MetaConnectionController extends AbstractController
         ]);
     }
 
+    #[Route('/settings/meta/whatsapp-embedded-signup/save', name: 'app_meta_whatsapp_embedded_signup_save', methods: ['POST'])]
+    public function saveWhatsappEmbeddedSignupSettings(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $appName = trim($request->request->get('appName', ''));
+        $appId = trim($request->request->get('appId', ''));
+        $appSecret = trim($request->request->get('appSecret', ''));
+        $whatsappConfigId = trim($request->request->get('whatsappConfigId', ''));
+        $systemUserAccessToken = trim($request->request->get('systemUserAccessToken', ''));
+
+        $setting = $this->facebookService->getSetting();
+
+        if (!$setting) {
+            $setting = new MetaSetting();
+            $setting->setVerifyToken($this->facebookService->generateVerifyToken());
+            $em->persist($setting);
+        }
+
+        if ($appId !== '') {
+            $setting->setWhatsappAppId($appId);
+        }
+        
+        if ($appSecret !== '') {
+            $setting->setWhatsappEncryptedAppSecret($this->facebookService->encryptToken($appSecret));
+        }
+
+        $setting->setAppName($appName ?: null);
+        $setting->setWhatsappConfigId($whatsappConfigId ?: null);
+        $setting->setSystemUserAccessToken($systemUserAccessToken ?: null);
+        
+        // Generate a separate verify token for WhatsApp if one doesn't exist
+        if (!$setting->getWhatsappVerifyToken()) {
+            $setting->setWhatsappVerifyToken(bin2hex(random_bytes(32)));
+        }
+
+        $em->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'WhatsApp API Integration settings saved successfully.',
+            'verifyToken' => $setting->getWhatsappVerifyToken()
+        ]);
+    }
+
     #[Route('/facebook/connect', name: 'facebook_connect_show', methods: ['GET'])]
     public function facebookShow(): Response
     {
@@ -179,6 +222,7 @@ class MetaConnectionController extends AbstractController
 
     #[Route('/facebook/callback', name: 'facebook_connect_callback', methods: ['GET'])]
     #[Route('/instagram/callback', name: 'instagram_connect_callback', methods: ['GET'])]
+    #[Route('/whatsapp/callback', name: 'whatsapp_connect_callback', methods: ['GET'])]
     public function callback(Request $request): Response
     {
         $code = $request->query->get('code');
@@ -198,7 +242,8 @@ class MetaConnectionController extends AbstractController
             return $this->redirectToRoute($redirectRouteShow);
         }
 
-        $redirectUri = $this->generateUrl('facebook_connect_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $currentRoute = $request->attributes->get('_route') ?: 'facebook_connect_callback';
+        $redirectUri = $this->generateUrl($currentRoute, [], UrlGeneratorInterface::ABSOLUTE_URL);
         $redirectUri = str_replace('http://', 'https://', $redirectUri);
 
         try {

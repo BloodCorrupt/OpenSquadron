@@ -34,6 +34,24 @@ class MetaSetting implements TenantAwareInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $whatsappConfigId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $appName = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $systemUserAccessToken = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $whatsappAppId = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $whatsappEncryptedAppSecret = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $whatsappVerifyToken = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
@@ -109,6 +127,61 @@ class MetaSetting implements TenantAwareInterface
         $this->updatedAt = new \DateTime('now', new \DateTimeZone('UTC'));
     }
 
+    public function getWhatsappConfigId(): ?string
+    {
+        return $this->whatsappConfigId;
+    }
+
+    public function setWhatsappConfigId(?string $whatsappConfigId): static
+    {
+        $this->whatsappConfigId = $whatsappConfigId;
+        return $this;
+    }
+
+    public function getAppName(): ?string
+    {
+        return $this->appName;
+    }
+
+    public function setAppName(?string $appName): static
+    {
+        $this->appName = $appName;
+        return $this;
+    }
+
+    public function getSystemUserAccessToken(): ?string
+    {
+        return $this->systemUserAccessToken;
+    }
+
+    public function setSystemUserAccessToken(?string $systemUserAccessToken): static
+    {
+        $this->systemUserAccessToken = $systemUserAccessToken;
+        return $this;
+    }
+
+    public function getWhatsappAppId(): ?string
+    {
+        return $this->whatsappAppId;
+    }
+
+    public function setWhatsappAppId(?string $whatsappAppId): static
+    {
+        $this->whatsappAppId = $whatsappAppId;
+        return $this;
+    }
+
+    public function getWhatsappEncryptedAppSecret(): ?string
+    {
+        return $this->whatsappEncryptedAppSecret;
+    }
+
+    public function setWhatsappEncryptedAppSecret(?string $whatsappEncryptedAppSecret): static
+    {
+        $this->whatsappEncryptedAppSecret = $whatsappEncryptedAppSecret;
+        return $this;
+    }
+
     public function getOwner(): ?Admin
     {
         return $this->owner;
@@ -117,6 +190,18 @@ class MetaSetting implements TenantAwareInterface
     public function setOwner(?Admin $owner): static
     {
         $this->owner = $owner;
+        return $this;
+    }
+
+    public function getWhatsappVerifyToken(): ?string
+    {
+        return $this->whatsappVerifyToken;
+    }
+
+    public function setWhatsappVerifyToken(?string $whatsappVerifyToken): static
+    {
+        $this->whatsappVerifyToken = $whatsappVerifyToken;
+
         return $this;
     }
 }

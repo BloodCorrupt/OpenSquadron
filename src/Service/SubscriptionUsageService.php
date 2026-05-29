@@ -36,8 +36,8 @@ class SubscriptionUsageService
     {
         $owner = $this->resolveOwner($user);
 
-        // Super admins are always active.
-        if ($owner->getAccountType() === 'super_admin') {
+        // Super admins and admins are always active.
+        if (in_array($owner->getAccountType(), ['super_admin', 'admin'], true)) {
             return true;
         }
 
@@ -96,8 +96,8 @@ class SubscriptionUsageService
     {
         $owner = $this->resolveOwner($user);
 
-        // Super admins have unrestricted access.
-        if ($owner->getAccountType() === 'super_admin') {
+        // Super admins and admins have unrestricted access.
+        if (in_array($owner->getAccountType(), ['super_admin', 'admin'], true)) {
             return true;
         }
 
@@ -119,7 +119,7 @@ class SubscriptionUsageService
     {
         $owner = $this->resolveOwner($user);
 
-        if ($owner->getAccountType() === 'super_admin') {
+        if (in_array($owner->getAccountType(), ['super_admin', 'admin'], true)) {
             return true;
         }
 
@@ -170,7 +170,7 @@ class SubscriptionUsageService
     {
         $owner = $this->resolveOwner($user);
 
-        if ($owner->getAccountType() === 'super_admin') {
+        if (in_array($owner->getAccountType(), ['super_admin', 'admin'], true)) {
             return true;
         }
 
@@ -221,7 +221,7 @@ class SubscriptionUsageService
     {
         $owner = $this->resolveOwner($user);
 
-        if ($owner->getAccountType() === 'super_admin') {
+        if (in_array($owner->getAccountType(), ['super_admin', 'admin'], true)) {
             return true;
         }
 
@@ -306,7 +306,7 @@ class SubscriptionUsageService
     {
         $owner = $this->resolveOwner($user);
 
-        if ($owner->getAccountType() === 'super_admin') {
+        if (in_array($owner->getAccountType(), ['super_admin', 'admin'], true)) {
             return true;
         }
 

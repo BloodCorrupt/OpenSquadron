@@ -173,13 +173,140 @@ class WhatsAppConnectionService
             return false;
         }
         
+        // Manually cascade delete Subscribers and Messages to prevent 1451 Foreign Key violations
+        // since the Message table doesn't have an ON DELETE CASCADE at the database level.
+        $subscribers = $this->entityManager->getRepository(\App\Entity\Subscriber::class)->findBy(['whatsAppConnection' => $connection]);
+        foreach ($subscribers as $sub) {
+            $messages = $this->entityManager->getRepository(\App\Entity\Message::class)->findBy(['subscriber' => $sub]);
+            foreach ($messages as $msg) {
+                $this->entityManager->remove($msg);
+            }
+            $this->entityManager->remove($sub);
+        }
+
         $this->entityManager->remove($connection);
         $this->entityManager->flush();
         return true;
     }
 
 
+    /**
+     * Synchronize connections from Meta Embedded Signup using the provided access token.
+     */
+    public function syncEmbeddedSignupConnections(string $oauthCode, string $appId, string $appSecret, int $limitSlots = 999, ?string $currentUrl = null): array
+    {
+        throw new \RuntimeException('Code exchange is deprecated for popup flow. Use syncFromEmbeddedSignupEvent instead.');
+    }
 
+    /**
+     * Sync a connection using data captured from the WA_EMBEDDED_SIGNUP message event.
+     * Uses the System User Access Token from MetaSetting instead of exchanging an OAuth code.
+     */
+    public function syncFromEmbeddedSignupEvent(string $wabaId, string $phoneNumberId, string $systemUserToken, int $limitSlots = 999): array
+    {
+        // 1. Fetch the phone number details from the Graph API using the System User Token
+        $phoneUrl = "https://graph.facebook.com/v21.0/{$phoneNumberId}";
+        $phoneResponse = $this->httpClient->request('GET', $phoneUrl, [
+            'query' => [
+                'access_token' => $systemUserToken,
+                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+            ]
+        ]);
+
+        $phoneData = $phoneResponse->toArray(false);
+        if ($phoneResponse->getStatusCode() >= 400) {
+            throw new \RuntimeException('Failed to fetch phone number details: ' . ($phoneData['error']['message'] ?? 'Unknown error'));
+        }
+
+        $displayPhoneNumber = $phoneData['display_phone_number'] ?? null;
+        $verifiedName = $phoneData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
+
+        // We no longer automatically register with a hardcoded '123456' PIN.
+        // The connection will be saved and the user can register it manually with a custom PIN via the dashboard.
+
+        // 2.5 Subscribe the App to the WABA's webhooks so we actually receive incoming messages
+        try {
+            $subscribeUrl = "https://graph.facebook.com/v21.0/{$wabaId}/subscribed_apps";
+            $this->httpClient->request('POST', $subscribeUrl, [
+                'headers' => [
+                    'Authorization' => "Bearer {$systemUserToken}"
+                ]
+            ]);
+        } catch (\Exception $e) {
+            // Silently continue, though this might mean webhooks won't fire until manually subscribed
+        }
+
+        // 3. Check if this phone number already exists in our database
+        $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
+
+        $syncedConnections = [];
+
+        if ($existing) {
+            // Update existing connection
+            $conn = $this->updateConnection(
+                $existing->getId(),
+                $wabaId,
+                $systemUserToken,
+                $phoneNumberId,
+                $verifiedName,
+                $displayPhoneNumber
+            );
+            $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName];
+        } else {
+            // Create new connection
+            $conn = $this->saveConnection(
+                $wabaId,
+                $systemUserToken,
+                $phoneNumberId,
+                $verifiedName,
+                $displayPhoneNumber
+            );
+            $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName];
+        }
+
+        return $syncedConnections;
+    }
+
+    /**
+     * Manually register a phone number on the Meta network using a 6-digit PIN.
+     */
+    public function registerPhoneNumber(int $connectionId, string $pin): void
+    {
+        $connection = $this->getConnectionById($connectionId);
+        if (!$connection) {
+            throw new \RuntimeException('Connection not found.');
+        }
+
+        $phoneNumberId = $connection->getPhoneNumberId();
+        if (!$phoneNumberId) {
+            throw new \RuntimeException('No phone number ID associated with this connection.');
+        }
+
+        $encryptedToken = $connection->getEncryptedAccessToken();
+        if (!$encryptedToken) {
+            throw new \RuntimeException('No access token found for this connection.');
+        }
+
+        $accessToken = $this->decryptToken($encryptedToken);
+
+        $registerUrl = "https://graph.facebook.com/v21.0/{$phoneNumberId}/register";
+        $response = $this->httpClient->request('POST', $registerUrl, [
+            'headers' => [
+                'Authorization' => "Bearer {$accessToken}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'messaging_product' => 'whatsapp',
+                'pin' => $pin
+            ]
+        ]);
+
+        $data = $response->toArray(false);
+        if ($response->getStatusCode() >= 400 && !isset($data['success'])) {
+            $errorMsg = $data['error']['message'] ?? 'Unknown error';
+            throw new \RuntimeException("Meta API Error: " . $errorMsg);
+        }
+    }
 
     // ───────────────────────── Crypto ─────────────────────────
 

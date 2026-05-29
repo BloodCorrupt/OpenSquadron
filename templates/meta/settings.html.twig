@@ -355,14 +355,32 @@
         </div>
         <div class="nav-header">Facebook Settings</div>
         
-        <div class="nav-item is-active" data-tab-target="api-config" onclick="switchFbSubtab('api-config')">
+        <div class="nav-item is-active" data-tab-target="api-config" data-section="fb" onclick="switchSettingsTab('api-config', 'fb')">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
             </span>
             <span>API Configuration</span>
         </div>
 
-        <div class="nav-item" data-tab-target="webhook-endpoints" onclick="switchFbSubtab('webhook-endpoints')">
+        <div class="nav-item" data-tab-target="webhook-endpoints" data-section="fb" onclick="switchSettingsTab('webhook-endpoints', 'fb')">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </span>
+            <span>Webhook & Endpoints</span>
+        </div>
+
+        <div style="border-top: 1px solid var(--glass-border); margin: 14px 0 6px;"></div>
+
+        <div class="nav-header" style="color: #25d366;">WhatsApp Settings</div>
+
+        <div class="nav-item" data-tab-target="wa-api-integration" data-section="wa" onclick="switchSettingsTab('wa-api-integration', 'wa')">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+            </span>
+            <span>API Integration</span>
+        </div>
+
+        <div class="nav-item" data-tab-target="wa-webhook-endpoints" data-section="wa" onclick="switchSettingsTab('wa-webhook-endpoints', 'wa')">
             <span class="nav-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
             </span>
@@ -560,6 +578,150 @@
                 </div>
             </div>
 
+
+            {# ─── WhatsApp Sub-pane: API Integration ─── #}
+            <div class="fb-settings-subpane" id="fb-subpane-wa-api-integration" style="display: none; width: 100%;">
+                <div style="background: rgba(37, 211, 102, 0.06); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">
+                    <strong style="color: #25D366;">💡 Connection Setup:</strong> Enter your WhatsApp App credentials below. You must complete all fields to enable embedded signup.
+                </div>
+                
+                <form id="wa-embedded-signup-form" onsubmit="saveWhatsappEmbeddedSignup(event)" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+                    
+                    {# Meta Credentials Card #}
+                    <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                        <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0 0 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                            Meta App Credentials
+                        </h3>
+
+                        <div class="form-group">
+                            <label class="form-label">App Name <span>*</span></label>
+                            <input type="text" name="appName" class="form-control" value="{{ setting.appName }}" placeholder="Enter your WhatsApp App Name" required autocomplete="off">
+                            <p class="form-hint">A descriptive name for this connection.</p>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">WhatsApp App ID <span>*</span></label>
+                                <input type="text" name="appId" class="form-control" value="{{ setting.whatsappAppId }}" placeholder="e.g. 1234567890" required autocomplete="off">
+                                <p class="form-hint">Obtained from Meta App Dashboard.</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">WhatsApp App Secret {% if not setting.whatsappEncryptedAppSecret %}<span>*</span>{% endif %}</label>
+                                <div class="password-container">
+                                    <input type="password" id="waAppSecret" name="appSecret" class="form-control" placeholder="{% if setting.whatsappEncryptedAppSecret %}•••••••••••••••• (saved){% else %}Enter app secret{% endif %}" {% if not setting.whatsappEncryptedAppSecret %}required{% endif %} autocomplete="new-password">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibilityCustom('waAppSecret')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </button>
+                                </div>
+                                <p class="form-hint">{% if setting.whatsappEncryptedAppSecret %}Leave blank to keep existing secret. {% endif %}Keep this private and secure.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# WhatsApp Configuration Card #}
+                    <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                        <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0 0 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                            Embedded Signup & Access
+                        </h3>
+
+                        <div class="form-group">
+                            <label class="form-label">Configuration ID <span>*</span></label>
+                            <input type="text" name="whatsappConfigId" class="form-control" value="{{ setting.whatsappConfigId }}" placeholder="e.g. 1234567890123456" required autocomplete="off">
+                            <p class="form-hint">The Configuration ID used to initiate the embedded signup flow.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">System User Access Token {% if not setting.systemUserAccessToken %}<span>*</span>{% endif %}</label>
+                            <div class="password-container">
+                                <input type="password" id="waSystemToken" name="systemUserAccessToken" class="form-control" placeholder="{% if setting.systemUserAccessToken %}•••••••••••••••• (saved){% else %}Enter System User Access Token...{% endif %}" {% if not setting.systemUserAccessToken %}required{% endif %} autocomplete="off">
+                                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibilityCustom('waSystemToken')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                            </div>
+                            <p class="form-hint">Required for sending template messages and syncing WABA data automatically.</p>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                        <button type="submit" class="btn-action btn-create" id="btn-save-wa-api">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                            <span>Save Settings</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {# ─── WhatsApp Sub-pane: Webhooks & Endpoints ─── #}
+            <div class="fb-settings-subpane" id="fb-subpane-wa-webhook-endpoints" style="display: none; width: 100%;">
+                <div style="background: rgba(37,211,102,0.06); border: 1px solid rgba(37,211,102,0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">
+                    Configure these WhatsApp-specific webhook URLs in your Meta Developer Console under your app's WhatsApp product settings.
+                </div>
+
+                <div class="endpoint-list">
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">WhatsApp OAuth Redirect URI</div>
+                            <div class="endpoint-value" id="wa-oauth-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('whatsapp_connect_callback') }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('wa-oauth-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">WhatsApp Webhook Callback URL</div>
+                            <div class="endpoint-value" id="wa-webhook-val">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('whatsapp_webhook_verify') }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('wa-webhook-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Verify Token</div>
+                            <div class="endpoint-value" id="wa-verify-val">
+                                {% if setting.whatsappVerifyToken %}
+                                    {{ setting.whatsappVerifyToken }}
+                                {% else %}
+                                    <span style="color: var(--warning);">Token not generated yet. Click "Save Settings" on the API Integration tab to generate.</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('wa-verify-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Privacy Policy URL</div>
+                            <div class="endpoint-value" id="wa-privacy-val">{{ url('app_privacy')|replace({'http://': 'https://'}) }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('wa-privacy-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="endpoint-item">
+                        <div class="endpoint-info">
+                            <div class="endpoint-label">Terms of Service URL</div>
+                            <div class="endpoint-value" id="wa-terms-val">{{ url('app_terms')|replace({'http://': 'https://'}) }}</div>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copyToClipboardText('wa-terms-val')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -569,8 +731,15 @@
 {% block javascripts %}
 <script>
 
-    // ───────── Facebook Sub-Tab Switcher Logic ─────────
-    function switchFbSubtab(subtabId) {
+    // ───────── Unified Settings Tab Switcher ─────────
+    const TAB_META = {
+        'api-config':          { title: 'API Configuration',        desc: 'Configure global Meta API credentials for workspace integrations.',                                icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>' },
+        'webhook-endpoints':   { title: 'Webhook & Endpoints',      desc: 'Copy Callback URLs and verify tokens to complete your Meta App Developer setup.',                    icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>' },
+        'wa-api-integration':  { title: 'WhatsApp API Integration', desc: 'Configure your WhatsApp integration credentials to enable Embedded Signup and messaging.',           icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9"></path><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1"></path></svg>' },
+        'wa-webhook-endpoints':{ title: 'WhatsApp Webhooks',        desc: 'Copy WhatsApp-specific webhook callback URLs for your Meta App Developer setup.',                  icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>' },
+    };
+
+    function switchSettingsTab(subtabId, section) {
         // Toggle active nav-item highlight
         document.querySelectorAll('.manager-nav .nav-item').forEach(el => {
             if (el.getAttribute('data-tab-target') === subtabId) {
@@ -589,18 +758,12 @@
             }
         });
 
-        // Update headers based on selection
-        const titleText = document.getElementById('fb-settings-title-text');
-        const titleIcon = document.getElementById('fb-settings-title-icon');
-        const titleDesc = document.getElementById('fb-settings-title-desc');
-        if (subtabId === 'api-config') {
-            titleText.textContent = 'API Configuration';
-            titleIcon.innerHTML = '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>';
-            titleDesc.textContent = 'Configure global Meta API credentials for workspace integrations.';
-        } else {
-            titleText.textContent = 'Webhook & Endpoints';
-            titleIcon.innerHTML = '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
-            titleDesc.textContent = 'Copy Callback URLs and verify tokens to complete your Meta App Developer setup.';
+        // Update headers
+        const meta = TAB_META[subtabId];
+        if (meta) {
+            document.getElementById('fb-settings-title-text').textContent = meta.title;
+            document.getElementById('fb-settings-title-icon').innerHTML = meta.icon;
+            document.getElementById('fb-settings-title-desc').textContent = meta.desc;
         }
 
         // Save sub-tab selection to URL params
@@ -609,11 +772,15 @@
         window.history.replaceState({}, '', url);
     }
 
+    // Backwards-compat alias for switchFbSubtab calls
+    function switchFbSubtab(subtabId) { switchSettingsTab(subtabId, 'fb'); }
+
     // Set active tab on load
     document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
-        const fbSubtab = params.get('fb_subtab') || 'api-config';
-        switchFbSubtab(fbSubtab);
+        const subtab = params.get('fb_subtab') || 'api-config';
+        const section = subtab.startsWith('wa-') ? 'wa' : 'fb';
+        switchSettingsTab(subtab, section);
     });
 
     function saveFbApiConfig(event) {
@@ -682,6 +849,19 @@
         }
     }
 
+    function togglePasswordVisibilityCustom(inputId) {
+        const input = document.getElementById(inputId);
+        const toggleBtn = input.nextElementSibling;
+        const eyeIcon = toggleBtn.querySelector('svg');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            input.type = 'password';
+            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+    }
+
     function copyToClipboardText(id) {
         const element = document.getElementById(id);
         if (!element) return;
@@ -714,6 +894,51 @@
     }
     
     // Check initial state on load
+    function saveWhatsappEmbeddedSignup(event) {
+        event.preventDefault();
+        const btn = document.getElementById('btn-save-wa-api');
+        btn.disabled = true;
+        btn.innerHTML = '<span>Saving...</span>';
+
+        const form = document.getElementById('wa-embedded-signup-form');
+        const formData = new FormData(form);
+
+        fetch('{{ path('app_meta_whatsapp_embedded_signup_save') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(data => { throw new Error(data.error || 'Server error'); });
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Settings saved successfully!', 'success');
+                if (data.verifyToken) {
+                    const waVerifyValEl = document.getElementById('wa-verify-val');
+                    if (waVerifyValEl) {
+                        waVerifyValEl.textContent = data.verifyToken;
+                    }
+                    const waVerifyInputEl = document.getElementById('wa-verify-val-input');
+                    if (waVerifyInputEl) {
+                        waVerifyInputEl.value = data.verifyToken;
+                    }
+                }
+            } else {
+                showToast('Failed to save settings: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Save error: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> <span>Save Settings</span>';
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const useCustomToggle = document.getElementById('useCustomToggle');
         if (useCustomToggle) {

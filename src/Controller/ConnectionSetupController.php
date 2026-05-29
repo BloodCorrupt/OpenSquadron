@@ -16,17 +16,53 @@ class ConnectionSetupController extends AbstractController
 {
     public function __construct(
         private WhatsAppConnectionService $whatsappService,
-        private SubscriptionUsageService $usageService
+        private SubscriptionUsageService $usageService,
+        private \App\Service\FacebookService $facebookService
     ) {
     }
 
     #[Route('/whatsapp-business/connect', name: 'whatsapp_connect_show', methods: ['GET'])]
-    public function show(): Response
+    public function show(Request $request): Response
     {
+        $oauthCode = $request->query->get('code');
+        if ($oauthCode) {
+            try {
+                /** @var Admin $user */
+                $user = $this->getUser();
+                $metaSetting = $this->facebookService->getEffectiveSetting();
+                
+                if ($metaSetting && $metaSetting->getAppId() && $metaSetting->getEncryptedAppSecret()) {
+                    $appId = $metaSetting->getAppId();
+                    $appSecret = $this->facebookService->decryptToken($metaSetting->getEncryptedAppSecret());
+                    
+                    if (!$this->usageService->canAddBot($user)) {
+                        $this->addFlash('error', 'Bot connection limit reached. Upgrade your subscription.');
+                    } else {
+                        $usage = $this->usageService->getBotUsage($user);
+                        $availableSlots = (in_array($user->getAccountType(), ['super_admin', 'admin'], true) || $usage['limit'] === 0) ? 9999 : max(1, $usage['limit'] - $usage['current']);
+                        
+                        $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots);
+                        if (!empty($syncedNames)) {
+                            $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $syncedNames));
+                        } else {
+                            $this->addFlash('error', 'No valid phone numbers found for the connected Meta account.');
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+            
+            // Redirect to strip the code from the URL
+            return $this->redirectToRoute('whatsapp_connect_show');
+        }
+
         $connections = $this->whatsappService->getAllConnections();
+        $metaSetting = $this->facebookService->getEffectiveSetting();
 
         return $this->render('whatsapp/connect.html.twig', [
             'connections' => $connections,
+            'metaSetting' => $metaSetting,
         ]);
     }
 
@@ -92,10 +128,12 @@ class ConnectionSetupController extends AbstractController
         }
 
         $connections = $this->whatsappService->getAllConnections();
+        $metaSetting = $this->facebookService->getEffectiveSetting();
 
         return $this->render('whatsapp/connect.html.twig', [
             'connections' => $connections,
             'editConnection' => $connection,
+            'metaSetting' => $metaSetting,
         ]);
     }
 
@@ -147,8 +185,28 @@ class ConnectionSetupController extends AbstractController
     #[Route('/whatsapp-business/connect/{id}/delete', name: 'whatsapp_connect_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(int $id): JsonResponse
     {
-        $success = $this->whatsappService->deleteConnection($id);
-        return new JsonResponse(['success' => $success]);
+        try {
+            $success = $this->whatsappService->deleteConnection($id);
+            return new JsonResponse(['success' => $success]);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    #[Route('/whatsapp-business/connect/{id}/register', name: 'whatsapp_connect_register', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function registerConnection(int $id, Request $request): JsonResponse
+    {
+        $pin = $request->request->get('pin');
+        if (!$pin || !preg_match('/^\d{6}$/', $pin)) {
+            return new JsonResponse(['success' => false, 'error' => 'Invalid PIN. Must be 6 digits.']);
+        }
+
+        try {
+            $this->whatsappService->registerPhoneNumber($id, $pin);
+            return new JsonResponse(['success' => true]);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
     #[Route('/whatsapp/connect/{id}/toggle-status', name: 'whatsapp_connect_toggle_status', methods: ['POST'])]
     public function toggleStatus(int $id, \Doctrine\ORM\EntityManagerInterface $em): Response
@@ -170,5 +228,68 @@ class ConnectionSetupController extends AbstractController
         }
 
         return $this->redirectToRoute('whatsapp_connect_show');
+    }
+
+    #[Route('/whatsapp-business/connect/embedded-callback', name: 'whatsapp_connect_embedded_callback', methods: ['POST'])]
+    public function whatsappEmbeddedCallback(Request $request): Response
+    {
+        // The embedded signup flow now passes wabaId and phoneNumberId directly via the message event
+        // We no longer rely on the OAuth code.
+
+        try {
+            /** @var Admin $user */
+            $user = $this->getUser();
+            
+            $metaSetting = $this->facebookService->getEffectiveSetting();
+            if (!$metaSetting || !$metaSetting->getAppId() || !$metaSetting->getEncryptedAppSecret()) {
+                return $this->json(['success' => false, 'error' => 'Meta API credentials are not configured in settings.']);
+            }
+            
+            $appId = $metaSetting->getAppId();
+            $appSecret = $this->facebookService->decryptToken($metaSetting->getEncryptedAppSecret());
+
+            // Check if they are allowed to add bots
+            if (!$this->usageService->canAddBot($user)) {
+                $usage = $this->usageService->getBotUsage($user);
+                return $this->json(['success' => false, 'error' => sprintf('Bot connection limit reached (%d/%d). Upgrade your subscription.', $usage['current'], $usage['limit'])]);
+            }
+
+            // Calculate slots for the background sync loop (to avoid exceeding quota if Meta returns 10 phones at once)
+            $usage = $this->usageService->getBotUsage($user);
+            if (in_array($user->getAccountType(), ['super_admin', 'admin'], true) || $usage['limit'] === 0) {
+                $availableSlots = 9999; // Unlimited
+            } else {
+                $availableSlots = max(1, $usage['limit'] - $usage['current']);
+            }
+
+            $wabaId = $request->request->get('wabaId');
+            $phoneNumberId = $request->request->get('phoneNumberId');
+
+            if (!$wabaId || !$phoneNumberId) {
+                return $this->json(['success' => false, 'error' => 'WABA ID and Phone Number ID are required.']);
+            }
+
+            if (!$metaSetting->getSystemUserAccessToken()) {
+                 return $this->json(['success' => false, 'error' => 'System User Access Token is not configured in settings. Please generate one in the Meta App Dashboard and save it in OpenSquadron settings.']);
+            }
+            
+            $systemUserToken = $metaSetting->getSystemUserAccessToken();
+
+            $syncedNames = $this->whatsappService->syncFromEmbeddedSignupEvent($wabaId, $phoneNumberId, $systemUserToken, $availableSlots);
+            
+            if (empty($syncedNames)) {
+                return $this->json(['success' => false, 'error' => 'No valid phone numbers found for the connected Meta account.']);
+            }
+
+            $names = array_column($syncedNames, 'name');
+            return $this->json([
+                'success' => true, 
+                'message' => 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $names),
+                'connections' => $syncedNames
+            ]);
+            
+        } catch (\Exception $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
 }
