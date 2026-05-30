@@ -401,6 +401,16 @@ class WhatsAppConnectionService
      * 3. Use System User Token for stored connections (long-lived)
      * 4. Subscribe WABA to webhooks
      */
+    /**
+     * Write a diagnostic line to var/wa_onboarding_debug.log
+     */
+    private function debugLog(string $msg): void
+    {
+        $logFile = dirname(__DIR__, 2) . '/var/wa_onboarding_debug.log';
+        $line = date('Y-m-d H:i:s') . ' - ' . $msg . "\n";
+        file_put_contents($logFile, $line, FILE_APPEND);
+    }
+
     public function syncBusinessAppOnboarding(
         string $oauthCode,
         string $appId,
@@ -409,6 +419,93 @@ class WhatsAppConnectionService
         ?string $hintWabaId = null,
         ?string $hintPhoneNumberId = null
     ): array {
+        $this->debugLog("=== syncBusinessAppOnboarding START ===");
+        $this->debugLog("hintWabaId={$hintWabaId}, hintPhoneNumberId={$hintPhoneNumberId}");
+
+        // ── FAST PATH: If frontend gave us both waba_id + phone_number_id, skip all discovery ──
+        // This is the most reliable path — the WA_EMBEDDED_SIGNUP event already told us exactly
+        // which phone was selected. Just fetch its details and save it.
+        if ($hintWabaId && $hintPhoneNumberId) {
+            $this->debugLog("FAST PATH: have both hintWabaId and hintPhoneNumberId, skipping code exchange & discovery");
+
+            // Still exchange the code to validate the session (but we don't strictly need the token)
+            try {
+                $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/oauth/access_token', [
+                    'query' => [
+                        'client_id' => $appId,
+                        'client_secret' => $appSecret,
+                        'code' => $oauthCode,
+                    ]
+                ]);
+                if ($response->getStatusCode() >= 400) {
+                    $data = $response->toArray(false);
+                    throw new \RuntimeException('Failed to exchange code: ' . ($data['error']['message'] ?? 'Unknown error'));
+                }
+                $this->debugLog("FAST PATH: code exchange OK");
+            } catch (\Exception $e) {
+                $this->debugLog("FAST PATH: code exchange failed: " . $e->getMessage());
+                throw $e;
+            }
+
+            // Subscribe the app to the WABA
+            try {
+                $this->httpClient->request('POST', "https://graph.facebook.com/v21.0/{$hintWabaId}/subscribed_apps", [
+                    'headers' => ['Authorization' => "Bearer {$systemUserToken}"]
+                ]);
+                $this->debugLog("FAST PATH: subscribed_apps OK");
+            } catch (\Exception $e) {
+                $this->debugLog("FAST PATH: subscribed_apps failed: " . $e->getMessage());
+            }
+
+            // Fetch phone details directly using system user token
+            $phoneResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$hintPhoneNumberId}", [
+                'query' => [
+                    'access_token' => $systemUserToken,
+                    'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
+                ]
+            ]);
+            $phoneData = $phoneResp->toArray(false);
+            $this->debugLog("FAST PATH: phone fetch status=" . $phoneResp->getStatusCode() . " data=" . json_encode($phoneData));
+
+            if ($phoneResp->getStatusCode() >= 400) {
+                throw new \RuntimeException('Failed to fetch phone details: ' . ($phoneData['error']['message'] ?? 'Unknown error'));
+            }
+
+            $displayPhoneNumber = $phoneData['display_phone_number'] ?? null;
+            $verifiedName = $phoneData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
+            $platformType = $phoneData['platform_type'] ?? 'NOT_APPLICABLE';
+            $isSmb = ($platformType !== 'CLOUD_API');
+
+            $this->debugLog("FAST PATH: phone={$displayPhoneNumber}, name={$verifiedName}, platform={$platformType}, isSmb=" . ($isSmb ? 'true' : 'false'));
+
+            $existing = $this->getConnectionByPhoneNumberId($hintPhoneNumberId);
+            $isNew = !$existing;
+
+            if ($existing) {
+                $existingSettings = $existing->getBotSettings() ?? [];
+                $isSmb = $existingSettings['is_smb'] ?? $isSmb;
+                $conn = $this->updateConnection($existing->getId(), $hintWabaId, $systemUserToken, $hintPhoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
+                $this->debugLog("FAST PATH: updated existing connection id=" . $conn->getId());
+            } else {
+                $conn = $this->saveConnection($hintWabaId, $systemUserToken, $hintPhoneNumberId, $verifiedName, $displayPhoneNumber, null, $isSmb);
+                $this->debugLog("FAST PATH: created new connection id=" . $conn->getId());
+            }
+
+            $needsRegistration = $isNew && !$isSmb;
+            $this->debugLog("FAST PATH: needsRegistration=" . ($needsRegistration ? 'true' : 'false'));
+            $this->debugLog("=== syncBusinessAppOnboarding END (FAST PATH) ===");
+
+            return [[
+                'id' => $conn->getId(),
+                'name' => $verifiedName,
+                'phone' => $displayPhoneNumber,
+                'needsRegistration' => $needsRegistration
+            ]];
+        }
+
+        // ── STANDARD PATH: no hint IDs from frontend, need to discover via code exchange + /debug_token ──
+        $this->debugLog("STANDARD PATH: exchanging code...");
+
         // 1. Exchange code for user access token — NO redirect_uri (FB.login uses xd_arbiter)
         $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/oauth/access_token', [
             'query' => [
@@ -420,13 +517,15 @@ class WhatsAppConnectionService
 
         if ($response->getStatusCode() >= 400) {
             $data = $response->toArray(false);
+            $this->debugLog("STANDARD PATH: code exchange FAILED: " . json_encode($data));
             throw new \RuntimeException('Failed to exchange code: ' . ($data['error']['message'] ?? 'Unknown error'));
         }
 
         $tokenData = $response->toArray();
         $userAccessToken = $tokenData['access_token'];
+        $this->debugLog("STANDARD PATH: code exchange OK, got user token");
 
-        // 2. Discover WABAs via /debug_token (using App Access Token to inspect the user token)
+        // 2. Discover WABAs via /debug_token
         $wabaIds = [];
         $grantedPhoneIds = [];
 
@@ -436,10 +535,11 @@ class WhatsAppConnectionService
                 'query' => ['input_token' => $userAccessToken],
                 'headers' => ['Authorization' => "Bearer {$appAccessToken}"]
             ]);
+            $debugRaw = $debugResponse->toArray(false);
+            $this->debugLog("STANDARD PATH: /debug_token status=" . $debugResponse->getStatusCode() . " data=" . json_encode($debugRaw));
 
             if ($debugResponse->getStatusCode() === 200) {
-                $debugData = $debugResponse->toArray();
-                $granularScopes = $debugData['data']['granular_scopes'] ?? [];
+                $granularScopes = $debugRaw['data']['granular_scopes'] ?? [];
                 foreach ($granularScopes as $scope) {
                     if ($scope['scope'] === 'whatsapp_business_management' && !empty($scope['target_ids'])) {
                         $wabaIds = array_merge($wabaIds, $scope['target_ids']);
@@ -450,101 +550,141 @@ class WhatsAppConnectionService
                 }
             }
         } catch (\Exception $e) {
-            // /debug_token failed, fall through to hint-based discovery
+            $this->debugLog("STANDARD PATH: /debug_token exception: " . $e->getMessage());
         }
 
-        // 3. If /debug_token didn't find WABAs, use the hint IDs from the frontend WA_EMBEDDED_SIGNUP event
+        $this->debugLog("STANDARD PATH: after /debug_token => wabaIds=" . json_encode($wabaIds) . ", grantedPhoneIds=" . json_encode($grantedPhoneIds));
+
+        // 3. Fallback: use hint waba_id
         if (empty($wabaIds) && $hintWabaId) {
             $wabaIds[] = $hintWabaId;
+            $this->debugLog("STANDARD PATH: fallback to hintWabaId={$hintWabaId}");
         }
 
-        // 4. If we still have no WABAs, try querying with the user token directly
+        // 4. Fallback: query /me/whatsapp_business_accounts with user token
         if (empty($wabaIds)) {
             try {
                 $ownedResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/whatsapp_business_accounts', [
                     'headers' => ['Authorization' => "Bearer {$userAccessToken}"]
                 ]);
+                $ownedRaw = $ownedResponse->toArray(false);
+                $this->debugLog("STANDARD PATH: /me/whatsapp_business_accounts status=" . $ownedResponse->getStatusCode() . " data=" . json_encode($ownedRaw));
                 if ($ownedResponse->getStatusCode() === 200) {
-                    $ownedData = $ownedResponse->toArray();
-                    foreach (($ownedData['data'] ?? []) as $waba) {
+                    foreach (($ownedRaw['data'] ?? []) as $waba) {
                         $wabaIds[] = $waba['id'];
                     }
                 }
             } catch (\Exception $e) {
-                // Ignore
+                $this->debugLog("STANDARD PATH: /me/whatsapp_business_accounts exception: " . $e->getMessage());
             }
         }
 
         if (empty($wabaIds)) {
+            $this->debugLog("STANDARD PATH: NO WABAs found at all. ABORTING.");
             throw new \RuntimeException('No WhatsApp Business Accounts found. Please ensure you selected a business account during setup.');
         }
 
         $wabaIds = array_unique($wabaIds);
+        $this->debugLog("STANDARD PATH: final wabaIds=" . json_encode($wabaIds));
+
         $syncedConnections = [];
 
-        // For discovery, we use the user access token (guaranteed to have permissions for the user's accounts)
-        $discoveryToken = $userAccessToken;
-        // For storing the connection, we use the system user token
-        $tokenForStorage = $systemUserToken;
-
         foreach ($wabaIds as $wabaId) {
-            // Subscribe the App to the WABA's webhooks
+            // Subscribe the App to the WABA
             try {
                 $this->httpClient->request('POST', "https://graph.facebook.com/v21.0/{$wabaId}/subscribed_apps", [
-                    'headers' => ['Authorization' => "Bearer {$tokenForStorage}"]
+                    'headers' => ['Authorization' => "Bearer {$systemUserToken}"]
                 ]);
+                $this->debugLog("STANDARD PATH: subscribed_apps for waba={$wabaId} OK");
             } catch (\Exception $e) {
-                // Continue
+                $this->debugLog("STANDARD PATH: subscribed_apps for waba={$wabaId} failed: " . $e->getMessage());
             }
 
-            // Get phone numbers from the WABA using the discovery token
-            $phonesResponse = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$wabaId}/phone_numbers", [
-                'headers' => ['Authorization' => "Bearer {$discoveryToken}"],
-                'query' => ['fields' => 'id,display_phone_number,verified_name,quality_rating']
-            ]);
-
-            $phonesData = $phonesResponse->toArray(false);
-            $phones = $phonesData['data'] ?? [];
-
-            // Filter phones strictly by what was granted or hinted
-            if ($hintPhoneNumberId) {
-                $filteredPhones = array_filter($phones, fn($p) => $p['id'] == $hintPhoneNumberId);
-                if (!empty($filteredPhones)) {
-                    $phones = array_values($filteredPhones);
-                } else {
-                    $phones = [];
+            // ── If we have grantedPhoneIds from /debug_token, fetch each directly ──
+            // This avoids the WABA phone_numbers edge which may fail with user token
+            if (!empty($grantedPhoneIds)) {
+                $this->debugLog("STANDARD PATH: have grantedPhoneIds, fetching each directly with system user token");
+                foreach ($grantedPhoneIds as $grantedPhoneId) {
                     try {
-                        $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$hintPhoneNumberId}", [
+                        $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$grantedPhoneId}", [
                             'query' => [
-                                'access_token' => $discoveryToken,
-                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                                'access_token' => $systemUserToken,
+                                'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
                             ]
                         ]);
-                        if ($directResp->getStatusCode() === 200) {
-                            $directData = $directResp->toArray();
-                            $phones[] = $directData;
+                        $directData = $directResp->toArray(false);
+                        $this->debugLog("STANDARD PATH: direct phone fetch id={$grantedPhoneId} status=" . $directResp->getStatusCode() . " data=" . json_encode($directData));
+
+                        if ($directResp->getStatusCode() === 200 && !empty($directData['id'])) {
+                            $phoneNumberId = $directData['id'];
+                            $displayPhoneNumber = $directData['display_phone_number'] ?? null;
+                            $verifiedName = $directData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
+                            $platformType = $directData['platform_type'] ?? 'NOT_APPLICABLE';
+                            $isSmb = ($platformType !== 'CLOUD_API');
+
+                            $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
+                            $isNew = !$existing;
+
+                            if ($existing) {
+                                $existingSettings = $existing->getBotSettings() ?? [];
+                                $isSmb = $existingSettings['is_smb'] ?? $isSmb;
+                                $conn = $this->updateConnection($existing->getId(), $wabaId, $systemUserToken, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
+                            } else {
+                                $conn = $this->saveConnection($wabaId, $systemUserToken, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, $isSmb);
+                            }
+
+                            $needsRegistration = $isNew && !$isSmb;
+                            $syncedConnections[$conn->getId()] = [
+                                'id' => $conn->getId(),
+                                'name' => $verifiedName,
+                                'phone' => $displayPhoneNumber,
+                                'needsRegistration' => $needsRegistration
+                            ];
+                            $this->debugLog("STANDARD PATH: saved phone id={$phoneNumberId} connId={$conn->getId()} needsReg=" . ($needsRegistration ? 'true' : 'false'));
                         }
                     } catch (\Exception $e) {
-                        // Continue
+                        $this->debugLog("STANDARD PATH: direct phone fetch failed for id={$grantedPhoneId}: " . $e->getMessage());
                     }
                 }
-            } elseif (!empty($grantedPhoneIds)) {
-                // Strictly filter to ONLY the phones explicitly granted in this exact session!
-                $filteredPhones = array_filter($phones, fn($p) => in_array($p['id'], $grantedPhoneIds));
-                $phones = array_values($filteredPhones);
+                // Skip the WABA phone_numbers edge if we already got phones directly
+                continue;
             }
+
+            // ── Fallback: list phone numbers from the WABA edge ──
+            // Try system user token first (more reliable), then user token as fallback
+            $phones = [];
+            foreach ([$systemUserToken, $userAccessToken] as $tryToken) {
+                $tokenLabel = ($tryToken === $systemUserToken) ? 'systemUserToken' : 'userAccessToken';
+                try {
+                    $phonesResponse = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$wabaId}/phone_numbers", [
+                        'headers' => ['Authorization' => "Bearer {$tryToken}"],
+                        'query' => ['fields' => 'id,display_phone_number,verified_name,quality_rating']
+                    ]);
+                    $phonesData = $phonesResponse->toArray(false);
+                    $this->debugLog("STANDARD PATH: /{$wabaId}/phone_numbers with {$tokenLabel} status=" . $phonesResponse->getStatusCode() . " data=" . json_encode($phonesData));
+
+                    if ($phonesResponse->getStatusCode() === 200 && !empty($phonesData['data'])) {
+                        $phones = $phonesData['data'];
+                        break; // success, stop trying
+                    }
+                } catch (\Exception $e) {
+                    $this->debugLog("STANDARD PATH: /{$wabaId}/phone_numbers with {$tokenLabel} exception: " . $e->getMessage());
+                }
+            }
+
+            $this->debugLog("STANDARD PATH: phones count after WABA edge query: " . count($phones));
 
             foreach ($phones as $phone) {
                 $phoneNumberId = $phone['id'];
                 $displayPhoneNumber = $phone['display_phone_number'] ?? null;
                 $verifiedName = $phone['verified_name'] ?? null;
 
-                // Query details and platform_type individually using discoveryToken
+                // Fetch platform_type individually
                 $platformType = 'CLOUD_API';
                 try {
                     $indivResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
                         'query' => [
-                            'access_token' => $discoveryToken,
+                            'access_token' => $systemUserToken,
                             'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
                         ]
                     ]);
@@ -559,30 +699,32 @@ class WhatsAppConnectionService
                 }
 
                 $verifiedName = $verifiedName ?: ($displayPhoneNumber ?: 'WhatsApp Connection');
-
                 $isSmb = ($platformType !== 'CLOUD_API');
 
                 $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
                 $isNew = !$existing;
+
                 if ($existing) {
                     $existingSettings = $existing->getBotSettings() ?? [];
-                    // Preserve existing SMB flag or update it
                     $isSmb = $existingSettings['is_smb'] ?? $isSmb;
-                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForStorage, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
+                    $conn = $this->updateConnection($existing->getId(), $wabaId, $systemUserToken, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
                 } else {
-                    $conn = $this->saveConnection($wabaId, $tokenForStorage, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, $isSmb);
+                    $conn = $this->saveConnection($wabaId, $systemUserToken, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, $isSmb);
                 }
-                
-                $needsRegistration = $isNew && !$isSmb;
 
+                $needsRegistration = $isNew && !$isSmb;
                 $syncedConnections[$conn->getId()] = [
                     'id' => $conn->getId(),
                     'name' => $verifiedName,
                     'phone' => $displayPhoneNumber,
                     'needsRegistration' => $needsRegistration
                 ];
+                $this->debugLog("STANDARD PATH: saved phone id={$phoneNumberId} connId={$conn->getId()}");
             }
         }
+
+        $this->debugLog("STANDARD PATH: total synced connections: " . count($syncedConnections));
+        $this->debugLog("=== syncBusinessAppOnboarding END ===");
 
         return array_values($syncedConnections);
     }
