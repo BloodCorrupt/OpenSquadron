@@ -526,8 +526,9 @@ class WhatsAppConnectionService
         $this->debugLog("STANDARD PATH: code exchange OK, got user token");
 
         // 2. Discover WABAs via /debug_token
+        // IMPORTANT: Both whatsapp_business_management AND whatsapp_business_messaging 
+        // target_ids are WABA IDs (NOT phone number IDs)
         $wabaIds = [];
-        $grantedPhoneIds = [];
 
         try {
             $appAccessToken = "{$appId}|{$appSecret}";
@@ -541,11 +542,9 @@ class WhatsAppConnectionService
             if ($debugResponse->getStatusCode() === 200) {
                 $granularScopes = $debugRaw['data']['granular_scopes'] ?? [];
                 foreach ($granularScopes as $scope) {
-                    if ($scope['scope'] === 'whatsapp_business_management' && !empty($scope['target_ids'])) {
+                    // Both scopes return WABA IDs in target_ids
+                    if (in_array($scope['scope'], ['whatsapp_business_management', 'whatsapp_business_messaging']) && !empty($scope['target_ids'])) {
                         $wabaIds = array_merge($wabaIds, $scope['target_ids']);
-                    }
-                    if ($scope['scope'] === 'whatsapp_business_messaging' && !empty($scope['target_ids'])) {
-                        $grantedPhoneIds = array_merge($grantedPhoneIds, $scope['target_ids']);
                     }
                 }
             }
@@ -553,7 +552,7 @@ class WhatsAppConnectionService
             $this->debugLog("STANDARD PATH: /debug_token exception: " . $e->getMessage());
         }
 
-        $this->debugLog("STANDARD PATH: after /debug_token => wabaIds=" . json_encode($wabaIds) . ", grantedPhoneIds=" . json_encode($grantedPhoneIds));
+        $this->debugLog("STANDARD PATH: after /debug_token => wabaIds=" . json_encode(array_unique($wabaIds)));
 
         // 3. Fallback: use hint waba_id
         if (empty($wabaIds) && $hintWabaId) {
@@ -585,7 +584,7 @@ class WhatsAppConnectionService
         }
 
         $wabaIds = array_unique($wabaIds);
-        $this->debugLog("STANDARD PATH: final wabaIds=" . json_encode($wabaIds));
+        $this->debugLog("STANDARD PATH: final wabaIds=" . json_encode(array_values($wabaIds)));
 
         $syncedConnections = [];
 
@@ -600,55 +599,6 @@ class WhatsAppConnectionService
                 $this->debugLog("STANDARD PATH: subscribed_apps for waba={$wabaId} failed: " . $e->getMessage());
             }
 
-            // ── If we have grantedPhoneIds from /debug_token, fetch each directly ──
-            // This avoids the WABA phone_numbers edge which may fail with user token
-            if (!empty($grantedPhoneIds)) {
-                $this->debugLog("STANDARD PATH: have grantedPhoneIds, fetching each directly with system user token");
-                foreach ($grantedPhoneIds as $grantedPhoneId) {
-                    try {
-                        $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$grantedPhoneId}", [
-                            'query' => [
-                                'access_token' => $systemUserToken,
-                                'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
-                            ]
-                        ]);
-                        $directData = $directResp->toArray(false);
-                        $this->debugLog("STANDARD PATH: direct phone fetch id={$grantedPhoneId} status=" . $directResp->getStatusCode() . " data=" . json_encode($directData));
-
-                        if ($directResp->getStatusCode() === 200 && !empty($directData['id'])) {
-                            $phoneNumberId = $directData['id'];
-                            $displayPhoneNumber = $directData['display_phone_number'] ?? null;
-                            $verifiedName = $directData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
-                            $platformType = $directData['platform_type'] ?? 'NOT_APPLICABLE';
-                            $isSmb = ($platformType !== 'CLOUD_API');
-
-                            $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
-                            $isNew = !$existing;
-
-                            if ($existing) {
-                                $existingSettings = $existing->getBotSettings() ?? [];
-                                $isSmb = $existingSettings['is_smb'] ?? $isSmb;
-                                $conn = $this->updateConnection($existing->getId(), $wabaId, $systemUserToken, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
-                            } else {
-                                $conn = $this->saveConnection($wabaId, $systemUserToken, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, $isSmb);
-                            }
-
-                            $needsRegistration = $isNew && !$isSmb;
-                            $syncedConnections[$conn->getId()] = [
-                                'id' => $conn->getId(),
-                                'name' => $verifiedName,
-                                'phone' => $displayPhoneNumber,
-                                'needsRegistration' => $needsRegistration
-                            ];
-                            $this->debugLog("STANDARD PATH: saved phone id={$phoneNumberId} connId={$conn->getId()} needsReg=" . ($needsRegistration ? 'true' : 'false'));
-                        }
-                    } catch (\Exception $e) {
-                        $this->debugLog("STANDARD PATH: direct phone fetch failed for id={$grantedPhoneId}: " . $e->getMessage());
-                    }
-                }
-                // Skip the WABA phone_numbers edge if we already got phones directly
-                continue;
-            }
 
             // ── Fallback: list phone numbers from the WABA edge ──
             // Try system user token first (more reliable), then user token as fallback
