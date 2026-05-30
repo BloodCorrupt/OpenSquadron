@@ -134,6 +134,9 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $webhookEvents = [];
 
+    #[ORM\Column(length: 255, nullable: true, options: ['default' => 'UTC'])]
+    private ?string $timezone = 'UTC';
+
     public function __construct()
     {
         $this->children = new ArrayCollection();
@@ -660,6 +663,17 @@ class Admin implements UserInterface, PasswordAuthenticatedUserInterface, TwoFac
     public function setWebhookEvents(?array $webhookEvents): static
     {
         $this->webhookEvents = $webhookEvents;
+        return $this;
+    }
+
+    public function getTimezone(): string
+    {
+        return $this->timezone ?? 'UTC';
+    }
+
+    public function setTimezone(?string $timezone): static
+    {
+        $this->timezone = $timezone ?? 'UTC';
         return $this;
     }
 }

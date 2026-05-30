@@ -52,7 +52,7 @@ class HttpApiExecutorService
         return $text;
     }
 
-    public function execute(HttpApi $httpApi, Subscriber $subscriber): array
+    public function execute(HttpApi $httpApi, ?Subscriber $subscriber = null): array
     {
         $endpointUrl = $httpApi->getEndpointUrl();
         $method = $httpApi->getMethod() ?? 'GET';

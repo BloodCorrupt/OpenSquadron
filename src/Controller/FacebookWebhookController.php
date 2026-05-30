@@ -229,7 +229,7 @@ class FacebookWebhookController extends AbstractController
                                 $subscriber->setName($profileName);
                             }
                             $this->entityManager->persist($subscriber);
-                        } elseif (!$subscriber->getName() || $subscriber->getName() === $senderPsid) {
+                            } elseif (!$subscriber->getName() || $subscriber->getName() === $senderPsid) {
                             // Subscriber exists but has no name — retry profile lookup
                             $profileName = $this->fetchUserProfile($senderPsid, $resolvedConnection);
                             if ($profileName) {
@@ -397,6 +397,67 @@ class FacebookWebhookController extends AbstractController
                             if ($actionButton) {
                                 $this->executeFacebookActionButton($actionButton, $subscriber);
                                 $isResumed = true;
+                            }
+                        }
+
+                        // Check Whitelist Mode dynamically
+                        if (!$isResumed) {
+                            $botSettings = $resolvedConnection->getBotSettings() ?? [];
+                            $wlEnabled = $botSettings['whitelist-mode']['enabled'] ?? false;
+                            if ($wlEnabled) {
+                                $wlNumbersStr = $botSettings['whitelist-mode']['whitelistedNumbers'] ?? '';
+                                $wlNumbers = array_filter(array_map('trim', preg_split('/[\n,]+/', $wlNumbersStr)));
+                                if (!in_array($senderPsid, $wlNumbers)) {
+                                    $isResumed = true;
+                                    if (!$subscriber->isBotPaused()) {
+                                        $subscriber->setBotPaused(true);
+                                        $this->entityManager->persist($subscriber);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Check Blacklist Mode dynamically
+                        if (!$isResumed) {
+                            $botSettings = $resolvedConnection->getBotSettings() ?? [];
+                            $blEnabled = $botSettings['blacklist-mode']['enabled'] ?? false;
+                            if ($blEnabled) {
+                                $blNumbersStr = $botSettings['blacklist-mode']['blacklistedNumbers'] ?? '';
+                                $blNumbers = array_filter(array_map('trim', preg_split('/[\n,]+/', $blNumbersStr)));
+                                if (in_array($senderPsid, $blNumbers)) {
+                                    $isResumed = true;
+                                    if (!$subscriber->isBotPaused()) {
+                                        $subscriber->setBotPaused(true);
+                                        $this->entityManager->persist($subscriber);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Check Business Hours
+                        if (!$isResumed) {
+                            $botSettings = $resolvedConnection->getBotSettings() ?? [];
+                            $bh = $botSettings['business-hours'] ?? [];
+                            if (!empty($bh['enabled'])) {
+                                try {
+                                    $ownerTz = ($resolvedConnection->getOwner() && $resolvedConnection->getOwner()->getTimezone()) ? $resolvedConnection->getOwner()->getTimezone() : 'UTC';
+                                    $tz = new \DateTimeZone($ownerTz);
+                                    $now = new \DateTime('now', $tz);
+                                    $currentDay = $now->format('l');
+                                    $currentTime = $now->format('H:i');
+                                    $activeDays = $bh['days'] ?? [];
+                                    
+                                    $isOutsideBH = (!in_array($currentDay, $activeDays) || $currentTime < ($bh['startTime'] ?? '09:00') || $currentTime > ($bh['endTime'] ?? '17:00'));
+                                    $mode = $bh['mode'] ?? 'bot';
+                                    
+                                    if ($mode === 'bot' && $isOutsideBH) {
+                                        $isResumed = true;
+                                    } elseif ($mode === 'human' && !$isOutsideBH) {
+                                        $isResumed = true;
+                                    }
+                                } catch (\Exception $e) {
+                                    // Ignore exception and process normally if TZ is invalid
+                                }
                             }
                         }
 

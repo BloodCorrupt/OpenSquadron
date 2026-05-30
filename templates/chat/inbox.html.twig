@@ -1088,7 +1088,7 @@
                             <div class="subscriber-phone" style="max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 {% if lastMessage.direction == 'outbound' %}You: {% endif %}{{ preview }}
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted);">{{ lastMessage.timestamp|date('H:i', 'UTC') }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ lastMessage.timestamp|date('H:i') }}</div>
                         </div>
                     {% else %}
                         <div class="subscriber-phone">{{ phone }}</div>
@@ -1178,7 +1178,7 @@
                             {% if message.content %}
                                 <div>{{ message.content|nl2br }}</div>
                             {% endif %}
-                            <div class="message-time">{{ message.timestamp|date('H:i', 'UTC') }}</div>
+                            <div class="message-time">{{ message.timestamp|date('H:i') }}</div>
                         </div>
                     {% endfor %}
                 {% endif %}

@@ -25,7 +25,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(TeamPermissionVoter::PERM_WHATSAPP_MANAGE)]
 class WhatsappBotManagerController extends AbstractController
 {
-    public function __construct(private SubscriptionUsageService $usageService) {}
+    public function __construct(private SubscriptionUsageService $usageService)
+    {
+    }
     #[Route('/whatsapp-bot-manager', name: 'app_whatsapp_bot_manager')]
     public function index(Request $request, EntityManagerInterface $em): Response
     {
@@ -37,7 +39,7 @@ class WhatsappBotManagerController extends AbstractController
         }
 
         $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
-        
+
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
         if ($selectedConnectionId) {
@@ -75,7 +77,7 @@ class WhatsappBotManagerController extends AbstractController
             // Load action buttons
             $actionBtnRepo = $em->getRepository(WhatsappActionButton::class);
             $actionBtnEntities = $actionBtnRepo->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'ASC']);
-            
+
             $presets = [
                 'get-started' => 'Get-started',
                 'no-match' => 'No Match',
@@ -85,12 +87,12 @@ class WhatsappBotManagerController extends AbstractController
                 'chat-with-human' => 'Chat with Human',
                 'chat-with-bot' => 'Chat with Bot',
             ];
-            
+
             $existingKeys = [];
             foreach ($actionBtnEntities as $btn) {
                 $existingKeys[] = $btn->getButtonKey();
             }
-            
+
             $seeded = false;
             foreach ($presets as $key => $label) {
                 if (!in_array($key, $existingKeys)) {
@@ -109,7 +111,7 @@ class WhatsappBotManagerController extends AbstractController
                 $em->flush();
                 $actionBtnEntities = $actionBtnRepo->findBy(['whatsAppConnection' => $selectedConnection], ['id' => 'ASC']);
             }
-            
+
             foreach ($actionBtnEntities as $btn) {
                 $actionButtons[] = $btn->toArray();
             }
@@ -131,13 +133,14 @@ class WhatsappBotManagerController extends AbstractController
             'sequences' => $sequences,
             'actionButtons' => $actionButtons,
             'broadcasts' => $broadcasts,
+            'timezonesList' => $this->getTimezonesList(),
         ]);
     }
 
     #[Route('/whatsapp-bot-manager/action-buttons/save', name: 'app_whatsapp_action_buttons_save', methods: ['POST'])]
     public function saveActionButtons(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $connectionId = (int)$request->request->get('connectionId');
+        $connectionId = (int) $request->request->get('connectionId');
         if (!$connectionId) {
             return new JsonResponse(['success' => false, 'error' => 'Invalid Connection ID.'], 400);
         }
@@ -157,7 +160,8 @@ class WhatsappBotManagerController extends AbstractController
 
         foreach ($presets as $preset) {
             $key = $preset['buttonKey'] ?? null;
-            if (!$key) continue;
+            if (!$key)
+                continue;
 
             $entity = $actionBtnRepo->findOneBy([
                 'whatsAppConnection' => $connection,
@@ -172,7 +176,7 @@ class WhatsappBotManagerController extends AbstractController
             }
 
             $entity->setButtonLabel($preset['buttonLabel'] ?? $key);
-            $entity->setIsEnabled((bool)($preset['isEnabled'] ?? false));
+            $entity->setIsEnabled((bool) ($preset['isEnabled'] ?? false));
             $entity->setReplyType($preset['replyType'] ?? 'none');
             $entity->setReplyText($preset['replyText'] ?? null);
 
@@ -195,7 +199,7 @@ class WhatsappBotManagerController extends AbstractController
     #[Route('/whatsapp-bot-manager/save-settings', name: 'app_whatsapp_bot_save_settings', methods: ['POST'])]
     public function saveSettings(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $connectionId = (int)$request->request->get('connectionId');
+        $connectionId = (int) $request->request->get('connectionId');
         if (!$connectionId) {
             return new JsonResponse(['success' => false, 'error' => 'Invalid WhatsApp Connection ID.'], 400);
         }
@@ -205,7 +209,7 @@ class WhatsappBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
         }
 
-        $type = trim((string)$request->request->get('type'));
+        $type = trim((string) $request->request->get('type'));
         if ($type === '') {
             return new JsonResponse(['success' => false, 'error' => 'Settings target type is required.'], 400);
         }
@@ -230,7 +234,7 @@ class WhatsappBotManagerController extends AbstractController
         return new JsonResponse([
             'success' => true,
             'message' => 'Settings saved successfully.',
-            'data'    => $currentSettings[$type]
+            'data' => $currentSettings[$type]
         ]);
     }
 
@@ -317,13 +321,13 @@ class WhatsappBotManagerController extends AbstractController
             $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
         }
 
-        $name     = trim($request->request->get('name', ''));
+        $name = trim($request->request->get('name', ''));
         $language = $request->request->get('language', 'en_US');
         $category = $request->request->get('category', 'UTILITY');
-        $body     = trim($request->request->get('body', ''));
-        $header   = trim($request->request->get('header', '')) ?: null;
-        $footer   = trim($request->request->get('footer', '')) ?: null;
-        
+        $body = trim($request->request->get('body', ''));
+        $header = trim($request->request->get('header', '')) ?: null;
+        $footer = trim($request->request->get('footer', '')) ?: null;
+
         $customComponentsJson = $request->request->get('customComponents');
         $customComponents = null;
         if ($customComponentsJson) {
@@ -358,7 +362,7 @@ class WhatsappBotManagerController extends AbstractController
     public function flows(Request $request, EntityManagerInterface $em): Response
     {
         $connections = $em->getRepository(\App\Entity\WhatsAppConnection::class)->findBy(['status' => 'active'], ['id' => 'DESC']);
-        
+
         $selectedConnectionId = $request->query->get('connectionId');
         $selectedConnection = null;
         if ($selectedConnectionId) {
@@ -378,23 +382,23 @@ class WhatsappBotManagerController extends AbstractController
             ], ['id' => 'DESC']);
         }
 
-        $payload = array_map(static fn (WhatsappBotFlow $f) => self::flowToArray($f), $flows);
+        $payload = array_map(static fn(WhatsappBotFlow $f) => self::flowToArray($f), $flows);
 
         $httpApis = $em->getRepository(\App\Entity\HttpApi::class)->findBy(['status' => 'active'], ['name' => 'ASC']);
 
         return $this->render('whatsapp_bot_manager/flows.html.twig', [
-            'flows'       => $flows,
-            'flowsJson'   => $payload,
-            'templates'   => $templates,
-            'connection'  => $selectedConnection,
-            'httpApis'    => $httpApis,
+            'flows' => $flows,
+            'flowsJson' => $payload,
+            'templates' => $templates,
+            'connection' => $selectedConnection,
+            'httpApis' => $httpApis,
         ]);
     }
 
     #[Route('/whatsapp-bot-manager/sequence-builder', name: 'app_whatsapp_bot_sequence_builder', methods: ['GET'])]
     public function sequenceBuilder(Request $request, EntityManagerInterface $em): Response
     {
-        $connectionId = (int)$request->query->get('connectionId');
+        $connectionId = (int) $request->query->get('connectionId');
         $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
         if (!$connection) {
             throw $this->createNotFoundException('Connection not found.');
@@ -404,7 +408,7 @@ class WhatsappBotManagerController extends AbstractController
         $sequence = null;
 
         if ($sequenceId) {
-            $entity = $em->getRepository(WhatsappDripSequence::class)->find((int)$sequenceId);
+            $entity = $em->getRepository(WhatsappDripSequence::class)->find((int) $sequenceId);
             if ($entity && $entity->getWhatsAppConnection()?->getId() === $connection->getId()) {
                 $sequence = $entity->toArray();
             }
@@ -452,7 +456,7 @@ class WhatsappBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
         }
 
-        $connectionId = (int)($payload['connectionId'] ?? 0);
+        $connectionId = (int) ($payload['connectionId'] ?? 0);
         $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
         if (!$connection) {
             return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
@@ -462,7 +466,7 @@ class WhatsappBotManagerController extends AbstractController
         $entity = null;
 
         if ($sequenceId) {
-            $entity = $em->getRepository(WhatsappDripSequence::class)->find((int)$sequenceId);
+            $entity = $em->getRepository(WhatsappDripSequence::class)->find((int) $sequenceId);
             // Verify it belongs to the same connection
             if ($entity && $entity->getWhatsAppConnection()?->getId() !== $connection->getId()) {
                 $entity = null;
@@ -485,13 +489,13 @@ class WhatsappBotManagerController extends AbstractController
             }
         }
 
-        $entity->setName(trim((string)($payload['name'] ?? 'Untitled Sequence')));
-        $entity->setTrigger(trim((string)($payload['trigger'] ?? 'NEW_SUBSCRIBER')));
-        $entity->setPreferredTime(trim((string)($payload['preferredTime'] ?? 'anytime')));
-        $entity->setTimezone(trim((string)($payload['timezone'] ?? 'UTC')));
-        $entity->setMessageTag(trim((string)($payload['messageTag'] ?? 'NON_PROMOTIONAL_SUBSCRIPTION')));
-        $entity->setAllowReentry((bool)($payload['allowReentry'] ?? false));
-        $entity->setActive((bool)($payload['isActive'] ?? true));
+        $entity->setName(trim((string) ($payload['name'] ?? 'Untitled Sequence')));
+        $entity->setTrigger(trim((string) ($payload['trigger'] ?? 'NEW_SUBSCRIBER')));
+        $entity->setPreferredTime(trim((string) ($payload['preferredTime'] ?? 'anytime')));
+        $entity->setTimezone(trim((string) ($payload['timezone'] ?? 'UTC')));
+        $entity->setMessageTag(trim((string) ($payload['messageTag'] ?? 'NON_PROMOTIONAL_SUBSCRIPTION')));
+        $entity->setAllowReentry((bool) ($payload['allowReentry'] ?? false));
+        $entity->setActive((bool) ($payload['isActive'] ?? true));
         $entity->setStepsCount($stepsCount);
         $entity->setGraphData($payload['graph'] ?? null);
 
@@ -509,7 +513,7 @@ class WhatsappBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
         }
 
-        $sequenceId = (int)($payload['sequenceId'] ?? 0);
+        $sequenceId = (int) ($payload['sequenceId'] ?? 0);
         $entity = $em->getRepository(WhatsappDripSequence::class)->find($sequenceId);
         if (!$entity) {
             return new JsonResponse(['success' => false, 'error' => 'Sequence not found.'], 404);
@@ -529,12 +533,12 @@ class WhatsappBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
         }
 
-        $id        = isset($payload['id']) ? (int)$payload['id'] : null;
-        $name      = trim((string)($payload['name'] ?? ''));
-        $keywords  = $this->normaliseKeywords($payload['keywords'] ?? '');
-        $matchMode = (string)($payload['matchMode'] ?? WhatsappBotFlow::MATCH_EXACT);
-        $isActive  = (bool)($payload['isActive'] ?? true);
-        $graph     = $payload['graph'] ?? null;
+        $id = isset($payload['id']) ? (int) $payload['id'] : null;
+        $name = trim((string) ($payload['name'] ?? ''));
+        $keywords = $this->normaliseKeywords($payload['keywords'] ?? '');
+        $matchMode = (string) ($payload['matchMode'] ?? WhatsappBotFlow::MATCH_EXACT);
+        $isActive = (bool) ($payload['isActive'] ?? true);
+        $graph = $payload['graph'] ?? null;
 
         if ($name === '') {
             return new JsonResponse(['success' => false, 'error' => 'Flow name is required.'], 400);
@@ -552,7 +556,7 @@ class WhatsappBotManagerController extends AbstractController
         }
 
         // Get selected connection
-        $connectionId = isset($payload['connectionId']) ? (int)$payload['connectionId'] : (int)$request->query->get('connectionId');
+        $connectionId = isset($payload['connectionId']) ? (int) $payload['connectionId'] : (int) $request->query->get('connectionId');
         $connection = null;
         if ($connectionId) {
             $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
@@ -573,9 +577,9 @@ class WhatsappBotManagerController extends AbstractController
         }
         $flow->setActive($isActive);
         $flow->setFlowData([
-            'format'   => 'graph',
-            'nodes'    => $graph['nodes'] ?? [],
-            'edges'    => $graph['edges'] ?? [],
+            'format' => 'graph',
+            'nodes' => $graph['nodes'] ?? [],
+            'edges' => $graph['edges'] ?? [],
             'viewport' => $graph['viewport'] ?? null,
         ]);
 
@@ -609,7 +613,7 @@ class WhatsappBotManagerController extends AbstractController
         // Mock syncing to Meta Graph API
         // This is where POST /{waba_id}/flows and POST /{flow_id}/assets would occur
         return new JsonResponse([
-            'success' => true, 
+            'success' => true,
             'message' => 'Flow successfully synced to Meta in DRAFT mode.',
             'meta_flow_id' => 'mock_meta_flow_' . rand(1000, 9999)
         ]);
@@ -626,7 +630,7 @@ class WhatsappBotManagerController extends AbstractController
         // Mock fetching preview from Meta Graph API
         // This is where GET /{flow_id}?fields=preview would occur
         return new JsonResponse([
-            'success' => true, 
+            'success' => true,
             'preview_url' => 'https://business.facebook.com/wa/manage/flows/preview?flow_id=mock_meta_flow_1234'
         ]);
     }
@@ -640,7 +644,7 @@ class WhatsappBotManagerController extends AbstractController
         }
 
         $payload = json_decode($request->getContent(), true);
-        $isActive = isset($payload['isActive']) ? (bool)$payload['isActive'] : !$flow->isActive();
+        $isActive = isset($payload['isActive']) ? (bool) $payload['isActive'] : !$flow->isActive();
 
         $flow->setActive($isActive);
         $em->flush();
@@ -664,8 +668,8 @@ class WhatsappBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'No WhatsApp Connection found.']);
         }
 
-        $aiActive = (bool)$request->request->get('aiActive', false);
-        $ecomContextEnabled = (bool)$request->request->get('ecomContextEnabled', false);
+        $aiActive = (bool) $request->request->get('aiActive', false);
+        $ecomContextEnabled = (bool) $request->request->get('ecomContextEnabled', false);
         $activeContextId = $request->request->get('activeContextId');
 
         $connection->setAiActive($aiActive);
@@ -699,30 +703,29 @@ class WhatsappBotManagerController extends AbstractController
 
     #[Route('/whatsapp-bot-manager/broadcasts/save', name: 'app_whatsapp_broadcasts_save', methods: ['POST'])]
     public function saveBroadcast(
-        Request $request, 
+        Request $request,
         EntityManagerInterface $em,
         WhatsAppConnectionService $whatsappService
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $payload = json_decode($request->getContent(), true);
         if (!\is_array($payload)) {
             return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
         }
 
-        $connectionId = (int)($payload['connectionId'] ?? 0);
+        $connectionId = (int) ($payload['connectionId'] ?? 0);
         $connection = $em->getRepository(\App\Entity\WhatsAppConnection::class)->find($connectionId);
         if (!$connection) {
             return new JsonResponse(['success' => false, 'error' => 'Connection not found.'], 404);
         }
 
-        $campaignName = trim((string)($payload['campaignName'] ?? ''));
+        $campaignName = trim((string) ($payload['campaignName'] ?? ''));
         if ($campaignName === '') {
             return new JsonResponse(['success' => false, 'error' => 'Campaign Name is required.'], 400);
         }
 
-        $broadcastType = trim((string)($payload['broadcastType'] ?? '24_hours'));
+        $broadcastType = trim((string) ($payload['broadcastType'] ?? '24_hours'));
         $templateName = $payload['templateName'] ?? null;
-        $customMessage = trim((string)($payload['customMessage'] ?? ''));
+        $customMessage = trim((string) ($payload['customMessage'] ?? ''));
 
         if ($broadcastType === 'anytime' && !$templateName) {
             return new JsonResponse(['success' => false, 'error' => 'Template is required for Anytime broadcasts.'], 400);
@@ -750,7 +753,7 @@ class WhatsappBotManagerController extends AbstractController
                         'whatsAppConnection' => $connection
                     ]);
                     $lang = $templateEntity ? $templateEntity->getLanguage() : 'en_US';
-                    
+
                     $whatsappService->sendTemplateMessage($sub->getPhoneNumber(), $templateName, $lang, $connection);
                 } else {
                     $whatsappService->sendMessage($sub->getPhoneNumber(), $customMessage, $connection);
@@ -788,7 +791,7 @@ class WhatsappBotManagerController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Invalid payload'], 400);
         }
 
-        $id = (int)($payload['id'] ?? 0);
+        $id = (int) ($payload['id'] ?? 0);
         $broadcast = $em->getRepository(BroadcastCampaign::class)->find($id);
         if (!$broadcast) {
             return new JsonResponse(['success' => false, 'error' => 'Broadcast campaign not found.'], 404);
@@ -815,16 +818,16 @@ class WhatsappBotManagerController extends AbstractController
 
         $logs = [];
         $idx = 1;
-        
+
         $deliveredRemaining = $broadcast->getDeliveredCount();
         $unreachedRemaining = $broadcast->getUnreachedCount();
-        
+
         foreach ($subscribers as $sub) {
             $status = 'Sent';
             $error = null;
             $failedAt = null;
             $deliveredAt = null;
-            
+
             if ($unreachedRemaining > 0) {
                 $status = 'Failed';
                 $error = 'Meta API Error: Recipient phone number not registered on WhatsApp.';
@@ -855,7 +858,7 @@ class WhatsappBotManagerController extends AbstractController
         $audienceFilters = $broadcast->getAudienceFilters();
         $customMsg = $audienceFilters['customMessage'] ?? null;
 
-        $templateVal = $broadcast->getBroadcastType() === 'anytime' 
+        $templateVal = $broadcast->getBroadcastType() === 'anytime'
             ? ($broadcast->getTemplateName() ?: 'Template')
             : ($customMsg ? (strlen($customMsg) > 50 ? substr($customMsg, 0, 47) . '...' : $customMsg) : '24 Hours Custom Message');
 
@@ -891,25 +894,25 @@ class WhatsappBotManagerController extends AbstractController
         ]);
 
         $filename = 'campaign_report_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $broadcast->getCampaignName()) . '.csv';
-        
+
         $fp = fopen('php://temp', 'r+');
-        
+
         // Write UTF-8 BOM to open correctly in Excel
         fwrite($fp, "\xEF\xBB\xBF");
-        
+
         // Write headers
         fputcsv($fp, ['#', 'Chat ID', 'Name', 'Status', 'Sent At', 'Delivered At', 'Opened At', 'Failed At', 'Message ID', 'Error']);
-        
+
         $idx = 1;
         $deliveredRemaining = $broadcast->getDeliveredCount();
         $unreachedRemaining = $broadcast->getUnreachedCount();
-        
+
         foreach ($subscribers as $sub) {
             $status = 'Sent';
             $error = null;
             $failedAt = null;
             $deliveredAt = null;
-            
+
             if ($unreachedRemaining > 0) {
                 $status = 'Failed';
                 $error = 'Meta API Error: Recipient phone number not registered on WhatsApp.';
@@ -936,7 +939,7 @@ class WhatsappBotManagerController extends AbstractController
                 $error ?: 'N/A'
             ]);
         }
-        
+
         rewind($fp);
         $csvContent = stream_get_contents($fp);
         fclose($fp);
@@ -944,7 +947,7 @@ class WhatsappBotManagerController extends AbstractController
         $response = new Response($csvContent);
         $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
         $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
-        
+
         return $response;
     }
 
@@ -959,13 +962,13 @@ class WhatsappBotManagerController extends AbstractController
         if (\is_array($raw)) {
             $parts = $raw;
         } else {
-            $parts = explode(',', (string)$raw);
+            $parts = explode(',', (string) $raw);
         }
         $parts = array_map(
-            static fn ($k): string => strtolower(trim((string)$k)),
+            static fn($k): string => strtolower(trim((string) $k)),
             $parts
         );
-        $parts = array_values(array_unique(array_filter($parts, static fn (string $k): bool => $k !== '')));
+        $parts = array_values(array_unique(array_filter($parts, static fn(string $k): bool => $k !== '')));
 
         return implode(',', $parts);
     }
@@ -979,21 +982,21 @@ class WhatsappBotManagerController extends AbstractController
         $isGraph = isset($data['format']) && $data['format'] === 'graph';
 
         return [
-            'id'        => $flow->getId(),
-            'name'      => $flow->getName() ?? ('Flow #' . $flow->getId()),
-            'keywords'  => $flow->getKeywordList(),
+            'id' => $flow->getId(),
+            'name' => $flow->getName() ?? ('Flow #' . $flow->getId()),
+            'keywords' => $flow->getKeywordList(),
             'matchMode' => $flow->getMatchMode(),
-            'isActive'  => (bool)$flow->isActive(),
-            'graph'     => $isGraph
+            'isActive' => (bool) $flow->isActive(),
+            'graph' => $isGraph
                 ? [
-                    'nodes'    => $data['nodes'] ?? [],
-                    'edges'    => $data['edges'] ?? [],
+                    'nodes' => $data['nodes'] ?? [],
+                    'edges' => $data['edges'] ?? [],
                     'viewport' => $data['viewport'] ?? null,
                 ]
                 : null,
             'legacyActions' => $isGraph ? null : $data,
         ];
-     }
+    }
 
     private function mergeSettings(array $defaults, array $saved): array
     {
@@ -1060,8 +1063,63 @@ class WhatsappBotManagerController extends AbstractController
                 'typingIndicator' => false,
                 'replyBuffer' => 0,
                 'reasoningDepth' => 'standard'
+            ],
+            'business-hours' => [
+                'enabled' => false,
+                'mode' => 'human',
+                'timezone' => 'UTC',
+                'startTime' => '09:00',
+                'endTime' => '17:00',
+                'days' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                'awayMessage' => 'We are currently offline. We will get back to you during business hours.'
+            ],
+            'whitelist-mode' => [
+                'enabled' => false,
+                'whitelistedNumbers' => ''
+            ],
+            'blacklist-mode' => [
+                'enabled' => false,
+                'blacklistedNumbers' => ''
             ]
         ];
     }
+    private function getTimezonesList(): array
+    {
+        return [
+            'UTC' => 'UTC (Default)',
+            '-12:00' => '(UTC-12:00) International Date Line West',
+            '-11:00' => '(UTC-11:00) Coordinated Universal Time-11',
+            '-10:00' => '(UTC-10:00) Hawaii',
+            '-09:00' => '(UTC-09:00) Alaska',
+            '-08:00' => '(UTC-08:00) Pacific Time (US & Canada)',
+            '-07:00' => '(UTC-07:00) Mountain Time (US & Canada)',
+            '-06:00' => '(UTC-06:00) Central Time (US & Canada)',
+            '-05:00' => '(UTC-05:00) Eastern Time (US & Canada)',
+            '-04:00' => '(UTC-04:00) Atlantic Time (Canada)',
+            '-03:30' => '(UTC-03:30) Newfoundland',
+            '-03:00' => '(UTC-03:00) Brasilia, Buenos Aires',
+            '-02:00' => '(UTC-02:00) Mid-Atlantic',
+            '-01:00' => '(UTC-01:00) Azores, Cape Verde Is.',
+            '+00:00' => '(UTC+00:00) London, Dublin, Lisbon',
+            '+01:00' => '(UTC+01:00) Paris, Berlin, Rome, Madrid',
+            '+02:00' => '(UTC+02:00) Cairo, Athens, Jerusalem',
+            '+03:00' => '(UTC+03:00) Moscow, Istanbul, Riyadh',
+            '+03:30' => '(UTC+03:30) Tehran',
+            '+04:00' => '(UTC+04:00) Dubai, Baku',
+            '+04:30' => '(UTC+04:30) Kabul',
+            '+05:00' => '(UTC+05:00) Karachi, Tashkent',
+            '+05:30' => '(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi',
+            '+05:45' => '(UTC+05:45) Kathmandu',
+            '+06:00' => '(UTC+06:00) Almaty, Dhaka',
+            '+06:30' => '(UTC+06:30) Yangon (Rangoon)',
+            '+07:00' => '(UTC+07:00) Bangkok, Hanoi, Jakarta',
+            '+08:00' => '(UTC+08:00) Beijing, Singapore, Perth',
+            '+09:00' => '(UTC+09:00) Tokyo, Seoul, Osaka',
+            '+09:30' => '(UTC+09:30) Adelaide, Darwin',
+            '+10:00' => '(UTC+10:00) Sydney, Melbourne, Brisbane',
+            '+11:00' => '(UTC+11:00) Solomon Is., New Caledonia',
+            '+12:00' => '(UTC+12:00) Auckland, Wellington',
+            '+13:00' => '(UTC+13:00) Nuku\'alofa'
+        ];
+    }
 }
-

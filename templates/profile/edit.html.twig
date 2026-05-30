@@ -255,6 +255,16 @@
             <input type="email" id="email" name="email" class="form-control" value="{{ account.email }}" required autocomplete="off">
         </div>
 
+        {# Timezone Field #}
+        <div class="form-group">
+            <label for="timezone">Timezone</label>
+            <select id="timezone" name="timezone" class="form-control" style="background-color: #0c111d; color: #fff; cursor: pointer;">
+                {% for tzId, tzLabel in timezones %}
+                    <option value="{{ tzId }}" {% if account.timezone == tzId %}selected{% endif %}>{{ tzLabel }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
         {# Profile Avatar Field #}
         <div class="form-group" style="margin-bottom: 24px;">
             <label>Profile Avatar</label>

@@ -127,7 +127,7 @@ class LiveChatController extends AbstractController
                     'content' => $msg->getContent(),
                     'type' => $msg->getType(),
                     'direction' => $msg->getDirection(),
-                    'timestamp' => $msg->getTimestamp()->format('H:i'),
+                    'timestamp' => $this->formatTime($msg->getTimestamp(), 'H:i'),
                 ];
             }
             
@@ -197,8 +197,8 @@ class LiveChatController extends AbstractController
                 'type' => $msg->getType(),
                 'content' => $msg->getContent(),
                 'mediaUrl' => $resMediaUrl,
-                'timestamp' => $msg->getTimestamp()->format('Y-m-d H:i:s'),
-                'timeOnly' => $msg->getTimestamp()->format('H:i'),
+                'timestamp' => $this->formatTime($msg->getTimestamp(), 'Y-m-d H:i:s'),
+                'timeOnly' => $this->formatTime($msg->getTimestamp(), 'H:i'),
                 'direction' => $msg->getDirection()
             ];
         }
@@ -384,7 +384,7 @@ class LiveChatController extends AbstractController
                     'type' => $msg->getType(),
                     'content' => $msg->getContent(),
                     'mediaUrl' => $resMediaUrl,
-                    'timestamp' => $msg->getTimestamp()->format('Y-m-d H:i:s'),
+                    'timestamp' => $this->formatTime($msg->getTimestamp(), 'Y-m-d H:i:s'),
                     'direction' => 'outbound'
                 ]
             ]);
@@ -432,7 +432,7 @@ class LiveChatController extends AbstractController
                     'id' => $msg->getId(),
                     'type' => 'template',
                     'content' => $msg->getContent(),
-                    'timestamp' => $msg->getTimestamp()->format('Y-m-d H:i:s'),
+                    'timestamp' => $this->formatTime($msg->getTimestamp(), 'Y-m-d H:i:s'),
                     'direction' => 'outbound'
                 ]
             ]);
@@ -692,6 +692,19 @@ class LiveChatController extends AbstractController
             'expiresAtTimestamp' => $expiresAt->getTimestamp(),
             'remainingSeconds' => $remainingSeconds
         ];
+    }
+
+    private function formatTime(\DateTimeInterface $dt, string $format = 'H:i'): string
+    {
+        $user = $this->getUser();
+        $tz = ($user && method_exists($user, 'getTimezone') && $user->getTimezone()) ? $user->getTimezone() : 'UTC';
+        $cloned = new \DateTime($dt->format('Y-m-d H:i:s'), new \DateTimeZone('UTC'));
+        try {
+            $cloned->setTimezone(new \DateTimeZone($tz));
+        } catch (\Exception $e) {
+            // fallback
+        }
+        return $cloned->format($format);
     }
 
 

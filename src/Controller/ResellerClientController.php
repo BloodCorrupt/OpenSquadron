@@ -217,6 +217,7 @@ class ResellerClientController extends AbstractController
                     'owners' => $owners,
                     'packages' => $packages,
                     'currentUser' => $currentUser,
+                    'timezones' => $this->getTimezonesList(),
                 ]);
             }
 
@@ -228,11 +229,19 @@ class ResellerClientController extends AbstractController
                     'owners' => $owners,
                     'packages' => $packages,
                     'currentUser' => $currentUser,
+                    'timezones' => $this->getTimezonesList(),
                 ]);
             }
 
             $account->setEmail($email);
             $account->setName($name);
+
+            $timezone = $request->request->get('timezone');
+            if ($timezone !== null && $timezone !== '') {
+                $account->setTimezone($timezone);
+            } else {
+                $account->setTimezone('UTC');
+            }
 
             $settings = $r2SettingsService->getActiveSettings($account);
             $isR2Configured = $r2SettingsService->isComplete($settings);
@@ -320,6 +329,7 @@ class ResellerClientController extends AbstractController
             'owners' => $owners,
             'packages' => $packages,
             'currentUser' => $currentUser,
+            'timezones' => $this->getTimezonesList(),
         ]);
     }
 
@@ -359,5 +369,45 @@ class ResellerClientController extends AbstractController
         $this->addFlash('success', 'Client and associated data deleted successfully.');
 
         return $this->redirectToRoute('app_reseller_clients_index');
+    }
+
+    private function getTimezonesList(): array
+    {
+        return [
+            'UTC' => 'UTC (Default)',
+            '-12:00' => '(UTC-12:00) International Date Line West',
+            '-11:00' => '(UTC-11:00) Coordinated Universal Time-11',
+            '-10:00' => '(UTC-10:00) Hawaii',
+            '-09:00' => '(UTC-09:00) Alaska',
+            '-08:00' => '(UTC-08:00) Pacific Time (US & Canada)',
+            '-07:00' => '(UTC-07:00) Mountain Time (US & Canada)',
+            '-06:00' => '(UTC-06:00) Central Time (US & Canada)',
+            '-05:00' => '(UTC-05:00) Eastern Time (US & Canada)',
+            '-04:00' => '(UTC-04:00) Atlantic Time (Canada)',
+            '-03:30' => '(UTC-03:30) Newfoundland',
+            '-03:00' => '(UTC-03:00) Brasilia, Buenos Aires',
+            '-02:00' => '(UTC-02:00) Mid-Atlantic',
+            '-01:00' => '(UTC-01:00) Azores, Cape Verde Is.',
+            '+00:00' => '(UTC+00:00) London, Dublin, Lisbon',
+            '+01:00' => '(UTC+01:00) Paris, Berlin, Rome, Madrid',
+            '+02:00' => '(UTC+02:00) Cairo, Athens, Jerusalem',
+            '+03:00' => '(UTC+03:00) Moscow, Istanbul, Riyadh',
+            '+03:30' => '(UTC+03:30) Tehran',
+            '+04:00' => '(UTC+04:00) Dubai, Baku',
+            '+04:30' => '(UTC+04:30) Kabul',
+            '+05:00' => '(UTC+05:00) Karachi, Tashkent',
+            '+05:30' => '(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi',
+            '+05:45' => '(UTC+05:45) Kathmandu',
+            '+06:00' => '(UTC+06:00) Almaty, Dhaka',
+            '+06:30' => '(UTC+06:30) Yangon (Rangoon)',
+            '+07:00' => '(UTC+07:00) Bangkok, Hanoi, Jakarta',
+            '+08:00' => '(UTC+08:00) Beijing, Singapore, Perth',
+            '+09:00' => '(UTC+09:00) Tokyo, Seoul, Osaka',
+            '+09:30' => '(UTC+09:30) Adelaide, Darwin',
+            '+10:00' => '(UTC+10:00) Sydney, Melbourne, Brisbane',
+            '+11:00' => '(UTC+11:00) Solomon Is., New Caledonia',
+            '+12:00' => '(UTC+12:00) Auckland, Wellington',
+            '+13:00' => '(UTC+13:00) Nuku\'alofa'
+        ];
     }
 }

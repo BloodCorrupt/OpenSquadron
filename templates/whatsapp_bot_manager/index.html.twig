@@ -4,6 +4,11 @@
 
 {% block stylesheets %}
 <style>
+    body:not([data-theme="light"]) input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        opacity: 0.7;
+        cursor: pointer;
+    }
     :root {
         --wa-primary: #10b981;
         --wa-primary-rgb: 16, 185, 129;
@@ -1357,6 +1362,7 @@
 {% block body %}
 <div class="manager-shell">
     {# ───────── Left Sidebar Navigation (Grouped Layout) ───────── #}
+    {% if connections is not empty %}
     <div class="manager-nav">
         <div class="sidebar-mobile-toggle">
             <span>
@@ -1453,7 +1459,16 @@
             <span>Action Button Presets</span>
         </div>
 
-        <!-- Group 5: Integrations & API -->
+        <!-- Group 5: Bot Settings -->
+        <div class="nav-header">Bot Settings</div>
+        <div class="nav-item" data-tab-target="bot-settings">
+            <span class="nav-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </span>
+            <span>Bot Configuration</span>
+        </div>
+
+        <!-- Group 6: Integrations & API -->
         <div class="nav-header">Integrations & API</div>
         <div class="nav-item is-disabled" data-tab-target="ecommerce-automations">
             <span class="nav-item-icon">
@@ -1478,6 +1493,7 @@
             <span class="nav-item-status" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25);">Soon</span>
         </div>
     </div>
+    {% endif %}
 
     {# ───────── Right Content Panels ───────── #}
 
@@ -1667,6 +1683,21 @@
                     <p class="console-card-desc">Deploy responsive floating chat bubbles and click-to-chat QR code plugins on external websites.</p>
                     <div class="console-card-action" style="color: #ec4899;">
                         <span>Build Widgets</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- 12. Bot Configuration -->
+                <div class="console-card" onclick="switchTab('bot-settings')">
+                    <div class="console-card-header">
+                        <div class="console-icon-wrapper" style="background: rgba(255, 255, 255, 0.1); color: #fff; border-color: rgba(255, 255, 255, 0.2);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </div>
+                        <span class="console-card-title">Bot Configuration</span>
+                    </div>
+                    <p class="console-card-desc">Configure business hours, whitelist modes, and global operating settings for this bot connection.</p>
+                    <div class="console-card-action" style="color: #fff;">
+                        <span>Open Configuration</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </div>
                 </div>
@@ -2537,6 +2568,120 @@
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; border-top: 1px solid var(--glass-border); padding-top:15px;">
                 <button class="btn-action btn-secondary" onclick="closePresetConfigModal()">Cancel</button>
                 <button class="btn-action btn-create" onclick="savePresetConfig()">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    {# 8b. Bot Configuration Settings Pane #}
+    <div class="manager-content-pane" id="pane-bot-settings">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <span>Bot Configuration</span>
+                </h1>
+                <div class="content-subtitle">Manage Business Hours and Whitelist mode for this bot connection.</div>
+            </div>
+            <div>
+                <button class="btn-action btn-create" onclick="saveBotSettings()">
+                    <svg viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Save Config
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-form-card" style="max-width: 800px;">
+            <div style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Business Hours</div>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div class="form-label">Enable Business Hours</div>
+                        <div class="form-helper">When enabled, the bot will automatically pause responses during off-hours.</div>
+                    </div>
+                    <label class="switch-toggle">
+                        <input type="checkbox" id="bh-enabled" {% if settings['business-hours']['enabled'] %}checked{% endif %}>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Operating Mode</label>
+                        <select class="form-control" id="bh-mode">
+                            <option value="bot" {% if (settings['business-hours']['mode'] ?? 'bot') == 'bot' %}selected{% endif %}>Bot handles during Business Hours</option>
+                            <option value="human" {% if (settings['business-hours']['mode'] ?? 'bot') == 'human' %}selected{% endif %}>Human handles during Business Hours</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" class="glass-input" id="bh-start-time" value="{{ settings['business-hours']['startTime'] ?? '09:00' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Time</label>
+                        <input type="time" class="glass-input" id="bh-end-time" value="{{ settings['business-hours']['endTime'] ?? '17:00' }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Active Days</label>
+                    <div class="form-helper" style="margin-bottom: 10px;">Select the days your business is open.</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;" id="bh-days-container">
+                        {% set activeDays = settings['business-hours']['days'] ?? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+                        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                        <label style="display: flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s; user-select: none; {% if day in activeDays %}background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);{% else %}background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);{% endif %}">
+                            <input type="checkbox" value="{{ day }}" class="bh-day-cb" style="display: none;" {% if day in activeDays %}checked{% endif %} onchange="this.parentElement.style.background = this.checked ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.03)'; this.parentElement.style.borderColor = this.checked ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)';">
+                            <span style="font-size: 14px; color: #fff; font-weight: 500;">{{ day }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {# Away message removed per user preference #}
+            </div>
+        </div>
+        
+        <div class="glass-form-card" style="max-width: 800px; margin-top: 20px;">
+            <div style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Whitelist Mode</div>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div class="form-label">Enable Whitelist Mode</div>
+                        <div class="form-helper">When enabled, the bot will ONLY reply to the numbers listed below.</div>
+                    </div>
+                    <label class="switch-toggle">
+                        <input type="checkbox" id="wl-enabled" {% if settings['whitelist-mode']['enabled'] ?? false %}checked{% endif %}>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+                
+                <div class="form-group" id="wl-numbers-container">
+                    <label class="form-label">Whitelisted Numbers (Manual Input)</label>
+                    <div class="form-helper" style="margin-bottom: 8px;">Enter phone numbers separated by commas or new lines. The bot will only respond to these numbers.</div>
+                    <textarea class="glass-textarea" id="wl-numbers" style="width: 100%; height: 100px; resize: vertical;" placeholder="e.g. 1234567890, 0987654321">{{ settings['whitelist-mode']['whitelistedNumbers'] ?? '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-form-card" style="max-width: 800px; margin-top: 20px;">
+            <div style="font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Blacklist Mode</div>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div class="form-label">Enable Blacklist Mode</div>
+                        <div class="form-helper">When enabled, the bot will completely IGNORE and pause interactions from the numbers listed below.</div>
+                    </div>
+                    <label class="switch-toggle">
+                        <input type="checkbox" id="bl-enabled" {% if settings['blacklist-mode']['enabled'] ?? false %}checked{% endif %}>
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+                
+                <div class="form-group" id="bl-numbers-container">
+                    <label class="form-label">Blacklisted Numbers (Manual Input)</label>
+                    <div class="form-helper" style="margin-bottom: 8px;">Enter phone numbers separated by commas or new lines.</div>
+                    <textarea class="glass-textarea" id="bl-numbers" style="width: 100%; height: 100px; resize: vertical;" placeholder="e.g. 1234567890, 0987654321">{{ settings['blacklist-mode']['blacklistedNumbers'] ?? '' }}</textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -5086,6 +5231,78 @@
                        log.error.toLowerCase().includes(query);
             });
             renderReportLogs(filtered);
+        }
+
+        function saveBotSettings() {
+            if (!activeConnectionId) {
+                return showToast('Please select a connection first.', 'error');
+            }
+            
+            const mode = document.getElementById('bh-mode').value;
+
+            const start = document.getElementById('bh-start-time').value;
+            const end = document.getElementById('bh-end-time').value;
+            const enabled = document.getElementById('bh-enabled').checked;
+            
+            const days = Array.from(document.querySelectorAll('.bh-day-cb:checked')).map(cb => cb.value);
+            
+            const bhSettings = {
+                enabled,
+                mode,
+                timezone: tz,
+                startTime: start,
+                endTime: end,
+                days,
+                awayMessage: ''
+            };
+            
+            fetch('/whatsapp-bot-manager/save-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    connectionId: activeConnectionId,
+                    type: 'business-hours',
+                    data: JSON.stringify(bhSettings)
+                })
+            }).then(r => r.json()).then(res => {
+                if (res.success) {
+                    const wlEnabled = document.getElementById('wl-enabled').checked;
+                    const wlNumbers = document.getElementById('wl-numbers').value;
+                    fetch('/whatsapp-bot-manager/save-settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({
+                            connectionId: activeConnectionId,
+                            type: 'whitelist-mode',
+                            data: JSON.stringify({ enabled: wlEnabled, whitelistedNumbers: wlNumbers })
+                        })
+                    }).then(r2 => r2.json()).then(res2 => {
+                        if (res2.success) {
+                            const blEnabled = document.getElementById('bl-enabled').checked;
+                            const blNumbers = document.getElementById('bl-numbers').value;
+                            fetch('/whatsapp-bot-manager/save-settings', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: new URLSearchParams({
+                                    connectionId: activeConnectionId,
+                                    type: 'blacklist-mode',
+                                    data: JSON.stringify({ enabled: blEnabled, blacklistedNumbers: blNumbers })
+                                })
+                            }).then(r3 => r3.json()).then(res3 => {
+                                if (res3.success) {
+                                    showToast('Bot Settings saved successfully!', 'success');
+                                } else {
+                                    showToast(res3.error, 'error');
+                                }
+                            });
+                        } else {
+                            showToast(res2.error, 'error');
+                        }
+                    });
+                } else {
+                    showToast(res.error, 'error');
+                }
+            });
         }
     </script>
 {% endblock %}
