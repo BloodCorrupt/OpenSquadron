@@ -83,7 +83,8 @@ class WhatsAppConnectionService
         string $phoneNumberId,
         ?string $label = null,
         ?string $phoneNumber = null,
-        ?int $existingId = null
+        ?int $existingId = null,
+        bool $isSmbOnboarding = false
     ): WhatsAppConnection {
         if (empty($businessAccountId) || empty($plainAccessToken)) {
             throw new \InvalidArgumentException('Business Account ID and Access Token are required.');
@@ -121,6 +122,12 @@ class WhatsAppConnectionService
 
         $connection->setStatus('active');
 
+        $settings = $connection->getBotSettings() ?? [];
+        if ($isSmbOnboarding) {
+            $settings['is_smb'] = true;
+        }
+        $connection->setBotSettings($settings);
+
         $this->entityManager->persist($connection);
         $this->entityManager->flush();
 
@@ -136,7 +143,8 @@ class WhatsAppConnectionService
         ?string $plainAccessToken,
         string $phoneNumberId,
         ?string $label,
-        ?string $phoneNumber
+        ?string $phoneNumber,
+        bool $isSmbOnboarding = false
     ): ?WhatsAppConnection {
         if (empty($phoneNumberId)) {
             throw new \InvalidArgumentException('Phone Number ID is required.');
@@ -160,6 +168,12 @@ class WhatsAppConnectionService
         if ($phoneNumber !== null) {
             $connection->setPhoneNumber($phoneNumber);
         }
+
+        $settings = $connection->getBotSettings() ?? [];
+        if ($isSmbOnboarding) {
+            $settings['is_smb'] = true;
+        }
+        $connection->setBotSettings($settings);
 
         $this->entityManager->flush();
 
@@ -527,9 +541,9 @@ class WhatsAppConnectionService
 
                 $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
                 if ($existing) {
-                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber);
+                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, true);
                 } else {
-                    $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber);
+                    $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, true);
                 }
                 $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName];
             }
