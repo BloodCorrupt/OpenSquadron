@@ -712,23 +712,48 @@ class WhatsAppConnectionService
      */
     public function syncFromEmbeddedSignupEvent(string $wabaId, string $phoneNumberId, string $systemUserToken, int $limitSlots = 999): array
     {
-        // 1. Fetch the phone number details from the Graph API using the System User Token
         $phoneUrl = "https://graph.facebook.com/v21.0/{$phoneNumberId}";
-        $phoneResponse = $this->httpClient->request('GET', $phoneUrl, [
-            'query' => [
-                'access_token' => $systemUserToken,
-                'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
-            ]
-        ]);
+        $displayPhoneNumber = null;
+        $verifiedName = 'WhatsApp Connection';
+        $platformType = null;
 
-        $phoneData = $phoneResponse->toArray(false);
-        if ($phoneResponse->getStatusCode() >= 400) {
-            throw new \RuntimeException('Failed to fetch phone number details: ' . ($phoneData['error']['message'] ?? 'Unknown error'));
+        try {
+            $phoneResponse = $this->httpClient->request('GET', $phoneUrl, [
+                'query' => [
+                    'access_token' => $systemUserToken,
+                    'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
+                ]
+            ]);
+
+            $phoneData = $phoneResponse->toArray(false);
+            if ($phoneResponse->getStatusCode() === 200) {
+                $displayPhoneNumber = $phoneData['display_phone_number'] ?? null;
+                $verifiedName = $phoneData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
+                $platformType = $phoneData['platform_type'] ?? null;
+            } else {
+                throw new \RuntimeException('Failed status: ' . $phoneResponse->getStatusCode());
+            }
+        } catch (\Exception $e) {
+            // Fallback: try fetching without platform_type (helpful for some SMB numbers)
+            try {
+                $fallbackResponse = $this->httpClient->request('GET', $phoneUrl, [
+                    'query' => [
+                        'access_token' => $systemUserToken,
+                        'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                    ]
+                ]);
+                $phoneData = $fallbackResponse->toArray(false);
+                if ($fallbackResponse->getStatusCode() === 200) {
+                    $displayPhoneNumber = $phoneData['display_phone_number'] ?? null;
+                    $verifiedName = $phoneData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
+                } else {
+                    throw new \RuntimeException('Failed status: ' . $fallbackResponse->getStatusCode());
+                }
+            } catch (\Exception $fallbackEx) {
+                throw new \RuntimeException('Failed to fetch phone number details: ' . $e->getMessage());
+            }
         }
 
-        $displayPhoneNumber = $phoneData['display_phone_number'] ?? null;
-        $verifiedName = $phoneData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
-        $platformType = $phoneData['platform_type'] ?? 'CLOUD_API';
         $isSmb = ($platformType !== 'CLOUD_API');
 
         // We no longer automatically register with a hardcoded '123456' PIN.

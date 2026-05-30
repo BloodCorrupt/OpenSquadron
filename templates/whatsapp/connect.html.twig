@@ -664,7 +664,7 @@
                                 </button>
                             </form>
                             {% if not (conn.botSettings.is_smb ?? false) %}
-                            <button onclick="registerConnection({{ conn.id }})" class="conn-action-btn edit-btn">
+                            <button onclick="registerConnection({{ conn.id }}, '{{ conn.phoneNumber|default(conn.label|default('WhatsApp Connection'))|escape('js') }}')" class="conn-action-btn edit-btn">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                                 <span>Register</span>
                             </button>
@@ -1361,10 +1361,17 @@ function closePinModal() {
     currentRegisterId = null;
 }
 
-function registerConnection(id) {
+function registerConnection(id, label) {
     currentRegisterId = id;
     const overlay = document.getElementById('pinModalOverlay');
     const input = document.getElementById('pinModalInput');
+    
+    if (label) {
+        const desc = document.getElementById('pinModalDesc');
+        if (desc) {
+            desc.innerHTML = `Enter a 6-digit PIN to register <strong style="color:var(--primary-accent)">${label}</strong> on the Meta network (or to re-register). If this is a new number, make up a secure 6-digit PIN.`;
+        }
+    }
     
     overlay.classList.add('active');
     setTimeout(() => input.focus(), 100);
