@@ -41,7 +41,7 @@ class ConnectionSetupController extends AbstractController
                         $usage = $this->usageService->getBotUsage($user);
                         $availableSlots = (in_array($user->getAccountType(), ['super_admin', 'admin'], true) || $usage['limit'] === 0) ? 9999 : max(1, $usage['limit'] - $usage['current']);
                         
-                        $currentUrl = str_replace('http://', 'https://', $request->getSchemeAndHttpHost() . $request->getPathInfo());
+                        $currentUrl = $request->getSchemeAndHttpHost() . $request->getPathInfo();
                         $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots, $currentUrl);
                         if (!empty($syncedNames)) {
                             $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $syncedNames));
