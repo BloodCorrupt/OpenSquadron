@@ -1219,6 +1219,7 @@ function showRegistrationModal(conn) {
     if (desc) {
         desc.innerHTML = `Enter a 6-digit PIN to register <strong style="color:var(--primary-accent)">${conn.phone || conn.name}</strong> on the Meta network. If this is a new number, make up a secure 6-digit PIN.`;
     }
+    isNewConnectionPendingPin = true;
     registerConnection(conn.id);
 }
 
@@ -1353,11 +1354,24 @@ function confirmDeleteConnection() {
         });
 }
 
+let isNewConnectionPendingPin = false;
 let currentRegisterId = null;
 
 function closePinModal() {
     document.getElementById('pinModalOverlay').classList.remove('active');
     document.getElementById('pinModalInput').value = '';
+    
+    if (isNewConnectionPendingPin && currentRegisterId) {
+        // Delete the connection from the database because user cancelled the new connection registration
+        const deleteUrl = "{{ path('whatsapp_connect_delete', {id: '999999999'}) }}".replace('999999999', currentRegisterId);
+        fetch(deleteUrl, { method: 'POST' })
+            .then(() => {
+                refreshConnectionsSection();
+            })
+            .catch(() => {});
+    }
+    
+    isNewConnectionPendingPin = false;
     currentRegisterId = null;
 }
 
@@ -1388,6 +1402,7 @@ document.getElementById('pinModalSubmitBtn').addEventListener('click', function(
     }
 
     const idToRegister = currentRegisterId;
+    isNewConnectionPendingPin = false;
     closePinModal();
 
     if (typeof showToast === 'function') { showToast('Registering phone number...', 'info'); }
