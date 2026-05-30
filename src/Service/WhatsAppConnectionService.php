@@ -375,6 +375,170 @@ class WhatsAppConnectionService
     }
 
     /**
+     * Sync a connection from the WhatsApp Business App (Coexistence) onboarding flow.
+     * 
+     * Per Meta docs:
+     * 1. Exchange code for user token (NO redirect_uri — code comes from FB.login SDK)
+     * 2. Use /debug_token to discover WABAs from granular_scopes
+     * 3. Use System User Token for stored connections (long-lived)
+     * 4. Subscribe WABA to webhooks
+     */
+    public function syncBusinessAppOnboarding(
+        string $oauthCode,
+        string $appId,
+        string $appSecret,
+        string $systemUserToken,
+        ?string $hintWabaId = null,
+        ?string $hintPhoneNumberId = null
+    ): array {
+        // 1. Exchange code for user access token — NO redirect_uri (FB.login uses xd_arbiter)
+        $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/oauth/access_token', [
+            'query' => [
+                'client_id' => $appId,
+                'client_secret' => $appSecret,
+                'code' => $oauthCode,
+            ]
+        ]);
+
+        if ($response->getStatusCode() >= 400) {
+            $data = $response->toArray(false);
+            throw new \RuntimeException('Failed to exchange code: ' . ($data['error']['message'] ?? 'Unknown error'));
+        }
+
+        $tokenData = $response->toArray();
+        $userAccessToken = $tokenData['access_token'];
+
+        // 2. Discover WABAs via /debug_token (using System User Token to inspect the user token)
+        $wabaIds = [];
+
+        try {
+            $debugResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/debug_token', [
+                'query' => ['input_token' => $userAccessToken],
+                'headers' => ['Authorization' => "Bearer {$systemUserToken}"]
+            ]);
+
+            if ($debugResponse->getStatusCode() === 200) {
+                $debugData = $debugResponse->toArray();
+                $granularScopes = $debugData['data']['granular_scopes'] ?? [];
+                foreach ($granularScopes as $scope) {
+                    if ($scope['scope'] === 'whatsapp_business_management' && !empty($scope['target_ids'])) {
+                        $wabaIds = array_merge($wabaIds, $scope['target_ids']);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // /debug_token failed, fall through to hint-based discovery
+        }
+
+        // 3. If /debug_token didn't find WABAs, use the hint IDs from the frontend WA_EMBEDDED_SIGNUP event
+        if (empty($wabaIds) && $hintWabaId) {
+            $wabaIds[] = $hintWabaId;
+        }
+
+        // 4. If we still have no WABAs, try querying with the user token directly
+        if (empty($wabaIds)) {
+            try {
+                $ownedResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/whatsapp_business_accounts', [
+                    'headers' => ['Authorization' => "Bearer {$userAccessToken}"]
+                ]);
+                if ($ownedResponse->getStatusCode() === 200) {
+                    $ownedData = $ownedResponse->toArray();
+                    foreach (($ownedData['data'] ?? []) as $waba) {
+                        $wabaIds[] = $waba['id'];
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore
+            }
+        }
+
+        if (empty($wabaIds)) {
+            throw new \RuntimeException('No WhatsApp Business Accounts found. Please ensure you selected a business account during setup.');
+        }
+
+        $wabaIds = array_unique($wabaIds);
+        $syncedConnections = [];
+
+        // Use the System User Token for all API calls and stored connections
+        $tokenForApi = $systemUserToken;
+
+        foreach ($wabaIds as $wabaId) {
+            // Subscribe the App to the WABA's webhooks
+            try {
+                $this->httpClient->request('POST', "https://graph.facebook.com/v21.0/{$wabaId}/subscribed_apps", [
+                    'headers' => ['Authorization' => "Bearer {$tokenForApi}"]
+                ]);
+            } catch (\Exception $e) {
+                // Continue
+            }
+
+            // Get phone numbers with explicit fields
+            $phonesResponse = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$wabaId}/phone_numbers", [
+                'headers' => ['Authorization' => "Bearer {$tokenForApi}"],
+                'query' => ['fields' => 'id,display_phone_number,verified_name,quality_rating']
+            ]);
+
+            $phonesData = $phonesResponse->toArray(false);
+            $phones = $phonesData['data'] ?? [];
+
+            // If we have a hint phone number ID and the list is empty or doesn't contain it, fetch directly
+            if ($hintPhoneNumberId && empty(array_filter($phones, fn($p) => $p['id'] === $hintPhoneNumberId))) {
+                try {
+                    $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$hintPhoneNumberId}", [
+                        'query' => [
+                            'access_token' => $tokenForApi,
+                            'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                        ]
+                    ]);
+                    if ($directResp->getStatusCode() === 200) {
+                        $directData = $directResp->toArray();
+                        $phones[] = $directData;
+                    }
+                } catch (\Exception $e) {
+                    // Continue with what we have
+                }
+            }
+
+            foreach ($phones as $phone) {
+                $phoneNumberId = $phone['id'];
+                $displayPhoneNumber = $phone['display_phone_number'] ?? null;
+                $verifiedName = $phone['verified_name'] ?? null;
+
+                // If still missing, try fetching individually
+                if (empty($verifiedName)) {
+                    try {
+                        $indivResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
+                            'query' => [
+                                'access_token' => $tokenForApi,
+                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                            ]
+                        ]);
+                        if ($indivResp->getStatusCode() === 200) {
+                            $indivData = $indivResp->toArray();
+                            $verifiedName = $indivData['verified_name'] ?? $verifiedName;
+                            $displayPhoneNumber = $indivData['display_phone_number'] ?? $displayPhoneNumber;
+                        }
+                    } catch (\Exception $e) {
+                        // Use whatever we have
+                    }
+                }
+
+                $verifiedName = $verifiedName ?: ($displayPhoneNumber ?: 'WhatsApp Connection');
+
+                $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
+                if ($existing) {
+                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber);
+                } else {
+                    $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber);
+                }
+                $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName];
+            }
+        }
+
+        return $syncedConnections;
+    }
+
+    /**
      * Sync a connection using data captured from the WA_EMBEDDED_SIGNUP message event.
      * Uses the System User Access Token from MetaSetting instead of exchanging an OAuth code.
      */

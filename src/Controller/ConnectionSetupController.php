@@ -26,6 +26,8 @@ class ConnectionSetupController extends AbstractController
     {
         $oauthCode = $request->query->get('code');
         if ($oauthCode) {
+            // Fallback: if Meta redirects the browser directly with ?code= (edge case).
+            // Primary flow is via AJAX through /business-app-callback endpoint.
             try {
                 /** @var Admin $user */
                 $user = $this->getUser();
@@ -35,32 +37,21 @@ class ConnectionSetupController extends AbstractController
                     $appId = $metaSetting->getWhatsappAppId() ?: $metaSetting->getAppId();
                     $encryptedSecret = $metaSetting->getWhatsappEncryptedAppSecret() ?: $metaSetting->getEncryptedAppSecret();
                     $appSecret = $encryptedSecret ? $this->facebookService->decryptToken($encryptedSecret) : null;
+                    $systemUserToken = $metaSetting->getSystemUserAccessToken();
 
-                    if ($appId && $appSecret) {
-                        if (!$this->usageService->canAddBot($user)) {
-                            $this->addFlash('error', 'Bot connection limit reached. Upgrade your subscription.');
-                        } else {
-                            $usage = $this->usageService->getBotUsage($user);
-                            $availableSlots = (in_array($user->getAccountType(), ['super_admin', 'admin'], true) || $usage['limit'] === 0) ? 9999 : max(1, $usage['limit'] - $usage['current']);
-                            $scheme = $request->getScheme();
-                            if ($request->headers->has('X-Forwarded-Proto')) {
-                                $scheme = $request->headers->get('X-Forwarded-Proto');
-                            }
-                            $scheme = strtolower($scheme) === 'https' ? 'https' : 'http';
-
-                            $host = $request->getHttpHost();
-                            if ($request->headers->has('X-Forwarded-Host')) {
-                                $host = $request->headers->get('X-Forwarded-Host');
-                            }
-
-                            $currentUrl = $scheme . '://' . $host . $request->getPathInfo();
-                            $systemUserToken = $metaSetting->getSystemUserAccessToken();
-                            $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots, $currentUrl, $systemUserToken);
+                    if ($appId && $appSecret && $systemUserToken) {
+                        if ($this->usageService->canAddBot($user)) {
+                            $syncedNames = $this->whatsappService->syncBusinessAppOnboarding(
+                                $oauthCode, $appId, $appSecret, $systemUserToken
+                            );
                             if (!empty($syncedNames)) {
-                                $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', array_column($syncedNames, 'name')));
+                                $names = implode(', ', array_column($syncedNames, 'name'));
+                                $this->addFlash('success', 'Connected ' . count($syncedNames) . ' phone number(s): ' . $names);
                             } else {
-                                $this->addFlash('error', 'No valid phone numbers found for the connected Meta account.');
+                                $this->addFlash('error', 'No valid phone numbers found.');
                             }
+                        } else {
+                            $this->addFlash('error', 'Bot connection limit reached.');
                         }
                     }
                 }
@@ -68,7 +59,6 @@ class ConnectionSetupController extends AbstractController
                 $this->addFlash('error', $e->getMessage());
             }
             
-            // Redirect to strip the code from the URL
             return $this->redirectToRoute('whatsapp_connect_show');
         }
 
@@ -303,6 +293,76 @@ class ConnectionSetupController extends AbstractController
                 'connections' => $syncedNames
             ]);
             
+        } catch (\Exception $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * AJAX endpoint for the WhatsApp Business App (Coexistence) onboarding flow.
+     * Receives the authorization code from FB.login() callback + optional hint IDs from WA_EMBEDDED_SIGNUP.
+     * Exchanges code WITHOUT redirect_uri (since FB.login uses xd_arbiter internally).
+     */
+    #[Route('/whatsapp-business/connect/business-app-callback', name: 'whatsapp_connect_business_app_callback', methods: ['POST'])]
+    public function whatsappBusinessAppCallback(Request $request): Response
+    {
+        try {
+            /** @var Admin $user */
+            $user = $this->getUser();
+
+            $metaSetting = $this->facebookService->getEffectiveSetting();
+            if (!$metaSetting) {
+                return $this->json(['success' => false, 'error' => 'Meta API credentials are not configured in settings.']);
+            }
+
+            $appId = $metaSetting->getWhatsappAppId() ?: $metaSetting->getAppId();
+            $encryptedSecret = $metaSetting->getWhatsappEncryptedAppSecret() ?: $metaSetting->getEncryptedAppSecret();
+            $appSecret = $encryptedSecret ? $this->facebookService->decryptToken($encryptedSecret) : null;
+
+            if (!$appId || !$appSecret) {
+                return $this->json(['success' => false, 'error' => 'App ID or App Secret not configured.']);
+            }
+
+            $systemUserToken = $metaSetting->getSystemUserAccessToken();
+            if (!$systemUserToken) {
+                return $this->json(['success' => false, 'error' => 'System User Access Token is not configured. Please add it in Settings.']);
+            }
+
+            $code = trim($request->request->get('code', ''));
+            if (!$code) {
+                return $this->json(['success' => false, 'error' => 'Authorization code is required.']);
+            }
+
+            // Check bot limits
+            if (!$this->usageService->canAddBot($user)) {
+                $usage = $this->usageService->getBotUsage($user);
+                return $this->json(['success' => false, 'error' => sprintf('Bot connection limit reached (%d/%d). Upgrade your subscription.', $usage['current'], $usage['limit'])]);
+            }
+
+            // Optional hint IDs from the WA_EMBEDDED_SIGNUP frontend event
+            $hintWabaId = trim($request->request->get('wabaId', '')) ?: null;
+            $hintPhoneNumberId = trim($request->request->get('phoneNumberId', '')) ?: null;
+
+            $syncedNames = $this->whatsappService->syncBusinessAppOnboarding(
+                $code,
+                $appId,
+                $appSecret,
+                $systemUserToken,
+                $hintWabaId,
+                $hintPhoneNumberId
+            );
+
+            if (empty($syncedNames)) {
+                return $this->json(['success' => false, 'error' => 'No valid phone numbers found for the connected Meta account.']);
+            }
+
+            $names = array_column($syncedNames, 'name');
+            return $this->json([
+                'success' => true,
+                'message' => 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $names),
+                'connections' => $syncedNames
+            ]);
+
         } catch (\Exception $e) {
             return $this->json(['success' => false, 'error' => $e->getMessage()]);
         }

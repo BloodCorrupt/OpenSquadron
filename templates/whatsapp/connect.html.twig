@@ -614,11 +614,6 @@
                     </svg>
                     Connect WhatsApp Account
                 </button>
-                <p style="color: var(--text-muted); font-size: 11px; margin-top: 18px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 8px; text-align: left;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px; vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    <strong>Meta App Whitelisting Required:</strong> You must whitelist this specific URL in your Meta App Dashboard under <strong>Facebook Login for Business → Settings → Valid OAuth Redirect URIs</strong>:
-                    <span style="display: block; margin-top: 6px; font-family: monospace; color: var(--primary-accent); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; word-break: break-all; user-select: all;">{{ app.request.schemeAndHttpHost|replace({'http://': 'https://'}) }}{{ path('whatsapp_connect_show') }}</span>
-                </p>
             </div>
         {% else %}
             <div style="background: rgba(15, 23, 42, 0.3); border: 1px dashed var(--glass-border); border-radius: 14px; padding: 28px; text-align: center;">
@@ -848,21 +843,7 @@
 
 <script>
 {% if metaAppId and waConfigId %}
-    // ── Popup return handler ──
-    // If this page was loaded inside a popup (after Meta redirected back with ?code=),
-    // the backend has already processed the code exchange and redirected here cleanly.
-    // Signal the opener window and close the popup.
-    (function() {
-        if (window.opener && window.opener !== window) {
-            try {
-                window.opener.postMessage({ type: 'WA_BUSINESS_APP_DONE' }, window.location.origin);
-            } catch (e) {}
-            window.close();
-            return; // Stop executing rest of script in popup
-        }
-    })();
-
-    // ── Load the Facebook SDK (needed for WA_EMBEDDED_SIGNUP postMessage events) ──
+    // ── Load the Facebook SDK ──
     window.fbAsyncInit = function() {
         FB.init({
             appId      : '{{ metaAppId }}',
@@ -894,9 +875,122 @@
 
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Waiting for Meta...</span>';
 
+        // Collected data from both channels
+        let capturedWabaId = null;
+        let capturedPhoneNumberId = null;
+        let capturedCode = null;
         let ajaxFlowStarted = false;
 
-        // ── Listen for WA_EMBEDDED_SIGNUP postMessage (Cloud API flow) ──
+        // Helper: once we have enough data, send to backend via AJAX
+        function trySendToBackend() {
+            if (ajaxFlowStarted) return;
+
+            // For Cloud API flow: WA_EMBEDDED_SIGNUP gives waba_id + phone_number_id (no code needed)
+            // For Business App flow: we need the code (waba_id/phone_number_id may come from WA_EMBEDDED_SIGNUP or /debug_token)
+            // Send whatever we have — the backend handles both scenarios
+            if (capturedWabaId && capturedPhoneNumberId && !capturedCode) {
+                // Cloud API flow — waba_id + phone_number_id, no code
+                ajaxFlowStarted = true;
+                sendCloudApiCallback(capturedWabaId, capturedPhoneNumberId);
+            } else if (capturedCode) {
+                // Business App flow — we have a code, send it along with any IDs we captured
+                ajaxFlowStarted = true;
+                sendBusinessAppCallback(capturedCode, capturedWabaId, capturedPhoneNumberId);
+            }
+        }
+
+        // Cloud API callback (existing endpoint — uses System User Token)
+        function sendCloudApiCallback(wabaId, phoneNumberId) {
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
+
+            const formData = new FormData();
+            formData.append('wabaId', wabaId || '');
+            formData.append('phoneNumberId', phoneNumberId || '');
+
+            fetch('{{ path('whatsapp_connect_embedded_callback') }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(apiData => {
+                if (apiData.success) {
+                    if (typeof showToast === 'function') { showToast(apiData.message, 'success'); }
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                    
+                    fetch(window.location.href)
+                        .then(res => res.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newSection = doc.querySelector('.connections-section');
+                            const oldSection = document.querySelector('.connections-section');
+                            if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
+                            
+                            if (apiData.connections && apiData.connections.length > 0) {
+                                registerConnection(apiData.connections[0].id);
+                            }
+                        });
+                } else {
+                    if (typeof showToast === 'function') { showToast(apiData.error || 'Failed to save connection.', 'error'); }
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            })
+            .catch(err => {
+                if (typeof showToast === 'function') { showToast('An error occurred during save.', 'error'); }
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            });
+        }
+
+        // Business App callback (NEW endpoint — exchanges code, uses /debug_token)
+        function sendBusinessAppCallback(code, wabaId, phoneNumberId) {
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
+
+            const formData = new FormData();
+            formData.append('code', code);
+            if (wabaId) formData.append('wabaId', wabaId);
+            if (phoneNumberId) formData.append('phoneNumberId', phoneNumberId);
+
+            fetch('{{ path('whatsapp_connect_business_app_callback') }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(apiData => {
+                if (apiData.success) {
+                    if (typeof showToast === 'function') { showToast(apiData.message, 'success'); }
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                    
+                    fetch(window.location.href)
+                        .then(res => res.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newSection = doc.querySelector('.connections-section');
+                            const oldSection = document.querySelector('.connections-section');
+                            if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
+                            
+                            if (apiData.connections && apiData.connections.length > 0) {
+                                registerConnection(apiData.connections[0].id);
+                            }
+                        });
+                } else {
+                    if (typeof showToast === 'function') { showToast(apiData.error || 'Failed to save connection.', 'error'); }
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            })
+            .catch(err => {
+                if (typeof showToast === 'function') { showToast('An error occurred during save.', 'error'); }
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            });
+        }
+
+        // ── Channel 1: Listen for WA_EMBEDDED_SIGNUP postMessage ──
         const messageListener = (event) => {
             if (!event.origin.includes("facebook.com") && !event.origin.includes("whatsapp.com")) return;
 
@@ -909,54 +1003,14 @@
 
             if (data && data.type === 'WA_EMBEDDED_SIGNUP') {
                 if (data.event === 'FINISH') {
-                    ajaxFlowStarted = true;
                     const payload = data.data || data;
-                    const wabaId = payload.waba_id;
-                    const phoneNumberId = payload.phone_number_id;
-
-                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
-
-                    const formData = new FormData();
-                    formData.append('wabaId', wabaId || '');
-                    formData.append('phoneNumberId', phoneNumberId || '');
-
-                    fetch('{{ path('whatsapp_connect_embedded_callback') }}', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(apiData => {
-                        if (apiData.success) {
-                            if (typeof showToast === 'function') { showToast(apiData.message, 'success'); }
-                            btn.innerHTML = originalHtml;
-                            btn.disabled = false;
-                            
-                            fetch(window.location.href)
-                                .then(res => res.text())
-                                .then(html => {
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(html, 'text/html');
-                                    const newSection = doc.querySelector('.connections-section');
-                                    const oldSection = document.querySelector('.connections-section');
-                                    if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
-                                    
-                                    if (apiData.connections && apiData.connections.length > 0) {
-                                        registerConnection(apiData.connections[0].id);
-                                    }
-                                });
-                        } else {
-                            if (typeof showToast === 'function') { showToast(apiData.error || 'Failed to save connection.', 'error'); }
-                            btn.disabled = false;
-                            btn.innerHTML = originalHtml;
-                        }
-                    })
-                    .catch(err => {
-                        if (typeof showToast === 'function') { showToast('An error occurred during save.', 'error'); }
-                        btn.disabled = false;
-                        btn.innerHTML = originalHtml;
-                    });
-
+                    capturedWabaId = payload.waba_id || capturedWabaId;
+                    capturedPhoneNumberId = payload.phone_number_id || capturedPhoneNumberId;
                     window.removeEventListener('message', messageListener);
+
+                    // Try to send — if we already have the code too, send immediately
+                    // If no code yet, wait for FB.login callback (it fires shortly after)
+                    setTimeout(() => { trySendToBackend(); }, 500);
                 } else if (data.event === 'CANCEL') {
                     ajaxFlowStarted = true;
                     if (typeof showToast === 'function') { showToast('Authentication cancelled.', 'error'); }
@@ -975,61 +1029,31 @@
 
         window.addEventListener('message', messageListener);
 
-        // ── Listen for Business App popup completion (our own postMessage) ──
-        const businessAppListener = (event) => {
-            if (event.origin !== window.location.origin) return;
-            if (event.data && event.data.type === 'WA_BUSINESS_APP_DONE') {
-                ajaxFlowStarted = true;
-                window.removeEventListener('message', businessAppListener);
-                window.removeEventListener('message', messageListener);
-                if (typeof showToast === 'function') { showToast('WhatsApp Business account connected!', 'success'); }
-                btn.innerHTML = originalHtml;
-                btn.disabled = false;
-                // Reload to show updated connections
-                setTimeout(() => { window.location.reload(); }, 500);
-            }
-        };
-        window.addEventListener('message', businessAppListener);
-
-        // ── Build the OAuth dialog URL with OUR controlled redirect_uri ──
-        const appId = '{{ metaAppId }}';
-        const configId = '{{ waConfigId }}';
-        const redirectUri = window.location.origin + '{{ path('whatsapp_connect_show') }}';
-        const extras = JSON.stringify({
-            "setup": {},
-            "featureType": "whatsapp_business_app_onboarding",
-            "sessionInfoVersion": "2"
-        });
-
-        const oauthUrl = 'https://www.facebook.com/v21.0/dialog/oauth'
-            + '?client_id=' + encodeURIComponent(appId)
-            + '&redirect_uri=' + encodeURIComponent(redirectUri)
-            + '&response_type=code'
-            + '&config_id=' + encodeURIComponent(configId)
-            + '&extras=' + encodeURIComponent(extras);
-
-        // ── Open the popup directly (bypass FB.login) ──
-        const w = 720, h = 820;
-        const left = Math.round((screen.width - w) / 2);
-        const top = Math.round((screen.height - h) / 2);
-        const popup = window.open(
-            oauthUrl,
-            'WhatsAppOnboarding',
-            'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',scrollbars=yes,status=yes'
-        );
-
-        // ── Monitor popup close to reset button if user cancelled ──
-        const popupCheck = setInterval(() => {
-            if (!popup || popup.closed) {
-                clearInterval(popupCheck);
+        // ── Channel 2: FB.login() — returns authorization code ──
+        FB.login(function(response) {
+            if (!response.authResponse) {
+                // User cancelled or popup blocked
                 if (!ajaxFlowStarted) {
+                    if (typeof showToast === 'function') { showToast('Authentication cancelled or popup blocked.', 'error'); }
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
                     window.removeEventListener('message', messageListener);
-                    window.removeEventListener('message', businessAppListener);
                 }
+            } else if (response.authResponse.code) {
+                capturedCode = response.authResponse.code;
+                // Try to send — if WA_EMBEDDED_SIGNUP already fired, we have IDs
+                // If not (Business App flow), send code alone — backend uses /debug_token
+                setTimeout(() => { trySendToBackend(); }, 500);
             }
-        }, 1000);
+        }, {
+            config_id: '{{ waConfigId }}',
+            response_type: 'code',
+            override_default_response_type: true,
+            extras: {
+                featureType: 'whatsapp_business_app_onboarding',
+                sessionInfoVersion: 3
+            }
+        });
     }
 {% endif %}
 let connectionToDelete = null;
