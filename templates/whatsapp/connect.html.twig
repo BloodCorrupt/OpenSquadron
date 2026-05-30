@@ -1234,9 +1234,8 @@ function showPhoneSelectModal(connections) {
     confirmBtn.disabled = true;
 
     list.innerHTML = connections.map(conn => {
-        const isCloudApi = conn.needsRegistration; // Cloud API needs registration, SMB doesn't
-        const badgeClass = isCloudApi ? 'cloud' : 'smb';
-        const badgeLabel = isCloudApi ? 'Cloud API' : 'Business App';
+        const badgeClass = conn.isSmb ? 'smb' : 'cloud';
+        const badgeLabel = conn.isSmb ? 'Business App' : 'Cloud API';
         return `<div class="phone-select-item" data-conn-id="${conn.id}" onclick="selectPhoneItem(this, '${conn.id}')">
             <div class="phone-select-radio"><div class="phone-select-radio-dot"></div></div>
             <div class="phone-select-info">

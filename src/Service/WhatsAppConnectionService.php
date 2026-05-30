@@ -499,7 +499,8 @@ class WhatsAppConnectionService
                 'id' => $conn->getId(),
                 'name' => $verifiedName,
                 'phone' => $displayPhoneNumber,
-                'needsRegistration' => $needsRegistration
+                'needsRegistration' => $needsRegistration,
+                'isSmb' => $isSmb
             ]];
         }
 
@@ -667,7 +668,8 @@ class WhatsAppConnectionService
                     'id' => $conn->getId(),
                     'name' => $verifiedName,
                     'phone' => $displayPhoneNumber,
-                    'needsRegistration' => $needsRegistration
+                    'needsRegistration' => $needsRegistration,
+                    'isSmb' => $isSmb
                 ];
                 $this->debugLog("STANDARD PATH: saved phone id={$phoneNumberId} connId={$conn->getId()}");
             }
@@ -757,7 +759,8 @@ class WhatsAppConnectionService
             'id' => $conn->getId(),
             'name' => $verifiedName,
             'phone' => $displayPhoneNumber,
-            'needsRegistration' => $needsRegistration
+            'needsRegistration' => $needsRegistration,
+            'isSmb' => $isSmb
         ];
 
         return $syncedConnections;
