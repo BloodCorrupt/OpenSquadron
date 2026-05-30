@@ -441,6 +441,22 @@ class WhatsAppController extends AbstractController
                                         } elseif ($mode === 'human' && !$isOutsideBH) {
                                             $isResumed = true;
                                         }
+
+                                        // Log business hours details for debugging
+                                        $logMsg = sprintf(
+                                            "[%s] Business Hours Debug - TZ: %s, Current: %s %s, Active Days: %s, Start: %s, End: %s, OutsideBH: %s, Mode: %s, isResumed: %s\n",
+                                            date('Y-m-d H:i:s'),
+                                            $tzString,
+                                            $currentDay,
+                                            $currentTime,
+                                            implode(',', $activeDays),
+                                            $bh['startTime'] ?? '09:00',
+                                            $bh['endTime'] ?? '17:00',
+                                            $isOutsideBH ? 'yes' : 'no',
+                                            $mode,
+                                            $isResumed ? 'yes' : 'no'
+                                        );
+                                        file_put_contents($this->getParameter('kernel.project_dir') . '/var/webhook.log', $logMsg, FILE_APPEND);
                                     } catch (\Exception $e) {
                                         // Ignore exception and process normally if TZ is invalid
                                     }
