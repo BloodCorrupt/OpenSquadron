@@ -426,14 +426,15 @@ class WhatsAppConnectionService
         $tokenData = $response->toArray();
         $userAccessToken = $tokenData['access_token'];
 
-        // 2. Discover WABAs via /debug_token (using System User Token to inspect the user token)
+        // 2. Discover WABAs via /debug_token (using App Access Token to inspect the user token)
         $wabaIds = [];
         $grantedPhoneIds = [];
 
         try {
+            $appAccessToken = "{$appId}|{$appSecret}";
             $debugResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/debug_token', [
                 'query' => ['input_token' => $userAccessToken],
-                'headers' => ['Authorization' => "Bearer {$systemUserToken}"]
+                'headers' => ['Authorization' => "Bearer {$appAccessToken}"]
             ]);
 
             if ($debugResponse->getStatusCode() === 200) {
@@ -481,22 +482,24 @@ class WhatsAppConnectionService
         $wabaIds = array_unique($wabaIds);
         $syncedConnections = [];
 
-        // Use the System User Token for all API calls and stored connections
-        $tokenForApi = $systemUserToken;
+        // For discovery, we use the user access token (guaranteed to have permissions for the user's accounts)
+        $discoveryToken = $userAccessToken;
+        // For storing the connection, we use the system user token
+        $tokenForStorage = $systemUserToken;
 
         foreach ($wabaIds as $wabaId) {
             // Subscribe the App to the WABA's webhooks
             try {
                 $this->httpClient->request('POST', "https://graph.facebook.com/v21.0/{$wabaId}/subscribed_apps", [
-                    'headers' => ['Authorization' => "Bearer {$tokenForApi}"]
+                    'headers' => ['Authorization' => "Bearer {$tokenForStorage}"]
                 ]);
             } catch (\Exception $e) {
                 // Continue
             }
 
-            // Get phone numbers with explicit fields
+            // Get phone numbers from the WABA using the discovery token
             $phonesResponse = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$wabaId}/phone_numbers", [
-                'headers' => ['Authorization' => "Bearer {$tokenForApi}"],
+                'headers' => ['Authorization' => "Bearer {$discoveryToken}"],
                 'query' => ['fields' => 'id,display_phone_number,verified_name,quality_rating']
             ]);
 
@@ -513,7 +516,7 @@ class WhatsAppConnectionService
                     try {
                         $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$hintPhoneNumberId}", [
                             'query' => [
-                                'access_token' => $tokenForApi,
+                                'access_token' => $discoveryToken,
                                 'fields' => 'id,display_phone_number,verified_name,quality_rating'
                             ]
                         ]);
@@ -536,41 +539,41 @@ class WhatsAppConnectionService
                 $displayPhoneNumber = $phone['display_phone_number'] ?? null;
                 $verifiedName = $phone['verified_name'] ?? null;
 
-                // If still missing, try fetching individually
-                if (empty($verifiedName)) {
-                    try {
-                        $indivResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
-                            'query' => [
-                                'access_token' => $tokenForApi,
-                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
-                            ]
-                        ]);
-                        if ($indivResp->getStatusCode() === 200) {
-                            $indivData = $indivResp->toArray();
-                            $verifiedName = $indivData['verified_name'] ?? $verifiedName;
-                            $displayPhoneNumber = $indivData['display_phone_number'] ?? $displayPhoneNumber;
-                        }
-                    } catch (\Exception $e) {
-                        // Use whatever we have
+                // Query details and platform_type individually using discoveryToken
+                $platformType = 'CLOUD_API';
+                try {
+                    $indivResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
+                        'query' => [
+                            'access_token' => $discoveryToken,
+                            'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
+                        ]
+                    ]);
+                    if ($indivResp->getStatusCode() === 200) {
+                        $indivData = $indivResp->toArray();
+                        $verifiedName = $indivData['verified_name'] ?? $verifiedName;
+                        $displayPhoneNumber = $indivData['display_phone_number'] ?? $displayPhoneNumber;
+                        $platformType = $indivData['platform_type'] ?? $platformType;
                     }
+                } catch (\Exception $e) {
+                    // Use whatever we have
                 }
 
                 $verifiedName = $verifiedName ?: ($displayPhoneNumber ?: 'WhatsApp Connection');
 
+                $isSmb = ($platformType !== 'CLOUD_API');
+
                 $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
-                $isNew = false;
+                $isNew = !$existing;
                 if ($existing) {
                     $existingSettings = $existing->getBotSettings() ?? [];
-                    // Preserve existing SMB flag if available
-                    $isSmb = $existingSettings['is_smb'] ?? false;
-                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
+                    // Preserve existing SMB flag or update it
+                    $isSmb = $existingSettings['is_smb'] ?? $isSmb;
+                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForStorage, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
                 } else {
-                    $isNew = true;
-                    // Assume new connections via this flow are SMB numbers
-                    $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, true);
+                    $conn = $this->saveConnection($wabaId, $tokenForStorage, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, $isSmb);
                 }
                 
-                $needsRegistration = $isNew && !true; // Business app numbers don't need manual registration
+                $needsRegistration = $isNew && !$isSmb;
 
                 $syncedConnections[$conn->getId()] = [
                     'id' => $conn->getId(),
@@ -595,7 +598,7 @@ class WhatsAppConnectionService
         $phoneResponse = $this->httpClient->request('GET', $phoneUrl, [
             'query' => [
                 'access_token' => $systemUserToken,
-                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
             ]
         ]);
 
@@ -606,6 +609,8 @@ class WhatsAppConnectionService
 
         $displayPhoneNumber = $phoneData['display_phone_number'] ?? null;
         $verifiedName = $phoneData['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
+        $platformType = $phoneData['platform_type'] ?? 'CLOUD_API';
+        $isSmb = ($platformType !== 'CLOUD_API');
 
         // We no longer automatically register with a hardcoded '123456' PIN.
         // The connection will be saved and the user can register it manually with a custom PIN via the dashboard.
@@ -624,10 +629,13 @@ class WhatsAppConnectionService
 
         // 3. Check if this phone number already exists in our database
         $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
+        $isNew = !$existing;
 
         $syncedConnections = [];
 
         if ($existing) {
+            $existingSettings = $existing->getBotSettings() ?? [];
+            $isSmb = $existingSettings['is_smb'] ?? $isSmb;
             // Update existing connection
             $conn = $this->updateConnection(
                 $existing->getId(),
@@ -635,9 +643,9 @@ class WhatsAppConnectionService
                 $systemUserToken,
                 $phoneNumberId,
                 $verifiedName,
-                $displayPhoneNumber
+                $displayPhoneNumber,
+                $isSmb
             );
-            $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName, 'phone' => $displayPhoneNumber, 'needsRegistration' => false];
         } else {
             // Create new connection
             $conn = $this->saveConnection(
@@ -645,10 +653,20 @@ class WhatsAppConnectionService
                 $systemUserToken,
                 $phoneNumberId,
                 $verifiedName,
-                $displayPhoneNumber
+                $displayPhoneNumber,
+                null,
+                $isSmb
             );
-            $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName, 'phone' => $displayPhoneNumber, 'needsRegistration' => false];
         }
+
+        $needsRegistration = $isNew && !$isSmb;
+
+        $syncedConnections[] = [
+            'id' => $conn->getId(),
+            'name' => $verifiedName,
+            'phone' => $displayPhoneNumber,
+            'needsRegistration' => $needsRegistration
+        ];
 
         return $syncedConnections;
     }
