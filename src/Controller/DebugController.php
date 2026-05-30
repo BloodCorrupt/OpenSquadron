@@ -60,15 +60,4 @@ class DebugController extends AbstractController
             return new JsonResponse(['error' => $e->getMessage()]);
         }
     }
-
-    #[Route('/debug-log', name: 'debug_log', methods: ['GET'])]
-    public function debugLog(): JsonResponse
-    {
-        $logFile = dirname(__DIR__, 2) . '/var/wa_onboarding_debug.log';
-        if (!file_exists($logFile)) {
-            return new JsonResponse(['error' => 'Log file not found at ' . $logFile]);
-        }
-        $content = file_get_contents($logFile);
-        return new JsonResponse(['success' => true, 'log' => explode("\n", $content)]);
-    }
 }

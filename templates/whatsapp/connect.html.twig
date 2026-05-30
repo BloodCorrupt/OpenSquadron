@@ -1235,15 +1235,12 @@ function showPhoneSelectModal(connections) {
     confirmBtn.disabled = true;
 
     list.innerHTML = connections.map(conn => {
-        const badgeClass = conn.isSmb ? 'smb' : 'cloud';
-        const badgeLabel = conn.isSmb ? 'Business App' : 'Cloud API';
         return `<div class="phone-select-item" data-conn-id="${conn.id}" onclick="selectPhoneItem(this, '${conn.id}')">
             <div class="phone-select-radio"><div class="phone-select-radio-dot"></div></div>
             <div class="phone-select-info">
                 <div class="phone-select-name">${conn.name || 'WhatsApp Connection'}</div>
                 <div class="phone-select-number">${conn.phone || 'No number'}</div>
             </div>
-            <span class="phone-select-badge ${badgeClass}">${badgeLabel}</span>
         </div>`;
     }).join('');
 
@@ -1446,11 +1443,23 @@ document.getElementById('pinModalSubmitBtn').addEventListener('click', function(
                 });
                 
         } else {
-            if (typeof showToast === 'function') { showToast(data.error || 'Unknown error', 'error'); }
+            const errorMsg = data.error || 'Unknown error';
+            if (errorMsg.includes('do not need to register')) {
+                if (typeof showToast === 'function') { showToast(errorMsg, 'info'); }
+            } else {
+                if (typeof showToast === 'function') { showToast(errorMsg, 'error'); }
+            }
+            refreshConnectionsSection();
         }
     })
     .catch(err => {
-        if (typeof showToast === 'function') { showToast('Exception: ' + err.message, 'error'); }
+        const errorMsg = err.message || 'An error occurred.';
+        if (errorMsg.includes('do not need to register')) {
+            if (typeof showToast === 'function') { showToast(errorMsg, 'info'); }
+        } else {
+            if (typeof showToast === 'function') { showToast('Exception: ' + errorMsg, 'error'); }
+        }
+        refreshConnectionsSection();
     });
 });
 
