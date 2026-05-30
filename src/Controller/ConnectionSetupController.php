@@ -54,9 +54,10 @@ class ConnectionSetupController extends AbstractController
                             }
 
                             $currentUrl = $scheme . '://' . $host . $request->getPathInfo();
-                            $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots, $currentUrl);
+                            $systemUserToken = $metaSetting->getSystemUserAccessToken();
+                            $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots, $currentUrl, $systemUserToken);
                             if (!empty($syncedNames)) {
-                                $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $syncedNames));
+                                $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', array_column($syncedNames, 'name')));
                             } else {
                                 $this->addFlash('error', 'No valid phone numbers found for the connected Meta account.');
                             }

@@ -194,7 +194,7 @@ class WhatsAppConnectionService
      * Synchronize connections from Meta Embedded Signup using the provided access token.
      * This handles the Coexistence (WhatsApp Business App Onboarding) flow which relies on Code Exchange.
      */
-    public function syncEmbeddedSignupConnections(string $oauthCode, string $appId, string $appSecret, int $limitSlots = 999, ?string $currentUrl = null): array
+    public function syncEmbeddedSignupConnections(string $oauthCode, string $appId, string $appSecret, int $limitSlots = 999, ?string $currentUrl = null, ?string $systemUserToken = null): array
     {
         // 1. Exchange code for access token
         $query = [
@@ -216,7 +216,12 @@ class WhatsAppConnectionService
         }
 
         $tokenData = $response->toArray();
-        $accessToken = $tokenData['access_token'];
+        $userAccessToken = $tokenData['access_token'];
+
+        // Use the System User Token for stored connections (long-lived), fall back to user token
+        $tokenForStorage = $systemUserToken ?: $userAccessToken;
+        // Use the user token for discovery (it has the user's permissions to list their WABAs)
+        $discoveryToken = $userAccessToken;
 
         // 2. Fetch WABAs owned or shared via this token
         $wabas = [];
@@ -225,7 +230,7 @@ class WhatsAppConnectionService
         try {
             $ownedResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/whatsapp_business_accounts', [
                 'headers' => [
-                    'Authorization' => "Bearer {$accessToken}"
+                    'Authorization' => "Bearer {$discoveryToken}"
                 ]
             ]);
             if ($ownedResponse->getStatusCode() === 200) {
@@ -242,7 +247,7 @@ class WhatsAppConnectionService
         try {
             $clientResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/client_whatsapp_business_accounts', [
                 'headers' => [
-                    'Authorization' => "Bearer {$accessToken}"
+                    'Authorization' => "Bearer {$discoveryToken}"
                 ]
             ]);
             if ($clientResponse->getStatusCode() === 200) {
@@ -260,6 +265,43 @@ class WhatsAppConnectionService
             // Silently ignore client fetch failure
         }
 
+        // Also try querying the user's businesses for shared WABAs
+        if (empty($wabas)) {
+            try {
+                $bizResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/businesses', [
+                    'headers' => [
+                        'Authorization' => "Bearer {$discoveryToken}"
+                    ],
+                    'query' => ['fields' => 'id,name']
+                ]);
+                if ($bizResponse->getStatusCode() === 200) {
+                    $bizData = $bizResponse->toArray();
+                    foreach (($bizData['data'] ?? []) as $biz) {
+                        try {
+                            $bizWabaResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$biz['id']}/owned_whatsapp_business_accounts", [
+                                'headers' => [
+                                    'Authorization' => "Bearer {$discoveryToken}"
+                                ]
+                            ]);
+                            if ($bizWabaResp->getStatusCode() === 200) {
+                                $bizWabaData = $bizWabaResp->toArray();
+                                $existingIds = array_column($wabas, 'id');
+                                foreach (($bizWabaData['data'] ?? []) as $waba) {
+                                    if (!in_array($waba['id'], $existingIds, true)) {
+                                        $wabas[] = $waba;
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            // Continue to next business
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Silently ignore businesses fetch failure
+            }
+        }
+
         if (empty($wabas)) {
             throw new \RuntimeException('No WhatsApp Business Accounts found. Please ensure you selected a business account during setup.');
         }
@@ -268,11 +310,25 @@ class WhatsAppConnectionService
 
         foreach ($wabas as $waba) {
             $wabaId = $waba['id'];
+
+            // Subscribe the App to the WABA's webhooks
+            try {
+                $this->httpClient->request('POST', "https://graph.facebook.com/v21.0/{$wabaId}/subscribed_apps", [
+                    'headers' => [
+                        'Authorization' => "Bearer {$tokenForStorage}"
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                // Silently continue
+            }
             
-            // Get phone numbers for this WABA
+            // Get phone numbers for this WABA with explicit fields
             $phonesResponse = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$wabaId}/phone_numbers", [
                 'headers' => [
-                    'Authorization' => "Bearer {$accessToken}"
+                    'Authorization' => "Bearer {$discoveryToken}"
+                ],
+                'query' => [
+                    'fields' => 'id,display_phone_number,verified_name,quality_rating'
                 ]
             ]);
 
@@ -282,13 +338,34 @@ class WhatsAppConnectionService
             foreach ($phones as $phone) {
                 $phoneNumberId = $phone['id'];
                 $displayPhoneNumber = $phone['display_phone_number'] ?? null;
-                $verifiedName = $phone['verified_name'] ?? $displayPhoneNumber ?? 'WhatsApp Connection';
+                $verifiedName = $phone['verified_name'] ?? null;
+
+                // If verified_name is missing, try fetching it directly
+                if (empty($verifiedName) && $phoneNumberId) {
+                    try {
+                        $directPhoneResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
+                            'query' => [
+                                'access_token' => $discoveryToken,
+                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                            ]
+                        ]);
+                        if ($directPhoneResp->getStatusCode() === 200) {
+                            $directData = $directPhoneResp->toArray();
+                            $verifiedName = $directData['verified_name'] ?? $verifiedName;
+                            $displayPhoneNumber = $directData['display_phone_number'] ?? $displayPhoneNumber;
+                        }
+                    } catch (\Exception $e) {
+                        // Use whatever we have
+                    }
+                }
+
+                $verifiedName = $verifiedName ?: ($displayPhoneNumber ?: 'WhatsApp Connection');
 
                 $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
                 if ($existing) {
-                    $conn = $this->updateConnection($existing->getId(), $wabaId, $accessToken, $phoneNumberId, $verifiedName, $displayPhoneNumber);
+                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForStorage, $phoneNumberId, $verifiedName, $displayPhoneNumber);
                 } else {
-                    $conn = $this->saveConnection($wabaId, $accessToken, $phoneNumberId, $verifiedName, $displayPhoneNumber);
+                    $conn = $this->saveConnection($wabaId, $tokenForStorage, $phoneNumberId, $verifiedName, $displayPhoneNumber);
                 }
                 $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName];
             }
