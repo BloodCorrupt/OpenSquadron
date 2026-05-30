@@ -125,6 +125,8 @@ class WhatsAppConnectionService
         $settings = $connection->getBotSettings() ?? [];
         if ($isSmbOnboarding) {
             $settings['is_smb'] = true;
+        } else {
+            unset($settings['is_smb']);
         }
         $connection->setBotSettings($settings);
 
@@ -172,6 +174,8 @@ class WhatsAppConnectionService
         $settings = $connection->getBotSettings() ?? [];
         if ($isSmbOnboarding) {
             $settings['is_smb'] = true;
+        } else {
+            unset($settings['is_smb']);
         }
         $connection->setBotSettings($settings);
 
@@ -495,21 +499,27 @@ class WhatsAppConnectionService
             $phonesData = $phonesResponse->toArray(false);
             $phones = $phonesData['data'] ?? [];
 
-            // If we have a hint phone number ID and the list is empty or doesn't contain it, fetch directly
-            if ($hintPhoneNumberId && empty(array_filter($phones, fn($p) => $p['id'] === $hintPhoneNumberId))) {
-                try {
-                    $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$hintPhoneNumberId}", [
-                        'query' => [
-                            'access_token' => $tokenForApi,
-                            'fields' => 'id,display_phone_number,verified_name,quality_rating'
-                        ]
-                    ]);
-                    if ($directResp->getStatusCode() === 200) {
-                        $directData = $directResp->toArray();
-                        $phones[] = $directData;
+            // If a hint ID is provided, ONLY process that specific phone number
+            if ($hintPhoneNumberId) {
+                $filteredPhones = array_filter($phones, fn($p) => $p['id'] == $hintPhoneNumberId);
+                if (!empty($filteredPhones)) {
+                    $phones = array_values($filteredPhones);
+                } else {
+                    $phones = [];
+                    try {
+                        $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$hintPhoneNumberId}", [
+                            'query' => [
+                                'access_token' => $tokenForApi,
+                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                            ]
+                        ]);
+                        if ($directResp->getStatusCode() === 200) {
+                            $directData = $directResp->toArray();
+                            $phones[] = $directData;
+                        }
+                    } catch (\Exception $e) {
+                        // Continue
                     }
-                } catch (\Exception $e) {
-                    // Continue with what we have
                 }
             }
 
@@ -545,11 +555,11 @@ class WhatsAppConnectionService
                 } else {
                     $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, true);
                 }
-                $syncedConnections[] = ['id' => $conn->getId(), 'name' => $verifiedName];
+                $syncedConnections[$conn->getId()] = ['id' => $conn->getId(), 'name' => $verifiedName];
             }
         }
 
-        return $syncedConnections;
+        return array_values($syncedConnections);
     }
 
     /**
