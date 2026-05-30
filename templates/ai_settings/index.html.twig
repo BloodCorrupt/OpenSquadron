@@ -1080,13 +1080,6 @@
         .then(data => {
             if (data.success) {
                 showToast(isActive ? 'Context activated successfully!' : 'Context deactivated successfully!', 'success');
-                if (isActive) {
-                    document.querySelectorAll('.context-active-checkbox').forEach(cb => {
-                        if (cb.getAttribute('data-context-id') != id) {
-                            cb.checked = false;
-                        }
-                    });
-                }
             } else {
                 showToast('Failed to toggle context active state: ' + (data.error || 'Unknown error'), 'error');
                 document.querySelector(`.context-active-checkbox[data-context-id="${id}"]`).checked = !isActive;
