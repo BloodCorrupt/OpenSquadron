@@ -428,6 +428,7 @@ class WhatsAppConnectionService
 
         // 2. Discover WABAs via /debug_token (using System User Token to inspect the user token)
         $wabaIds = [];
+        $grantedPhoneIds = [];
 
         try {
             $debugResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/debug_token', [
@@ -441,6 +442,9 @@ class WhatsAppConnectionService
                 foreach ($granularScopes as $scope) {
                     if ($scope['scope'] === 'whatsapp_business_management' && !empty($scope['target_ids'])) {
                         $wabaIds = array_merge($wabaIds, $scope['target_ids']);
+                    }
+                    if ($scope['scope'] === 'whatsapp_business_messaging' && !empty($scope['target_ids'])) {
+                        $grantedPhoneIds = array_merge($grantedPhoneIds, $scope['target_ids']);
                     }
                 }
             }
@@ -490,16 +494,16 @@ class WhatsAppConnectionService
                 // Continue
             }
 
-            // Get phone numbers with explicit fields
+            // Get phone numbers with explicit fields, including platform_type
             $phonesResponse = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$wabaId}/phone_numbers", [
                 'headers' => ['Authorization' => "Bearer {$tokenForApi}"],
-                'query' => ['fields' => 'id,display_phone_number,verified_name,quality_rating']
+                'query' => ['fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type']
             ]);
 
             $phonesData = $phonesResponse->toArray(false);
             $phones = $phonesData['data'] ?? [];
 
-            // If a hint ID is provided, ONLY process that specific phone number
+            // Filter phones strictly by what was granted or hinted
             if ($hintPhoneNumberId) {
                 $filteredPhones = array_filter($phones, fn($p) => $p['id'] == $hintPhoneNumberId);
                 if (!empty($filteredPhones)) {
@@ -510,7 +514,7 @@ class WhatsAppConnectionService
                         $directResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$hintPhoneNumberId}", [
                             'query' => [
                                 'access_token' => $tokenForApi,
-                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                                'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
                             ]
                         ]);
                         if ($directResp->getStatusCode() === 200) {
@@ -521,6 +525,10 @@ class WhatsAppConnectionService
                         // Continue
                     }
                 }
+            } elseif (!empty($grantedPhoneIds)) {
+                // Strictly filter to ONLY the phones explicitly granted in this exact session!
+                $filteredPhones = array_filter($phones, fn($p) => in_array($p['id'], $grantedPhoneIds));
+                $phones = array_values($filteredPhones);
             }
 
             foreach ($phones as $phone) {
@@ -534,13 +542,14 @@ class WhatsAppConnectionService
                         $indivResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
                             'query' => [
                                 'access_token' => $tokenForApi,
-                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                                'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
                             ]
                         ]);
                         if ($indivResp->getStatusCode() === 200) {
                             $indivData = $indivResp->toArray();
                             $verifiedName = $indivData['verified_name'] ?? $verifiedName;
                             $displayPhoneNumber = $indivData['display_phone_number'] ?? $displayPhoneNumber;
+                            $phone['platform_type'] = $indivData['platform_type'] ?? ($phone['platform_type'] ?? null);
                         }
                     } catch (\Exception $e) {
                         // Use whatever we have
@@ -549,13 +558,16 @@ class WhatsAppConnectionService
 
                 $verifiedName = $verifiedName ?: ($displayPhoneNumber ?: 'WhatsApp Connection');
 
+                $isSmbActual = isset($phone['platform_type']) ? ($phone['platform_type'] === 'SMB') : true;
+
                 $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
                 if ($existing) {
                     $existingSettings = $existing->getBotSettings() ?? [];
-                    $isSmb = $existingSettings['is_smb'] ?? false;
+                    // Use platform_type if available, otherwise preserve existing
+                    $isSmb = isset($phone['platform_type']) ? $isSmbActual : ($existingSettings['is_smb'] ?? false);
                     $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
                 } else {
-                    $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, true);
+                    $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, $isSmbActual);
                 }
                 $syncedConnections[$conn->getId()] = ['id' => $conn->getId(), 'name' => $verifiedName];
             }
