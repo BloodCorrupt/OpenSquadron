@@ -1260,13 +1260,17 @@ function selectPhoneItem(el, connId) {
 function closePhoneSelectModal() {
     document.getElementById('phoneSelectOverlay').classList.remove('active');
     // Delete ALL saved connections since user cancelled
-    pendingConnections.forEach(conn => {
+    const deletePromises = pendingConnections.map(conn => {
         const deleteUrl = "{{ path('whatsapp_connect_delete', {id: '999999999'}) }}".replace('999999999', conn.id);
-        fetch(deleteUrl, { method: 'POST' }).catch(() => {});
+        return fetch(deleteUrl, { method: 'POST' }).catch(() => {});
     });
+    
+    Promise.all(deletePromises).then(() => {
+        refreshConnectionsSection();
+    });
+    
     pendingConnections = [];
     selectedConnectionId = null;
-    refreshConnectionsSection();
 }
 
 document.getElementById('phoneSelectConfirmBtn').addEventListener('click', function() {
