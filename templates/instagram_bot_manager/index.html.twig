@@ -2264,7 +2264,7 @@
 {% endblock %}
 
 {% block body %}
-<div class="manager-shell">
+<div class="manager-shell"{% if connections is empty %} style="grid-template-columns: 1fr;"{% endif %}>
     {# â”€â”€â”€â”€â”€â”€â”€â”€â”€ Left Sidebar Navigation (Logical Groups) â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
     {% if connections is not empty %}
     <div class="manager-nav">
@@ -2424,6 +2424,7 @@
             <span>Whitelisted Domains</span>
         </div>
     </div>
+    {% endif %}
 
     {# â”€â”€â”€â”€â”€â”€â”€â”€â”€ Right Content Panels â”€â”€â”€â”€â”€â”€â”€â”€â”€ #}
 

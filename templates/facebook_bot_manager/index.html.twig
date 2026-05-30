@@ -2262,7 +2262,7 @@
 {% endblock %}
 
 {% block body %}
-<div class="manager-shell">
+<div class="manager-shell"{% if connections is empty %} style="grid-template-columns: 1fr;"{% endif %}>
     {# ───────── Left Sidebar Navigation (Logical Groups) ───────── #}
     {% if connections is not empty %}
     <div class="manager-nav">
