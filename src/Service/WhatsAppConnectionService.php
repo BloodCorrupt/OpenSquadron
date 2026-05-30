@@ -551,7 +551,9 @@ class WhatsAppConnectionService
 
                 $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
                 if ($existing) {
-                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, true);
+                    $existingSettings = $existing->getBotSettings() ?? [];
+                    $isSmb = $existingSettings['is_smb'] ?? false;
+                    $conn = $this->updateConnection($existing->getId(), $wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, $isSmb);
                 } else {
                     $conn = $this->saveConnection($wabaId, $tokenForApi, $phoneNumberId, $verifiedName, $displayPhoneNumber, null, true);
                 }

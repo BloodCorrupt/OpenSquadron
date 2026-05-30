@@ -976,7 +976,7 @@
                             if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
                             
                             if (apiData.connections && apiData.connections.length > 0) {
-                                registerConnection(apiData.connections[0].id);
+                                // Do not auto-popup register for Business App flow
                             }
                         });
                 } else {
@@ -1043,9 +1043,23 @@
                 }
             } else if (response.authResponse.code) {
                 capturedCode = response.authResponse.code;
-                // Try to send — if WA_EMBEDDED_SIGNUP already fired, we have IDs
-                // If not (Business App flow), send code alone — backend uses /debug_token
-                setTimeout(() => { trySendToBackend(); }, 500);
+                // Wait for WA_EMBEDDED_SIGNUP to provide IDs (up to 3 seconds)
+                let attempts = 0;
+                const checkInterval = setInterval(() => {
+                    if (ajaxFlowStarted) {
+                        clearInterval(checkInterval);
+                        return;
+                    }
+                    if (capturedPhoneNumberId) {
+                        clearInterval(checkInterval);
+                        trySendToBackend();
+                    } else if (attempts >= 6) {
+                        // 3 seconds passed, send whatever we have
+                        clearInterval(checkInterval);
+                        trySendToBackend();
+                    }
+                    attempts++;
+                }, 500);
             }
         }, {
             config_id: '{{ waConfigId }}',
