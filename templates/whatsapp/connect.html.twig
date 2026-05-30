@@ -877,7 +877,7 @@
 
         // Listen for the postMessage event from the popup
         const messageListener = (event) => {
-            if (event.origin !== "https://www.facebook.com" && event.origin !== "https://web.facebook.com") return;
+            if (!event.origin.includes("facebook.com")) return;
             
             try {
                 const data = JSON.parse(event.data);
@@ -951,7 +951,21 @@
         window.addEventListener('message', messageListener);
 
         FB.login(function(response) {
-            // We ignore the response here because the postMessage event handles it
+            // If response has no authResponse, the user closed the popup or it was blocked
+            if (!response.authResponse) {
+                if (typeof showToast === 'function') { showToast('Authentication cancelled or popup blocked.', 'error'); }
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                window.removeEventListener('message', messageListener);
+            } else if (response.authResponse.code) {
+                // If we get an OAuth code but the postMessage hasn't fired yet, fallback to the OAuth code flow
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
+                
+                // Add a small timeout to allow postMessage to fire first if it's just delayed
+                setTimeout(() => {
+                    window.location.href = window.location.pathname + '?code=' + response.authResponse.code;
+                }, 1500);
+            }
         }, {
             config_id: '{{ waConfigId }}',
             response_type: 'code',
