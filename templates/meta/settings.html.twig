@@ -582,7 +582,7 @@
             {# ─── WhatsApp Sub-pane: API Integration ─── #}
             <div class="fb-settings-subpane" id="fb-subpane-wa-api-integration" style="display: none; width: 100%;">
                 <div style="background: rgba(37, 211, 102, 0.06); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">
-                    <strong style="color: #25D366;">💡 Connection Setup:</strong> Enter your WhatsApp App credentials below. You must complete all fields to enable embedded signup.
+                    <strong style="color: #25D366;">💡 Connection Setup:</strong> Enter your WhatsApp App credentials below. You must complete all fields to enable Meta onboarding.
                 </div>
                 
                 <form id="wa-embedded-signup-form" onsubmit="saveWhatsappEmbeddedSignup(event)" style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
@@ -622,13 +622,13 @@
                     {# WhatsApp Configuration Card #}
                     <div style="background: rgba(15, 23, 42, 0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                         <h3 style="font-size: 14px; font-weight: 600; color: #f8fafc; margin: 0 0 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
-                            Embedded Signup & Access
+                            Meta Onboarding & Access
                         </h3>
 
                         <div class="form-group">
                             <label class="form-label">Configuration ID <span>*</span></label>
                             <input type="text" name="whatsappConfigId" class="form-control" value="{{ setting.whatsappConfigId }}" placeholder="e.g. 1234567890123456" required autocomplete="off">
-                            <p class="form-hint">The Configuration ID used to initiate the embedded signup flow.</p>
+                            <p class="form-hint">The Configuration ID used to initiate the Meta onboarding flow.</p>
                         </div>
 
                         <div class="form-group">
@@ -735,7 +735,7 @@
     const TAB_META = {
         'api-config':          { title: 'API Configuration',        desc: 'Configure global Meta API credentials for workspace integrations.',                                icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>' },
         'webhook-endpoints':   { title: 'Webhook & Endpoints',      desc: 'Copy Callback URLs and verify tokens to complete your Meta App Developer setup.',                    icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>' },
-        'wa-api-integration':  { title: 'WhatsApp API Integration', desc: 'Configure your WhatsApp integration credentials to enable Embedded Signup and messaging.',           icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9"></path><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1"></path></svg>' },
+        'wa-api-integration':  { title: 'WhatsApp API Integration', desc: 'Configure your WhatsApp integration credentials to enable Meta Onboarding and messaging.',           icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9"></path><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1"></path></svg>' },
         'wa-webhook-endpoints':{ title: 'WhatsApp Webhooks',        desc: 'Copy WhatsApp-specific webhook callback URLs for your Meta App Developer setup.',                  icon: '<svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>' },
     };
 
