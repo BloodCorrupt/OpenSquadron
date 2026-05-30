@@ -97,12 +97,11 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $this->assertTrue($data['success']);
         $this->assertSame('Settings saved successfully.', $data['message']);
 
-        // Verify JSON file is stored and contains saved values
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        $file = $dir . "/conn_{$connection->getId()}.json";
-        $this->assertFileExists($file);
-        
-        $savedContent = json_decode(file_get_contents($file), true);
+        // Verify database is updated and contains saved values
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->clear();
+        $updatedConnection = $em->getRepository(FacebookConnection::class)->find($connection->getId());
+        $savedContent = $updatedConnection->getBotSettings();
         $this->assertTrue($savedContent['copilot-settings']['enableIntentRouting']);
         $this->assertSame('test_campaign', $savedContent['copilot-settings']['intentCampaign']);
     }
@@ -244,12 +243,11 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertTrue($data['success']);
 
-        // Verify JSON file is stored and contains saved values
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        $file = $dir . "/conn_{$connection->getId()}.json";
-        $this->assertFileExists($file);
-        
-        $savedContent = json_decode(file_get_contents($file), true);
+        // Verify database is updated and contains saved values
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->clear();
+        $updatedConnection = $em->getRepository(FacebookConnection::class)->find($connection->getId());
+        $savedContent = $updatedConnection->getBotSettings();
         $this->assertCount(2, $savedContent['persistent-menu']);
         $this->assertSame('🏠 Home Portal', $savedContent['persistent-menu'][0]['title']);
         $this->assertSame('web_url', $savedContent['persistent-menu'][1]['type']);
@@ -300,12 +298,11 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $this->assertSame('🏠 Synced Home', $data['data'][0]['title']);
         $this->assertSame('SYNCED_HOME_PAYLOAD', $data['data'][0]['payload']);
 
-        // Verify it was saved to the JSON file
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        $file = $dir . "/conn_{$connection->getId()}.json";
-        $this->assertFileExists($file);
-        
-        $savedContent = json_decode(file_get_contents($file), true);
+        // Verify it was saved to the database
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->clear();
+        $updatedConnection = $em->getRepository(FacebookConnection::class)->find($connection->getId());
+        $savedContent = $updatedConnection->getBotSettings();
         $this->assertSame('🏠 Synced Home', $savedContent['persistent-menu'][0]['title']);
     }
 
@@ -350,12 +347,11 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertTrue($data['success']);
 
-        // Verify JSON file is stored and contains saved values
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        $file = $dir . "/conn_{$connection->getId()}.json";
-        $this->assertFileExists($file);
-        
-        $savedContent = json_decode(file_get_contents($file), true);
+        // Verify database is updated and contains saved values
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->clear();
+        $updatedConnection = $em->getRepository(FacebookConnection::class)->find($connection->getId());
+        $savedContent = $updatedConnection->getBotSettings();
         $this->assertSame('Testing interactive hello screen greeting!', $savedContent['welcome-screen']['greetingText']);
         $this->assertSame('HELLO_GREETING_PAYLOAD', $savedContent['welcome-screen']['getStartedPayload']);
         $this->assertSame('enabled', $savedContent['welcome-screen']['getStartedStatus']);
@@ -420,12 +416,11 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $this->assertCount(2, $data['data']['iceBreakers']);
         $this->assertSame('Synced FAQ 1', $data['data']['iceBreakers'][0]['question']);
 
-        // Verify it was saved to the JSON file
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        $file = $dir . "/conn_{$connection->getId()}.json";
-        $this->assertFileExists($file);
-        
-        $savedContent = json_decode(file_get_contents($file), true);
+        // Verify it was saved to the database
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->clear();
+        $updatedConnection = $em->getRepository(FacebookConnection::class)->find($connection->getId());
+        $savedContent = $updatedConnection->getBotSettings();
         $this->assertSame('Welcome Synced greeting text!', $savedContent['welcome-screen']['greetingText']);
     }
 
@@ -450,12 +445,9 @@ class FacebookBotManagerControllerTest extends WebTestCase
 
         $connection = $this->createAndLoginAdmin($client);
 
-        // 2. Pre-populate local settings with some draft values
-        $dir = __DIR__ . '/../../var/facebook_bot_settings';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $file = $dir . "/conn_{$connection->getId()}.json";
+        // 2. Pre-populate database settings with some draft values
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $connectionEntity = $em->getRepository(FacebookConnection::class)->find($connection->getId());
         $localSettings = [
             'welcome-screen' => [
                 'showGreeting' => true,
@@ -468,7 +460,8 @@ class FacebookBotManagerControllerTest extends WebTestCase
                 ]
             ]
         ];
-        file_put_contents($file, json_encode($localSettings, JSON_PRETTY_PRINT));
+        $connectionEntity->setBotSettings($localSettings);
+        $em->flush();
 
         // 3. Trigger sync
         $client->request('POST', '/facebook-bot-manager/sync-welcome-screen', [
@@ -489,8 +482,10 @@ class FacebookBotManagerControllerTest extends WebTestCase
         $this->assertCount(1, $data['data']['iceBreakers']);
         $this->assertSame('My Draft FAQ', $data['data']['iceBreakers'][0]['question']);
 
-        // Verify the file content
-        $savedContent = json_decode(file_get_contents($file), true);
+        // Verify the database content
+        $em->clear();
+        $updatedConnection = $em->getRepository(FacebookConnection::class)->find($connection->getId());
+        $savedContent = $updatedConnection->getBotSettings();
         $this->assertSame('Custom Local Draft Text', $savedContent['welcome-screen']['greetingText']);
         $this->assertSame('FLOW_ID_999', $savedContent['welcome-screen']['getStartedPayload']);
     }

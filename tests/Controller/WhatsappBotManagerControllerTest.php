@@ -105,12 +105,11 @@ class WhatsappBotManagerControllerTest extends WebTestCase
         $this->assertTrue($data['success']);
         $this->assertSame('Settings saved successfully.', $data['message']);
 
-        // Verify JSON file is stored and contains saved values
-        $dir = __DIR__ . '/../../var/whatsapp_bot_settings';
-        $file = $dir . "/conn_{$connection->getId()}.json";
-        $this->assertFileExists($file);
-        
-        $savedContent = json_decode(file_get_contents($file), true);
+        // Verify database is updated and contains saved values
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->clear();
+        $updatedConnection = $em->getRepository(WhatsAppConnection::class)->find($connection->getId());
+        $savedContent = $updatedConnection->getBotSettings();
         $this->assertTrue($savedContent['ecommerce-automations']['abandonedCartActive']);
         $this->assertSame('15 minutes', $savedContent['ecommerce-automations']['abandonedCartDelay']);
         $this->assertSame('custom_cart_reminder', $savedContent['ecommerce-automations']['abandonedCartTemplate']);

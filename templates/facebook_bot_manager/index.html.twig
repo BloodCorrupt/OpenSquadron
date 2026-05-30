@@ -5304,6 +5304,7 @@
         {% endfor %}
     ];
     let activeConnectionId = '{{ connection ? connection.id : "" }}';
+    const tz = '{{ settings['business-hours']['timezone']|default('UTC') }}';
     let pageCommentSettings = {{ settings['comment-automation']|default(null)|json_encode|raw }};
     let postbacks = {{ settings['postbacks']|default([])|json_encode|raw }};
     let marketingMessages = {{ settings['marketing-messages']|default([])|json_encode|raw }};
@@ -8839,7 +8840,7 @@
             awayMessage: ''
         };
         
-        fetch('/facebook-bot-manager/save-settings', {
+        fetch('{{ path('app_facebook_bot_save_settings') }}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -8851,7 +8852,7 @@
             if (res.success) {
                 const wlEnabled = document.getElementById('wl-enabled').checked;
                 const wlNumbers = document.getElementById('wl-numbers').value;
-                fetch('/facebook-bot-manager/save-settings', {
+                fetch('{{ path('app_facebook_bot_save_settings') }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
@@ -8863,7 +8864,7 @@
                     if (res2.success) {
                         const blEnabled = document.getElementById('bl-enabled').checked;
                         const blNumbers = document.getElementById('bl-numbers').value;
-                        fetch('/facebook-bot-manager/save-settings', {
+                        fetch('{{ path('app_facebook_bot_save_settings') }}', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({
