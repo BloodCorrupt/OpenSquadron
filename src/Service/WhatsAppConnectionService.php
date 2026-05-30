@@ -631,7 +631,10 @@ class WhatsAppConnectionService
                 $verifiedName = $phone['verified_name'] ?? null;
 
                 // Fetch platform_type individually
-                $platformType = 'CLOUD_API';
+                // IMPORTANT: SMB/Business App numbers do NOT return platform_type field.
+                // Cloud API numbers return platform_type=CLOUD_API.
+                // So if platform_type is absent → it's SMB.
+                $platformType = null;
                 try {
                     $indivResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
                         'query' => [
@@ -639,18 +642,40 @@ class WhatsAppConnectionService
                             'fields' => 'id,display_phone_number,verified_name,quality_rating,platform_type'
                         ]
                     ]);
+                    $indivData = $indivResp->toArray(false);
+                    $this->debugLog("STANDARD PATH: individual phone fetch id={$phoneNumberId} status=" . $indivResp->getStatusCode() . " data=" . json_encode($indivData));
+
                     if ($indivResp->getStatusCode() === 200) {
-                        $indivData = $indivResp->toArray();
                         $verifiedName = $indivData['verified_name'] ?? $verifiedName;
                         $displayPhoneNumber = $indivData['display_phone_number'] ?? $displayPhoneNumber;
-                        $platformType = $indivData['platform_type'] ?? $platformType;
+                        $platformType = $indivData['platform_type'] ?? null;
                     }
                 } catch (\Exception $e) {
-                    // Use whatever we have
+                    $this->debugLog("STANDARD PATH: individual phone fetch EXCEPTION for id={$phoneNumberId}: " . $e->getMessage());
+                    // If the individual fetch fails entirely, try without platform_type
+                    try {
+                        $fallbackResp = $this->httpClient->request('GET', "https://graph.facebook.com/v21.0/{$phoneNumberId}", [
+                            'query' => [
+                                'access_token' => $systemUserToken,
+                                'fields' => 'id,display_phone_number,verified_name,quality_rating'
+                            ]
+                        ]);
+                        if ($fallbackResp->getStatusCode() === 200) {
+                            $fallbackData = $fallbackResp->toArray();
+                            $verifiedName = $fallbackData['verified_name'] ?? $verifiedName;
+                            $displayPhoneNumber = $fallbackData['display_phone_number'] ?? $displayPhoneNumber;
+                        }
+                    } catch (\Exception $e2) {
+                        // Use whatever we have from the edge query
+                    }
                 }
 
                 $verifiedName = $verifiedName ?: ($displayPhoneNumber ?: 'WhatsApp Connection');
+
+                // If platform_type is explicitly CLOUD_API → Cloud API number
+                // If platform_type is absent/null or anything else → SMB/Business App
                 $isSmb = ($platformType !== 'CLOUD_API');
+                $this->debugLog("STANDARD PATH: phone id={$phoneNumberId} platformType=" . ($platformType ?? 'NULL') . " isSmb=" . ($isSmb ? 'true' : 'false'));
 
                 $existing = $this->getConnectionByPhoneNumberId($phoneNumberId);
                 $isNew = !$existing;
@@ -671,7 +696,7 @@ class WhatsAppConnectionService
                     'needsRegistration' => $needsRegistration,
                     'isSmb' => $isSmb
                 ];
-                $this->debugLog("STANDARD PATH: saved phone id={$phoneNumberId} connId={$conn->getId()}");
+                $this->debugLog("STANDARD PATH: saved phone id={$phoneNumberId} connId={$conn->getId()} isSmb=" . ($isSmb ? 'true' : 'false') . " needsReg=" . ($needsRegistration ? 'true' : 'false'));
             }
         }
 
