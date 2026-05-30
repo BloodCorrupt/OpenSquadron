@@ -879,72 +879,74 @@
         const messageListener = (event) => {
             if (!event.origin.includes("facebook.com")) return;
             
-            try {
-                const data = JSON.parse(event.data);
-                if (data.type === 'WA_EMBEDDED_SIGNUP') {
-                    if (data.event === 'FINISH') {
-                        const wabaId = data.data.waba_id;
-                        const phoneNumberId = data.data.phone_number_id;
+            let data;
+            if (typeof event.data === 'string') {
+                try { data = JSON.parse(event.data); } catch (e) { return; }
+            } else {
+                data = event.data;
+            }
 
-                        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
+            if (data && data.type === 'WA_EMBEDDED_SIGNUP') {
+                if (data.event === 'FINISH') {
+                    const wabaId = data.data.waba_id;
+                    const phoneNumberId = data.data.phone_number_id;
 
-                        const formData = new FormData();
-                        formData.append('wabaId', wabaId);
-                        formData.append('phoneNumberId', phoneNumberId);
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
 
-                        fetch('{{ path('whatsapp_connect_embedded_callback') }}', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(res => res.json())
-                        .then(apiData => {
-                            if (apiData.success) {
-                                if (typeof showToast === 'function') { showToast(apiData.message, 'success'); }
-                                btn.innerHTML = originalHtml;
-                                btn.disabled = false;
-                                
-                                // Fetch updated DOM seamlessly
-                                fetch(window.location.href)
-                                    .then(res => res.text())
-                                    .then(html => {
-                                        const parser = new DOMParser();
-                                        const doc = parser.parseFromString(html, 'text/html');
-                                        const newSection = doc.querySelector('.connections-section');
-                                        const oldSection = document.querySelector('.connections-section');
-                                        if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
-                                        
-                                        // Once DOM is updated, prompt for custom PIN
-                                        if (apiData.connections && apiData.connections.length > 0) {
-                                            registerConnection(apiData.connections[0].id);
-                                        }
-                                    });
-                            } else {
-                                if (typeof showToast === 'function') { showToast(apiData.error || 'Failed to save connection.', 'error'); }
-                                btn.disabled = false;
-                                btn.innerHTML = originalHtml;
-                            }
-                        })
-                        .catch(err => {
-                            if (typeof showToast === 'function') { showToast('An error occurred during save.', 'error'); }
+                    const formData = new FormData();
+                    formData.append('wabaId', wabaId);
+                    formData.append('phoneNumberId', phoneNumberId);
+
+                    fetch('{{ path('whatsapp_connect_embedded_callback') }}', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(apiData => {
+                        if (apiData.success) {
+                            if (typeof showToast === 'function') { showToast(apiData.message, 'success'); }
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                            
+                            // Fetch updated DOM seamlessly
+                            fetch(window.location.href)
+                                .then(res => res.text())
+                                .then(html => {
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    const newSection = doc.querySelector('.connections-section');
+                                    const oldSection = document.querySelector('.connections-section');
+                                    if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
+                                    
+                                    // Once DOM is updated, prompt for custom PIN
+                                    if (apiData.connections && apiData.connections.length > 0) {
+                                        registerConnection(apiData.connections[0].id);
+                                    }
+                                });
+                        } else {
+                            if (typeof showToast === 'function') { showToast(apiData.error || 'Failed to save connection.', 'error'); }
                             btn.disabled = false;
                             btn.innerHTML = originalHtml;
-                        });
+                        }
+                    })
+                    .catch(err => {
+                        if (typeof showToast === 'function') { showToast('An error occurred during save.', 'error'); }
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    });
 
-                        window.removeEventListener('message', messageListener);
-                    } else if (data.event === 'CANCEL') {
-                        if (typeof showToast === 'function') { showToast('Authentication cancelled.', 'error'); }
-                        btn.disabled = false;
-                        btn.innerHTML = originalHtml;
-                        window.removeEventListener('message', messageListener);
-                    } else if (data.event === 'ERROR') {
-                        if (typeof showToast === 'function') { showToast('An error occurred during setup.', 'error'); }
-                        btn.disabled = false;
-                        btn.innerHTML = originalHtml;
-                        window.removeEventListener('message', messageListener);
-                    }
+                    window.removeEventListener('message', messageListener);
+                } else if (data.event === 'CANCEL') {
+                    if (typeof showToast === 'function') { showToast('Authentication cancelled.', 'error'); }
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    window.removeEventListener('message', messageListener);
+                } else if (data.event === 'ERROR') {
+                    if (typeof showToast === 'function') { showToast('An error occurred during setup.', 'error'); }
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    window.removeEventListener('message', messageListener);
                 }
-            } catch (e) {
-                // Ignore other messages
             }
         };
 
@@ -957,15 +959,8 @@
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
                 window.removeEventListener('message', messageListener);
-            } else if (response.authResponse.code) {
-                // If we get an OAuth code but the postMessage hasn't fired yet, fallback to the OAuth code flow
-                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
-                
-                // Add a small timeout to allow postMessage to fire first if it's just delayed
-                setTimeout(() => {
-                    window.location.href = window.location.pathname + '?code=' + response.authResponse.code;
-                }, 1500);
             }
+            // If successful, do nothing. The postMessage handler (messageListener) will process the waba_id.
         }, {
             config_id: '{{ waConfigId }}',
             response_type: 'code',
