@@ -877,7 +877,7 @@
 
         // Listen for the postMessage event from the popup
         const messageListener = (event) => {
-            if (!event.origin.includes("facebook.com")) return;
+            if (!event.origin.includes("facebook.com") && !event.origin.includes("whatsapp.com")) return;
             
             let data;
             if (typeof event.data === 'string') {
