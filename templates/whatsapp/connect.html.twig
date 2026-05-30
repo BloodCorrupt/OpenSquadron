@@ -815,7 +815,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; color: var(--primary-accent);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             Register Phone Number
         </div>
-        <div class="pin-modal-desc">
+        <div class="pin-modal-desc" id="pinModalDesc">
             Enter a 6-digit PIN to register this phone number on the Meta network (or to re-register). If this is a new number, make up a secure 6-digit PIN.
         </div>
         <input type="text" id="pinModalInput" class="pin-modal-input" placeholder="••••••" maxlength="6" autocomplete="off" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
@@ -930,7 +930,15 @@
                             if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
                             
                             if (apiData.connections && apiData.connections.length > 0) {
-                                registerConnection(apiData.connections[0].id);
+                                const needsReg = apiData.connections.find(c => c.needsRegistration);
+                                if (needsReg || apiData.connections.length === 1) {
+                                    const target = needsReg || apiData.connections[0];
+                                    const desc = document.getElementById('pinModalDesc');
+                                    if (desc) {
+                                        desc.innerHTML = `Enter a 6-digit PIN to register <strong style="color:var(--primary-accent)">${target.phone || target.name}</strong> on the Meta network. If this is a new number, make up a secure 6-digit PIN.`;
+                                    }
+                                    registerConnection(target.id);
+                                }
                             }
                         });
                 } else {
@@ -976,7 +984,14 @@
                             if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
                             
                             if (apiData.connections && apiData.connections.length > 0) {
-                                // Do not auto-popup register for Business App flow
+                                const needsReg = apiData.connections.find(c => c.needsRegistration);
+                                if (needsReg) {
+                                    const desc = document.getElementById('pinModalDesc');
+                                    if (desc) {
+                                        desc.innerHTML = `Enter a 6-digit PIN to register <strong style="color:var(--primary-accent)">${needsReg.phone || needsReg.name}</strong> on the Meta network. If this is a new number, make up a secure 6-digit PIN.`;
+                                    }
+                                    registerConnection(needsReg.id);
+                                }
                             }
                         });
                 } else {

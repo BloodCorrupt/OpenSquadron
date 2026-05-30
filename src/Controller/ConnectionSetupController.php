@@ -360,7 +360,7 @@ class ConnectionSetupController extends AbstractController
             return $this->json([
                 'success' => true,
                 'message' => 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $names),
-                'connections' => $syncedNames
+                'connections' => array_values($syncedNames)
             ]);
 
         } catch (\Exception $e) {
