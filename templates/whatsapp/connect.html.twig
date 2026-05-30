@@ -875,11 +875,12 @@
 
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Waiting for Meta...</span>';
 
+        let fallbackTimeout;
+        let ajaxFlowStarted = false;
+
         // Listen for the postMessage event from the popup
         const messageListener = (event) => {
             if (!event.origin.includes("facebook.com") && !event.origin.includes("whatsapp.com")) return;
-            
-            if (typeof fallbackTimeout !== 'undefined') clearTimeout(fallbackTimeout);
 
             let data;
             if (typeof event.data === 'string') {
@@ -890,7 +891,12 @@
 
             // Handle standard WA_EMBEDDED_SIGNUP events
             if (data && data.type === 'WA_EMBEDDED_SIGNUP') {
+                if (typeof fallbackTimeout !== 'undefined') {
+                    clearTimeout(fallbackTimeout);
+                }
+
                 if (data.event === 'FINISH') {
+                    ajaxFlowStarted = true;
                     const payload = data.data || data;
                     const wabaId = payload.waba_id;
                     const phoneNumberId = payload.phone_number_id;
@@ -941,11 +947,13 @@
 
                     window.removeEventListener('message', messageListener);
                 } else if (data.event === 'CANCEL') {
+                    ajaxFlowStarted = true;
                     if (typeof showToast === 'function') { showToast('Authentication cancelled.', 'error'); }
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
                     window.removeEventListener('message', messageListener);
                 } else if (data.event === 'ERROR') {
+                    ajaxFlowStarted = true;
                     if (typeof showToast === 'function') { showToast('An error occurred during setup.', 'error'); }
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
@@ -956,8 +964,6 @@
 
         window.addEventListener('message', messageListener);
 
-        let fallbackTimeout;
-
         FB.login(function(response) {
             // If response has no authResponse, the user closed the popup or it was blocked
             if (!response.authResponse) {
@@ -966,12 +972,16 @@
                 btn.innerHTML = originalHtml;
                 window.removeEventListener('message', messageListener);
             } else if (response.authResponse.code) {
+                if (ajaxFlowStarted) return;
+
                 // For Coexistence (WhatsApp Business App Onboarding), postMessage might not fire.
                 // We capture the code and fallback to server-side Code Exchange after 2 seconds.
                 btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
                 
                 fallbackTimeout = setTimeout(() => {
-                    window.location.href = window.location.pathname + '?code=' + response.authResponse.code;
+                    if (!ajaxFlowStarted) {
+                        window.location.href = window.location.pathname + '?code=' + response.authResponse.code;
+                    }
                 }, 2000);
             }
         }, {
