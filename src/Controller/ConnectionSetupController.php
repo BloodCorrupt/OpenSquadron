@@ -31,32 +31,35 @@ class ConnectionSetupController extends AbstractController
                 $user = $this->getUser();
                 $metaSetting = $this->facebookService->getEffectiveSetting();
                 
-                if ($metaSetting && $metaSetting->getAppId() && $metaSetting->getEncryptedAppSecret()) {
-                    $appId = $metaSetting->getAppId();
-                    $appSecret = $this->facebookService->decryptToken($metaSetting->getEncryptedAppSecret());
-                    
-                    if (!$this->usageService->canAddBot($user)) {
-                        $this->addFlash('error', 'Bot connection limit reached. Upgrade your subscription.');
-                    } else {
-                        $usage = $this->usageService->getBotUsage($user);
-                        $availableSlots = (in_array($user->getAccountType(), ['super_admin', 'admin'], true) || $usage['limit'] === 0) ? 9999 : max(1, $usage['limit'] - $usage['current']);
-                        $scheme = $request->getScheme();
-                        if ($request->headers->has('X-Forwarded-Proto')) {
-                            $scheme = $request->headers->get('X-Forwarded-Proto');
-                        }
-                        $scheme = strtolower($scheme) === 'https' ? 'https' : 'http';
+                if ($metaSetting) {
+                    $appId = $metaSetting->getWhatsappAppId() ?: $metaSetting->getAppId();
+                    $encryptedSecret = $metaSetting->getWhatsappEncryptedAppSecret() ?: $metaSetting->getEncryptedAppSecret();
+                    $appSecret = $encryptedSecret ? $this->facebookService->decryptToken($encryptedSecret) : null;
 
-                        $host = $request->getHttpHost();
-                        if ($request->headers->has('X-Forwarded-Host')) {
-                            $host = $request->headers->get('X-Forwarded-Host');
-                        }
-
-                        $currentUrl = $scheme . '://' . $host . $request->getPathInfo();
-                        $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots, $currentUrl);
-                        if (!empty($syncedNames)) {
-                            $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $syncedNames));
+                    if ($appId && $appSecret) {
+                        if (!$this->usageService->canAddBot($user)) {
+                            $this->addFlash('error', 'Bot connection limit reached. Upgrade your subscription.');
                         } else {
-                            $this->addFlash('error', 'No valid phone numbers found for the connected Meta account.');
+                            $usage = $this->usageService->getBotUsage($user);
+                            $availableSlots = (in_array($user->getAccountType(), ['super_admin', 'admin'], true) || $usage['limit'] === 0) ? 9999 : max(1, $usage['limit'] - $usage['current']);
+                            $scheme = $request->getScheme();
+                            if ($request->headers->has('X-Forwarded-Proto')) {
+                                $scheme = $request->headers->get('X-Forwarded-Proto');
+                            }
+                            $scheme = strtolower($scheme) === 'https' ? 'https' : 'http';
+
+                            $host = $request->getHttpHost();
+                            if ($request->headers->has('X-Forwarded-Host')) {
+                                $host = $request->headers->get('X-Forwarded-Host');
+                            }
+
+                            $currentUrl = $scheme . '://' . $host . $request->getPathInfo();
+                            $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots, $currentUrl);
+                            if (!empty($syncedNames)) {
+                                $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $syncedNames));
+                            } else {
+                                $this->addFlash('error', 'No valid phone numbers found for the connected Meta account.');
+                            }
                         }
                     }
                 }
