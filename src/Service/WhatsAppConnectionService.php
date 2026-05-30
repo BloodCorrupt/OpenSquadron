@@ -218,20 +218,48 @@ class WhatsAppConnectionService
         $tokenData = $response->toArray();
         $accessToken = $tokenData['access_token'];
 
-        // 2. Fetch WABAs shared via this token
-        $wabaResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/client_whatsapp_business_accounts', [
-            'headers' => [
-                'Authorization' => "Bearer {$accessToken}"
-            ]
-        ]);
+        // 2. Fetch WABAs owned or shared via this token
+        $wabas = [];
 
-        $wabaData = $wabaResponse->toArray(false);
-        if ($wabaResponse->getStatusCode() >= 400) {
-            // Fallback: maybe it's not a client WABA, try normal accounts
-            $wabaData['data'] = [];
+        // Try querying owned accounts (whatsapp_business_accounts)
+        try {
+            $ownedResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/whatsapp_business_accounts', [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}"
+                ]
+            ]);
+            if ($ownedResponse->getStatusCode() === 200) {
+                $ownedData = $ownedResponse->toArray();
+                if (!empty($ownedData['data'])) {
+                    $wabas = array_merge($wabas, $ownedData['data']);
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently ignore owned fetch failure
         }
 
-        $wabas = $wabaData['data'] ?? [];
+        // Try querying client/shared accounts (client_whatsapp_business_accounts)
+        try {
+            $clientResponse = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/me/client_whatsapp_business_accounts', [
+                'headers' => [
+                    'Authorization' => "Bearer {$accessToken}"
+                ]
+            ]);
+            if ($clientResponse->getStatusCode() === 200) {
+                $clientData = $clientResponse->toArray();
+                if (!empty($clientData['data'])) {
+                    $existingIds = array_column($wabas, 'id');
+                    foreach ($clientData['data'] as $waba) {
+                        if (!in_array($waba['id'], $existingIds, true)) {
+                            $wabas[] = $waba;
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently ignore client fetch failure
+        }
+
         if (empty($wabas)) {
             throw new \RuntimeException('No WhatsApp Business Accounts found. Please ensure you selected a business account during setup.');
         }
