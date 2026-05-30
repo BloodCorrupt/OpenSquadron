@@ -427,8 +427,8 @@ class WhatsAppController extends AbstractController
                                         if ($tzString === '') {
                                             $tzString = 'UTC';
                                         }
-                                        $tz = new \DateTimeZone($tzString);
-                                        $now = new \DateTime('now', $tz);
+                                         $tz = \App\Helper\TimezoneHelper::getValidDateTimeZone($tzString);
+                                         $now = new \DateTime('now', $tz);
                                         $currentDay = strtolower($now->format('l'));
                                         $currentTime = $now->format('H:i');
                                         $activeDays = array_map('strtolower', $bh['days'] ?? []);

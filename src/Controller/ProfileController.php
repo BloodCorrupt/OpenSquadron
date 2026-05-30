@@ -66,7 +66,7 @@ class ProfileController extends AbstractController
 
             $timezone = $request->request->get('timezone');
             if ($timezone !== null && $timezone !== '') {
-                $currentUser->setTimezone($timezone);
+                $currentUser->setTimezone(\App\Helper\TimezoneHelper::normalizeTimezone($timezone));
             } else {
                 $currentUser->setTimezone('UTC');
             }

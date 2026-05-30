@@ -2616,6 +2616,17 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label">Timezone</label>
+                        <select class="form-control" id="bh-timezone">
+                            {% for tzVal, tzName in timezonesList %}
+                                <option value="{{ tzVal }}" {% if (settings['business-hours']['timezone'] ?? (connection ? (connection.owner ? connection.owner.timezone : 'UTC') : 'UTC')) == tzVal %}selected{% endif %}>{{ tzName }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-group">
                         <label class="form-label">Start Time</label>
                         <input type="time" class="glass-input" id="bh-start-time" value="{{ settings['business-hours']['startTime'] ?? '09:00' }}">
                     </div>
@@ -5242,6 +5253,7 @@
             }
             
             const mode = document.getElementById('bh-mode').value;
+            const timezone = document.getElementById('bh-timezone').value;
 
             const start = document.getElementById('bh-start-time').value;
             const end = document.getElementById('bh-end-time').value;
@@ -5252,7 +5264,7 @@
             const bhSettings = {
                 enabled,
                 mode,
-                timezone: tz,
+                timezone,
                 startTime: start,
                 endTime: end,
                 days,

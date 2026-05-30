@@ -222,7 +222,7 @@ class ServerAccountController extends AbstractController
 
             $timezone = $request->request->get('timezone');
             if ($timezone !== null && $timezone !== '') {
-                $account->setTimezone($timezone);
+                $account->setTimezone(\App\Helper\TimezoneHelper::normalizeTimezone($timezone));
             } else {
                 $account->setTimezone('UTC');
             }

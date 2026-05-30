@@ -372,6 +372,10 @@ class FacebookBotManagerController extends AbstractController
         $currentSettings = $connection->getBotSettings() ?: [];
         $currentSettings[$type] = $decoded;
 
+        if ($type === 'business-hours' && is_array($currentSettings[$type]) && isset($currentSettings[$type]['timezone'])) {
+            $currentSettings[$type]['timezone'] = \App\Helper\TimezoneHelper::normalizeTimezone($currentSettings[$type]['timezone']);
+        }
+
         if ($type === 'persistent-menu') {
             if ($connection) {
                 $menuItems = [];

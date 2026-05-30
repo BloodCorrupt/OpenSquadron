@@ -229,6 +229,10 @@ class WhatsappBotManagerController extends AbstractController
         }
 
         $connection->setBotSettings($currentSettings);
+        if ($type === 'business-hours' && is_array($currentSettings[$type]) && isset($currentSettings[$type]['timezone'])) {
+            $currentSettings[$type]['timezone'] = \App\Helper\TimezoneHelper::normalizeTimezone($currentSettings[$type]['timezone']);
+            $connection->setBotSettings($currentSettings);
+        }
         $em->flush();
 
         return new JsonResponse([
