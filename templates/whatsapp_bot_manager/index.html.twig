@@ -3079,7 +3079,7 @@
 
 <script>
     const activeConnectionId = '{{ connection ? connection.id : "" }}';
-    const tz = '{{ settings['business-hours']['timezone']|default('UTC') }}';
+    const tz = '{{ settings['business-hours']['timezone'] is defined and settings['business-hours']['timezone'] != 'UTC' ? settings['business-hours']['timezone'] : (connection ? (connection.owner ? connection.owner.timezone : 'UTC') : 'UTC') }}';
     let sequencesList = {{ sequences|json_encode|raw }};
 
     // Webhooks compatibility

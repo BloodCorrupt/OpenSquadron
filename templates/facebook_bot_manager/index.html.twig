@@ -5304,7 +5304,7 @@
         {% endfor %}
     ];
     let activeConnectionId = '{{ connection ? connection.id : "" }}';
-    const tz = '{{ settings['business-hours']['timezone']|default('UTC') }}';
+    const tz = '{{ settings['business-hours']['timezone'] is defined and settings['business-hours']['timezone'] != 'UTC' ? settings['business-hours']['timezone'] : (connection ? (connection.owner ? connection.owner.timezone : 'UTC') : 'UTC') }}';
     let pageCommentSettings = {{ settings['comment-automation']|default(null)|json_encode|raw }};
     let postbacks = {{ settings['postbacks']|default([])|json_encode|raw }};
     let marketingMessages = {{ settings['marketing-messages']|default([])|json_encode|raw }};

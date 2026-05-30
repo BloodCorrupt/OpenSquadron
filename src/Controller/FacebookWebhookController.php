@@ -441,14 +441,20 @@ class FacebookWebhookController extends AbstractController
                             if (!empty($bh['enabled'])) {
                                 try {
                                     $tzString = !empty($bh['timezone']) ? trim((string)$bh['timezone']) : '';
+                                    if ($tzString === '' || $tzString === 'UTC') {
+                                        $ownerTz = ($resolvedConnection->getOwner() && $resolvedConnection->getOwner()->getTimezone()) ? $resolvedConnection->getOwner()->getTimezone() : '';
+                                        if ($ownerTz !== '') {
+                                            $tzString = $ownerTz;
+                                        }
+                                    }
                                     if ($tzString === '') {
-                                        $tzString = ($resolvedConnection->getOwner() && $resolvedConnection->getOwner()->getTimezone()) ? $resolvedConnection->getOwner()->getTimezone() : 'UTC';
+                                        $tzString = 'UTC';
                                     }
                                     $tz = new \DateTimeZone($tzString);
                                     $now = new \DateTime('now', $tz);
-                                    $currentDay = $now->format('l');
+                                    $currentDay = strtolower($now->format('l'));
                                     $currentTime = $now->format('H:i');
-                                    $activeDays = $bh['days'] ?? [];
+                                    $activeDays = array_map('strtolower', $bh['days'] ?? []);
                                     
                                     $isOutsideBH = (!in_array($currentDay, $activeDays) || $currentTime < ($bh['startTime'] ?? '09:00') || $currentTime > ($bh['endTime'] ?? '17:00'));
                                     $mode = $bh['mode'] ?? 'bot';
