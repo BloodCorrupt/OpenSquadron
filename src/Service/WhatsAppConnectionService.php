@@ -197,12 +197,17 @@ class WhatsAppConnectionService
     public function syncEmbeddedSignupConnections(string $oauthCode, string $appId, string $appSecret, int $limitSlots = 999, ?string $currentUrl = null): array
     {
         // 1. Exchange code for access token
+        $query = [
+            'client_id' => $appId,
+            'client_secret' => $appSecret,
+            'code' => $oauthCode,
+        ];
+        if ($currentUrl) {
+            $query['redirect_uri'] = $currentUrl;
+        }
+
         $response = $this->httpClient->request('GET', 'https://graph.facebook.com/v21.0/oauth/access_token', [
-            'query' => [
-                'client_id' => $appId,
-                'client_secret' => $appSecret,
-                'code' => $oauthCode,
-            ]
+            'query' => $query
         ]);
         
         if ($response->getStatusCode() >= 400) {
