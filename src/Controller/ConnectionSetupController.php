@@ -40,8 +40,18 @@ class ConnectionSetupController extends AbstractController
                     } else {
                         $usage = $this->usageService->getBotUsage($user);
                         $availableSlots = (in_array($user->getAccountType(), ['super_admin', 'admin'], true) || $usage['limit'] === 0) ? 9999 : max(1, $usage['limit'] - $usage['current']);
-                        
-                        $currentUrl = $request->getSchemeAndHttpHost() . $request->getPathInfo();
+                        $scheme = $request->getScheme();
+                        if ($request->headers->has('X-Forwarded-Proto')) {
+                            $scheme = $request->headers->get('X-Forwarded-Proto');
+                        }
+                        $scheme = strtolower($scheme) === 'https' ? 'https' : 'http';
+
+                        $host = $request->getHttpHost();
+                        if ($request->headers->has('X-Forwarded-Host')) {
+                            $host = $request->headers->get('X-Forwarded-Host');
+                        }
+
+                        $currentUrl = $scheme . '://' . $host . $request->getPathInfo();
                         $syncedNames = $this->whatsappService->syncEmbeddedSignupConnections($oauthCode, $appId, $appSecret, $availableSlots, $currentUrl);
                         if (!empty($syncedNames)) {
                             $this->addFlash('success', 'Successfully connected ' . count($syncedNames) . ' phone number(s): ' . implode(', ', $syncedNames));
