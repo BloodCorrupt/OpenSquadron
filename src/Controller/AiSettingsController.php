@@ -450,19 +450,7 @@ class AiSettingsController extends AbstractController
         $payload = json_decode($request->getContent(), true);
         $isActive = isset($payload['isActive']) ? (bool)$payload['isActive'] : !$context->isActive();
 
-        if ($isActive) {
-            // Deactivate all other contexts
-            $contexts = $em->getRepository(AiContext::class)->findAll();
-            foreach ($contexts as $c) {
-                if ($c->getId() !== $context->getId()) {
-                    $c->setActive(false);
-                }
-            }
-            $context->setActive(true);
-        } else {
-            $context->setActive(false);
-        }
-
+        $context->setActive($isActive);
         $em->flush();
 
         return new JsonResponse([

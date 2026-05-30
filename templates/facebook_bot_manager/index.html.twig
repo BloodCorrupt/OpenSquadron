@@ -2866,9 +2866,11 @@
                     <select id="ai-agent-context-select" class="glass-input" style="width: 100%; height: 42px;">
                         <option value="">-- No Context Profile (Use Connection Default) --</option>
                         {% for ctx in contexts %}
-                            <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
-                                {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %}
-                            </option>
+                            {% if ctx.isActive() or (connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id) %}
+                                <option value="{{ ctx.id }}" {% if connection and connection.getActiveContext() and connection.getActiveContext().getId() == ctx.id %}selected{% endif %}>
+                                    {{ ctx.name }} {% if ctx.getAgentRole() %}({{ ctx.getAgentRole() }}){% endif %} {% if not ctx.isActive() %}(Inactive){% endif %}
+                                </option>
+                            {% endif %}
                         {% endfor %}
                     </select>
                 </div>
