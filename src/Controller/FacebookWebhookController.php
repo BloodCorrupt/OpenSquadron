@@ -440,8 +440,11 @@ class FacebookWebhookController extends AbstractController
                             $bh = $botSettings['business-hours'] ?? [];
                             if (!empty($bh['enabled'])) {
                                 try {
-                                    $ownerTz = ($resolvedConnection->getOwner() && $resolvedConnection->getOwner()->getTimezone()) ? $resolvedConnection->getOwner()->getTimezone() : 'UTC';
-                                    $tz = new \DateTimeZone($ownerTz);
+                                    $tzString = !empty($bh['timezone']) ? trim((string)$bh['timezone']) : '';
+                                    if ($tzString === '') {
+                                        $tzString = ($resolvedConnection->getOwner() && $resolvedConnection->getOwner()->getTimezone()) ? $resolvedConnection->getOwner()->getTimezone() : 'UTC';
+                                    }
+                                    $tz = new \DateTimeZone($tzString);
                                     $now = new \DateTime('now', $tz);
                                     $currentDay = $now->format('l');
                                     $currentTime = $now->format('H:i');
