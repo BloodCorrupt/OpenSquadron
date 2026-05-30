@@ -843,15 +843,23 @@
 
 <script>
 {% if metaAppId and waConfigId %}
-    // Detect if this page is loaded inside a popup window that has an opener
-    if (window.opener && window.opener !== window && window.name === 'WhatsAppOnboarding') {
-        try {
-            window.opener.postMessage({ type: 'WA_SIGNUP_DONE', success: true }, window.location.origin);
-        } catch (e) {
-            console.error('Failed to postMessage to opener:', e);
-        }
-        window.close();
-    }
+    // Load the Facebook SDK asynchronously
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId      : '{{ metaAppId }}',
+            cookie     : true,
+            xfbml      : true,
+            version    : 'v21.0'
+        });
+    };
+
+    (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
 
     function launchWhatsAppSignup() {
         const btn = document.getElementById('wa-embedded-signup-btn');
@@ -867,52 +875,125 @@
 
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Waiting for Meta...</span>';
 
-        const appId = '{{ metaAppId }}';
-        const configId = '{{ waConfigId }}';
-        const redirectUri = window.location.origin + window.location.pathname;
-        const extras = JSON.stringify({
-            setup: {},
-            featureType: "whatsapp_business_app_onboarding",
-            sessionInfoVersion: "2"
-        });
+        let fallbackTimeout;
+        let ajaxFlowStarted = false;
 
-        const oauthUrl = `https://www.facebook.com/v21.0/dialog/oauth?` +
-            `client_id=${encodeURIComponent(appId)}` +
-            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-            `&response_type=code` +
-            `&config_id=${encodeURIComponent(configId)}` +
-            `&extras=${encodeURIComponent(extras)}` +
-            `&override_default_response_type=true` +
-            `&display=popup`;
+        // Listen for the postMessage event from the popup
+        const messageListener = (event) => {
+            if (!event.origin.includes("facebook.com") && !event.origin.includes("whatsapp.com")) return;
 
-        const handleMessage = (event) => {
-            if (event.origin !== window.location.origin) return;
-            if (event.data && event.data.type === 'WA_SIGNUP_DONE') {
-                if (typeof showToast === 'function') {
-                    showToast('WhatsApp Account successfully connected!', 'success');
+            let data;
+            if (typeof event.data === 'string') {
+                try { data = JSON.parse(event.data); } catch (e) { return; }
+            } else {
+                data = event.data;
+            }
+
+            // Handle standard WA_EMBEDDED_SIGNUP events
+            if (data && data.type === 'WA_EMBEDDED_SIGNUP') {
+                if (typeof fallbackTimeout !== 'undefined') {
+                    clearTimeout(fallbackTimeout);
                 }
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+
+                if (data.event === 'FINISH') {
+                    ajaxFlowStarted = true;
+                    const payload = data.data || data;
+                    const wabaId = payload.waba_id;
+                    const phoneNumberId = payload.phone_number_id;
+
+                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
+
+                    const formData = new FormData();
+                    formData.append('wabaId', wabaId || '');
+                    formData.append('phoneNumberId', phoneNumberId || '');
+
+                    fetch('{{ path('whatsapp_connect_embedded_callback') }}', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(apiData => {
+                        if (apiData.success) {
+                            if (typeof showToast === 'function') { showToast(apiData.message, 'success'); }
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                            
+                            // Fetch updated DOM seamlessly
+                            fetch(window.location.href)
+                                .then(res => res.text())
+                                .then(html => {
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    const newSection = doc.querySelector('.connections-section');
+                                    const oldSection = document.querySelector('.connections-section');
+                                    if (newSection && oldSection) { oldSection.innerHTML = newSection.innerHTML; }
+                                    
+                                    // Once DOM is updated, prompt for custom PIN
+                                    if (apiData.connections && apiData.connections.length > 0) {
+                                        registerConnection(apiData.connections[0].id);
+                                    }
+                                });
+                        } else {
+                            if (typeof showToast === 'function') { showToast(apiData.error || 'Failed to save connection.', 'error'); }
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
+                    })
+                    .catch(err => {
+                        if (typeof showToast === 'function') { showToast('An error occurred during save.', 'error'); }
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    });
+
+                    window.removeEventListener('message', messageListener);
+                } else if (data.event === 'CANCEL') {
+                    ajaxFlowStarted = true;
+                    if (typeof showToast === 'function') { showToast('Authentication cancelled.', 'error'); }
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    window.removeEventListener('message', messageListener);
+                } else if (data.event === 'ERROR') {
+                    ajaxFlowStarted = true;
+                    if (typeof showToast === 'function') { showToast('An error occurred during setup.', 'error'); }
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    window.removeEventListener('message', messageListener);
+                }
             }
         };
-        window.addEventListener('message', handleMessage);
 
-        const width = 600;
-        const height = 650;
-        const left = (window.screen.width / 2) - (width / 2);
-        const top = (window.screen.height / 2) - (height / 2);
-        
-        const popup = window.open(oauthUrl, 'WhatsAppOnboarding', `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`);
+        window.addEventListener('message', messageListener);
 
-        const checkClosed = setInterval(() => {
-            if (!popup || popup.closed) {
-                clearInterval(checkClosed);
+        FB.login(function(response) {
+            // If response has no authResponse, the user closed the popup or it was blocked
+            if (!response.authResponse) {
+                if (typeof showToast === 'function') { showToast('Authentication cancelled or popup blocked.', 'error'); }
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
-                window.removeEventListener('message', handleMessage);
+                window.removeEventListener('message', messageListener);
+            } else if (response.authResponse.code) {
+                if (ajaxFlowStarted) return;
+
+                // For Coexistence (WhatsApp Business App Onboarding), postMessage might not fire.
+                // We capture the code and fallback to server-side Code Exchange after 2 seconds.
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Saving Connection...</span>';
+                
+                fallbackTimeout = setTimeout(() => {
+                    if (!ajaxFlowStarted) {
+                        window.location.href = window.location.pathname + '?code=' + response.authResponse.code;
+                    }
+                }, 2000);
             }
-        }, 1000);
+        }, {
+            config_id: '{{ waConfigId }}',
+            response_type: 'code',
+            override_default_response_type: true,
+            extras: {
+                "setup": {},
+                "featureType": "whatsapp_business_app_onboarding",
+                "sessionInfoVersion": "2",
+            }
+        });
     }
 {% endif %}
 let connectionToDelete = null;
