@@ -787,7 +787,8 @@ class WhatsAppConnectionService
             if (stripos($errorMsg, 'business app') !== false || 
                 stripos($errorMsg, 'registered to') !== false || 
                 stripos($errorMsg, 'conflict') !== false ||
-                stripos($errorMsg, 'coexistence') !== false) {
+                stripos($errorMsg, 'coexistence') !== false ||
+                stripos($errorMsg, 'SMB') !== false) {
                 
                 // Save is_smb = true in database so the register button/modal will be hidden
                 $settings = $connection->getBotSettings() ?? [];
